@@ -4,6 +4,31 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.59.2
+
+Aufgeräumte Optionen und bessere Hilfe, wenn das Programm hängt.
+
+- **Optionen aufgeräumt:** „Problem melden“ und „Leistungsmessung“ stehen
+  jetzt zusammen ganz unten im neuen Bereich „Diagnose und Werkzeuge“. Beim
+  Öffnen der Optionen ist er eingeklappt, wie die anderen Bereiche. Die
+  Suche führt direkt dorthin.
+- **Hänger-Diagnose (PC):** Bleibt das Programm hängen, schreibt es nach
+  30 Sekunden automatisch in die Datei haenger.log, an welcher Stelle es
+  steht. Kürzere Blockaden ab 5 Sekunden stehen kurz in fehler.log. Beide
+  Dateien liegen im Datenordner und stehen im Problembericht. Es wird nichts
+  gesendet. Unter Linux kann man diese Angaben jederzeit mit einem Befehl
+  abrufen; er steht unter „Diagnose und Werkzeuge“ und lässt sich dort
+  kopieren (erst ab dieser Version, in älteren Versionen beendet der Befehl
+  das Programm).
+- **Kein zweites Fenster mehr nach kurzem Stocken:** War das laufende
+  Programm beim zweiten Start nur kurz beschäftigt, öffnete sich bisher nach
+  einiger Zeit doch ein zweites Fenster. Jetzt kommt das vorhandene Fenster
+  nach vorn, sobald es wieder antwortet.
+- **Windows: Speicher in der Leistungsmessung:** Die Spalte mit dem
+  Arbeitsspeicher war unter Windows leer und ist jetzt gefüllt. Die
+  Messdatei zeigt außerdem den freien Arbeitsspeicher beim Start und, was
+  das Programm gerade tat, wenn es stockte.
+
 ## 0.59.1
 
 Besser unter Linux, ein Programmfenster statt zwei und ein mitwachsendes

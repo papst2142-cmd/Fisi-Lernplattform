@@ -350,7 +350,7 @@ def deb_cancel_message(path):
 # Download, Pruefung, Start des Installers, Beenden des Programms, Ergebnis
 # (die Zeilen des Installers schreibt er selbst dazu). Nie Zugangsschluessel
 # oder Passwoerter; Benutzerpfade werden wie in fehler.log ersetzt. Die
-# Datei erscheint unter Optionen > Problem melden.
+# Datei erscheint unter Optionen > Diagnose und Werkzeuge > Problem melden.
 
 UPDATE_LOG_NAME = "update.log"
 INSTALLER_LOG_NAME = "update_installer.log"
@@ -361,7 +361,7 @@ FAILED_TITLE = "Update nicht abgeschlossen"
 FAILED_TEXT = ("Das Update auf Version %(neu)s wurde nicht installiert. Installiert "
                "ist weiterhin Version %(alt)s. Dein Lernstand ist davon nicht "
                "betroffen.\n\n%(grund)s\n\nDas Protokoll liegt hier:\n%(pfad)s\n"
-               "Es steht auch unter Optionen › Problem melden.\n\n"
+               "Es steht auch unter Optionen › Diagnose und Werkzeuge › Problem melden.\n\n"
                "Tipp: PC neu starten und das Update erneut versuchen. Klappt es "
                "dann nicht, den Installer von der Download-Seite von Hand starten.")
 REASON_ROLLBACK = ("Der Installer konnte nicht alle Dateien ersetzen und hat alle "

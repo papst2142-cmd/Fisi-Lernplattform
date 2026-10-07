@@ -159,6 +159,52 @@ class RecorderTest(unittest.TestCase):
                          [(fle.EVENT_START, "6.0.0"), (fle.EVENT_PAGE, ""),
                           (fle.EVENT_STOP, "")])
 
+    # -- ab 0.59.2: A3, F, A2 ----------------------------------------------
+
+    def test_a3_verfuegbar_nur_in_der_startzeile_und_vorgang(self):
+        rec = fle.Recorder("0.59.2", "PC")
+        rec.task_source = lambda: "vorladen:settings"
+        rec.set_active(True)
+        rec.record(fle.EVENT_PAGE, von="a", nach="b")
+        rec.record(fle.EVENT_BLOCKED, nach="settings", dauer_ms=2500.0, vorgang="darstellung")
+        rec.flush()
+        rows = [dict(zip(fle.COLUMNS, row.split(";"))) for row in _rows(fle.file_path())[1:]]
+        self.assertEqual(rows[0]["ereignis"], fle.EVENT_START)
+        if os.path.exists("/proc/meminfo") or sys.platform == "win32":
+            self.assertGreater(int(rows[0]["verfuegbar_mb"]), 0)
+        self.assertEqual(rows[1]["verfuegbar_mb"], "")
+        self.assertEqual(rows[1]["vorgang"], "vorladen:settings")
+        self.assertEqual((rows[2]["ereignis"], rows[2]["vorgang"], rows[2]["dauer_ms"]),
+                         (fle.EVENT_BLOCKED, "darstellung", "2500,0"))
+
+    def test_a3_handy_ohne_vorgang(self):
+        rec = fle.Recorder("0.59.2", "Handy")
+        rec.set_active(True)
+        rec.flush()
+        row = dict(zip(fle.COLUMNS, _rows(fle.file_path())[1].split(";")))
+        self.assertEqual(row["vorgang"], "")
+
+    def test_a3_alte_messdatei_bekommt_neue_kopfzeile(self):
+        old_header = ";".join(fle.COLUMNS[:16])
+        with open(fle.file_path(), "w", encoding="utf-8") as handle:
+            handle.write(old_header + "\nalt;0.59.1\n")
+        rec = fle.Recorder("0.59.2", "PC")
+        rec.set_active(True)
+        rec.flush()
+        rows = _rows(fle.file_path())
+        self.assertEqual(rows[0], ";".join(fle.COLUMNS))
+        self.assertEqual(rows[1], "alt;0.59.1")
+        self.assertEqual(len(rows), 3)
+
+    @unittest.skipUnless(sys.platform == "win32", "nur Windows")
+    def test_a2_windows_speicher_gefuellt(self):
+        memory, private = fle.memory_mb()
+        self.assertIsNotNone(memory)
+        self.assertIsNotNone(private)
+        self.assertGreater(memory, 5)
+        self.assertGreater(private, 5)
+        self.assertIsNotNone(fle.available_mb())
+
     def test_zeilen_werden_gebuendelt(self):
         rec = fle.Recorder("0.58.1", "PC")
         rec.set_active(True)
@@ -226,7 +272,9 @@ class RecorderTest(unittest.TestCase):
         self.assertIn("fle.TITLE", shared)
         self.assertIn("fo.AREA_BY_ID", pc)
         self.assertIn("fo.AREA_BY_ID", mobile)
-        for name in ("SUBTITLE", "HELP", "SWITCH", "BTN_SHOW", "BTN_DELETE"):
+        # Ab 0.59.2 (U): Zwischenueberschrift im Bereich "Diagnose und
+        # Werkzeuge" ohne eigene Unterzeile (SUBTITLE entfaellt)
+        for name in ("HELP", "SWITCH", "BTN_SHOW", "BTN_DELETE"):
             self.assertIn("fle." + name, pc, name)
             self.assertIn("fle." + name, mobile, name)
         import fisi_hilfe as fh

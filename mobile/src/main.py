@@ -83,7 +83,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.59.1"
+APP_VERSION = "0.59.2"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -3429,7 +3429,11 @@ class SettingsScreen(Screen):
         self.report_text = ui.text("", size=11, color=C["text_dim"], font_family=ui.MONO,
                                    selectable=True)
         self._report_key = None
-        report = self._area("problem", [
+        # Ab 0.59.2 (U): Problem melden und Leistungsmessung stehen als
+        # Zwischenueberschriften im letzten Bereich "Diagnose und Werkzeuge"
+        sections = {item["id"]: item["titel"] for item in fo.diagnose_sections(pc=False)}
+        report_controls = [
+            ui.label(sections["problem"]),
             ui.text(fdg.HELP, size=13, color=C["text_dim"]),
             ft.Container(content=ft.Column([self.report_text], scroll=ft.ScrollMode.AUTO,
                                            tight=True),
@@ -3438,19 +3442,21 @@ class SettingsScreen(Screen):
             ft.Row([ui.GradientButton(fdg.BTN_COPY, self.copy_report, expand=True)]),
             ft.Row([ui.GradientButton(fdg.BTN_SAVE, self.save_report, kind="ghost",
                                       expand=True)]),
-        ], accent=C["orange"], subtitle=fdg.SUBTITLE)
+        ]
 
         # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am PC
         perf = getattr(self.app, "perf", None)
         self.lbl_perf = ui.text("", size=13, color=C["muted"])
-        measure = self._area("leistung", [
+        measure_controls = [
+            ft.Container(height=6),
+            ui.label(sections["leistung"]),
             ui.text(fle.HELP, size=13, color=C["text_dim"]),
             self._switch(fle.SWITCH, bool(perf and perf.active), self._toggle_perf),
             self.lbl_perf,
             ft.Row([ui.GradientButton(fle.BTN_SHOW, self.show_perf_file, expand=True)]),
             ft.Row([ui.GradientButton(fle.BTN_DELETE, self.delete_perf_file, kind="ghost",
                                       expand=True)]),
-        ], accent=C["orange"], subtitle=fle.SUBTITLE)
+        ]
 
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
@@ -3624,18 +3630,20 @@ class SettingsScreen(Screen):
             "Lerninhalte wie die PC-Version und ist mit Python und Flet umgesetzt."
             % (APP_TITLE, APP_VERSION), size=14, color=C["text_dim"])],
             accent=C["green"])
+        tools = self._area(fo.DIAGNOSE_ID, report_controls + measure_controls,
+                           accent=C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE)
         # Ab 0.59: Reihenfolge aus fisi_optionen (Updates ganz oben, E2)
         built = {"updates": updates, "rundgang": tour, "schrift": fonts, "farben": colors,
                  "tagesziel": goal, "rahmenplan": plan, "abgleich": sync,
-                 "sicherung": backup, "problem": report, "leistung": measure,
-                 "lerninhalte": content, "spiel": game, "loeschen": danger, "ueber": about}
+                 "sicherung": backup, "lerninhalte": content, "spiel": game,
+                 "loeschen": danger, "ueber": about, fo.DIAGNOSE_ID: tools}
         self.areas = {area["id"]: built[area["id"]] for area in fo.areas(pc=False)}
         self.list_view = screen_list(list(self.areas.values()))
         return self.list_view
 
     def _area(self, area_id, controls, accent=None, subtitle=None):
         """Ab 0.59: Bereich der Optionen (Titel aus fisi_optionen). Offen nur
-        Updates und Problem melden (E1), sonst Klappbereich (E4)."""
+        Updates (E1; bis 0.59.1 auch Problem melden), sonst Klappbereich (E4)."""
         area = fo.AREA_BY_ID[area_id]
         if fo.opened_at_start(area_id):
             return ui.Card(area["titel"], controls, accent=accent, subtitle=subtitle)

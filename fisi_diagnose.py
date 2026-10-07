@@ -7,7 +7,8 @@ FISI Lernplattform - Problem melden (ab 0.54)
 Baut einen Bericht fuer die Fehlersuche: Programmversion, Geraet, Datenordner,
 ein paar Systemwerte (Anzahl Eintraege, Groesse der Datenbank) und das
 Fehlerprotokoll fehler.log (fisi_core.install_error_log, nur gelesen,
-hoechstens die letzten ERROR_LOG_MAX Bytes), ab 0.55.1 auch update.log. Ohne Oberflaeche, damit PC und
+hoechstens die letzten ERROR_LOG_MAX Bytes), ab 0.55.1 auch update.log, ab
+0.59.2 am PC haenger.log (letzte HANG_LOG_MAX Bytes) und laeuft.info. Ohne Oberflaeche, damit PC und
 Handy denselben Text zeigen, kopieren und speichern.
 
 Datenschutz wie bei der Sicherung (fisi_sicherung.py): Von den Einstellungen
@@ -49,6 +50,11 @@ NO_LOG = ("Keine Fehler aufgezeichnet – die Datei fehler.log ist leer oder noc
           "vorhanden. Das ist ein gutes Zeichen.")
 LOG_CUT = "… (ältere Einträge gekürzt, gezeigt werden die letzten %d KB)"
 FILE_TYPE = "Textdatei"
+# Ab 0.59.2 (PC): Haenger-Diagnose (fisi_haenger) und Halter der Sperre
+# (fisi_einzelstart). Nur Dateinamen, damit das Handy fisi_haenger nicht braucht.
+HANG_LOG_NAME = "haenger.log"
+HANG_LOG_MAX = 16 * 1024
+INFO_NAME = "laeuft.info"
 FILE_EXT = ".txt"
 REDACTED = "[entfernt]"
 
@@ -197,6 +203,14 @@ def build_report(db=None, version="", geraet="", settings=None, log_path=None, n
     update_log = read_update_log()
     if update_log:
         lines += ["", "--- update.log ---", update_log]
+    # ab 0.59.2: nur angehaengt, wenn die Dateien da sind (am Handy nie)
+    folder = os.path.dirname(os.path.abspath(log_path or error_log_path()))
+    hang_log = read_log(os.path.join(folder, HANG_LOG_NAME), HANG_LOG_MAX)
+    if hang_log:
+        lines += ["", "--- %s ---" % HANG_LOG_NAME, hang_log]
+    info = read_log(os.path.join(folder, INFO_NAME), 4096)
+    if info:
+        lines += ["", "--- %s ---" % INFO_NAME, info]
     # ab 0.55: Benutzerpfade durch %APPDATA%, ~ bzw. "…" ersetzt (auch in
     # Eintraegen, die eine aeltere Version in fehler.log geschrieben hat)
     return anonymize_paths(scrub("\n".join(lines), secrets_of(settings)))

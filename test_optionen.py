@@ -34,9 +34,10 @@ import fisi_theme as th  # noqa: E402
 import fisi_verknuepfung as fsc  # noqa: E402
 from fisi_lernen import DELETE_TITLE  # noqa: E402
 
+# Ab 0.59.2 (U): "problem" und "leistung" stehen als Zwischenueberschriften
+# im letzten Bereich "diagnose"
 PC_IDS = ["updates", "rundgang", "schrift", "farben", "tagesziel", "rahmenplan", "abgleich",
-          "sicherung", "datenbank", "problem", "leistung", "lerninhalte", "spiel",
-          "loeschen", "ueber"]
+          "sicherung", "datenbank", "lerninhalte", "spiel", "loeschen", "ueber", "diagnose"]
 NAMES_DARK = {"violett": "Violett", "nachtblau": "Nachtblau", "tannengruen": "Tannengrün",
               "aubergine": "Aubergine", "anthrazit": "Anthrazit", "schwarz": "Schwarz"}
 NAMES_LIGHT = {"violett": "Flieder", "nachtblau": "Hellblau", "tannengruen": "Mintgrün",
@@ -84,17 +85,54 @@ class AufbauTest(unittest.TestCase):
         handy = [area["id"] for area in fo.areas(pc=False)]
         self.assertEqual(handy, [key for key in PC_IDS if key != "datenbank"])
 
-    def test_offen_nur_updates_und_problem_melden(self):
+    def test_offen_nur_updates(self):
+        # bis 0.59.1 auch "Problem melden", ab 0.59.2 im eingeklappten Bereich
         opened = [area["id"] for area in fo.AREAS if fo.opened_at_start(area["id"])]
-        self.assertEqual(opened, ["updates", "problem"])
+        self.assertEqual(opened, ["updates"])
+
+    # -- ab 0.59.2 (U): Diagnose und Werkzeuge ------------------------------
+
+    def test_diagnose_ist_der_letzte_bereich(self):
+        for pc in (True, False):
+            self.assertEqual(fo.areas(pc)[-1]["id"], fo.DIAGNOSE_ID)
+        self.assertEqual(fo.DIAGNOSE_TITLE, "Diagnose und Werkzeuge")
+        self.assertFalse(fo.opened_at_start(fo.DIAGNOSE_ID))
+
+    def test_diagnose_abschnitte(self):
+        import fisi_haenger as fhg
+        pc = [(item["id"], item["titel"]) for item in fo.diagnose_sections(pc=True)]
+        self.assertEqual(pc, [("problem", fdg.TITLE), ("leistung", fle.TITLE),
+                              ("haenger", fhg.TITLE)])
+        handy = [item["id"] for item in fo.diagnose_sections(pc=False)]
+        self.assertEqual(handy, ["problem", "leistung"])
+
+    def test_suche_findet_werkzeuge(self):
+        for word in ("Problem", "Problem melden", "Fehler", "Messung", "Leistungsmessung",
+                     "Diagnose", "Werkzeuge"):
+            for pc in (True, False):
+                hits = [hit[0] for hit in fo.search_options(word, pc=pc)]
+                self.assertIn(fo.DIAGNOSE_ID, hits, (word, pc))
+        for word in ("haenger", "Hänger"):
+            self.assertIn(fo.DIAGNOSE_ID, [hit[0] for hit in fo.search_options(word)])
+            # am Handy gibt es keine Haenger-Diagnose
+            self.assertNotIn(fo.DIAGNOSE_ID,
+                             [hit[0] for hit in fo.search_options(word, pc=False)])
+        self.assertEqual(fo.hit_target(fo.DIAGNOSE_TITLE, "Problem"), (fo.DIAGNOSE_ID, False))
+
+    def test_texte_nennen_den_neuen_ort(self):
+        import fisi_update as fu
+        self.assertIn("Diagnose und Werkzeuge", fh.HELP_BY_ID["problem"]["text"])
+        self.assertIn("Diagnose und Werkzeuge", fh.HELP_BY_ID["leistung"]["text"])
+        self.assertIn("Diagnose und Werkzeuge › Problem melden", fu.FAILED_TEXT)
+        for section in fh.HELP_SECTIONS:
+            self.assertNotIn("unter „Problem melden“", section["text"], section["id"])
 
     def test_titel_wie_in_den_modulen(self):
         titles = {area["id"]: area["titel"] for area in fo.AREAS}
         self.assertEqual(titles["schrift"], th.FONT_TITLE)
         self.assertEqual(titles["rahmenplan"], frp.OPTIONS_TITLE)
         self.assertEqual(titles["sicherung"], fsi.TITLE)
-        self.assertEqual(titles["problem"], fdg.TITLE)
-        self.assertEqual(titles["leistung"], fle.TITLE)
+        self.assertEqual(titles["diagnose"], fo.DIAGNOSE_TITLE)
         self.assertEqual(titles["loeschen"], DELETE_TITLE)
 
     def test_kacheln_bei_sehr_gross_umbrechen(self):
@@ -389,11 +427,11 @@ class OptionenPcTest(unittest.TestCase):
         self.pump()
         return self.app.views["settings"]
 
-    def test_a_beim_oeffnen_alles_zu_ausser_updates_und_problem(self):
+    def test_a_beim_oeffnen_alles_zu_ausser_updates(self):
         view = self.open_settings()
         self.assertEqual(list(view.areas), PC_IDS)
         for key, card in view.areas.items():
-            if key in ("updates", "problem"):
+            if key == "updates":
                 self.assertNotIsInstance(card, self.fw.FoldCard, key)
                 self.assertTrue(card.body.winfo_ismapped(), key)
             else:
@@ -481,6 +519,54 @@ class OptionenPcTest(unittest.TestCase):
         self.app.header.search_entry.delete(0, "end")
         self.pump()
         self.assertTrue(view.folds["abgleich"].opened)
+
+    def test_f2_diagnose_letzter_bereich_mit_allen_werkzeugen(self):
+        # ab 0.59.2 (U): ganz unten, eingeklappt, enthaelt Problem melden,
+        # Leistungsmessung und Haenger-Diagnose
+        import fisi_haenger as fhg
+        view = self.open_settings()
+        card = view.areas["diagnose"]
+        self.assertIs(card, list(view.areas.values())[-1])
+        self.assertFalse(card.opened)
+        card.toggle()
+        self.pump()
+        self.assertGreater(card.winfo_y(), view.areas["ueber"].winfo_y())
+        body = str(card.body)
+        for widget in (view.report_box, view.lbl_perf, view.lbl_hang):
+            self.assertTrue(str(widget).startswith(body + "."), str(widget))
+        texts = [label.cget("text") for label in _labels(card.body)]
+        for text in (fdg.TITLE.upper(), fle.TITLE.upper(), fhg.TITLE.upper(), fdg.HELP,
+                     fle.HELP, fhg.HELP):
+            self.assertIn(text, texts)
+        # Knoepfe (NeoButton zeichnet seinen Text selbst; per Name suchen)
+        buttons = []
+
+        def walk(widget):
+            for child in widget.winfo_children():
+                if isinstance(child, self.fw.NeoButton):
+                    buttons.append(child.cget("text"))
+                walk(child)
+        walk(card.body)
+
+        def has_button(text):
+            return any(caption.endswith(text) for caption in buttons)
+        for text in (fdg.BTN_COPY, fdg.BTN_SAVE, fdg.BTN_FOLDER, fle.BTN_SHOW, fle.BTN_DELETE):
+            self.assertTrue(has_button(text), (text, buttons))
+        if sys.platform.startswith("linux"):
+            self.assertIn(fhg.KILL_COMMAND, texts)
+            self.assertTrue(has_button(fhg.BTN_COPY), buttons)
+        self.assertEqual(view.lbl_perf.cget("text") != "", True)
+
+    def test_f3_suche_problem_oeffnet_diagnose(self):
+        self.open_settings()
+        self.app.do_search("Problem")
+        self.pump()
+        self.app.open_search_hit(fo.SEARCH_KIND, fo.DIAGNOSE_TITLE)
+        self.pump()
+        view = self.app.views["settings"]
+        self.assertEqual(self.app.current, "settings")
+        self.assertTrue(view.folds["diagnose"].opened)
+        self.assertGreater(view.canvas.yview()[0], 0.5)
 
     def test_g_suche_oeffnet_vorlagen_und_trefferliste(self):
         self.open_settings()
@@ -633,12 +719,12 @@ class OptionenHandyTest(unittest.TestCase):
             self.assertEqual(fold.accessible_name(),
                              th.fold_label(fh.HELP_BY_ID[key]["titel"], fold.opened))
 
-    def test_alles_zu_ausser_updates_und_problem(self):
+    def test_alles_zu_ausser_updates(self):
         screen = self.screen()
         self.assertEqual(list(screen.areas), [key for key in PC_IDS if key != "datenbank"])
         self.assertEqual(screen.root.controls, list(screen.areas.values()))
         for key, card in screen.areas.items():
-            if key in ("updates", "problem"):
+            if key == "updates":
                 self.assertNotIsInstance(card, self.ui.FoldCard, key)
             else:
                 self.assertIsInstance(card, self.ui.FoldCard, key)
@@ -668,8 +754,8 @@ class OptionenHandyTest(unittest.TestCase):
     def test_mehrere_offen_und_beim_oeffnen_wieder_zu(self):
         screen = self.screen()
         screen.folds["farben"].toggle()
-        screen.folds["leistung"].toggle()
-        self.assertTrue(screen.folds["farben"].opened and screen.folds["leistung"].opened)
+        screen.folds["diagnose"].toggle()
+        self.assertTrue(screen.folds["farben"].opened and screen.folds["diagnose"].opened)
         screen.reset_folds()
         self.assertFalse(any(fold.opened for fold in screen.folds.values()))
 
@@ -718,6 +804,35 @@ class OptionenHandyTest(unittest.TestCase):
                             walk(item)
         walk(search.results)
         self.assertIn("Abgleich PC und Handy", texts)
+
+    def test_diagnose_am_handy(self):
+        # ab 0.59.2 (U): letzter Bereich, Problem melden und Leistungsmessung,
+        # keine Haenger-Diagnose
+        import fisi_haenger as fhg
+        screen = self.screen()
+        card = screen.areas["diagnose"]
+        self.assertIs(card, list(screen.areas.values())[-1])
+        self.assertFalse(card.opened)
+        texts = []
+
+        def walk(control):
+            if isinstance(control, self.ft.Text):
+                texts.append(control.value)
+            for name in ("content", "controls"):
+                value = getattr(control, name, None)
+                if isinstance(value, self.ft.Control):
+                    walk(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, self.ft.Control):
+                            walk(item)
+        walk(card.body)
+        for text in (fdg.TITLE.upper(), fle.TITLE.upper(), fdg.HELP, fle.HELP):
+            self.assertIn(text, texts)
+        self.assertNotIn(fhg.TITLE.upper(), texts)
+        self.assertNotIn(fhg.HELP, texts)
+        self.assertIs(screen.open_area("diagnose"), card)
+        self.assertTrue(card.opened)
 
     def test_kacheln_hell_heissen_anders_auch_fuer_talkback(self):
         th.apply_mode(th.MODE_LIGHT)

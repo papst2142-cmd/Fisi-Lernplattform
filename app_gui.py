@@ -79,6 +79,7 @@ from fisi_lernen import (  # noqa: E402
 )
 import fisi_diagnose as fdg  # noqa: E402
 import fisi_einzelstart  # noqa: E402
+import fisi_haenger as fhg  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_optionen as fo  # noqa: E402
@@ -111,7 +112,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.59.1"
+APP_VERSION = "0.59.2"
 
 
 def _resource_path(filename):
@@ -4870,8 +4871,9 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
-        fisi_optionen). Offen beim Oeffnen nur Updates und Problem melden
-        (E1), alle anderen sind Klappbereiche (E4: Zustand nicht gespeichert)."""
+        fisi_optionen). Offen beim Oeffnen nur Updates (E1; bis 0.59.1 auch
+        Problem melden), alle anderen sind Klappbereiche (E4: Zustand nicht
+        gespeichert)."""
         area = fo.AREA_BY_ID[area_id]
         if fo.opened_at_start(area_id):
             card = Card(self.content, title=area["titel"], accent=accent, subtitle=subtitle)
@@ -5127,43 +5129,6 @@ class SettingsView(View):
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
-        # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie auf dem Handy.
-        # Der Bericht wird erst nach dem Anzeigen der Seite eingetragen.
-        report = self._area("problem", C["orange"], subtitle=fdg.SUBTITLE)
-        make_label(report.body, fdg.HELP, font=F["small"], fg=C["text_dim"],
-                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
-        self.report_box = make_text(report.body, height=10, font=F["mono_small"])
-        self.report_box.pack(fill="x", pady=(10, 0))
-        self.report_box.configure(state="disabled")
-        self._report_key = None
-        row = transparent_frame(report.body)
-        row.pack(anchor="w", pady=(12, 0))
-        NeoButton(row, fdg.BTN_COPY, self.copy_report, kind="primary").pack(side="left")
-        NeoButton(row, fdg.BTN_SAVE, self.save_report, kind="ghost").pack(side="left",
-                                                                          padx=10)
-        NeoButton(row, fdg.BTN_FOLDER, self.open_data_folder,
-                  kind="ghost").pack(side="left")
-
-        # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am Handy
-        perf = self._area("leistung", C["orange"], subtitle=fle.SUBTITLE)
-        make_label(perf.body, fle.HELP, font=F["small"], fg=C["text_dim"],
-                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
-        self.var_perf = tk.BooleanVar(value=self.app.perf.active)
-        ctk.CTkSwitch(perf.body, text=fle.SWITCH, variable=self.var_perf,
-                      command=self._toggle_perf,
-                      font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
-                      button_color=C["text"], button_hover_color="#FFFFFF"
-                      ).pack(anchor="w", pady=(12, 0))
-        self.lbl_perf = make_label(perf.body, "", font=F["small"], fg=C["muted"],
-                                   justify="left", anchor="w")
-        self.lbl_perf.pack(anchor="w", pady=(10, 0))
-        row = transparent_frame(perf.body)
-        row.pack(anchor="w", pady=(12, 0))
-        NeoButton(row, fle.BTN_SHOW, self.show_perf_file, kind="primary").pack(side="left")
-        NeoButton(row, fle.BTN_DELETE, self.delete_perf_file, kind="ghost").pack(
-            side="left", padx=10)
-
         content = self._area("lerninhalte", C["purple"])
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
@@ -5239,9 +5204,81 @@ class SettingsView(View):
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
 
+        # Ab 0.59.2 (U): alle Werkzeuge zum Melden und Messen im letzten
+        # Bereich "Diagnose und Werkzeuge" (eingeklappt), Zwischenueberschriften
+        # wie bei "Löschen". Inhalte unveraendert, sie werden wie bisher
+        # mitgebaut.
+        tools = self._area(fo.DIAGNOSE_ID, C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE)
+        self.diagnose_sections = {}
+        sections = iter(fo.diagnose_sections(pc=True))
+
+        def section(first=False):
+            item = next(sections)
+            label = make_label(tools.body, item["titel"].upper(), font=F["label"],
+                               fg=C["muted"])
+            label.pack(anchor="w", pady=(0 if first else 20, 0))
+            self.diagnose_sections[item["id"]] = label
+            return tools.body
+
+        # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie auf dem Handy.
+        # Der Bericht wird erst nach dem Anzeigen der Seite eingetragen.
+        body = section(first=True)
+        make_label(body, fdg.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        self.report_box = make_text(body, height=10, font=F["mono_small"])
+        self.report_box.pack(fill="x", pady=(10, 0))
+        self.report_box.configure(state="disabled")
+        self._report_key = None
+        row = transparent_frame(body)
+        row.pack(anchor="w", pady=(12, 0))
+        NeoButton(row, fdg.BTN_COPY, self.copy_report, kind="primary").pack(side="left")
+        NeoButton(row, fdg.BTN_SAVE, self.save_report, kind="ghost").pack(side="left",
+                                                                          padx=10)
+        NeoButton(row, fdg.BTN_FOLDER, self.open_data_folder,
+                  kind="ghost").pack(side="left")
+
+        # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am Handy
+        body = section()
+        make_label(body, fle.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        self.var_perf = tk.BooleanVar(value=self.app.perf.active)
+        ctk.CTkSwitch(body, text=fle.SWITCH, variable=self.var_perf,
+                      command=self._toggle_perf,
+                      font=F["small"], text_color=C["text_dim"],
+                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      button_color=C["text"], button_hover_color="#FFFFFF"
+                      ).pack(anchor="w", pady=(12, 0))
+        self.lbl_perf = make_label(body, "", font=F["small"], fg=C["muted"],
+                                   justify="left", anchor="w")
+        self.lbl_perf.pack(anchor="w", pady=(10, 0))
+        row = transparent_frame(body)
+        row.pack(anchor="w", pady=(12, 0))
+        NeoButton(row, fle.BTN_SHOW, self.show_perf_file, kind="primary").pack(side="left")
+        NeoButton(row, fle.BTN_DELETE, self.delete_perf_file, kind="ghost").pack(
+            side="left", padx=10)
+
+        # Ab 0.59.2: Haenger-Diagnose (fisi_haenger.py), nur PC
+        body = section()
+        make_label(body, fhg.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        self.lbl_hang = make_label(body, "", font=F["small"], fg=C["muted"],
+                                   justify="left", anchor="w")
+        self.lbl_hang.pack(anchor="w", pady=(10, 0))
+        if sys.platform.startswith("linux"):
+            make_label(body, fhg.SIGNAL_HELP, font=F["tiny"], fg=C["muted"],
+                       wraplength=800, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(12, 0))
+            row = transparent_frame(body)
+            row.pack(anchor="w", pady=(8, 0))
+            make_label(row, fhg.KILL_COMMAND, font=F["mono_small"],
+                       fg=C["text_dim"]).pack(side="left")
+            NeoButton(row, fhg.BTN_COPY, self.copy_kill_command,
+                      kind="ghost").pack(side="left", padx=(16, 0))
+
+
     def reset_folds(self):
         """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen (ausser
-        Updates und Problem melden, die keine Klappbereiche sind)."""
+        Updates, das kein Klappbereich ist)."""
         FoldCard.reset_states(fo.STATE_PREFIX)
         for fold in self.folds.values():
             fold.set_opened(False)
@@ -5411,6 +5448,21 @@ class SettingsView(View):
         self._show_difficulty()
         self.after_idle(self._show_report)
         self.after_idle(self._show_perf_state)
+        self.after_idle(self._show_hang_state)
+
+    # -- Haenger-Diagnose (ab 0.59.2) ------------------------------------------
+
+    def _show_hang_state(self):
+        try:
+            self.lbl_hang.configure(text=fhg.state_text())
+        except tk.TclError:
+            pass
+
+    def copy_kill_command(self):
+        root = self.app.root
+        root.clipboard_clear()
+        root.clipboard_append(fhg.KILL_COMMAND)
+        show_badge_toast(root, fhg.MSG_COPIED)
 
     # -- Leistungsmessung (ab 0.58.1) ------------------------------------------
 
@@ -5454,6 +5506,7 @@ class SettingsView(View):
         self._show_difficulty()
         self._show_report()
         self._show_perf_state()
+        self._show_hang_state()
         return True
 
     # -- Problem melden (ab 0.54) ---------------------------------------------
@@ -5800,6 +5853,8 @@ class PerfMonitor:
         self.app = app
         self.root = app.root
         self.rec = fle.Recorder(APP_VERSION, "PC", toolkit=ctk.__version__)
+        # Ab 0.59.2: Spalte "vorgang" (letzter Vorgang, fisi_haenger)
+        self.rec.task_source = lambda: fhg.current()[1]
         self._flush_job = None
         self._bound = False
         self._resize = None
@@ -5878,6 +5933,15 @@ class PerfMonitor:
             self.rec.record(fle.EVENT_PAGE, von=old or "", nach=new, dauer_ms=elapsed,
                             elemente=self.elements(), aufgaben=self.tasks())
         self.root.after_idle(done)
+
+    def blocked(self, seconds):
+        """Ab 0.59.2: Der Herzschlag kam seconds zu spaet (Hauptfaden
+        blockiert). Seite und Vorgang aus der Haenger-Diagnose."""
+        if not self.rec.active:
+            return
+        page, _task = fhg.current()
+        self.rec.record(fle.EVENT_BLOCKED, nach=page, dauer_ms=seconds * 1000.0,
+                        vorgang=fhg.recent(time.monotonic() - seconds - 1.0))
 
     def theme(self, old, new, started):
         if not self.rec.active:
@@ -6080,11 +6144,13 @@ class SyncController:
         laenger gewartet."""
         if not (self.dirty and self.auto_enabled()):
             return
+        task = fhg.vorgang("abgleich")   # ab 0.59.2: Haenger-Diagnose
         worker = threading.Thread(
             target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
             daemon=True)
         worker.start()
         worker.join(timeout)
+        fhg.vorgang(task)
 
 
 def _quietly(function, *args, **kwargs):
@@ -6906,6 +6972,7 @@ class ViewPreloader:
         started = time.perf_counter()
         worked = False
         app.preloading = True
+        task_before = fhg.vorgang("vorladen:%s" % key)   # ab 0.59.2
         try:
             view = views.built(key)
             if task[0] == "view":
@@ -6930,6 +6997,7 @@ class ViewPreloader:
             worked = True
         finally:
             app.preloading = False
+            fhg.vorgang(task_before)
         try:
             # Eine Ansicht, die beim Aufbau den Fokus nimmt (z.B. ein
             # Eingabefeld), soll ihn dem Nutzer nicht wegnehmen
@@ -7046,6 +7114,9 @@ class FISIApp:
         self.preloader.start()
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
+        # Ab 0.59.2: Herzschlag fuer die Haenger-Diagnose (fisi_haenger),
+        # laeuft immer; on_close bricht ihn wie alle Zeitgeber ab
+        root.after(fhg.BEAT_MS, self._heartbeat)
 
         self.updater = UpdateController(self)
         self.sync = SyncController(self)
@@ -7116,6 +7187,23 @@ class FISIApp:
                 return False
         return True
 
+    def _heartbeat(self):
+        """Ab 0.59.2: alle fhg.BEAT_MS ms im Hauptfaden. Merkt die Zeit fuer
+        den Waechter und meldet eine Verspaetung ab fhg.MEASURE_SECONDS als
+        "blockiert" an die Leistungsmessung. Zeigt nie einen Fehler."""
+        try:
+            delay = fhg.beat()
+            if delay >= fhg.MEASURE_SECONDS:
+                self.perf.blocked(delay)
+        except Exception:
+            pass
+        finally:
+            if not self._closing:
+                try:
+                    self.root.after(fhg.BEAT_MS, self._heartbeat)
+                except tk.TclError:
+                    pass
+
     def change_font_size(self, size_id):
         """Ab 0.56: Schriftgroesse speichern und die Oberflaeche in der neuen
         Groesse neu aufbauen (wie beim Farbwechsel, gilt sofort)."""
@@ -7124,6 +7212,7 @@ class FISIApp:
         self._recoloring = True
         started = time.monotonic()
         measured, before = time.perf_counter(), fisi_theme.current_font_size
+        task = fhg.vorgang("schrift")
         overlay = self._show_busy(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
         try:
             fisi_theme.save_font_size(size_id)
@@ -7138,6 +7227,7 @@ class FISIApp:
             self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
+            fhg.vorgang(task)
         self.perf.theme("schrift " + str(before), "schrift " + str(size_id), measured)
 
     def change_color(self, preset_id=None, background_id=None, mode=None, custom=None):
@@ -7148,6 +7238,7 @@ class FISIApp:
         self._recoloring = True
         started = time.monotonic()
         measured, before = time.perf_counter(), _theme_name()
+        task = fhg.vorgang("darstellung")
         overlay = self._show_busy()
         try:
             self._recolor(preset_id, background_id, overlay, mode, custom)
@@ -7160,6 +7251,7 @@ class FISIApp:
             self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
+            fhg.vorgang(task)
         self.perf.theme(before, _theme_name(), measured)
 
     def _show_busy(self, title=None, text=None):
@@ -7316,7 +7408,12 @@ class FISIApp:
     def show_view(self, key):
         started = time.perf_counter()
         before = self.current
-        self._show_view_measured(key)
+        task = fhg.vorgang("seite:%s" % key)   # ab 0.59.2: Haenger-Diagnose
+        try:
+            self._show_view_measured(key)
+        finally:
+            fhg.vorgang(task)
+            fhg.seite(self.current)
         self.perf.page(before, self.current, started)
 
     def _show_view_measured(self, key):
@@ -7706,6 +7803,7 @@ class FISIApp:
         if final_sync:
             self.sync.run_before_exit()
         arm_emergency_exit(self.update_exit)
+        fhg.dump_on_close()   # ab 0.59.2: nur Diagnose (Stapel nach 5 s)
         # Ab 0.54: noch geplante after-Zeitgeber (auch die von customtkinter,
         # z. B. update und check_dpi_scaling) abbrechen. Beim echten Schliessen
         # ueber mainloop laufen sie ohnehin nicht mehr; ein Skript, das danach
@@ -7903,8 +8001,11 @@ def main():
     # Programm schon, kommt dessen Fenster nach vorn und dieser Start endet
     # still. Der Starttest beim Bauen ist ausgenommen.
     single = (fisi_einzelstart.supported() and not os.environ.get("FISI_SELFTEST"))
-    if single and not fisi_einzelstart.claim():
+    if single and not fisi_einzelstart.claim(version=APP_VERSION):
         return
+    # Ab 0.59.2: Haenger-Diagnose (haenger.log, Waechter, kill -USR1);
+    # still aus, wenn der Datenordner nicht beschreibbar ist
+    fhg.setup(APP_VERSION)
     apply_appearance()
     if sys.platform.startswith("linux"):
         # Ab 0.59.1: eigene Fensterklasse, damit GNOME Fenster und
@@ -7921,6 +8022,7 @@ def main():
         show_error(*exc_info)
     root.report_callback_exception = report_error
     app = FISIApp(root)
+    fhg.set_closing(lambda: app._closing or app.update_exit)
     if single:
         fisi_einzelstart.listen(
             root, closing=lambda: app._closing or app.update_exit,

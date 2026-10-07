@@ -9,8 +9,12 @@ dieselbe Reihenfolge, dieselben Beschriftungen und dieselbe Suche haben.
 
 - AREAS: alle Bereiche der Optionen in der angezeigten Reihenfolge.
   "Updates" steht ganz oben (E2). Beim Oeffnen der Optionen sind alle
-  Bereiche eingeklappt, ausser "Updates" und "Problem melden" (E1). Der
-  Klappzustand wird nicht gespeichert (E4) - es gibt keine neue Einstellung.
+  Bereiche eingeklappt, ausser "Updates" (E1; bis 0.59.1 auch "Problem
+  melden"). Der Klappzustand wird nicht gespeichert (E4) - es gibt keine
+  neue Einstellung.
+- Ab 0.59.2 (U): "Problem melden", "Leistungsmessung" und am PC die
+  "Hänger-Diagnose" stehen zusammen im letzten Bereich "Diagnose und
+  Werkzeuge" (Zwischenueberschriften wie bei "Löschen", DIAGNOSE_SECTIONS).
 - search_options(): Treffer fuer die Suche (Strg+F). Ein Treffer oeffnet die
   Optionen, klappt den Bereich (und ggf. den Unterbereich "Vorlagen") auf und
   springt hin (E5).
@@ -18,6 +22,7 @@ dieselbe Reihenfolge, dieselben Beschriftungen und dieselbe Suche haben.
 
 import fisi_diagnose as fdg
 import fisi_hilfe as fh
+# fisi_haenger nicht importieren: das Handy braucht es nicht (nur Texte unten)
 import fisi_leistung as fle
 import fisi_rahmenplan as frp
 import fisi_sicherung as fsi
@@ -38,6 +43,18 @@ TEMPLATES_TEXT = ("Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der
                   "Hintergrund die Flächen und Karten. Fachbereichsfarben und Erfolg, "
                   "Fehler, Warnung bleiben gleich (in der hellen Darstellung etwas "
                   "dunkler, damit sie gut lesbar sind).")
+
+# Ab 0.59.2 (U): Bereich ganz unten mit allen Werkzeugen zum Melden und Messen
+DIAGNOSE_ID = "diagnose"
+DIAGNOSE_TITLE = "Diagnose und Werkzeuge"
+DIAGNOSE_SUBTITLE = "Fehler melden, messen, Hänger finden"
+HANG_TITLE = "Hänger-Diagnose"          # = fisi_haenger.TITLE (nur PC)
+# Zwischenueberschriften im Bereich (Reihenfolge), am Handy ohne "nur_pc"
+DIAGNOSE_SECTIONS = [
+    {"id": "problem", "titel": fdg.TITLE},
+    {"id": "leistung", "titel": fle.TITLE},
+    {"id": "haenger", "titel": HANG_TITLE, "nur_pc": True},
+]
 
 # id, Titel, offen beim Oeffnen, nur am PC, Stichwoerter fuer die Suche
 AREAS = [
@@ -65,10 +82,6 @@ AREAS = [
      "stichwoerter": ["Sicherung", "Backup", "wiederherstellen"]},
     {"id": "datenbank", "titel": "Datenbank", "nur_pc": True,
      "stichwoerter": ["Datenbank", "Speicherort", "FISI_DB_PATH"]},
-    {"id": "problem", "titel": fdg.TITLE, "offen": True,
-     "stichwoerter": ["Problem", "Fehler", "Bericht", "melden"]},
-    {"id": "leistung", "titel": fle.TITLE,
-     "stichwoerter": ["Leistung", "Messung", "Messdatei"]},
     {"id": "lerninhalte", "titel": "Lerninhalte",
      "stichwoerter": ["Lerninhalte", "Anzahl", "Karteikarten gesamt"]},
     {"id": "spiel", "titel": "Spiel",
@@ -78,6 +91,13 @@ AREAS = [
                       "Bestenliste"]},
     {"id": "ueber", "titel": "Über das Programm",
      "stichwoerter": ["Über", "Programm", "Version"]},
+    # Ab 0.59.2 (U): immer der letzte Bereich
+    {"id": DIAGNOSE_ID, "titel": DIAGNOSE_TITLE,
+     "stichwoerter": ["Diagnose", "Werkzeuge", fdg.TITLE, "Problem", "Fehler",
+                      "fehler.log", "Bericht", "melden", fle.TITLE, "Leistung",
+                      "Messung", "Messdatei"],
+     # nur am PC gesucht (die Hänger-Diagnose gibt es am Handy nicht)
+     "stichwoerter_pc": [HANG_TITLE, "Hänger", "haenger.log", "hängt"]},
 ]
 AREA_BY_ID = {area["id"]: area for area in AREAS}
 AREA_BY_TITLE = {area["titel"]: area for area in AREAS}
@@ -98,8 +118,14 @@ def areas(pc=True):
     return [area for area in AREAS if pc or not area.get("nur_pc")]
 
 
+def diagnose_sections(pc=True):
+    """Zwischenueberschriften im Bereich "Diagnose und Werkzeuge"."""
+    return [item for item in DIAGNOSE_SECTIONS if pc or not item.get("nur_pc")]
+
+
 def opened_at_start(area_id):
-    """E1: Nur "Updates" und "Problem melden" sind beim Oeffnen offen."""
+    """E1: Nur "Updates" ist beim Oeffnen offen (bis 0.59.1 auch "Problem
+    melden", ab 0.59.2 im eingeklappten Bereich "Diagnose und Werkzeuge")."""
     return bool(AREA_BY_ID[area_id].get("offen"))
 
 
@@ -115,12 +141,13 @@ def search_options(query, pc=True):
         return []
     hits = []
     for area in areas(pc):
-        words = [word for word in area["stichwoerter"] if needle in word.lower()]
+        all_words = area["stichwoerter"] + (area.get("stichwoerter_pc", []) if pc else [])
+        words = [word for word in all_words if needle in word.lower()]
         if needle not in area["titel"].lower() and not words:
             continue
         templates = area["id"] == "farben" and any(
             needle in word.lower() for word in TEMPLATE_WORDS)
-        shown = words or area["stichwoerter"]
+        shown = words or all_words
         detail = "Bereich in den Optionen: " + ", ".join(shown[:6])
         hits.append((area["id"], area["titel"], detail, templates))
     return hits
