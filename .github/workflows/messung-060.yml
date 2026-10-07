@@ -41,7 +41,8 @@ jobs:
               done
             done
           done
-          cd "$RUNNER_TEMP" && python "$GITHUB_WORKSPACE/messung_060/tab.py" m_*.json
+          cd "$RUNNER_TEMP" && python "$GITHUB_WORKSPACE/messung_060/tab.py" m_*.json > tab.txt; cat tab.txt
+          while IFS= read -r z; do echo "::notice::$z"; done < tab.txt
           python - <<'PY'
           import glob, json, os, statistics as st
           os.chdir(os.environ["RUNNER_TEMP"])
@@ -49,5 +50,5 @@ jobs:
               g = []
               for f in glob.glob("m_%s_*.json" % k):
                   g += [x["gesamt_ms"] for x in json.load(open(f, encoding="utf-8"))["wechsel"]]
-              print("SUMME", k, len(g), round(st.median(g)) if g else None)
+              print("::notice::SUMME", k, len(g), round(st.median(g)) if g else None)
           PY
