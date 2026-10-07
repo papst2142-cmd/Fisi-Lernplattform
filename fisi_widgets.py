@@ -1302,13 +1302,31 @@ class RingStat(tk.Canvas):
         self._photo = tk_photo(image, size, size)
         self.create_image(size / 2, size / 2, image=self._photo)
         center = size / 2
+        lines = self._wrap(small) if small else []
         if big:
             offset = -px(8) if small else 0
+            if len(lines) > 1:
+                offset = -px(13)
             self.create_text(center, center + offset, text=big, fill=C["text"],
                              font=tk_font(F["ring_big"]))
-        if small:
-            self.create_text(center, center + px(15), text=small, fill=C["muted"],
-                             font=tk_font(F["ring_small"]))
+        if lines:
+            below = px(15) if len(lines) == 1 else px(18)
+            self.create_text(center, center + below, text="\n".join(lines),
+                             fill=C["muted"], font=tk_font(F["ring_small"]),
+                             justify="center")
+
+    def _wrap(self, text):
+        """Bricht die kleine Zeile um, wenn sie nicht in den Ring passt
+        (z. B. "von 2174 Fragen" / "beantwortet"). Der Wortlaut bleibt."""
+        inner = self.size - 2 * self.thickness - 14
+        if text_width(text, F["ring_small"]) <= inner:
+            return [text]
+        words = text.split(" ")
+        for cut in range(len(words) - 1, 0, -1):
+            first = " ".join(words[:cut])
+            if text_width(first, F["ring_small"]) <= inner:
+                return [first, " ".join(words[cut:])]
+        return [text]
 
 
 class MiniRing(tk.Canvas):

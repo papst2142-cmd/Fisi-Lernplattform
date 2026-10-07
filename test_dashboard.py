@@ -244,8 +244,9 @@ class PcTest(unittest.TestCase):
             pass
         if widget.winfo_class() == "Canvas":
             for item in widget.find_all():
+                # Ringe brechen lange Unterzeilen um (ab 0.60) - Wortlaut gleich
                 if widget.type(item) == "text" and widget.itemcget(item, "text").strip():
-                    found.append(widget.itemcget(item, "text"))
+                    found.append(widget.itemcget(item, "text").replace("\n", " "))
         for child in widget.winfo_children():
             self.texts(child, found)
         return found
