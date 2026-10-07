@@ -26,6 +26,22 @@ ANSWER_SECONDS auf "vordergrund-<pid>.antwort":
              startet das Programm trotzdem (wie in 0.59) und notiert das in
              fehler.log.
 
+Ab 0.59.2 (E2): Bei "keine" bleibt das Signal liegen und der zweite Start
+achtet bis LOCK_SECONDS weiter auf eine spaete Antwort. War das laufende
+Programm nur kurz blockiert (z. B. Darstellungswechsel auf einem langsamen
+Geraet), beantwortet es das Signal, sobald sein Zeitgeber wieder laeuft:
+"da" -> es holt sich selbst nach vorn, der zweite Start endet still (mit
+demselben Sicherheitsnetz wie oben); "endet" -> nur noch auf die Sperre
+warten. Haengt es dauerhaft, startet der zweite Start nach LOCK_SECONDS
+wie bisher ohne Sperre.
+
+Ab 0.59.2 (E1): Wer die Sperre bekommt, schreibt "laeuft.info" (Prozess-
+nummer, Startzeit, Version) - eine eigene Datei, weil Windows den gesperrten
+Bereich von laeuft.lock fuer andere Prozesse nicht lesbar macht. Ein zweiter
+Start haengt diese Angaben (unter Linux dazu Zustand und Wartepunkt des
+Halters aus /proc) an seinen Eintrag in fehler.log an. Fehler beim Schreiben
+oder Lesen werden geschluckt; das Verhalten aendert sich dadurch nicht.
+
 Grundsatz: Die Sperre verhindert den Start nie. Geht beim Anlegen oder
 Pruefen etwas schief, startet das Programm normal. Beendet wird ein zweiter
 Start nur, wenn das laufende Programm mit "da" geantwortet hat.
@@ -37,6 +53,7 @@ Schliesslogik bleiben unveraendert: on_close bricht den Zeitgeber wie alle
 anderen ab.
 """
 
+import datetime
 import glob
 import os
 import sys
@@ -46,6 +63,7 @@ import time
 from fisi_core import resolve_db_path, write_error_log
 
 LOCK_FILE = "laeuft.lock"
+INFO_FILE = "laeuft.info"   # ab 0.59.2 (E1)
 SIGNAL_SUFFIX = ".signal"
 ANSWER_SUFFIX = ".antwort"
 PREFIX = "vordergrund-"
@@ -199,7 +217,81 @@ def _wait_for_lock(folder, seconds):
             time.sleep(STEP_SECONDS)
 
 
-def claim(folder=None, answer_seconds=None, lock_seconds=None):
+def _proc_stat(pid):
+    """Linux: (Zustand, Startzeit in Ticks) aus /proc/<pid>/stat oder None."""
+    try:
+        with open("/proc/%d/stat" % int(pid)) as handle:
+            fields = handle.read().rsplit(")", 1)[1].split()
+        return fields[0], fields[19]
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def write_info(folder, version="", now=None):
+    """E1: Angaben zum Halter der Sperre nach laeuft.info. Erst ueber eine
+    Hilfsdatei (os.replace); scheitert das (Windows, die Datei ist gerade
+    offen), direkt ueberschreiben; scheitert auch das, still aufgeben."""
+    try:
+        when = (now or datetime.datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+        lines = ["pid=%d" % os.getpid(), "start=%s" % when,
+                 "version=%s" % (version or "?"), "system=%s" % sys.platform]
+        stat = _proc_stat(os.getpid())
+        if stat:
+            lines.append("startticks=%s" % stat[1])
+        text = "\n".join(lines) + "\n"
+        path = os.path.join(folder, INFO_FILE)
+        temp = path + ".tmp"
+        try:
+            with open(temp, "w", encoding="utf-8") as handle:
+                handle.write(text)
+            os.replace(temp, path)
+        except OSError:
+            _remove(temp)
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(text)
+        return True
+    except Exception:
+        return False
+
+
+def read_info(folder):
+    """laeuft.info als dict ({} ohne Datei oder bei Fehlern)."""
+    try:
+        with open(os.path.join(folder, INFO_FILE), encoding="utf-8") as handle:
+            pairs = [line.split("=", 1) for line in handle.read().splitlines()
+                     if "=" in line]
+        return {key.strip(): value.strip() for key, value in pairs}
+    except Exception:
+        return {}
+
+
+def holder_text(folder):
+    """Eine Zeile zum Halter der Sperre fuer den Eintrag in fehler.log."""
+    try:
+        info = read_info(folder)
+        if not info.get("pid"):
+            return "Halter: unbekannt (laeuft.info fehlt oder ist nicht lesbar)."
+        text = "Halter: pid %s, gestartet %s, Version %s" % (
+            info.get("pid"), info.get("start", "?"), info.get("version", "?"))
+        if os.path.isdir("/proc/self"):
+            stat = _proc_stat(info["pid"])
+            if stat is None:
+                text += "; Linux: Prozess läuft nicht mehr (Angaben veraltet)"
+            elif info.get("startticks") and stat[1] != info["startticks"]:
+                text += "; Linux: Prozessnummer neu vergeben (Angaben veraltet)"
+            else:
+                try:
+                    with open("/proc/%d/wchan" % int(info["pid"])) as handle:
+                        wchan = handle.read().strip() or "-"
+                except (OSError, ValueError):
+                    wchan = "?"
+                text += "; Linux: Zustand %s, wchan %s" % (stat[0], wchan)
+        return text + "."
+    except Exception:
+        return "Halter: unbekannt."
+
+
+def claim(folder=None, answer_seconds=None, lock_seconds=None, version=""):
     """Beim Start vor allem anderen aufrufen. True = normal starten,
     False = ein laufendes Programm wurde nach vorn geholt, still beenden."""
     global _lock_handle
@@ -217,6 +309,7 @@ def claim(folder=None, answer_seconds=None, lock_seconds=None):
                 return False
             _lock_handle = handle
         if _lock_handle is not None:
+            write_info(folder, version)
             _clean_stale(folder)
             _start_answering(folder)
     except Exception as error:
@@ -235,6 +328,20 @@ def _second_start(folder, answer_seconds, lock_seconds):
     with open(signal, "w", encoding="utf-8"):
         pass
     answer = _wait_for_answer(folder, token, answer_seconds)
+    if answer is None:
+        # Ab 0.59.2 (E2): Signal liegen lassen und bis lock_seconds sowohl
+        # auf die Sperre als auch auf eine spaete Antwort achten
+        handle, answer = _wait_for_lock_or_answer(folder, token, lock_seconds)
+        _remove(signal)
+        if handle is not None:
+            return handle
+        if answer == ANSWER_HERE:
+            handle = _wait_for_lock(folder, answer_seconds)
+            return handle if handle is not None else False
+        if answer is None:
+            _log_busy(folder, "keine", lock_seconds)
+            return None
+        # spaete Antwort "endet": nur noch auf die Sperre warten (wie unten)
     _remove(signal)
     if answer == ANSWER_HERE:
         # Sicherheitsnetz: Endet das laufende Programm gerade doch (Update),
@@ -243,10 +350,36 @@ def _second_start(folder, answer_seconds, lock_seconds):
         return handle if handle is not None else False
     handle = _wait_for_lock(folder, lock_seconds)
     if handle is None:
-        write_error_log("Mehrfachstart: Das laufende Programm hat nicht geantwortet "
-                        "(Antwort: %s) und die Sperre war nach %d s noch belegt. "
-                        "Start ohne Sperre." % (answer or "keine", lock_seconds))
+        _log_busy(folder, answer or "keine", lock_seconds)
     return handle
+
+
+def _log_busy(folder, answer, lock_seconds):
+    write_error_log("Mehrfachstart: Das laufende Programm hat nicht geantwortet "
+                    "(Antwort: %s) und die Sperre war nach %d s noch belegt. "
+                    "Start ohne Sperre. %s" % (answer, lock_seconds, holder_text(folder)))
+
+
+def _wait_for_lock_or_answer(folder, token, seconds):
+    """E2: Bis seconds lang die Sperre versuchen und nach einer spaeten
+    Antwort sehen. Liefert (Sperre oder None, Antwort oder None)."""
+    end = time.monotonic() + seconds
+    path = _answer_path(folder, token)
+    while True:
+        try:
+            return _try_lock(folder), None
+        except _Busy:
+            pass
+        try:
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read().strip()
+            _remove(path)
+            return None, text
+        except OSError:
+            pass
+        if time.monotonic() >= end:
+            return None, None
+        time.sleep(STEP_SECONDS)
 
 
 def _start_answering(folder):

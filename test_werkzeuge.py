@@ -163,6 +163,45 @@ class DiagnoseTest(TempDataMixin, unittest.TestCase):
         name = fd.default_name(datetime.datetime(2026, 10, 2, 14, 23))
         self.assertEqual(name, "FISI-Problembericht_2026-10-02_1423.txt")
 
+    # -- ab 0.59.2: haenger.log und laeuft.info -----------------------------
+
+    def test_ohne_haenger_dateien_keine_abschnitte(self):
+        text = fd.build_report(self.db, "0.59.2", "PC", settings={})
+        self.assertNotIn("--- haenger.log ---", text)
+        self.assertNotIn("--- laeuft.info ---", text)
+
+    def test_haenger_log_und_laeuft_info_angehaengt(self):
+        home = os.path.expanduser("~")
+        with open(os.path.join(self.folder, fd.HANG_LOG_NAME), "w", encoding="utf-8") as h:
+            h.write("=== 2026-10-07 08:00:03 | Start | Version 0.59.2 ===\n"
+                    'Thread 0x1 (most recent call first):\n'
+                    '  File "%s/quelle/app_gui.py", line 7204 in _recolor\n'
+                    "token=ghp_ABCDEFGHIJKLMNOPQRSTUV\n" % home)
+        with open(os.path.join(self.folder, fd.INFO_NAME), "w", encoding="utf-8") as h:
+            h.write("pid=4321\nstart=2026-10-07 08:00:03\nversion=0.59.2\n")
+        text = fd.build_report(self.db, "0.59.2", "PC", settings={})
+        self.assertIn("--- haenger.log ---", text)
+        self.assertIn("line 7204 in _recolor", text)
+        self.assertIn("--- laeuft.info ---", text)
+        self.assertIn("pid=4321", text)
+        # Benutzerpfad und Zugangsdaten entfernt wie bei fehler.log
+        self.assertNotIn(home + "/quelle", text)
+        self.assertNotIn("ghp_ABCDEFGHIJKLMNOPQRSTUV", text)
+        # Reihenfolge: fehler.log, (update.log), haenger.log, laeuft.info
+        self.assertLess(text.index("--- fehler.log ---"), text.index("--- haenger.log ---"))
+        self.assertLess(text.index("--- haenger.log ---"), text.index("--- laeuft.info ---"))
+
+    def test_haenger_log_gekuerzt(self):
+        line = "y" * 99 + "\n"
+        with open(os.path.join(self.folder, fd.HANG_LOG_NAME), "w", encoding="utf-8") as h:
+            h.write("ANFANG\n" + line * 1000 + "ENDE\n")
+        text = fd.build_report(self.db, "0.59.2", "PC", settings={})
+        part = text.split("--- haenger.log ---", 1)[1]
+        self.assertNotIn("ANFANG", part)
+        self.assertIn("ENDE", part)
+        self.assertIn(fd.LOG_CUT % (fd.HANG_LOG_MAX // 1024), part)
+        self.assertLess(len(part.encode("utf-8")), fd.HANG_LOG_MAX + 500)
+
     def test_kaputte_datenbank(self):
         with open(self.db.db_path, "wb") as handle:
             handle.write(b"kein sqlite")

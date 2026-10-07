@@ -351,7 +351,8 @@ HELP_SECTIONS = [
               "Gerät und nur für die gewählte Darstellung (Hell oder Dunkel).")},
     {"id": "problem", "titel": "Problem melden",
      "reiter": ["Optionen"],
-     "text": ("Wenn etwas nicht klappt: In den „Optionen“ unter „Problem melden“ steht ein "
+     "text": ("Wenn etwas nicht klappt: In den „Optionen“ ganz unten unter „Diagnose und "
+              "Werkzeuge“ steht bei „Problem melden“ ein "
               "Bericht mit Programmversion, Gerät, Datenordner und Fehlerprotokoll. "
               "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
               "entfernt, deine Antworten und Projekttexte stehen nicht darin.\n\n"
@@ -361,7 +362,8 @@ HELP_SECTIONS = [
     # Ab 0.58.1: Leistungsmessung (fisi_leistung.py)
     {"id": "leistung", "titel": "Leistungsmessung",
      "reiter": ["Optionen"],
-     "text": ("In den „Optionen“ unter „Leistungsmessung“ schaltet „Messung aufzeichnen“ "
+     "text": ("In den „Optionen“ unter „Diagnose und Werkzeuge“ schaltet bei "
+              "„Leistungsmessung“ der Schalter „Messung aufzeichnen“ "
               "die Messung ein und aus. Sie ist zu Beginn aus. Eingeschaltet schreibt "
               "das Programm in eine Messdatei, wie lange Seitenwechsel, "
               "Darstellungswechsel und Änderungen der Fenstergröße dauern und wie viel "
@@ -372,6 +374,23 @@ HELP_SECTIONS = [
               "wird nichts gesendet. Die Datei enthält keine Lerninhalte und keinen "
               "Namen. Die Einstellung gilt nur für dieses Gerät und kommt nicht in den "
               "Abgleich.")},
+    # Ab 0.59.2: Haenger-Diagnose (fisi_haenger.py, nur PC)
+    {"id": "haenger", "titel": "Hänger-Diagnose (PC)",
+     "reiter": ["Optionen"],
+     "text": ("Bleibt das Programm am PC hängen, schreibt es nach 30 Sekunden automatisch "
+              "in die Datei haenger.log, an welcher Stelle es steht. Blockaden ab 5 "
+              "Sekunden stehen kurz in fehler.log, bei bekannten langen Vorgängen "
+              "(Seitenaufbau, Darstellungswechsel, Schriftwechsel, Vorladen) erst ab 30 "
+              "Sekunden. Der Abgleich läuft im Hintergrund und blockiert nicht. Beide "
+              "Dateien liegen im Datenordner und stehen im Bericht bei „Problem melden“. "
+              "Es wird nichts gesendet.\n\n"
+              "Ab Version 0.59.2 unter Linux: Hängt das Programm, öffne ein Terminal und "
+              "gib diesen Befehl ein:\n"
+              "kill -USR1 $(pgrep -x FISI-Lernplattf | head -1)\n"
+              "Das Programm schreibt dann in die Datei haenger.log, an welcher Stelle es "
+              "gerade steht. Es wird dabei nicht beendet. Achtung: In Version 0.59.1 und "
+              "älter beendet derselbe Befehl das Programm. In den „Optionen“ unter "
+              "„Diagnose und Werkzeuge“ kopiert „Befehl kopieren“ ihn für dich.")},
     # Ab 0.56 (Nachbesserung): kurze Tastaturhilfe (nur PC)
     {"id": "tastatur", "titel": "Bedienung mit der Tastatur (PC)",
      "reiter": [],

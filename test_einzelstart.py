@@ -13,6 +13,11 @@ einem eigenen Datenordner (FISI_DB_PATH):
   * nach kill -9 des ersten Starts startet der naechste normal
   * Fehler beim Anlegen der Sperre verhindern den Start nie
   * main(): FISI_SELFTEST nimmt die Sperre aus, ein "da" beendet main still
+  * ab 0.59.2 (E2): spaete Antwort "da" nach einer Blockade -> zweiter Start
+    endet still; spaete Antwort "endet" -> wartet auf die Sperre; dauerhaft
+    blockiert -> nach der Wartezeit wie bisher ohne Sperre
+  * ab 0.59.2 (E1): laeuft.info wird geschrieben und gelesen, der Eintrag in
+    fehler.log nennt den Halter, Fehler beim Schreiben bleiben still
   * mit Display (Linux mit Fenstermanager, Windows): minimiertes Fenster
     kommt beim zweiten Start zurueck; Linux: das echte Programm oeffnet beim
     zweiten Start kein zweites Fenster
@@ -58,17 +63,27 @@ HOLDER = textwrap.dedent("""
     sys.path.insert(0, %(here)r)
     import fisi_einzelstart as fe
     folder, mode, seconds = sys.argv[1], sys.argv[2], float(sys.argv[3])
+    delay = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
     if mode == "still":
         handle = fe._try_lock(folder)
     else:
-        assert fe.claim(folder)
+        assert fe.claim(folder, version="9.9-test")
+    if mode.startswith("spaet"):
+        # wie ein blockierter Hauptfaden: erst nach delay s antworten
+        fe._startup_answering[1].set()
     print("bereit", flush=True)
-    end = time.monotonic() + seconds
+    begin = time.monotonic()
+    end = begin + seconds
     while time.monotonic() < end:
         if mode == "endet":
             if fe._startup_answering:
                 fe._startup_answering[1].set()
             fe.answer_signals(folder, closing=True)
+        elif mode.startswith("spaet") and time.monotonic() - begin >= delay:
+            if fe.answer_signals(folder, closing=mode == "spaet_endet"):
+                print("nach vorn", flush=True)
+            if mode == "spaet_endet":
+                break
         time.sleep(0.05)
 """)
 
@@ -100,9 +115,9 @@ class _Ordner(unittest.TestCase):
                     stream.close()
         shutil.rmtree(self.folder, ignore_errors=True)
 
-    def _holder(self, mode, seconds=20):
+    def _holder(self, mode, seconds=20, delay=0.0):
         proc = subprocess.Popen([sys.executable, "-c", HOLDER % {"here": HERE},
-                                 self.folder, mode, str(seconds)],
+                                 self.folder, mode, str(seconds), str(delay)],
                                 env=self.env, stdout=subprocess.PIPE, text=True)
         self.procs.append(proc)
         self.assertEqual(proc.stdout.readline().strip(), "bereit")
@@ -136,8 +151,9 @@ class SperreTest(_Ordner):
         code, out, _ = self._start(answer=1.0)
         self.assertEqual((code, out), (BEENDET, "ohne"))
         self.assertEqual(self._log(), "")
-        # keine Signal- oder Antwortdateien bleiben liegen
-        self.assertEqual(sorted(os.listdir(self.folder)), [fe.LOCK_FILE])
+        # keine Signal- oder Antwortdateien bleiben liegen (ab 0.59.2 liegt
+        # laeuft.info neben der Sperre)
+        self.assertEqual(sorted(os.listdir(self.folder)), [fe.INFO_FILE, fe.LOCK_FILE])
 
     def test_zwei_gleichzeitige_zweitstarts(self):
         self._holder("da")
@@ -166,6 +182,64 @@ class SperreTest(_Ordner):
         self.assertEqual((code, out), (0, "ohne"))
         self.assertGreaterEqual(took, 1.5)
         self.assertIn("Mehrfachstart", self._log())
+        # E2: Das Signal wird nach dem Aufgeben entfernt
+        self.assertFalse([name for name in os.listdir(self.folder)
+                          if name.endswith(fe.SIGNAL_SUFFIX)])
+
+    # -- ab 0.59.2: E2 spaete Antwort ---------------------------------------
+
+    def test_e2_spaete_antwort_da_endet_still(self):
+        # Programm 4 s blockiert (heute: nach 25 s ein zweites Fenster)
+        holder = self._holder("spaet", seconds=30, delay=4.0)
+        code, out, took = self._start(answer=1.0, lock=25.0)
+        self.assertEqual((code, out), (BEENDET, "ohne"))
+        self.assertGreaterEqual(took, 4.0)
+        self.assertLess(took, 12.0)
+        self.assertEqual(holder.stdout.readline().strip(), "nach vorn")
+        self.assertEqual(self._log(), "")
+        self.assertFalse([name for name in os.listdir(self.folder)
+                          if name.startswith(fe.PREFIX)])
+
+    def test_e2_spaete_antwort_endet_wartet_auf_sperre(self):
+        self._holder("spaet_endet", seconds=3.0, delay=1.5)
+        code, out, took = self._start(answer=0.5, lock=15.0)
+        self.assertEqual((code, out), (0, "sperre"))
+        self.assertLess(took, 12.0)
+
+    def test_e2_dauerhaft_blockiert_startet_nach_wartezeit(self):
+        self._holder("spaet", seconds=30, delay=60.0)
+        code, out, took = self._start(answer=0.5, lock=2.0)
+        self.assertEqual((code, out), (0, "ohne"))
+        self.assertGreaterEqual(took, 2.5)
+        log = self._log()
+        self.assertIn("Antwort: keine", log)
+        # E1: Halter im Eintrag
+        self.assertIn("Halter: pid", log)
+        self.assertIn("Version 9.9-test", log)
+        if sys.platform.startswith("linux"):
+            self.assertIn("Linux: Zustand", log)
+
+    def test_e2_sperre_wird_waehrend_des_wartens_frei(self):
+        self._holder("spaet", seconds=2.0, delay=60.0)
+        code, out, took = self._start(answer=0.5, lock=15.0)
+        self.assertEqual((code, out), (0, "sperre"))
+        self.assertLess(took, 10.0)
+
+    # -- ab 0.59.2: E1 laeuft.info ------------------------------------------
+
+    def test_e1_info_wird_geschrieben_und_gelesen(self):
+        holder = self._holder("da")
+        info = fe.read_info(self.folder)
+        self.assertEqual(info["pid"], str(holder.pid))
+        self.assertEqual(info["version"], "9.9-test")
+        self.assertTrue(info["start"])
+        text = fe.holder_text(self.folder)
+        self.assertIn("pid %d" % holder.pid, text)
+        if sys.platform.startswith("linux"):
+            self.assertIn("Zustand", text)
+            holder.kill()
+            holder.wait()
+            self.assertIn("veraltet", fe.holder_text(self.folder))
 
     def test_start_nach_kill_9(self):
         # kill() = SIGKILL unter Linux, TerminateProcess unter Windows
@@ -183,6 +257,28 @@ class SperreTest(_Ordner):
              missing, "1", "1"], env=self.env, capture_output=True, text=True, timeout=30)
         self.assertEqual((result.returncode, result.stdout.strip()), (0, "ohne"))
         self.assertIn("Start ohne Sperre", self._log())
+
+
+class InfoTest(_Ordner):
+    """E1 ohne zweiten Prozess: Fehler bleiben still."""
+
+    def test_schreibfehler_still(self):
+        self.assertFalse(fe.write_info(os.path.join(self.folder, "fehlt", "x")))
+
+    def test_lesen_ohne_datei(self):
+        self.assertEqual(fe.read_info(self.folder), {})
+        self.assertIn("unbekannt", fe.holder_text(self.folder))
+
+    def test_kaputte_datei(self):
+        with open(os.path.join(self.folder, fe.INFO_FILE), "wb") as handle:
+            handle.write(b"\xff\xfe pid")
+        self.assertIn("unbekannt", fe.holder_text(self.folder))
+
+    def test_ueberschreiben(self):
+        self.assertTrue(fe.write_info(self.folder, "1.0"))
+        self.assertTrue(fe.write_info(self.folder, "2.0"))
+        self.assertEqual(fe.read_info(self.folder)["version"], "2.0")
+        self.assertFalse(os.path.exists(os.path.join(self.folder, fe.INFO_FILE + ".tmp")))
 
 
 class AntwortTest(_Ordner):
@@ -239,7 +335,7 @@ class MainTest(unittest.TestCase):
 
         def fake_ctk(*_args, **_kwargs):
             raise self._Stop()
-        fe.claim = lambda: calls.append("claim") or claim_result
+        fe.claim = lambda **_kwargs: calls.append("claim") or claim_result
         fe.supported = lambda platform=None: True
         app_gui.ctk.CTk = fake_ctk
         if selftest:

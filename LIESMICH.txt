@@ -313,6 +313,7 @@ Programmdateien (PC):
   fisi_sync.py          Abgleich des Lernstands zwischen PC und Handy
   fisi_sicherung.py     Sicherung und Wiederherstellung als Datei
   fisi_diagnose.py      Bericht fuer "Problem melden" (ohne Zugangsdaten)
+  fisi_haenger.py       Haenger-Diagnose am PC (haenger.log, ab 0.59.2)
   fisi_rahmenplan.py    Ausbildungsrahmenplan: Zuordnung der Inhalte,
                         Abdeckung und Gewichtung der Uebungsauswahl
 
@@ -466,6 +467,17 @@ AppImage startet nicht (Linux, ab 0.59 beschrieben)
         jedem Start in einen temporaeren Ordner (langsamer beim Start):
           ./FISI-Lernplattform-*.AppImage --appimage-extract-and-run
       - Alternative unter Debian/Ubuntu/Mint: das .deb-Paket nehmen.
+
+Programm haengt (Linux, ab 0.59.2)
+    Am PC schreibt das Programm bei einem Haenger nach 30 Sekunden
+    automatisch in die Datei haenger.log im Datenordner, an welcher Stelle
+    es steht. Unter Linux laesst sich das auch sofort ausloesen: ein
+    Terminal oeffnen und eingeben
+      kill -USR1 $(pgrep -x FISI-Lernplattf | head -1)
+    Das Programm wird dabei nicht beendet. ACHTUNG: Das gilt erst ab
+    Version 0.59.2. In Version 0.59.1 und aelter beendet derselbe Befehl
+    das Programm. Die Datei steht danach unter Optionen -> "Diagnose und
+    Werkzeuge" im Bericht bei "Problem melden".
 
 "Datenbankfehler" beim Start
     Der Speicherort ist schreibgeschuetzt. Ueber FISI_DB_PATH einen

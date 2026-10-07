@@ -66,9 +66,13 @@ FLUSH_SECONDS = 5              # sonst schreibt die Oberflaeche alle 5 s
 
 COLUMNS = ("zeit", "version", "geraet", "system", "ereignis", "von", "nach", "dauer_ms",
            "max_ms", "anzahl", "ereignisse", "speicher_mb", "privat_mb", "elemente",
-           "aufgaben", "customtkinter")
+           "aufgaben", "customtkinter", "verfuegbar_mb", "vorgang")
 # "customtkinter": installierte Version, nur in der Zeile "start" und nur am
 # PC (am Handy leer) - belegt, welche Version die Installation wirklich hat
+# Ab 0.59.2: "verfuegbar_mb" (verfuegbarer Arbeitsspeicher des Geraets, nur
+# in der Zeile "start") und "vorgang" (laufender bzw. letzter Vorgang am PC,
+# z. B. "darstellung" oder "vorladen:settings"; am Handy leer). Eine aeltere
+# Messdatei bekommt beim ersten Schreiben die neue Kopfzeile.
 SEPARATOR = ";"
 
 # Ereignisse
@@ -78,6 +82,8 @@ EVENT_PAGE = "seite"             # Seitenwechsel von -> nach
 EVENT_THEME = "darstellung"      # Darstellung, Farbe oder Schriftgroesse neu aufgebaut
 EVENT_RESIZE = "groesse"         # Groessenaenderung, zusammengefasst
 EVENT_STOP = "ende"              # Messung ausgeschaltet oder Programm beendet
+EVENT_BLOCKED = "blockiert"      # ab 0.59.2 (PC): Hauptfaden blockiert, dauer_ms
+                                 # = Verspaetung des Herzschlags, nach = Seite
 
 
 # ============================================================================
@@ -144,11 +150,54 @@ def _memory_windows():
                     ("PrivateUsage", ctypes.c_size_t)]
     counters = Counters()
     counters.cb = ctypes.sizeof(Counters)
-    process = ctypes.windll.kernel32.GetCurrentProcess()
-    if not ctypes.windll.psapi.GetProcessMemoryInfo(process, ctypes.byref(counters),
-                                                    counters.cb):
+    # Ab 0.59.2: Typen angeben. Ohne restype kam das Pseudo-Handle (-1) als
+    # 32-Bit-Zahl an, GetProcessMemoryInfo scheiterte mit Fehler 6 und die
+    # Spalte blieb leer (seit 0.58.1).
+    kernel32 = ctypes.WinDLL("kernel32")
+    psapi = ctypes.WinDLL("psapi")
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.GetCurrentProcess.argtypes = []
+    psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+    psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters),
+                                           wintypes.DWORD]
+    process = kernel32.GetCurrentProcess()
+    if not psapi.GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb):
         return None, None
     return counters.WorkingSetSize / 1048576.0, counters.PrivateUsage / 1048576.0
+
+
+def available_mb():
+    """Ab 0.59.2: verfuegbarer Arbeitsspeicher des Geraets in MB (Linux und
+    Android MemAvailable, Windows ullAvailPhys), sonst None."""
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+
+            class Status(ctypes.Structure):
+                _fields_ = [("dwLength", wintypes.DWORD), ("dwMemoryLoad", wintypes.DWORD),
+                            ("ullTotalPhys", ctypes.c_ulonglong),
+                            ("ullAvailPhys", ctypes.c_ulonglong),
+                            ("ullTotalPageFile", ctypes.c_ulonglong),
+                            ("ullAvailPageFile", ctypes.c_ulonglong),
+                            ("ullTotalVirtual", ctypes.c_ulonglong),
+                            ("ullAvailVirtual", ctypes.c_ulonglong),
+                            ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+            status = Status()
+            status.dwLength = ctypes.sizeof(Status)
+            kernel32 = ctypes.WinDLL("kernel32")
+            kernel32.GlobalMemoryStatusEx.argtypes = [ctypes.POINTER(Status)]
+            kernel32.GlobalMemoryStatusEx.restype = wintypes.BOOL
+            if not kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+                return None
+            return status.ullAvailPhys / 1048576.0
+        with open("/proc/meminfo") as handle:
+            for line in handle:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) / 1024.0
+    except Exception:  # noqa: BLE001 - die Messung darf das Programm nie stoeren
+        return None
+    return None
 
 
 def system_text():
@@ -194,6 +243,9 @@ class Recorder:
         self.system = system_text()
         self.buffer = []
         self.active = enabled()
+        # Ab 0.59.2: liefert den laufenden Vorgang (PC, fisi_haenger), sonst leer
+        self.task_source = None
+        self._header_checked = False
 
     def set_active(self, flag):
         flag = bool(flag)
@@ -208,16 +260,23 @@ class Recorder:
             self.record(EVENT_START)
 
     def record(self, event, von="", nach="", dauer_ms=None, max_ms=None, anzahl=None,
-               ereignisse=None, elemente=None, aufgaben=None, speicher=True):
+               ereignisse=None, elemente=None, aufgaben=None, speicher=True, vorgang=None):
         if not self.active:
             return
         memory, private = memory_mb() if speicher else (None, None)
         now = datetime.datetime.now().isoformat(timespec="milliseconds")
+        if vorgang is None:
+            try:
+                vorgang = self.task_source() if self.task_source else ""
+            except Exception:  # noqa: BLE001
+                vorgang = ""
         values = (now, self.version, self.device, self.system, event, von, nach,
                   _number(dauer_ms), _number(max_ms), _number(anzahl),
                   _number(ereignisse), _number(memory), _number(private),
                   _number(elemente), _number(aufgaben),
-                  self.toolkit if event == EVENT_START else "")
+                  self.toolkit if event == EVENT_START else "",
+                  _number(available_mb(), 0) if event == EVENT_START else "",
+                  vorgang)
         self.buffer.append(SEPARATOR.join(_clean(value) for value in values))
         if len(self.buffer) >= FLUSH_LINES:
             self.flush()
@@ -229,6 +288,9 @@ class Recorder:
         lines, self.buffer = self.buffer, []
         try:
             new = not os.path.exists(self.path)
+            if not new and not self._header_checked:
+                self._update_header()
+            self._header_checked = True
             with open(self.path, "a", encoding="utf-8", newline="\n") as handle:
                 if new:
                     handle.write(SEPARATOR.join(COLUMNS) + "\n")
@@ -238,6 +300,20 @@ class Recorder:
             return True
         except OSError:
             return False   # z. B. Datenordner schreibgeschuetzt: Messung verloren, Programm laeuft
+
+    def _update_header(self):
+        """Ab 0.59.2: Messdatei einer aelteren Version bekommt die neue
+        Kopfzeile (die alten Zeilen haben dann einfach leere Spalten am Ende)."""
+        header = SEPARATOR.join(COLUMNS)
+        with open(self.path, encoding="utf-8") as handle:
+            first = handle.readline().rstrip("\n")
+            if first == header:
+                return
+            rest = handle.read()
+        temp = self.path + ".tmp"
+        with open(temp, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(header + "\n" + rest)
+        os.replace(temp, self.path)
 
     def _trim(self):
         with open(self.path, encoding="utf-8") as handle:
