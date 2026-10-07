@@ -10,11 +10,12 @@ Umgehung für das Einfrieren auf Linux (Wayland) mit IBus und korrigierter
 Diagnose-Befehl.
 
 - **Linux mit Wayland und IBus:** Das Programm konnte beim
-  Darstellungswechsel, beim Öffnen der Suche oder beim Schließen dauerhaft
-  einfrieren. Es schaltet dort jetzt für sich die IBus-Eingabe ab; Umlaute,
-  ß, AltGr-Zeichen und tote Tasten gehen weiter. Wer IBus im Programm
-  braucht, startet es mit `FISI_XIM=1 fisi-lernplattform`. Windows, macOS
-  und andere Linux-Sitzungen sind nicht betroffen.
+  Darstellungswechsel oder beim Öffnen der Suche dauerhaft einfrieren und
+  beim Schließen hängen bleiben. Es schaltet dort jetzt für sich die
+  IBus-Eingabe ab; Umlaute, ß, AltGr-Zeichen und tote Tasten gehen weiter.
+  Wer IBus im Programm braucht, startet es mit
+  `FISI_XIM=1 fisi-lernplattform`. Windows, macOS und andere
+  Linux-Sitzungen sind nicht betroffen.
 - **Bessere Diagnose:** Die erste Zeile in haenger.log zeigt jetzt die
   Sitzungsart, die Eingabemethode (`XMODIFIERS`) und ob die Umgehung aktiv
   ist.
