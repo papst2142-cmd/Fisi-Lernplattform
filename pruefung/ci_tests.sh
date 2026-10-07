@@ -33,10 +33,16 @@ esac
 
 # Linux: eine Anzeige fuer den ganzen Teil (wie am Bildschirm 1920x1080)
 if [ "$(uname -s)" = "Linux" ] && [ -z "${DISPLAY:-}" ]; then
-  Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 &
+  # freie Nummer suchen (eine eben beendete Anzeige kann ihre Sperre noch halten)
+  NR=99
+  while [ -e /tmp/.X$NR-lock ]; do NR=$((NR + 1)); done
+  Xvfb :$NR -screen 0 1920x1080x24 >/dev/null 2>&1 &
   XVFB=$!
-  export DISPLAY=:99
-  sleep 2
+  export DISPLAY=:$NR
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    xdpyinfo >/dev/null 2>&1 && break
+    sleep 1
+  done
   trap 'kill $XVFB 2>/dev/null' EXIT
 fi
 

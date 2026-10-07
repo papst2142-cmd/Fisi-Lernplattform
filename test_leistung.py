@@ -45,6 +45,7 @@ _TMP = tempfile.mkdtemp(prefix="fisi_leistung_")
 os.environ["FISI_DB_PATH"] = os.path.join(_TMP, "leistung.db")
 os.environ["FISI_SELFTEST"] = os.path.join(_TMP, "selbsttest.log")   # kein Netz
 
+import fisi_optionen as fo  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_update  # noqa: E402
 
@@ -441,6 +442,8 @@ class PcTest(unittest.TestCase):
     def test_2_schalter_in_den_optionen(self):
         self.show("settings")
         settings = self.app.views["settings"]
+        settings.open_area(fo.DIAGNOSE_ID)   # ab 0.60 (B3): erst beim Aufklappen gebaut
+        self.pump(0.1)
         self.assertEqual(settings.lbl_perf.cget("text"), fle.STATE_NONE)
         settings.var_perf.set(True)
         settings._toggle_perf()
@@ -486,6 +489,8 @@ class PcTest(unittest.TestCase):
         self.show("settings")
         self.pump(0.1)
         settings = self.app.views["settings"]
+        settings.open_area(fo.DIAGNOSE_ID)   # ab 0.60 (B3)
+        self.pump(0.1)
         self.assertTrue(settings.var_perf.get())
         self.assertIn("Einträge", settings.lbl_perf.cget("text"))
         # Loeschen und Ausschalten
