@@ -33,13 +33,16 @@ jobs:
               d=.; [ $v = alt ] && d=../v0591
               [ -f $d/$f.py ] || continue
               echo "=== $v $f"
-              (cd $d && python -m unittest $f 2>&1 | grep -E "^(FAIL|ERROR):|^Ran |^OK|^FAILED")
+              (cd $d && python -m unittest $f > "$RUNNER_TEMP/$v-$f.log" 2>&1; grep -E "^(FAIL|ERROR):|^Ran |^OK|^FAILED" "$RUNNER_TEMP/$v-$f.log"; \
+                grep -B2 -A14 -E "^(FAIL|ERROR):" "$RUNNER_TEMP/$v-$f.log" | grep -vE "^-+$" | head -60) || true
             done
           done
       - name: Probe A2, A3, E1, E2, Waechter, Problembericht
+        if: ${{ !contains(github.event.head_commit.message, 'nur Tests') }}
         continue-on-error: true
         run: python probe/probe_0592_bau.py
       - name: Aufwand Darstellungswechsel 0.59.1 gegen 0.59.2
+        if: ${{ !contains(github.event.head_commit.message, 'nur Tests') }}
         continue-on-error: true
         run: |
           for r in 1 2 3; do
