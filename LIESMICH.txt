@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.59.1
+  FISI LERNPLATTFORM  -  Version 0.59.2
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
