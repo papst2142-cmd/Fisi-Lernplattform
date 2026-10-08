@@ -38,18 +38,15 @@ function Pruefung($name, [bool]$ok, $detail) {
   Write-Host ("[{0}] {1}: {2}" -f $(if ($ok) { "OK" } else { "FEHLER" }), $name, $detail)
 }
 # Ab 0.61: Inno legt den Schluessel als AppId + "_is1" an - unabhaengig vom
-# Anzeigenamen. Ersatzweg ueber den Namen (alt "FISI*", neu "Fachinformatiker*").
+# Anzeigenamen. Gefunden wird der Eintrag ueber den Namen (alt "FISI*", neu
+# "Fachinformatiker*"); geprueft wird, dass der Schluessel (= AppId) nach dem
+# Update derselbe ist wie bei der alten Version.
 $Uninstall = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
-$AppKey = Join-Path $Uninstall "{6B2E7B7B-6C1E-4E59-9C55-FISI-LERNPLATTFORM}_is1"
 function Eintraege {
   @(Get-ItemProperty "$Uninstall\*" -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -like "FISI*" -or $_.DisplayName -like "Fachinformatiker*" })
 }
-function Version {
-  $e = Get-ItemProperty $AppKey -ErrorAction SilentlyContinue
-  if ($e) { return $e.DisplayVersion }
-  (Eintraege | Select-Object -First 1).DisplayVersion
-}
+function Version { (Eintraege | Select-Object -First 1).DisplayVersion }
 # Verknuepfungen auf die Exe (Ziel gelesen, nicht nur der Dateiname)
 $StartMenue = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
 $Desktop = [Environment]::GetFolderPath("Desktop")
@@ -82,7 +79,8 @@ Prozesse | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep 2
 
 # 14: Gegenprobe - die alte Version hat die alten Verknuepfungen angelegt
-$sv = Verknuepfungen $StartMenue; $dv = Verknuepfungen $Desktop
+$sv = @(Verknuepfungen $StartMenue); $dv = @(Verknuepfungen $Desktop)
+$AppKeyAlt = @(Eintraege | ForEach-Object { $_.PSChildName })
 if ($AlterName) {
   Pruefung "Vorher: alte Verknuepfungen vorhanden" (($sv.Count -eq 1) -and ($sv[0].Name -eq "FISI Lernplattform.lnk") -and ($dv.Count -eq 1)) "$(Namen ($sv + $dv))"
 } else {
@@ -125,7 +123,7 @@ Liste "nach dem Update"
 $v = Version
 Pruefung "Installierte Version" ($v -eq $NeuVersion) "erwartet $NeuVersion, gefunden $v"
 # 15-19 (ab 0.61): Namen nach dem Update
-$sn = Verknuepfungen $StartMenue
+$sn = @(Verknuepfungen $StartMenue)
 Pruefung "Startmenue: genau eine Verknuepfung, neuer Name" (($sn.Count -eq 1) -and ($sn[0].Name -eq "Fachinformatiker Lernplattform.lnk") -and ($sn[0].Directory.Name -eq "Fachinformatiker Lernplattform")) "$($sn.Count): $(Namen $sn)"
 $altOrdner = Join-Path $StartMenue "FISI Lernplattform"
 if ($AlterName) {
@@ -133,10 +131,10 @@ if ($AlterName) {
 } else {
   Pruefung "Alter Startmenue-Ordner (entfaellt, alte Version hat schon den neuen Namen)" $true "-"
 }
-$dn = Verknuepfungen $Desktop
+$dn = @(Verknuepfungen $Desktop)
 Pruefung "Desktop: genau eine Verknuepfung, neuer Name" (($dn.Count -eq 1) -and ($dn[0].Name -eq "Fachinformatiker Lernplattform.lnk")) "$($dn.Count): $(Namen $dn)"
-$en = Eintraege
-Pruefung "Apps und Features: genau ein Eintrag" (($en.Count -eq 1) -and ($en[0].DisplayName -like "Fachinformatiker Lernplattform*") -and ($en[0].Publisher -eq "Nico H") -and ($en[0].DisplayVersion -eq $NeuVersion) -and (Test-Path $AppKey)) "$($en.Count): $(($en | ForEach-Object { '{0} / {1} / {2}' -f $_.DisplayName, $_.Publisher, $_.DisplayVersion }) -join '; ')"
+$en = @(Eintraege)
+Pruefung "Apps und Features: genau ein Eintrag" (($en.Count -eq 1) -and ($en[0].DisplayName -like "Fachinformatiker Lernplattform*") -and ($en[0].Publisher -eq "Nico H") -and ($en[0].DisplayVersion -eq $NeuVersion) -and ($AppKeyAlt.Count -eq 1) -and ($en[0].PSChildName -eq $AppKeyAlt[0])) "$($en.Count): $(($en | ForEach-Object { '{0} / {1} / {2} / Schluessel {3}' -f $_.DisplayName, $_.Publisher, $_.DisplayVersion, $_.PSChildName }) -join '; ') (vorher $($AppKeyAlt -join ', '))"
 $dbNachher = Get-Item $DB -ErrorAction SilentlyContinue
 $neuOrdner = @(Get-ChildItem $env:APPDATA -Directory -Filter "Fachinformatiker*" -ErrorAction SilentlyContinue)
 Pruefung "Lernstand im selben Ordner" (($null -ne $dbVorher) -and ($null -ne $dbNachher) -and ($dbNachher.LastWriteTime -ge $dbVorher.LastWriteTime) -and ($neuOrdner.Count -eq 0)) "$DB, vorher $(if ($dbVorher) { $dbVorher.Length } else { 'fehlt' }) Byte, nachher $(if ($dbNachher) { $dbNachher.Length } else { 'fehlt' }) Byte, neue Ordner: $($neuOrdner.Count)"
