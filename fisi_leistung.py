@@ -84,6 +84,11 @@ EVENT_RESIZE = "groesse"         # Groessenaenderung, zusammengefasst
 EVENT_STOP = "ende"              # Messung ausgeschaltet oder Programm beendet
 EVENT_BLOCKED = "blockiert"      # ab 0.59.2 (PC): Hauptfaden blockiert, dauer_ms
                                  # = Verspaetung des Herzschlags, nach = Seite
+EVENT_PRELOAD = "vorladen"       # ab 0.60.1 (PC): ein Vorlade-Schritt gezeichnet,
+                                 # nach = Schritt (z.B. "help:teil"), dauer_ms =
+                                 # Schritt plus Zeichnen
+EVENT_PRELOAD_DONE = "vorladen_fertig"   # ab 0.60.1 (PC): Vorladen fertig, dauer_ms
+                                 # = seit dem Start bzw. dem Darstellungswechsel
 
 
 # ============================================================================

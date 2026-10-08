@@ -117,7 +117,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.60"
+APP_VERSION = "0.60.1"
 
 
 def _resource_path(filename):
@@ -841,18 +841,51 @@ class Header(ctk.CTkFrame):
 # ============================================================================
 
 class View(ScrollArea):
-    def __init__(self, parent, app):
+    # Ab 0.60.1: Ansichten mit PARTS = True koennen sich in Teilen bauen
+    # (Vorladen): build() legt dann die restlichen Teile in self._parts ab
+    # statt sie sofort auszufuehren (siehe add_parts).
+    PARTS = False
+
+    def __init__(self, parent, app, in_parts=False):
         # Ab 0.56 mit fit_wrap: lange Texte brechen bei grosser Schrift bzw.
         # schmalem Fenster innerhalb des sichtbaren Bereichs um
         super().__init__(parent, bg=C["bg"], fit_wrap=True)
         self.app = app
         self.db = app.db
+        self._in_parts = in_parts and self.PARTS
+        self._parts = []
         self.content = transparent_frame(self.inner)
         self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
         self.build()
 
     def build(self):
         raise NotImplementedError
+
+    # -- Ab 0.60.1: Aufbau in Teilen (Vorladen) -----------------------------
+
+    def add_parts(self, parts):
+        """Die Funktionen in parts bauen den Rest der Ansicht. Normal laufen
+        sie sofort; beim Vorladen in Teilen einzeln (build_next)."""
+        if self._in_parts:
+            self._parts.extend(parts)
+        else:
+            for part in parts:
+                part()
+
+    @property
+    def parts_pending(self):
+        """Fehlen noch Teile?"""
+        return bool(self._parts)
+
+    def build_next(self):
+        """Den naechsten Teil bauen."""
+        if self._parts:
+            self._parts.pop(0)()
+
+    def complete(self):
+        """Alle fehlenden Teile jetzt bauen."""
+        while self._parts:
+            self._parts.pop(0)()
 
     def on_show(self):
         pass
@@ -4625,7 +4658,7 @@ class CustomColors(ctk.CTkFrame):
     PREVIEW_W, PREVIEW_H = 330, 300
     DELAY_MS = 30    # Neuzeichnen hoechstens etwa 30-mal pro Sekunde
 
-    def __init__(self, parent, on_save):
+    def __init__(self, parent, on_save, in_parts=False):
         super().__init__(parent, fg_color="transparent")
         self.on_save = on_save
         self.mode = fisi_theme.current_mode
@@ -4647,12 +4680,29 @@ class CustomColors(ctk.CTkFrame):
         if active:
             make_label(self, fisi_theme.CUSTOM_TILE_HINT, font=F["tiny"], fg=C["muted"],
                        wraplength=800, justify="left", anchor="w").pack(anchor="w")
-        body = transparent_frame(self)
+        body = self._body = transparent_frame(self)
         body.pack(anchor="w", fill="x", pady=(10, 0))
         groups = transparent_frame(body)
         groups.pack(side="left", anchor="n")
-        for part, name in fisi_theme.CUSTOM_PARTS:
-            self._group(groups, part, name)
+        # Ab 0.60.1: je Gruppe ein Teil (Vorladen), danach Vorschau und Knoepfe
+        self._parts = [lambda p=part, n=name: self._group(groups, p, n)
+                       for part, name in fisi_theme.CUSTOM_PARTS]
+        self._parts.append(self._finish)
+        if not in_parts:
+            self.complete()
+
+    def build_next(self):
+        """Ab 0.60.1: den naechsten Teil bauen."""
+        if self._parts:
+            self._parts.pop(0)()
+
+    def complete(self):
+        """Ab 0.60.1: alle fehlenden Teile bauen."""
+        while self._parts:
+            self._parts.pop(0)()
+
+    def _finish(self):
+        body = self._body
         side = transparent_frame(body)
         side.pack(side="left", anchor="n", padx=(24, 0))
         make_label(side, fisi_theme.CUSTOM_PREVIEW.upper(), font=F["label"],
@@ -4704,6 +4754,9 @@ class CustomColors(ctk.CTkFrame):
                               fg=C["text"], width=56, anchor="w")
             text.pack(side="left")
             self.value_labels[(part, key)] = text
+        # Ab 0.60.1: Die Spuren sind mit diesen Werten gezeichnet - _redraw
+        # zeichnet sie beim ersten Mal nicht noch einmal (gleiches Bild)
+        self._tracks[part] = self.values[part]
 
     def _nudge(self, part, channel, step):
         index = "hsl".index(channel[0])
@@ -4937,8 +4990,9 @@ class SettingsView(View):
                    builder=self._build_schrift)
 
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        # Ab 0.60.1 in Teilen (Vorladen), siehe _farben_parts
         self._area("farben", C["accent"], subtitle="nur für dieses Gerät",
-                   builder=self._build_farben)
+                   builder=self._farben_parts())
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
         self._area("tagesziel", C["green"], subtitle="nur für dieses Gerät",
@@ -5005,7 +5059,27 @@ class SettingsView(View):
         make_label(fonts.body, fisi_theme.FONT_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
-    def _build_farben(self, colors):
+    def _farben_parts(self):
+        """Ab 0.60.1: Inhalt von "Farben" in Teilen (je ca. 30-110 ms), damit
+        das Vorladen ihn verdeckt bauen kann, ohne einen Klick lange warten
+        zu lassen. Beim Aufklappen laufen alle restlichen Teile auf einmal."""
+        def custom_start(colors):
+            # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
+            self.custom_colors = CustomColors(colors.body, self._save_custom, in_parts=True)
+            self.custom_colors.pack(anchor="w", fill="x", pady=(18, 0))
+
+        def custom_next(_colors):
+            self.custom_colors.build_next()
+
+        def custom_rest(_colors):
+            self.custom_colors.complete()
+
+        parts = [self._build_farben_mode, self._build_farben_presets,
+                 self._build_farben_backgrounds, custom_start]
+        parts += [custom_next] * len(fisi_theme.CUSTOM_PARTS)
+        return parts + [custom_rest]
+
+    def _build_farben_mode(self, colors):
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
         fisi_game_gui.ChoiceRow(colors.body, fisi_theme.MODES, fisi_theme.current_mode,
@@ -5017,6 +5091,9 @@ class SettingsView(View):
                              bg=C["card_alt"], pad=14)
         templates.pack(fill="x")
         self.folds[fo.TEMPLATES_ID] = templates
+
+    def _build_farben_presets(self, _colors):
+        templates = self.folds[fo.TEMPLATES_ID]
         make_label(templates.body, "GRUNDFARBE", font=F["label"], fg=C["muted"]).pack(
             anchor="w")
         tiles = transparent_frame(templates.body)
@@ -5028,6 +5105,10 @@ class SettingsView(View):
             ColorTile(tiles, item, item["id"] == fisi_theme.current_preset,
                       self._change_color).grid(row=index // columns, column=index % columns,
                                                padx=(0, 8), pady=(0, 8))
+
+    def _build_farben_backgrounds(self, _colors):
+        templates = self.folds[fo.TEMPLATES_ID]
+        columns = fo.tile_columns(fisi_theme.font_factor())
         make_label(templates.body, "HINTERGRUND", font=F["label"], fg=C["muted"]).pack(
             anchor="w")
         tiles = transparent_frame(templates.body)
@@ -5039,9 +5120,6 @@ class SettingsView(View):
                                                          padx=(0, 8), pady=(0, 8))
         make_label(templates.body, fo.TEMPLATES_TEXT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
-        # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
-        self.custom_colors = CustomColors(colors.body, self._save_custom)
-        self.custom_colors.pack(anchor="w", fill="x", pady=(18, 0))
 
     def _build_tagesziel(self, goal):
         values = learning_settings()
@@ -5846,7 +5924,11 @@ HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
 
 class HelpView(View):
     """Kurze Hilfetexte als aufklappbare Kacheln (Texte in fisi_hilfe.py,
-    am Handy dieselben). Ab 0.59 mit derselben Kopfzeile wie die Optionen."""
+    am Handy dieselben). Ab 0.59 mit derselben Kopfzeile wie die Optionen.
+    Ab 0.60.1 wird sie vorgeladen, in Teilen: erst die Kopfkachel, dann je
+    Teil ein Abschnitt (PARTS)."""
+
+    PARTS = True
 
     def build(self):
         intro = Card(self.content, title=fh.HELP_TITLE, accent=C["green"],
@@ -5857,14 +5939,16 @@ class HelpView(View):
         NeoButton(intro.body, fh.BTN_TOUR, self.app.start_tour,
                   kind="ghost").pack(anchor="w", pady=(12, 0))
         self.folds = {}
-        for section in fh.HELP_SECTIONS:
-            fold = FoldCard(self.content, title=section["titel"],
-                            accent=C[HELP_ACCENTS.get(section["id"], "accent")],
-                            key="hilfe_" + section["id"], marker=True)
-            fold.pack(fill="x", pady=(14, 0))
-            make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
-                       wraplength=800, justify="left", anchor="w").pack(anchor="w")
-            self.folds[section["id"]] = fold
+        self.add_parts([lambda s=section: self._add_section(s) for section in fh.HELP_SECTIONS])
+
+    def _add_section(self, section):
+        fold = FoldCard(self.content, title=section["titel"],
+                        accent=C[HELP_ACCENTS.get(section["id"], "accent")],
+                        key="hilfe_" + section["id"], marker=True)
+        fold.pack(fill="x", pady=(14, 0))
+        make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        self.folds[section["id"]] = fold
 
     def reset_folds(self):
         """Ab 0.60 (K-G, E11): beim Oeffnen der Hilfe alles einklappen, wie
@@ -6018,6 +6102,22 @@ class PerfMonitor:
         page, _task = fhg.current()
         self.rec.record(fle.EVENT_BLOCKED, nach=page, dauer_ms=seconds * 1000.0,
                         vorgang=fhg.recent(time.monotonic() - seconds - 1.0))
+
+    def preload_step(self, step, block_ms):
+        """Ab 0.60.1: ein Vorlade-Schritt ist gezeichnet (Schritt plus
+        Zeichnen in ms). Nur bei eingeschalteter Messung."""
+        if not self.rec.active:
+            return
+        self.rec.record(fle.EVENT_PRELOAD, nach=step, dauer_ms=block_ms,
+                        elemente=self.elements())
+
+    def preload_done(self, total_ms):
+        """Ab 0.60.1: Vorladen fertig, total_ms seit dem Start bzw. seit
+        Beginn des Darstellungswechsels."""
+        if not self.rec.active or total_ms is None:
+            return
+        self.rec.record(fle.EVENT_PRELOAD_DONE, dauer_ms=total_ms,
+                        elemente=self.elements(), aufgaben=self.tasks())
 
     def theme(self, old, new, started):
         if not self.rec.active:
@@ -6905,9 +7005,33 @@ class LazyViews(dict):
         self._app = app
         self._classes = dict(classes)
 
+    def __getitem__(self, key):
+        view = dict.__getitem__(self, key)   # baut ueber __missing__ auf
+        # Ab 0.60.1: eine in Teilen vorgeladene Ansicht (Hilfe) erst ganz
+        # fertig bauen - ausser dem Vorlader bekommt niemand eine halbe
+        if getattr(view, "parts_pending", False):
+            view.complete()
+        return view
+
     def __missing__(self, key):
+        return self._create(key, False)
+
+    def can_build_in_parts(self, key):
+        """Ab 0.60.1: Laesst sich die Ansicht in Teilen bauen (View.PARTS)?"""
+        return getattr(self._classes.get(key), "PARTS", False)
+
+    def build_in_parts(self, key):
+        """Ab 0.60.1 (nur fuer den Vorlader): nur den ersten Teil bauen; die
+        weiteren mit view.build_next(), der Rest beim ersten Zugriff."""
+        view = dict.get(self, key)
+        if view is None:
+            view = self._create(key, True)
+        return view
+
+    def _create(self, key, in_parts):
         cls = self._classes[key]      # KeyError bei unbekannter Ansicht
-        view = cls(self._parent, self._app)
+        view = cls(self._parent, self._app, in_parts=in_parts) if in_parts \
+            else cls(self._parent, self._app)
         # Ab 0.58.1 per place statt grid: eine verdeckte Ansicht behaelt ihre
         # Groesse (siehe hold_size), nur die sichtbare waechst mit dem Fenster
         hold_size(view, self._parent)
@@ -6942,69 +7066,144 @@ class LazyViews(dict):
 
 
 # Ab 0.56 (Plan Abschnitt 3): Grosse Ansichten werden nach dem Start im
-# Hintergrund vorbereitet, damit das erste Oeffnen nicht wartet. Reihenfolge
-# nach Dauer beim ersten Oeffnen (Messung 0.56, bericht.md). Ein Schritt ist
-# ("view", Ansicht) - Ansicht aufbauen und Inhalt zeichnen - oder
-# ("tab", Ansicht, Reiter) - einen Reiter von Firma bzw. Reise vorbauen.
+# Hintergrund vorbereitet, damit das erste Oeffnen nicht wartet. Ein Schritt
+# ist ("view", Ansicht) - Ansicht aufbauen und Inhalt zeichnen -,
+# ("tab", Ansicht, Reiter) - einen Reiter von Firma bzw. Reise vorbauen -,
+# ab 0.60.1 ("part", Ansicht) - ein Teil einer Ansicht, die sich in Teilen
+# bauen laesst (Hilfe) - oder ("area", Ansicht, Bereich) - ein Teil eines
+# Klappbereichs der Optionen ("Farben").
+# Ab 0.60.1: Reihenfolge nach Nutzung (Freigabe Plan 0.60.1, Abschnitt 6):
+# zuerst die Seiten, die man direkt nach dem Start oeffnet.
+PRELOAD_ORDER = (("view", "cards"), ("view", "game"), ("view", "settings"),
+                 ("view", "progress"), ("area", "settings", "farben"),
+                 ("view", "quiz"), ("view", "ap1scenarios"), ("view", "scenarios"),
+                 ("view", "testproject"), ("view", "help"), ("view", "calc"),
+                 ("view", "notebook"), ("view", "abschluss"))
+# Bis 0.60: Umfang und Reihenfolge (Rueckfallweg FISI_VORLADEN=060; ausserdem
+# die Ansichten, fuer die beim Oeffnen die Ladeanzeige in Frage kommt)
 PRELOAD_VIEWS = ("progress", "cards", "quiz", "notebook", "game", "settings", "calc",
                  "ap1scenarios", "scenarios", "testproject", "abschluss")
 # Spielansichten erst, wenn der Spielstand gewaehlt ist (vorher zeigen sie
 # nur die Auswahl)
 PRELOAD_GAME_VIEWS = ("firma", "reise", "zuhause", "buero", "kunde")
-PRELOAD_START_MS = 1500   # nach dem ersten Zeichnen des Dashboards
+PRELOAD_START_MS = 800    # nach dem ersten Zeichnen des Dashboards (bis 0.60: 1500)
+PRELOAD_START_MS_060 = 1500
 PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
-PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste, bevor der naechste Schritt laeuft
+PRELOAD_PART_GAP_MS = 20  # ab 0.60.1: Pause zwischen zwei Teilen derselben Ansicht
+PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste/Mausrad, bevor der naechste Schritt laeuft
 PRELOAD_WAIT_TASK = "vorladen:start"   # ab 0.59.3: Vorgang bis zum ersten Schritt
+# Ab 0.60.1: Notschalter (nur Umgebungsvariable, im LIESMICH beschrieben):
+# "0" = kein Vorladen, "060" = Umfang und Reihenfolge wie bis 0.60
+PRELOAD_ENV = "FISI_VORLADEN"
+# Mausrad: Windows/macOS <MouseWheel>, Linux Knopf 4/5 (die eigene Bindung
+# des Mausrads fuer Knopf 4/5 verdeckt sonst <ButtonPress>)
+PRELOAD_INPUTS = ("<ButtonPress>", "<KeyPress>", "<MouseWheel>", "<Shift-MouseWheel>",
+                  "<Button-4>", "<Button-5>")
 
 
-def preload_tasks(slot_chosen):
-    """Liste der Vorlade-Schritte (ohne Reiter, die kennt erst die Ansicht)."""
-    tasks = [("view", key) for key in PRELOAD_VIEWS]
+def preload_mode():
+    """Ab 0.60.1: "aus", "060" oder "normal" (FISI_VORLADEN)."""
+    value = os.environ.get(PRELOAD_ENV, "").strip()
+    if value == "0":
+        return "aus"
+    if value == "060":
+        return "060"
+    return "normal"
+
+
+def preload_tasks(slot_chosen, mode="normal"):
+    """Liste der Vorlade-Schritte (ohne Reiter und Teile, die kennt erst
+    die Ansicht)."""
+    if mode == "aus":
+        return []
+    if mode == "060":
+        tasks = [("view", key) for key in PRELOAD_VIEWS]
+    else:
+        tasks = list(PRELOAD_ORDER)
     if slot_chosen:
         tasks += [("view", key) for key in PRELOAD_GAME_VIEWS]
     return tasks
 
 
+def task_label(task):
+    """Ab 0.60.1: Name eines Schritts fuer Diagnose und Messdatei, z.B.
+    "help", "help:teil" oder "settings:farben"."""
+    if task[0] == "view":
+        return task[1]
+    if task[0] == "part":
+        return "%s:teil" % task[1]
+    return "%s:%s" % (task[1], task[2])
+
+
 class ViewPreloader:
-    """Ab 0.56: bereitet die Ansichten aus PRELOAD_VIEWS nacheinander vor.
+    """Ab 0.56: bereitet die Ansichten aus preload_tasks nacheinander vor.
 
     Tk ist nicht threadfaehig - deshalb laeuft jeder Schritt im Hauptthread
     als eigener Zeitgeber (root.after), dazwischen kommt die Ereignisschleife
-    dran. Ein Klick oder eine Taste hat Vorrang: Der naechste Schritt wartet,
-    bis PRELOAD_IDLE_MS lang nichts mehr kam, und eine Ansicht, die der
-    Nutzer schon selbst geoeffnet hat, wird uebersprungen. Die Zeitgeber
-    sind gewoehnliche after-Auftraege und werden beim Beenden mit allen
-    anderen abgebrochen (FISIApp.on_close); ein Schritt nach dem Schliessen
-    tut nichts."""
+    dran. Ein Klick, eine Taste oder (ab 0.60.1) das Mausrad hat Vorrang: Der
+    naechste Schritt wartet, bis PRELOAD_IDLE_MS lang nichts mehr kam, und
+    eine Ansicht, die der Nutzer schon selbst geoeffnet hat, wird
+    uebersprungen. Die Zeitgeber sind gewoehnliche after-Auftraege und werden
+    beim Beenden mit allen anderen abgebrochen (FISIApp.on_close); ein
+    Schritt nach dem Schliessen tut nichts.
+
+    Ab 0.60.1: Hilfe und "Farben" werden in kleinen Teilen gebaut (je Teil
+    ein Zeitgeber), damit ein Klick nie lange wartet. Braucht jemand die
+    Ansicht vorher, baut sie den Rest sofort fertig (LazyViews, FoldCard)."""
+
+    # Voreinstellungen (auch fuer Tests, die ohne __init__ anlegen)
+    mode = "normal"
+    started_at = None
+    finished_ms = None
 
     def __init__(self, app):
         self.app = app
         self.root = app.root
+        self.mode = preload_mode()
         self.queue = []
         self.job = None
         self.done = False
         self.steps_done = 0
         self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
+        self.block_ms = {}          # ab 0.60.1: Schritt -> Dauer bis gezeichnet (laengster)
+        self.started_at = None      # ab 0.60.1: Beginn dieser Runde (perf_counter)
+        self.finished_ms = None     # ab 0.60.1: Runde fertig nach ... ms
         self.last_input = 0.0
-        for sequence in ("<ButtonPress>", "<KeyPress>"):
+        for sequence in PRELOAD_INPUTS:
             self.root.bind_all(sequence, self._input, add="+")
 
     def _input(self, _event=None):
         self.last_input = time.monotonic()
 
-    def start(self, delay=PRELOAD_START_MS):
-        """(Neu) beginnen - beim Start und nach dem Neuaufbau (Farbwechsel)."""
-        self.queue = preload_tasks(self.app.slot_chosen)
+    def start(self, delay=None, origin=None):
+        """(Neu) beginnen - beim Start und nach dem Neuaufbau (Farbwechsel).
+        origin: Beginn fuer die Fertigzeit (perf_counter), sonst jetzt."""
+        self.queue = preload_tasks(self.app.slot_chosen, self.mode)
+        self.started_at = time.perf_counter() if origin is None else origin
+        self.finished_ms = None
+        if not self.queue:
+            self.done = True   # FISI_VORLADEN=0
+            return
         self.done = False
+        if delay is None:
+            delay = PRELOAD_START_MS_060 if self.mode == "060" else PRELOAD_START_MS
         # Ab 0.59.3 (K3, nur Diagnose): die Wartezeit bis zum ersten Schritt
         # (dazu gehoert das erste Zeichnen) heisst schon "vorladen:start"
         if fhg.current()[1] == fhg.IDLE:
             fhg.vorgang(PRELOAD_WAIT_TASK)
-        self._schedule(delay)
+        # Ab 0.60.1: Die Wartezeit beginnt erst, wenn das Fenster gezeichnet
+        # ist (Tk zeichnet im Leerlauf; ein faelliger Zeitgeber kaeme sonst
+        # vor dem Zeichnen dran, wenn das erste Zeichnen laenger dauert)
+        try:
+            self.root.after_idle(lambda: self._schedule(delay))
+        except tk.TclError:
+            pass
 
     def add_game(self):
         """Nach der Wahl des Spielstands die Spielansichten nachreichen."""
-        for task in preload_tasks(True):
+        if self.mode == "aus":
+            return
+        for task in preload_tasks(True, self.mode):
             if task[1] in PRELOAD_GAME_VIEWS and task not in self.queue:
                 self.queue.append(task)
         self.done = False
@@ -7030,25 +7229,38 @@ class ViewPreloader:
             self._schedule(max(PRELOAD_GAP_MS,
                                int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
             return
+        task = None
         while self.queue:
             task = self.queue.pop(0)
             if self._run(task):
                 break   # pro Zeitgeber nur ein echter Schritt
         if self.queue:
-            self._schedule(PRELOAD_GAP_MS)
+            # Ab 0.60.1: Teile derselben Ansicht folgen schneller aufeinander
+            same = task is not None and task[0] in ("part", "area") and self.queue[0] == task
+            self._schedule(PRELOAD_PART_GAP_MS if same else PRELOAD_GAP_MS)
         else:
             self.done = True
+            self.finished_ms = round((time.perf_counter() - self.started_at) * 1000) \
+                if self.started_at is not None else None
+            app.perf.preload_done(self.finished_ms)
 
-    def _release_task(self, label, before):
+    def _release_task(self, label, before, task=None, started=None):
         """Ab 0.59.3 (K3, nur Diagnose): Tk berechnet Groessen und zeichnet
         die gerade gebaute Ansicht erst in der naechsten Leerlauf-Runde. Der
         Vorgang bleibt deshalb bis nach dieser Runde stehen (after_idle kommt
         nach den schon wartenden Leerlauf-Auftraegen dran) - sonst liefe
         diese Zeit als "bereit". Hat inzwischen ein anderer Vorgang
-        uebernommen, bleibt dessen Name stehen."""
+        uebernommen, bleibt dessen Name stehen.
+        Ab 0.60.1 wird hier auch die Dauer bis gezeichnet gemessen (Schritt
+        plus Zeichnen, Freigabe 0.60.1 Auflage A3)."""
         def release():
             if fhg.current()[1] == label:
                 fhg.vorgang(before)
+            if task is not None and started is not None:
+                block = round((time.perf_counter() - started) * 1000)
+                if block > self.block_ms.get(task, -1):
+                    self.block_ms[task] = block
+                self.app.perf.preload_step(task_label(task), block)
         try:
             self.root.after_idle(release)
         except tk.TclError:
@@ -7060,9 +7272,20 @@ class ViewPreloader:
         key = task[1]
         if key in GAME_SUBVIEWS and not app.slot_chosen:
             return False
-        if key == app.current:
-            return False   # die sichtbare Ansicht gehoert dem Nutzer
         views = app.views
+        if task[0] == "area":
+            # Ab 0.60.1: Teile eines eingeklappten Bereichs bauen - auch wenn
+            # die Optionen gerade offen sind (eingeklappt sieht man nichts)
+            view = views.built(key)
+            fold = getattr(view, "folds", {}).get(task[2]) if view is not None else None
+            if fold is None or fold.built:
+                return False
+        elif key == app.current:
+            return False   # die sichtbare Ansicht gehoert dem Nutzer
+        elif task[0] == "part":
+            view = views.built(key)
+            if view is None or not getattr(view, "parts_pending", False):
+                return False
         try:
             focus = self.root.focus_get()
         except (KeyError, tk.TclError):
@@ -7070,13 +7293,29 @@ class ViewPreloader:
         started = time.perf_counter()
         worked = False
         app.preloading = True
-        label = "vorladen:%s" % key
+        label = "vorladen:%s" % task_label(task)
         task_before = fhg.vorgang(label)   # ab 0.59.2
         try:
-            view = views.built(key)
-            if task[0] == "view":
+            if task[0] == "area":
+                fold.build_part()
+                worked = True
+                if not fold.built:
+                    self.queue.insert(0, task)
+            elif task[0] == "part":
+                view.build_next()
+                worked = True
+                if view.parts_pending:
+                    self.queue.insert(0, task)
+            elif task[0] == "view":
+                view = views.built(key)
                 if view is None:
-                    view = views[key]   # baut auf und legt nach unten (LazyViews)
+                    if views.can_build_in_parts(key):
+                        # ab 0.60.1: nur der erste Teil, der Rest als ("part", ...)
+                        view = views.build_in_parts(key)
+                        if view.parts_pending:
+                            self.queue.insert(0, ("part", key))
+                    else:
+                        view = views[key]   # baut auf und legt nach unten (LazyViews)
                     worked = True
                 prepare = getattr(view, "prepare", None)
                 if prepare is not None and prepare():
@@ -7087,8 +7326,10 @@ class ViewPreloader:
                     if tabs is not None:
                         position = self.queue.index(task) + 1 if task in self.queue else 0
                         self.queue[position:position] = [("tab", key, tab) for tab in tabs()]
-            elif view is not None:
-                worked = bool(view.prepare_tab(task[2]))
+            else:
+                view = views.built(key)
+                if view is not None:
+                    worked = bool(view.prepare_tab(task[2]))
         except Exception:
             # Vorladen darf nie stoeren: Fehler nur protokollieren, beim
             # Oeffnen baut die Ansicht dann wie bisher selbst auf
@@ -7096,7 +7337,7 @@ class ViewPreloader:
             worked = True
         finally:
             app.preloading = False
-            self._release_task(label, task_before)
+            self._release_task(label, task_before, task if worked else None, started)
         try:
             # Eine Ansicht, die beim Aufbau den Fokus nimmt (z.B. ein
             # Eingabefeld), soll ihn dem Nutzer nicht wegnehmen
@@ -7107,10 +7348,15 @@ class ViewPreloader:
             pass
         if worked:
             self.steps_done += 1
-            self.step_ms[task] = round((time.perf_counter() - started) * 1000)
-            # So lange dauert das Zeichnen ungefaehr auch spaeter, wenn sich
-            # etwas geaendert hat - Grundlage fuer die Ladeanzeige
-            app.cost_ms.setdefault(task, self.step_ms[task])
+            elapsed = round((time.perf_counter() - started) * 1000)
+            if task[0] in ("part", "area"):
+                # Teile: den laengsten merken (Bericht/Test)
+                self.step_ms[task] = max(elapsed, self.step_ms.get(task, 0))
+            else:
+                self.step_ms[task] = elapsed
+                # So lange dauert das Zeichnen ungefaehr auch spaeter, wenn sich
+                # etwas geaendert hat - Grundlage fuer die Ladeanzeige
+                app.cost_ms.setdefault(task, self.step_ms[task])
         return worked
 
 
@@ -7178,6 +7424,7 @@ class LoadingHint:
 class FISIApp:
     def __init__(self, root):
         self.root = root
+        self._started = time.perf_counter()   # ab 0.60.1: Fertigzeit des Vorladens
         root.title("%s %s" % (APP_TITLE, APP_VERSION))
         root.geometry("1360x880")
         root.minsize(1120, 720)
@@ -7210,7 +7457,7 @@ class FISIApp:
         # Erst wenn das Dashboard steht (der Zeitgeber laeuft nach dem ersten
         # Zeichnen in mainloop), die grossen Ansichten nacheinander vorbereiten
         self.preloader = ViewPreloader(self)
-        self.preloader.start()
+        self.preloader.start(origin=self._started)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
         # Ab 0.59.2: Herzschlag fuer die Haenger-Diagnose (fisi_haenger),
@@ -7395,6 +7642,7 @@ class FISIApp:
     def _recolor(self, preset_id, background_id, overlay=None, mode=None, custom=None):
         # Ab 0.57: Eigene Farben und Kacheln koennen Hell/Dunkel der Oberflaeche
         # umschalten (Schrift nach Helligkeit des Hintergrunds)
+        recolor_started = time.perf_counter()   # ab 0.60.1: Fertigzeit des Vorladens
         was_light = fisi_theme.light
         if custom:
             fisi_theme.save_custom(*custom)
@@ -7451,7 +7699,7 @@ class FISIApp:
         # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
         preloader = getattr(self, "preloader", None)
         if preloader is not None:
-            preloader.start()
+            preloader.start(origin=recolor_started)
 
     def _cancel_orphaned_timers(self):
         """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
@@ -7592,7 +7840,9 @@ class FISIApp:
         Schwelle der Ladeanzeige."""
         if task in self.cost_ms:
             return self.cost_ms[task]
-        if task[0] == "tab" or task in preload_tasks(True):
+        # Ab 0.60.1 dieselben Ansichten wie bis 0.60 (die Hilfe bekam nie
+        # eine Ladeanzeige und bekommt auch jetzt keine)
+        if task[0] == "tab" or task in preload_tasks(True, "060"):
             return fisi_theme.LOADING_THRESHOLD_MS + 1
         return 0
 

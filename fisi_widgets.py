@@ -1037,7 +1037,12 @@ class FoldCard(Card):
 
     Ab 0.60 (B3, Tempo): Mit builder wird der Inhalt erst beim ersten
     Aufklappen gebaut - builder(self) fuellt dann self.body. Einmal gebaut
-    bleibt er stehen (Zuklappen baut nichts ab)."""
+    bleibt er stehen (Zuklappen baut nichts ab).
+
+    Ab 0.60.1: builder darf auch eine Liste von Teilen sein (je builder(self)).
+    Das Vorladen baut sie einzeln (build_part), beim Aufklappen kommt der
+    Rest auf einmal (ensure_built). Als gebaut gilt der Bereich erst nach
+    dem letzten Teil."""
 
     _open_state = {}
 
@@ -1045,7 +1050,7 @@ class FoldCard(Card):
                  opened=False, marker=False, open_text=None, close_text=None,
                  builder=None, after_build=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
-        self._builder = builder
+        self._builder = list(builder) if isinstance(builder, (list, tuple)) else builder
         self._building = False
         self._after_build = after_build   # ab 0.60: nach dem Bauen aufrufen
         self.key = key or title
@@ -1139,16 +1144,28 @@ class FoldCard(Card):
     def ensure_built(self):
         """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
         (auch eingeklappt, z.B. fuer den Selbsttest)."""
+        while self._builder is not None and not self._building:
+            self.build_part()
+
+    def build_part(self):
+        """Ab 0.60.1: den naechsten Teil bauen (ohne Liste: alles). Nach dem
+        letzten Teil gilt der Bereich als gebaut, dann after_build."""
         builder = self._builder
         if builder is None or self._building:
             return
         self._building = True
+        last = True
         try:
-            builder(self)
+            if isinstance(builder, list):
+                builder.pop(0)(self)
+                last = not builder
+            else:
+                builder(self)
         finally:
             self._building = False
-            self._builder = None
-        if self._after_build is not None:
+            if last:
+                self._builder = None
+        if last and self._after_build is not None:
             self._after_build()
 
     def _apply(self):
@@ -2547,10 +2564,12 @@ class ScrollArea(tk.Frame):
             root._fisi_wheel_area = self
             if not getattr(root, "_fisi_wheel_bound", False):
                 root._fisi_wheel_bound = True
+                # Ab 0.60.1 mit add: das Vorladen haengt am Mausrad mit (Eingabe)
                 for sequence, shift in (("<MouseWheel>", False), ("<Shift-MouseWheel>", True),
                                         ("<Button-4>", False), ("<Button-5>", False)):
                     root.bind_all(sequence,
-                                  lambda event, r=root, s=shift: _wheel_to_area(r, event, s))
+                                  lambda event, r=root, s=shift: _wheel_to_area(r, event, s),
+                                  add="+")
         elif getattr(root, "_fisi_wheel_area", None) is self:
             root._fisi_wheel_area = None
 
