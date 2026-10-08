@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Farbwelt
-=============================
+Fachinformatiker Lernplattform - Farbwelt
+=========================================
 
 Farbpalette, Farbverlaeufe und Farbzuordnungen der Oberflaeche. Liegt bewusst
 getrennt von fisi_core.py, damit der Kern (Datenbank, Lerninhalte, Rechner)

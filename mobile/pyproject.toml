@@ -1,4 +1,4 @@
-# FISI Lernplattform - Handy-App (Android), gebaut mit Flet
+# Fachinformatiker Lernplattform - Handy-App (Android), gebaut mit Flet
 #
 # Bauen (macht GitHub Actions bei jedem Versions-Tag automatisch):
 #   python mobile/vorbereiten.py      gemeinsame Dateien nach mobile/src kopieren
@@ -10,7 +10,7 @@
 [project]
 name = "fisi-lernplattform"
 version = "0.60.1"
-description = "Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration"
+description = "Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)"
 requires-python = ">=3.10"
 dependencies = [
     "flet==1.0.1",
@@ -18,9 +18,11 @@ dependencies = [
 ]
 
 [tool.flet]
-product = "FISI Lernplattform"
+# Ab 0.61: product = Beschriftung unter dem Symbol (kurz, F2). name und org
+# ergeben die Paketkennung io.github.papst2142cmd.fisi_lernplattform - NIE AENDERN.
+product = "FI Lernplattform"
 org = "io.github.papst2142cmd"
-company = "FISI Lernplattform Projekt"
+company = "Nico H"
 build_number = 6001
 icon_background = "#120A24"
 

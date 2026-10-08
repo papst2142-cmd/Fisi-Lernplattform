@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Arbeitsbereich Abschlussprojekt (ab 0.51, ohne Oberflaeche)
+Fachinformatiker Lernplattform - Arbeitsbereich Abschlussprojekt (ab 0.51, ohne Oberflaeche)
 =================================================================================
 
 Nicos eigenes IHK-Abschlussprojekt: Texte, Zeitplan, Kosten, Dokumentation,

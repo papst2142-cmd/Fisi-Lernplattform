@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Startprogramm
-==================================
+Fachinformatiker Lernplattform - Startprogramm
+==============================================
 
 Diese Datei ist der Einstiegspunkt. Sie prueft zuerst, ob alle
 Voraussetzungen erfuellt sind, und gibt sonst eine verstaendliche Meldung
@@ -26,7 +26,7 @@ def fail(title, message):
         from tkinter import messagebox
         root = tk.Tk()
         root.withdraw()
-        messagebox.showerror("FISI Lernplattform", text)
+        messagebox.showerror("Fachinformatiker Lernplattform", text)
         root.destroy()
     except Exception:
         print(text, file=sys.stderr)

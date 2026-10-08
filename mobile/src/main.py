@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Handy-App (Android)
-========================================
+Fachinformatiker Lernplattform - Handy-App (Android)
+====================================================
 
 Dieselben Lerninhalte, dieselbe Datenbank-Logik und derselbe Abgleich wie die
 PC-Version - nur die Oberflaeche ist neu, gebaut mit Flet fuer Touch-Bedienung.
@@ -24,10 +24,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if not os.path.exists(os.path.join(HERE, "fisi_core.py")):
     sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 
+from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_FILE_NAME  # noqa: E402
+
 # Auf dem Handy liegt die Datenbank im privaten Datenordner der App
+# (Dateiname ab 0.61 aus fisi_core, NIE AENDERN)
 if os.environ.get("FLET_APP_STORAGE_DATA") and not os.environ.get("FISI_DB_PATH"):
     os.environ["FISI_DB_PATH"] = os.path.join(os.environ["FLET_APP_STORAGE_DATA"],
-                                              "fisi_lernplattform.db")
+                                              DB_FILE_NAME)
 
 import flet as ft  # noqa: E402
 
@@ -84,7 +87,7 @@ import fisi_pruefung as fp  # noqa: E402
 import spiel  # noqa: E402
 import ui  # noqa: E402
 
-APP_TITLE = "FISI Lernplattform"
+APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (wie PC)
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
 APP_VERSION = "0.60.1"
@@ -179,7 +182,7 @@ class Screen:
     """Eine Seite der App. build() liefert den Inhalt, on_show() frischt ihn
     beim Anzeigen auf."""
 
-    crumbs = ("FISI", "")
+    crumbs = (APP_LOGO_TEXT, "")
 
     def __init__(self, app):
         self.app = app
@@ -3636,8 +3639,8 @@ class SettingsScreen(Screen):
                                       kind="danger")]),
         ], accent=C["red"], subtitle=DELETE_SUBTITLE)
         about = self._area("ueber", [ui.text(
-            "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
-            "Systemintegration mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
+            "%s Version %s\n\nLernprogramm für die Prüfungsvorbereitung zum Fachinformatiker "
+            "(Schwerpunkt Systemintegration) mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
             "Testprojekten und Praxis-Rechnern.\n\nDie Handy-App nutzt dieselben "
             "Lerninhalte wie die PC-Version und ist mit Python und Flet umgesetzt."
             % (APP_TITLE, APP_VERSION), size=14, color=C["text_dim"])],
@@ -5201,7 +5204,7 @@ class FISIMobileApp:
         # scrollt erst, wenn er nicht mehr auf den Bildschirm passt
         self.page.show_dialog(ft.AlertDialog(
             modal=True, bgcolor=C["card"], scrollable=True,
-            title=ft.Text("FISI Lernplattform %s ist verfügbar" % info.version,
+            title=ft.Text("Version %s ist verfügbar" % info.version,
                           color=C["text"], size=18, weight=ft.FontWeight.BOLD),
             content=ft.Column([
                 ft.Text("installiert: %s" % APP_VERSION, size=12, color=C["muted"]),

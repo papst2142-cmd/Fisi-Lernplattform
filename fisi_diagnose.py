@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Problem melden (ab 0.54)
-=============================================
+Fachinformatiker Lernplattform - Problem melden (ab 0.54)
+=========================================================
 
 Baut einen Bericht fuer die Fehlersuche: Programmversion, Geraet, Datenordner,
 ein paar Systemwerte (Anzahl Eintraege, Groesse der Datenbank) und das
@@ -29,7 +29,7 @@ import platform
 import re
 import sys
 
-from fisi_core import (APP_NAME, ERROR_LOG_MAX, EVENT_TABLES, GAME_TABLES, anonymize_paths,
+from fisi_core import (APP_DISPLAY_NAME, ERROR_LOG_MAX, EVENT_TABLES, GAME_TABLES, anonymize_paths,
                        error_log_path, plural)
 
 # Texte (PC und Handy gleich)
@@ -82,8 +82,8 @@ def _now():
 
 
 def default_name(now=None):
-    """Vorschlag fuer den Dateinamen, z.B. FISI-Problembericht_2026-10-02_1423.txt."""
-    return "FISI-Problembericht_%s%s" % ((now or _now()).strftime("%Y-%m-%d_%H%M"), FILE_EXT)
+    """Vorschlag fuer den Dateinamen, z.B. Lernplattform-Problembericht_2026-10-02_1423.txt."""
+    return "Lernplattform-Problembericht_%s%s" % ((now or _now()).strftime("%Y-%m-%d_%H%M"), FILE_EXT)
 
 
 def secrets_of(settings):
@@ -161,7 +161,7 @@ def report_lines(db=None, version="", geraet="", settings=None, now=None):
     """Kopfteil des Berichts als Zeilen (ohne fehler.log)."""
     from fisi_lernen import goal_settings
     settings = settings or {}
-    lines = ["%s – Problembericht" % APP_NAME,
+    lines = ["%s – Problembericht" % APP_DISPLAY_NAME,
              "Erstellt: %s" % (now or _now()).strftime("%d.%m.%Y %H:%M"),
              "Programmversion: %s" % (version or "?"),
              "Gerät: %s" % device_text(geraet),

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - einfacher PDF-Export (ab 0.51)
-===================================================
+Fachinformatiker Lernplattform - einfacher PDF-Export (ab 0.51)
+===============================================================
 
 Erzeugt ein schlichtes A4-PDF mit Ueberschriften, Absaetzen und Listen -
 nur mit der Standardbibliothek, damit PC und Handy dasselbe nutzen und der
@@ -236,7 +236,7 @@ def build_pdf(blocks, title="", author=""):
     objects[catalog - 1] = b"<< /Type /Catalog /Pages %d 0 R >>" % pages_id
     objects[pages_id - 1] = b"<< /Type /Pages /Kids [%s] /Count %d >>" % (
         b" ".join(b"%d 0 R" % kid for kid in kids), len(kids))
-    info = add(b"<< /Title %s /Author %s /Producer (FISI Lernplattform) >>" % (
+    info = add(b"<< /Title %s /Author %s /Producer (Fachinformatiker Lernplattform) >>" % (
         _info_string(title), _info_string(author)))
 
     out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")

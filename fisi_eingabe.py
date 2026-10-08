@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Eingabemethoden-Umgehung (ab 0.59.3, nur PC, Linux;
+Fachinformatiker Lernplattform - Eingabemethoden-Umgehung (ab 0.59.3, nur PC, Linux;
 ab 0.60 auch unter X11)
 =========================================================================
 
@@ -32,7 +32,7 @@ Unter Windows, macOS und allen anderen Linux-Konstellationen aendert sich
 nichts.
 
 Die Variable gilt fuer den ganzen Prozess, also auch fuer Programme, die
-FISI selbst startet (Ordner, Browser). Sie wird bewusst NICHT
+das Programm selbst startet (Ordner, Browser). Sie wird bewusst NICHT
 zurueckgesetzt (Entscheidung Nico 07.10.2026): Ob Tk die Eingabemethode
 spaeter (z. B. nach einem Neustart von IBus) neu oeffnet und die Variable
 dann noch einmal liest, ist nicht geprueft. Ein Neustart nach einem Update

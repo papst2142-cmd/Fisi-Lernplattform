@@ -323,7 +323,7 @@ class BefehlTest(unittest.TestCase):
         with open(os.path.join(HERE, "LIESMICH.txt"), encoding="utf-8") as handle:
             text = handle.read()
         self.assertIn("FISI_XIM=1 fisi-lernplattform", text)
-        self.assertIn("Programme, die FISI selbst", text)
+        self.assertRegex(text, r"Programme, die das Programm\s+selbst")
 
 
 # ============================================================================

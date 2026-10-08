@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Updater
-============================
+Fachinformatiker Lernplattform - Updater
+========================================
 
 Sucht auf GitHub nach einer neueren Version, laedt den passenden Installer
 herunter und startet die Installation. Bewusst ohne Oberflaeche und nur mit

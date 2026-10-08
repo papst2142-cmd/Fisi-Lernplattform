@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Klausursimulation (ab 0.51, ohne Oberflaeche)
-==================================================================
+Fachinformatiker Lernplattform - Klausursimulation (ab 0.51, ohne Oberflaeche)
+==============================================================================
 
 Pruefungen nach dem Aufbau der Fachinformatiker-Ausbildungsverordnung 2020
 (FIAusbV, §§ 9, 19-25) und der IHK-Praxis, abgestimmt mit Nico am

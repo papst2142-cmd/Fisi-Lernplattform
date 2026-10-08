@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Build und Installer
-========================================
+Fachinformatiker Lernplattform - Build und Installer
+====================================================
 
 Baut das Programm mit PyInstaller zu einer eigenstaendigen Anwendung und
 erzeugt daraus den Installer fuer das Betriebssystem, auf dem das Skript
@@ -49,9 +49,13 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+# Ab 0.61: APP_NAME (Exe, .app, Prozessname) und PACKAGE_NAME (.deb, /opt,
+# Befehl, .desktop-Datei, Fensterklasse) NIE AENDERN - test_namen.py prueft das.
+# Sichtbar ist nur DISPLAY_NAME.
 APP_NAME = "FISI-Lernplattform"
-DISPLAY_NAME = "FISI Lernplattform"
+DISPLAY_NAME = "Fachinformatiker Lernplattform"
 PACKAGE_NAME = "fisi-lernplattform"
+PUBLISHER = "Nico H"
 DIST = os.path.join(ROOT, "dist")
 OUTPUT = os.path.join(ROOT, "installer_output")
 
@@ -62,13 +66,14 @@ OUTPUT = os.path.join(ROOT, "installer_output")
 # (zweite Instanz verhindert fisi_einzelstart.py).
 DESKTOP_ENTRY = """[Desktop Entry]
 Type=Application
-Name=FISI Lernplattform
-Comment=Lernprogramm für die Umschulung zum Fachinformatiker Systemintegration
+Name=Fachinformatiker Lernplattform
+GenericName=Lernprogramm
+Comment=Lernprogramm für die Prüfungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)
 Exec={exec}
 Icon=fisi-lernplattform
 Terminal=false
 Categories=Education;
-Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
+Keywords=Fachinformatiker;FI;FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
 StartupWMClass={wm_class}
 SingleMainWindow=true
 """
@@ -113,7 +118,7 @@ def app_version():
 # ist APP_VERSION in app_gui.py; build.py sorgt dafuer, dass alle gleich sind.
 VERSION_SPOTS = [
     ("app_gui.py", r'^(APP_VERSION = ")([^"]+)(")'),
-    ("LIESMICH.txt", r'^(  FISI LERNPLATTFORM  -  Version )(\S+)()'),
+    ("LIESMICH.txt", r'^(  FACHINFORMATIKER LERNPLATTFORM  -  Version )(\S+)()'),
     ("FISI-Lernplattform.iss", r'^(  #define MyAppVersion ")([^"]+)(")'),
     ("mobile/src/main.py", r'^(APP_VERSION = ")([^"]+)(")'),
     ("mobile/pyproject.toml", r'^(version = ")([^"]+)(")'),
@@ -195,7 +200,7 @@ def _windows_version_file(version):
     numbers = _version_numbers(version)
     path = os.path.join(ROOT, "build", "version_info.txt")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    strings = [("CompanyName", "FISI Lernplattform Projekt"),
+    strings = [("CompanyName", PUBLISHER),
                ("FileDescription", DISPLAY_NAME),
                ("FileVersion", version),
                ("InternalName", APP_NAME),
@@ -317,11 +322,8 @@ def selftest_timeout(system=None, machine=None):
     return SELFTEST_TIMEOUT
 
 
-def smoke_test(app_path):
-    """Startet die gebaute Anwendung einmal im Testmodus: Sie oeffnet jede
-    Ansicht, fuehrt eine Suche aus und beendet sich wieder. So faellt ein
-    unvollstaendiges Paket (z.B. fehlende Bibliothek) schon beim Bauen auf.
-    Die Lern-Datenbank des Benutzers bleibt dabei unberuehrt."""
+def _app_command(app_path):
+    """Befehl zum Start der gebauten Anwendung."""
     if sys.platform == "win32":
         command = [os.path.join(app_path, APP_NAME + ".exe")]
     elif sys.platform == "darwin":
@@ -331,29 +333,82 @@ def smoke_test(app_path):
         # Ohne Bildschirm (z.B. auf GitHub) einen virtuellen X-Server nutzen
         if not os.environ.get("DISPLAY") and shutil.which("xvfb-run"):
             command = ["xvfb-run", "-a"] + command
+    return command
 
+
+def smoke_test(app_path):
+    """Startet die gebaute Anwendung einmal im Testmodus: Sie oeffnet jede
+    Ansicht, fuehrt eine Suche aus und beendet sich wieder. So faellt ein
+    unvollstaendiges Paket (z.B. fehlende Bibliothek) schon beim Bauen auf.
+    Die Lern-Datenbank des Benutzers bleibt dabei unberuehrt."""
     work = os.path.join(ROOT, "build", "selftest")
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(work)
     log_path = os.path.join(work, "selftest.log")
     env = dict(os.environ, FISI_SELFTEST=log_path,
                FISI_DB_PATH=os.path.join(work, "selftest.db"))
+    _run_selftest(_app_command(app_path), env, log_path, "Starttest der gebauten Anwendung")
+    info("Starttest bestanden: alle Ansichten wurden fehlerfrei geoeffnet.")
 
+
+def smoke_test_data_dir(app_path):
+    """Ab 0.61 (macOS ohne Geraet, M2): zweiter Starttest OHNE FISI_DB_PATH,
+    mit HOME auf einem leeren Ordner. Danach muss die Datenbank im echten
+    Datenordner liegen (~/Library/Application Support/FISI-Lernplattform) und
+    kein Ordner mit dem neuen Anzeigenamen entstanden sein."""
+    work = os.path.join(ROOT, "build", "selftest_datenordner")
+    shutil.rmtree(work, ignore_errors=True)
+    home = os.path.join(work, "home")
+    os.makedirs(home)
+    log_path = os.path.join(work, "selftest.log")
+    env = dict(os.environ, FISI_SELFTEST=log_path, HOME=home)
+    for key in ("FISI_DB_PATH", "XDG_DATA_HOME", "APPDATA"):
+        env.pop(key, None)
+    _run_selftest(_app_command(app_path), env, log_path, "Starttest mit echtem Datenordner")
+    support = os.path.join(home, "Library", "Application Support")
+    expected = os.path.join(support, "FISI-Lernplattform", "fisi_lernplattform.db")
+    others = sorted(name for name in os.listdir(support)
+                    if name != "FISI-Lernplattform") if os.path.isdir(support) else []
+    if not os.path.isfile(expected) or any(name.startswith("Fachinformatiker") for name in others):
+        fail("Starttest mit echtem Datenordner: erwartet %s, gefunden %s"
+             % (expected, os.listdir(support) if os.path.isdir(support) else "nichts"))
+    info("Starttest mit echtem Datenordner bestanden: %s" % expected.replace(home, "~"))
+
+
+def check_macos_bundle(app_path, version):
+    """Ab 0.61 (M3): Namen in der Info.plist der macOS-App pruefen. Bundle-Id
+    und App-Datei bleiben, sichtbar ist der neue Name."""
+    import plistlib
+    with open(os.path.join(app_path, "Contents", "Info.plist"), "rb") as handle:
+        plist = plistlib.load(handle)
+    expected = {"CFBundleDisplayName": DISPLAY_NAME,
+                "CFBundleIdentifier": "de.fisi.lernplattform",
+                "CFBundleShortVersionString": version}
+    wrong = ["%s = %r (erwartet %r)" % (key, plist.get(key), value)
+             for key, value in expected.items() if plist.get(key) != value]
+    if os.path.basename(app_path) != APP_NAME + ".app":
+        wrong.append("App-Datei %s (erwartet %s.app)" % (os.path.basename(app_path), APP_NAME))
+    if wrong:
+        fail("macOS-App: " + "; ".join(wrong))
+    info("macOS-App geprueft: %s, %s, %s.app" % (DISPLAY_NAME, expected["CFBundleIdentifier"],
+                                                 APP_NAME))
+
+
+def _run_selftest(command, env, log_path, title):
     limit = selftest_timeout()
-    info("Starttest der gebauten Anwendung (Zeitgrenze %d s) ..." % limit)
+    info("%s (Zeitgrenze %d s) ..." % (title, limit))
     try:
         result = subprocess.run(command, env=env, timeout=limit)
     except subprocess.TimeoutExpired:
-        fail("Starttest: Die Anwendung hat sich nicht innerhalb von %d Sekunden beendet."
-             % limit)
+        fail("%s: Die Anwendung hat sich nicht innerhalb von %d Sekunden beendet."
+             % (title, limit))
     report = ""
     if os.path.exists(log_path):
         with open(log_path, encoding="utf-8") as handle:
             report = handle.read()
     if result.returncode != 0 or report != "OK":
-        fail("Starttest fehlgeschlagen (Exit-Code %d):\n%s"
-             % (result.returncode, report or "keine Rueckmeldung der Anwendung"))
-    info("Starttest bestanden: alle Ansichten wurden fehlerfrei geoeffnet.")
+        fail("%s fehlgeschlagen (Exit-Code %d):\n%s"
+             % (title, result.returncode, report or "keine Rueckmeldung der Anwendung"))
 
 
 # ============================================================================
@@ -440,8 +495,8 @@ def package_deb(version):
             "Architecture: %s\n"
             "Installed-Size: %d\n"
             "Depends: %s\n"
-            "Maintainer: FISI Lernplattform Projekt <333448595+papst2142-cmd@users.noreply.github.com>\n"
-            "Description: Lernprogramm fuer Fachinformatiker Systemintegration\n"
+            "Maintainer: Nico H <333448595+papst2142-cmd@users.noreply.github.com>\n"
+            "Description: Pruefungsvorbereitung Fachinformatiker (Schwerpunkt Systemintegration)\n"
             " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
             " Praxis-Rechner mit Lernfortschritt. Bringt alle Bibliotheken mit.\n"
             % (PACKAGE_NAME, version, architecture, size_kb, DEB_DEPENDS))
@@ -527,8 +582,12 @@ def main():
     check_content()
     info("%s Version %s auf %s" % (DISPLAY_NAME, version, platform.platform()))
     app_path = build_app(version)
+    if sys.platform == "darwin":
+        check_macos_bundle(app_path, version)
     if "--ohne-test" not in sys.argv:
         smoke_test(app_path)
+        if sys.platform == "darwin":
+            smoke_test_data_dir(app_path)
     if "--nur-app" in sys.argv:
         info("Fertig: %s" % app_path)
         return

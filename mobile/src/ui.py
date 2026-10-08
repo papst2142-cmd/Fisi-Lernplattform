@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform (Handy) - Bausteine der Oberflaeche
-======================================================
+Fachinformatiker Lernplattform (Handy) - Bausteine der Oberflaeche
+==================================================================
 
 Karten, Verlaufs-Knoepfe, Ringe, Diagramme, Kalender - im selben Look wie die
 PC-Version (Farben und Verlaeufe aus fisi_theme.py), aber fuer Touch und

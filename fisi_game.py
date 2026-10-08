@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Lernspiel (Spiellogik)
-===========================================
+Fachinformatiker Lernplattform - Lernspiel (Spiellogik)
+=======================================================
 
 Der Praxisteil zur Lernplattform: Der Spieler arbeitet bei einem IT-Dienst-
 leister, der die IT eines Zugbetreibers betreut, und bearbeitet Tickets. Was

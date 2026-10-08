@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Oberflaechenbausteine
-==========================================
+Fachinformatiker Lernplattform - Oberflaechenbausteine
+======================================================
 
 Alle Bausteine des dunklen Dashboard-Designs auf Basis von CustomTkinter.
 CustomTkinter liefert abgerundete Karten, Eingabefelder, Textfelder und

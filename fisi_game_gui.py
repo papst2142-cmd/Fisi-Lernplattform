@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Lernspiel (PC-Oberflaeche)
-===============================================
+Fachinformatiker Lernplattform - Lernspiel (PC-Oberflaeche)
+===========================================================
 
 Die Ansicht "Lernspiel" der PC-Version. Die Spiellogik steckt in
 fisi_game.py, hier wird nur angezeigt und bedient. Gebaut aus den Bausteinen

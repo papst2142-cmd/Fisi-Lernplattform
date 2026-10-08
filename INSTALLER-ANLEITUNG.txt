@@ -1,5 +1,5 @@
 ============================================================================
- FISI Lernplattform - Installer: installieren und selbst bauen
+ Fachinformatiker Lernplattform - Installer: installieren und selbst bauen
 ============================================================================
 
 Ab Version 0.20 gibt es fertige Installer fuer Windows, Linux und macOS.
@@ -22,7 +22,8 @@ WINDOWS  -  FISI-Lernplattform-Setup-<Version>.exe
    ist nicht kostenpflichtig signiert.)
 3. Dem Assistenten folgen. Es werden keine Admin-Rechte benoetigt, das
    Programm wird nur fuer den aktuellen Benutzer installiert.
-4. Das Programm steht danach im Start-Menue unter "FISI Lernplattform".
+4. Das Programm steht danach im Start-Menue unter
+   "Fachinformatiker Lernplattform" (bis 0.60.1: "FISI Lernplattform").
    Deinstallieren ueber Einstellungen -> Apps.
 Ab Version 0.22 aktualisiert sich das Programm selbst (siehe LIESMICH.txt,
 Abschnitt UPDATES). Aeltere Versionen: das neue Setup einfach ueber die alte
@@ -34,7 +35,8 @@ LINUX (Debian, Ubuntu, Linux Mint)  -  fisi-lernplattform_<Version>_amd64.deb
 2. Installieren mit:
      sudo apt install ./fisi-lernplattform_<Version>_amd64.deb
    Mit derselben Zeile wird auch eine neue Version eingespielt.
-3. Start ueber das Startmenue ("FISI Lernplattform") oder im Terminal mit
+3. Start ueber das Startmenue ("Fachinformatiker Lernplattform") oder im
+   Terminal mit
      fisi-lernplattform
 Entfernen:  sudo apt remove fisi-lernplattform
 

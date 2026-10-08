@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Desktop-Verknuepfung unter Linux (ab 0.59)
-================================================================
+Fachinformatiker Lernplattform - Desktop-Verknuepfung unter Linux (ab 0.59)
+============================================================================
 
 Die .deb legt einen Eintrag im Anwendungsmenue an, das AppImage gar nichts.
 Eine Verknuepfung auf dem Desktop ("Schreibtisch") legt deshalb fuer beide
@@ -37,7 +37,7 @@ SETTING = "desktop_verknuepfung"
 
 BTN_CREATE = "Desktop-Verknüpfung anlegen"
 ASK_TITLE = "Desktop-Verknüpfung"
-ASK_TEXT = ("Soll eine Verknüpfung zur FISI Lernplattform auf dem Desktop angelegt "
+ASK_TEXT = ("Soll eine Verknüpfung zur Fachinformatiker Lernplattform auf dem Desktop angelegt "
             "werden? Du kannst sie später auch in den Optionen unter „Updates“ anlegen.")
 BTN_YES = "Ja"
 BTN_NO = "Nein"
@@ -54,13 +54,14 @@ MSG_NONE = "Noch keine Verknüpfung auf dem Desktop."
 
 ENTRY = """[Desktop Entry]
 Type=Application
-Name=FISI Lernplattform
-Comment=Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+Name=Fachinformatiker Lernplattform
+GenericName=Lernprogramm
+Comment=Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)
 Exec={exec}
 Icon={icon}
 Terminal=false
 Categories=Education;
-Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
+Keywords=Fachinformatiker;FI;FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
 StartupWMClass=Fisi-lernplattform
 {marker}
 """
@@ -226,6 +227,80 @@ def create(current=None, folder=None, icon_source=None):
         return "fehler", str(error), False
     sure = _trust(path, desktop_session())
     return ("erneuert" if renewed else "neu"), path, sure
+
+
+# -- Ab 0.61: eigene Verknuepfung mit altem Namen still erneuern (F4/E1) ----
+
+OLD_NAME_LINE = "Name=FISI Lernplattform"
+# Nur diese Zeilen ersetzt renew_own(); Exec=, Icon= und alles andere bleibt
+# Byte fuer Byte, damit sich nicht aendert, was gestartet wird.
+DISPLAY_KEYS = ("Name", "GenericName", "Comment", "Keywords")
+
+
+def _display_lines():
+    """Die Anzeigezeilen aus ENTRY, z.B. {"Name": "Name=..."}."""
+    lines = {}
+    for line in ENTRY.splitlines():
+        key = line.split("=", 1)[0]
+        if key in DISPLAY_KEYS and "=" in line:
+            lines[key] = line
+    return lines
+
+
+def renewed_text(text):
+    """Neuer Inhalt einer alten eigenen Verknuepfung oder None, wenn nichts zu
+    tun ist (kein Merker, schon der neue Name). Ersetzt nur die Anzeigezeilen;
+    GenericName= kommt direkt nach Name=, falls es fehlt."""
+    lines = text.splitlines()
+    if MARKER not in lines or OLD_NAME_LINE not in lines:
+        return None
+    new = _display_lines()
+    seen = set()
+    result = []
+    for line in lines:
+        key = line.split("=", 1)[0] if "=" in line else None
+        if key in new and key not in seen:
+            result.append(new[key])
+            seen.add(key)
+            if key == "Name" and "GenericName" not in seen and not any(
+                    other.startswith("GenericName=") for other in lines):
+                result.append(new["GenericName"])
+                seen.add("GenericName")
+        else:
+            result.append(line)
+    return "\n".join(result) + ("\n" if text.endswith("\n") else "")
+
+
+def renew_own(current=None, folder=None):
+    """Erneuert beim Start still die vom Programm angelegte Verknuepfung mit
+    dem Namen bis 0.60.1. Fremde Dateien (ohne Merker) bleiben unberuehrt.
+    Ergebnis: Pfad der erneuerten Datei oder None."""
+    if not supported(current):
+        return None
+    folder = folder or desktop_dir()
+    path = os.path.join(folder, FILE_NAME) if folder else None
+    if not path or not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as handle:
+        text = handle.read()
+    new = renewed_text(text)
+    if new is None:
+        return None
+    mode = os.stat(path).st_mode & 0o777
+    temp = path + ".tmp"
+    try:
+        with open(temp, "w", encoding="utf-8") as handle:
+            handle.write(new)
+        os.chmod(temp, mode)
+        os.replace(temp, path)
+    except OSError:
+        try:
+            os.remove(temp)
+        except OSError:
+            pass
+        raise
+    _trust(path, desktop_session())
+    return path
 
 
 def message(result):

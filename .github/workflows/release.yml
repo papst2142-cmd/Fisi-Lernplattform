@@ -1,5 +1,5 @@
 # ============================================================================
-#  FISI Lernplattform - Release automatisch
+#  Fachinformatiker Lernplattform - Release automatisch
 # ============================================================================
 #  Laeuft bei jedem Push auf main. Steht dort eine Version, fuer die es noch
 #  keinen Tag gibt (nach "python build.py --setze-version 0.xy" und dem

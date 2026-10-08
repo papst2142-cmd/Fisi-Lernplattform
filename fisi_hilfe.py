@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Erststart-Rundgang und Hilfe (ab 0.56)
-===========================================================
+Fachinformatiker Lernplattform - Erststart-Rundgang und Hilfe (ab 0.56)
+=======================================================================
 
 Texte und Logik ohne Oberflaeche, damit PC (app_gui.py) und Handy
 (mobile/src/main.py) genau dieselben Texte zeigen.
@@ -156,8 +156,8 @@ TOUR_KEYS = "Tab wechselt, Eingabe bestätigt, Esc überspringt"   # nur am PC
 
 TOUR_PAGES = [
     {"id": "willkommen", "titel": "Willkommen",
-     "text": ("Die FISI Lernplattform hilft dir bei der Vorbereitung auf die Prüfungen "
-              "zum Fachinformatiker Systemintegration (AP1 und AP2).\n\n"
+     "text": ("Die Fachinformatiker Lernplattform hilft dir bei der Vorbereitung auf die "
+              "Prüfungen AP1 und AP2 (Schwerpunkt Systemintegration).\n\n"
               "Lernen kannst du mit „Karteikarten“, im „Prüfungstrainer“ und mit den "
               "„AP1-Szenarien“ und „AP2-Szenarien“, die wie Prüfungsaufgaben aufgebaut "
               "sind. Am PC findest du alles links in der Seitenleiste, am Handy unter "
@@ -414,7 +414,7 @@ HELP_SECTIONS = [
     {"id": "schutzprogramm", "titel": "Warnung vom Schutzprogramm",
      "reiter": [],
      "text": ("Manche Schutzprogramme und Browser warnen beim Herunterladen oder "
-              "Installieren der FISI Lernplattform. Der Grund: Das Programm ist neu, wird "
+              "Installieren der Fachinformatiker Lernplattform. Der Grund: Das Programm ist neu, wird "
               "selten heruntergeladen und ist nicht digital signiert.\n\n"
               "Lade die App deshalb nur von der Release-Seite herunter: "
               + RELEASE_PAGE_TEXT + ". Dort steht zu jeder Datei eine Prüfsumme "
