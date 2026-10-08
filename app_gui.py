@@ -90,6 +90,7 @@ import fisi_haenger as fhg  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_optionen as fo  # noqa: E402
+import fisi_rechtliches as fr  # noqa: E402
 import fisi_verknuepfung as fsc  # noqa: E402
 import fisi_rahmenplan as frp  # noqa: E402
 from fisi_rahmenplan import fresh_order  # noqa: E402
@@ -2082,9 +2083,9 @@ class QuizView(View):
         self.lbl_question.configure(
             text="Session beendet\n\n"
                  "Ergebnis: %d von %d richtig (%.1f %%)\n"
-                 "IHK-Note: %s\n"
+                 "%s: %s\n"
                  "Dauer: %02d:%02d Minuten\n\n%s"
-                 % (self.score, total, percentage, note,
+                 % (self.score, total, percentage, fr.NOTE_LANG, note,
                     elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
         follow_up, self.follow_up = self.follow_up, None
@@ -2183,13 +2184,17 @@ class ExamPanel(ctk.CTkFrame):
                      subtitle="Aufbau nach der Ausbildungsverordnung 2020")
         intro.pack(fill="x")
         make_label(intro.body,
-                   "Wie in der echten Prüfung: feste Zeit ohne Pause, alle Aufgaben sind "
-                   "Pflicht, keine Musterlösung während der Prüfung. Offene Aufgaben "
+                   "Aufgebaut wie die echte Prüfung: feste Zeit ohne Pause, alle Aufgaben "
+                   "sind Pflicht, keine Musterlösung während der Prüfung. Offene Aufgaben "
                    "bewertest du nach der Abgabe selbst anhand der Musterlösung, WiSo wird "
-                   "automatisch ausgewertet. Notenschlüssel der IHK: ab 92 Punkten sehr gut, "
-                   "ab 81 gut, ab 67 befriedigend, ab 50 ausreichend, ab 30 mangelhaft.",
+                   "automatisch ausgewertet. %s: ab 92 Punkten sehr gut, "
+                   "ab 81 gut, ab 67 befriedigend, ab 50 ausreichend, ab 30 mangelhaft."
+                   % fr.NOTE_LANG,
                    font=F["small"], fg=C["text_soft"], wraplength=900, justify="left",
                    anchor="w").pack(anchor="w")
+        # Ab 0.62: Kurzhinweis (Hinweistext lang unter Optionen > Über das Programm)
+        make_label(intro.body, fr.HINWEIS_KURZ, font=F["small"], fg=C["muted"],
+                   wraplength=900, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         for exam in fp.EXAMS:
             row = ctk.CTkFrame(intro.body, fg_color=C["card_alt"], corner_radius=12,
                                border_width=1, border_color=C["border"])
@@ -2542,8 +2547,8 @@ class ExamPanel(ctk.CTkFrame):
         row.pack(fill="x")
         make_label(row, "%s Punkte" % _points(result["punkte"]), font=F["display"],
                    fg=_note_color(result["punkte"])).pack(side="left")
-        make_label(row, "IHK-Note %s  ·  Dauer %s" % (result["note"],
-                                                     fp.time_text(result["dauer"])),
+        make_label(row, "%s %s  ·  Dauer %s" % (fr.NOTE_KURZ, result["note"],
+                                                fp.time_text(result["dauer"])),
                    font=F["body_bold"], fg=C["text"]).pack(side="left", padx=(18, 0),
                                                             pady=(12, 0))
         details = result["daten"]
@@ -2793,8 +2798,8 @@ def overall_card(parent, db):
         make_label(card.body, hint, font=F["small"], fg=C["muted"], wraplength=900,
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
         return
-    make_label(card.body, "Gesamt %s Punkte · Note %s · %s" % (
-        _points(result["gesamt"]), result["note"],
+    make_label(card.body, "Gesamt %s Punkte · %s %s · %s" % (
+        _points(result["gesamt"]), fr.NOTE_KURZ, result["note"],
         "bestanden" if result["bestanden"] else "nicht bestanden"),
         font=F["body_bold"], fg=C["green"] if result["bestanden"] else C["red"]).pack(
             anchor="w", pady=(10, 4))
@@ -4431,7 +4436,7 @@ class ProgressView(View):
         self.tree = ttk.Treeview(table_card.body, columns=columns, show="headings",
                                  height=9, style="Dash.Treeview")
         headings = [("datum", "Datum & Uhrzeit", 170), ("score", "Ergebnis", 110),
-                    ("prozent", "Erfolgsquote", 110), ("note", "IHK-Note", 150),
+                    ("prozent", "Erfolgsquote", 110), ("note", fr.NOTE_KURZ, 150),
                     ("dauer", "Dauer", 90)]
         for key, text, width in headings:
             self.tree.heading(key, text=text)
@@ -4453,7 +4458,7 @@ class ProgressView(View):
                                       height=6, style="Dash.Treeview")
         for key, text, width in [("datum", "Datum & Uhrzeit", 170),
                                  ("pruefung", "Prüfung", 300), ("punkte", "Punkte", 90),
-                                 ("note", "IHK-Note", 150), ("dauer", "Dauer", 90)]:
+                                 ("note", fr.NOTE_KURZ, 150), ("dauer", "Dauer", 90)]:
             self.exam_tree.heading(key, text=text)
             self.exam_tree.column(key, width=px(width), anchor="center")
         self.exam_tree.pack(fill="x")
@@ -5320,18 +5325,34 @@ class SettingsView(View):
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
     def _build_ueber(self, about):
+        # Ab 0.62: Copyright, Hinweistext und Claude-Hinweis aus fisi_rechtliches
+        # (wortgleich mit dem Handy), darunter Lizenz und Fremdbestandteile
         make_label(about.body,
-                   "%s Version %s\n\n"
-                   "Lernprogramm für die Prüfungsvorbereitung zum Fachinformatiker "
-                   "(Schwerpunkt Systemintegration) mit Karteikarten, Prüfungstrainer, "
-                   "AP1-/AP2-Szenarien, Testprojekten und Praxis-Rechnern.\n\n"
-                   "Umgesetzt mit Python und CustomTkinter. Die Installer für "
-                   "Windows, Linux und macOS bringen alles Nötige mit - es muss "
-                   "nichts zusätzlich installiert werden. Die Handy-App für "
-                   "Android nutzt dieselben Lerninhalte."
-                   % (APP_TITLE, APP_VERSION),
+                   fr.about_text(APP_TITLE, APP_VERSION,
+                                 "Umgesetzt mit Python und CustomTkinter. Die Installer für "
+                                 "Windows, Linux und macOS bringen alles Nötige mit - es muss "
+                                 "nichts zusätzlich installiert werden. Die Handy-App für "
+                                 "Android nutzt dieselben Lerninhalte."),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
+        buttons = transparent_frame(about.body)
+        buttons.pack(anchor="w", pady=(14, 0))
+        NeoButton(buttons, fr.BTN_LIZENZ, lambda: self.show_legal("lizenz"),
+                  kind="ghost").pack(side="left")
+        NeoButton(buttons, fr.BTN_FREMD, lambda: self.show_legal("fremd"),
+                  kind="ghost").pack(side="left", padx=(10, 0))
+
+    def show_legal(self, kind):
+        """Ab 0.62: Lizenz oder Hinweise zu Fremdbestandteilen in einem eigenen
+        Fenster (ein zweiter Klick holt das offene Fenster nach vorn)."""
+        window = getattr(self, "legal_window", {}).get(kind)
+        if window is not None and window.winfo_exists():
+            window.lift()
+            window.focus_force()
+            return window
+        self.legal_window = getattr(self, "legal_window", {})
+        self.legal_window[kind] = window = LegalDialog(self.app, kind)
+        return window
 
     def _build_diagnose(self, tools):
         self.diagnose_sections = {}
@@ -6369,6 +6390,73 @@ class BackupDialog(ctk.CTkToplevel):
                   kind="danger").pack(side="left", padx=10)
         NeoButton(buttons, fsi.BTN_CANCEL, self.destroy, kind="ghost").pack(side="left")
         self.after(100, self._focus)
+
+    def _focus(self):
+        self.lift()
+        self.focus_force()
+
+
+class LegalDialog(ctk.CTkToplevel):
+    """Ab 0.62: Lizenz (LICENSE.txt) oder Hinweise zu Fremdbestandteilen
+    (THIRD_PARTY_NOTICES.txt, beim Bau von lizenzen.py erzeugt). Die Hinweise
+    sind bis 0,9 MB gross: Das Fenster zeigt zuerst die Uebersicht, ein
+    Abschnitt kommt erst bei Auswahl in der Liste links ins Textfeld (Plan
+    0.62, 4.5). Liste statt Aufklappliste: bis zu 50 lange Eintraege."""
+
+    def __init__(self, app, kind):
+        super().__init__(app.root, fg_color=C["bg"])
+        self.app = app
+        title = fr.TITEL_LIZENZ if kind == "lizenz" else fr.TITEL_FREMD
+        self.title(title)
+        self.geometry("980x660" if kind == "fremd" else "820x640")
+        self.resizable(True, True)
+        self.transient(app.root)
+        self.after(250, lambda: _apply_window_icon(self))
+        card = Card(self, title=title, accent=C["green"])
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        buttons = transparent_frame(card.body)
+        buttons.pack(fill="x", side="bottom", pady=(12, 0))
+        NeoButton(buttons, "Schließen", self.destroy, kind="ghost").pack(side="left")
+        self.choices = None
+        self.listbox = None
+        if kind == "fremd":
+            self.choices = dict(fr.notice_choices(*fr.load_notices()))
+            side = transparent_frame(card.body)
+            side.pack(fill="y", side="left", padx=(0, 12))
+            make_label(side, fr.ABSCHNITT.upper(), font=F["label"], fg=C["muted"]).pack(
+                anchor="w", pady=(0, 6))
+            self.listbox = tk.Listbox(
+                side, width=34, activestyle="none", exportselection=False,
+                font=F["small"], bg=C["card_alt"], fg=C["text_soft"],
+                selectbackground=C["purple"], selectforeground="#FFFFFF",
+                highlightthickness=1, highlightbackground=C["field_border"],
+                highlightcolor=C["purple"], relief="flat", borderwidth=0)
+            for name in self.choices:
+                self.listbox.insert("end", name)
+            self.listbox.selection_set(0)
+            self.listbox.pack(fill="y", expand=True, side="left")
+            self.listbox.bind("<<ListboxSelect>>", self._selected)
+            content = self.choices[fr.UEBERSICHT]
+        else:
+            content = fr.read_file(fr.LICENSE_FILE)
+        self.text = make_text(card.body, height=18, font=F["small"])
+        self.text.pack(fill="both", expand=True, side="top")
+        self.choose_text(content)
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+        self.after(100, self._focus)
+
+    def _selected(self, _event=None):
+        picked = self.listbox.curselection()
+        if picked:
+            self.choose(self.listbox.get(picked[0]))
+
+    def choose(self, name):
+        self.choose_text(self.choices.get(name, ""))
+
+    def choose_text(self, content):
+        set_text(self.text, content)
+        self.text.configure(state="disabled")
+        self.text.yview_moveto(0)
 
     def _focus(self):
         self.lift()
@@ -7481,6 +7569,8 @@ class FISIApp:
             root.after(8000, self.check_reminder)
             # Ab 0.56: Erststart-Rundgang, nur bei leerer Datenbank ohne Merker
             root.after(600, self.maybe_start_tour)
+            # Ab 0.62: Erststart-Hinweis (Leiste auf dem Dashboard, nicht modal)
+            root.after(700, self.maybe_show_notice)
 
     def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
@@ -7916,6 +8006,35 @@ class FISIApp:
             tour.on_close = lambda: self.root.after(400, self.maybe_ask_shortcut)
         else:
             self.root.after(2500, self.maybe_ask_shortcut)
+
+    def maybe_show_notice(self):
+        """Ab 0.62: Erststart-Hinweis als kleine Leiste oben auf dem Dashboard,
+        bis "Verstanden" gedrueckt wird (Merker je Geraet in
+        einstellungen.json, auch fuer bestehende Nutzer einmal, E6). Nicht
+        modal: Rundgang, Verknuepfungs-Frage und Update laufen wie bisher."""
+        try:
+            if not fr.notice_due():
+                return None
+            view = self.views["dashboard"]
+            bar = ctk.CTkFrame(view.content, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border_hi"])
+            make_label(bar, fr.ERSTSTART, font=F["small"], fg=C["text_soft"],
+                       wraplength=760, justify="left", anchor="w").pack(
+                side="left", fill="x", expand=True, padx=(14, 10), pady=10)
+
+            def understood():
+                fr.mark_notice_seen()
+                bar.destroy()
+                self.notice_bar = None
+
+            NeoButton(bar, fr.BTN_VERSTANDEN, understood, kind="ghost").pack(
+                side="right", padx=(0, 12), pady=8)
+            bar.pack(fill="x", pady=(0, 14), before=view.hero)
+            self.notice_bar = bar
+            return bar
+        except Exception:
+            log_exception(*sys.exc_info())
+            return None
 
     def maybe_ask_shortcut(self):
         """Ab 0.59 (8b): Rueckfrage "Desktop-Verknuepfung anlegen?" (Linux)."""

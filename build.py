@@ -56,6 +56,12 @@ APP_NAME = "FISI-Lernplattform"
 DISPLAY_NAME = "Fachinformatiker Lernplattform"
 PACKAGE_NAME = "fisi-lernplattform"
 PUBLISHER = "Nico H"
+# Ab 0.62: Copyright-Feld der Pakete (Exe, macOS-App, Installer, .deb), ASCII -
+# gleich fisi_rechtliches.COPYRIGHT_FELD (test_namen.py prueft das)
+COPYRIGHT = "Copyright (c) 2026 Nico H"
+# Ab 0.62: Lizenz und Hinweise zu Fremdbestandteilen (lizenzen.py) liegen im
+# Programmordner neben der Programmdatei, unter macOS in Contents/Resources
+LEGAL_FILES = ("LICENSE.txt", "THIRD_PARTY_NOTICES.txt")
 DIST = os.path.join(ROOT, "dist")
 OUTPUT = os.path.join(ROOT, "installer_output")
 
@@ -204,6 +210,7 @@ def _windows_version_file(version):
                ("FileDescription", DISPLAY_NAME),
                ("FileVersion", version),
                ("InternalName", APP_NAME),
+               ("LegalCopyright", COPYRIGHT),
                ("OriginalFilename", APP_NAME + ".exe"),
                ("ProductName", DISPLAY_NAME),
                ("ProductVersion", version)]
@@ -222,9 +229,9 @@ def _windows_version_file(version):
 
 
 def _set_macos_version(app_path, version):
-    """Traegt die Version in die macOS-App ein (PyInstaller setzt 0.0.0) und
-    signiert die App danach neu, weil die Aenderung die Signatur ungueltig
-    macht."""
+    """Traegt Version und Copyright in die macOS-App ein (PyInstaller setzt
+    0.0.0) und signiert die App danach neu, weil die Aenderung (und die
+    Lizenzdateien aus write_legal_files) die Signatur ungueltig macht."""
     import plistlib
     plist_path = os.path.join(app_path, "Contents", "Info.plist")
     with open(plist_path, "rb") as handle:
@@ -232,6 +239,7 @@ def _set_macos_version(app_path, version):
     plist["CFBundleShortVersionString"] = version
     plist["CFBundleVersion"] = version
     plist["CFBundleDisplayName"] = DISPLAY_NAME
+    plist["NSHumanReadableCopyright"] = COPYRIGHT
     with open(plist_path, "wb") as handle:
         plistlib.dump(plist, handle)
     run(["codesign", "--force", "--deep", "--sign", "-", app_path])
@@ -271,6 +279,10 @@ def build_app(version):
         "--add-data", "icon.png%s." % separator,
         "--add-data", "inhalte%sinhalte" % separator,
         "--add-data", "fisi_symbole.otf%s." % separator,
+        # Ab 0.62: readline braucht das Programm nicht (keine Eingabezeile im
+        # Terminal). Unter Linux brachte es libreadline (GPL-3) und libtinfo
+        # mit, gemessen 593 064 Byte und 3 Dateien (Plan 0.62, Abschnitt 6)
+        "--exclude-module", "readline",
     ]
     if sys.platform == "win32":
         command += ["--icon", "icon.ico",
@@ -285,9 +297,45 @@ def build_app(version):
     target = os.path.join(DIST, APP_NAME + (".app" if sys.platform == "darwin" else ""))
     if not os.path.exists(target):
         fail("PyInstaller hat kein Ergebnis erzeugt: %s" % target)
+    check_no_readline(target)
+    write_legal_files(target, version)
     if sys.platform == "darwin":
         _set_macos_version(target, version)
     return target
+
+
+def check_no_readline(target):
+    """Ab 0.62: Bau abbrechen, wenn readline doch wieder hineinrutscht."""
+    found = [os.path.join(folder, name) for folder, _dirs, names in os.walk(target)
+             for name in names if name.startswith(("libreadline", "readline."))]
+    if found:
+        fail("readline ist wieder im Programm (Plan 0.62): " + ", ".join(found))
+    info("readline nicht im Programm (geprueft)")
+
+
+def legal_folder(target):
+    """Ordner, in den LICENSE.txt und THIRD_PARTY_NOTICES.txt kommen."""
+    if sys.platform == "darwin":
+        return os.path.join(target, "Contents", "Resources")
+    return target
+
+
+def write_legal_files(target, version):
+    """Ab 0.62: Hinweise zu Fremdbestandteilen aus dem fertigen Programm
+    erzeugen (lizenzen.py bricht ab, wenn eine Datei ohne Zuordnung bleibt)
+    und mit LICENSE.txt neben das Programm legen. Unter macOS zusaetzlich
+    ein Verweis in Contents/Frameworks (sys._MEIPASS), wie PyInstaller es
+    fuer Datendateien macht."""
+    import lizenzen
+    folder = legal_folder(target)
+    info("Hinweise zu Fremdbestandteilen werden erzeugt (lizenzen.py) ...")
+    lizenzen.generate(target, os.path.join(folder, "THIRD_PARTY_NOTICES.txt"), version)
+    shutil.copy(os.path.join(ROOT, "LICENSE.txt"), os.path.join(folder, "LICENSE.txt"))
+    if sys.platform == "darwin":
+        for name in LEGAL_FILES:
+            link = os.path.join(target, "Contents", "Frameworks", name)
+            if not os.path.lexists(link):
+                os.symlink(os.path.join("..", "Resources", name), link)
 
 
 def check_content():
@@ -382,6 +430,7 @@ def check_macos_bundle(app_path, version):
     with open(os.path.join(app_path, "Contents", "Info.plist"), "rb") as handle:
         plist = plistlib.load(handle)
     expected = {"CFBundleDisplayName": DISPLAY_NAME,
+                "NSHumanReadableCopyright": COPYRIGHT,
                 "CFBundleIdentifier": "de.fisi.lernplattform",
                 "CFBundleShortVersionString": version}
     wrong = ["%s = %r (erwartet %r)" % (key, plist.get(key), value)
@@ -461,6 +510,33 @@ def write_deb_icons(hicolor):
                 image.resize((size, size), Image.LANCZOS).save(target)
 
 
+# Ab 0.62: /usr/share/doc/<Paket>/copyright im Debian-Format (DEP-5), ASCII
+DEB_COPYRIGHT = """Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: {name}
+Upstream-Contact: Nico H <333448595+papst2142-cmd@users.noreply.github.com>
+Source: https://github.com/papst2142-cmd/Fisi-Lernplattform
+
+Files: *
+Copyright: 2026 Nico H
+License: LicenseRef-proprietary
+ Alle Rechte vorbehalten. Der volle Text steht in {doc}/LICENSE.txt.
+ .
+ Bestandteile Dritter und ihre Lizenzen stehen in
+ {doc}/THIRD_PARTY_NOTICES.txt.
+"""
+
+
+def write_doc_files(doc):
+    """Ab 0.62: Lizenz und Hinweise zusaetzlich am ueblichen Linux-Ort
+    (/usr/share/doc/<Paket>/), copyright mit Verweis auf beide Dateien."""
+    os.makedirs(doc)
+    source = os.path.join(DIST, APP_NAME)
+    for name in LEGAL_FILES:
+        shutil.copy(os.path.join(source, name), os.path.join(doc, name))
+    with open(os.path.join(doc, "copyright"), "w", encoding="utf-8") as handle:
+        handle.write(DEB_COPYRIGHT.format(name=DISPLAY_NAME, doc="/usr/share/doc/" + PACKAGE_NAME))
+
+
 def package_deb(version):
     """Installiert nach /opt/fisi-lernplattform, mit Startmenue-Eintrag und
     dem Befehl fisi-lernplattform."""
@@ -479,6 +555,7 @@ def package_deb(version):
     with open(os.path.join(apps, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
         handle.write(DESKTOP_ENTRY.format(exec=PACKAGE_NAME, wm_class=WM_CLASS))
     write_deb_icons(os.path.join(stage, "usr", "share", "icons", "hicolor"))
+    write_doc_files(os.path.join(stage, "usr", "share", "doc", PACKAGE_NAME))
 
     size_kb = sum(os.path.getsize(os.path.join(folder, name))
                   for folder, _dirs, names in os.walk(stage) for name in names
@@ -523,12 +600,19 @@ def package_appimage(version):
     with open(os.path.join(appdir, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
         handle.write(DESKTOP_ENTRY.format(exec=APP_NAME, wm_class=WM_CLASS))
     shutil.copy(os.path.join(ROOT, "icon.png"), os.path.join(appdir, PACKAGE_NAME + ".png"))
+    write_doc_files(os.path.join(appdir, "usr", "share", "doc", PACKAGE_NAME))
 
     machine = platform.machine() or "x86_64"
     target = os.path.join(OUTPUT, "%s-%s-%s.AppImage" % (APP_NAME, version, machine))
     info("AppImage wird erzeugt ...")
     env = dict(os.environ, ARCH=machine, APPIMAGE_EXTRACT_AND_RUN="1")
-    run([tool, appdir, target], env=env)
+    command = [tool, appdir, target]
+    # Ab 0.62: feste, gepruefte Laufzeit (build.yml laedt sie mit SHA-256-
+    # Pruefung). Ohne Angabe laedt appimagetool die jeweils neueste.
+    runtime = os.environ.get("APPIMAGE_RUNTIME")
+    if runtime:
+        command[1:1] = ["--runtime-file", runtime]
+    run(command, env=env)
 
 
 # ============================================================================
@@ -540,6 +624,9 @@ def package_dmg(version, app_path):
     shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(stage)
     _copy_tree(app_path, os.path.join(stage, os.path.basename(app_path)))
+    # Ab 0.62: Lizenz und Hinweise auch sichtbar neben der App
+    for name in LEGAL_FILES:
+        shutil.copy(os.path.join(legal_folder(app_path), name), os.path.join(stage, name))
     # Verknuepfung zum Programme-Ordner, damit man die App hineinziehen kann
     os.symlink("/Applications", os.path.join(stage, "Programme"))
 

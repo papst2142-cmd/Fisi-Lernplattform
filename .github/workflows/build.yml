@@ -105,10 +105,21 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y tk-dev xvfb
+          # Ab 0.62 (A5): feste Fassungen statt "continuous", mit SHA-256-
+          # Pruefung - stimmt eine Pruefsumme nicht, bricht der Bau ab.
+          # appimagetool 1.9.1 und die AppImage-Laufzeit type2-runtime
+          # 20251108 (ihre Lizenzen stehen in THIRD_PARTY_NOTICES.txt).
           curl -fsSL -o appimagetool \
-            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          curl -fsSL -o runtime-x86_64 \
+            https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
+          printf '%s\n' \
+            "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool" \
+            "2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  runtime-x86_64" \
+            | sha256sum --check --strict
           chmod +x appimagetool
           echo "APPIMAGETOOL=$PWD/appimagetool" >> "$GITHUB_ENV"
+          echo "APPIMAGE_RUNTIME=$PWD/runtime-x86_64" >> "$GITHUB_ENV"
 
       - name: Inno Setup bereitstellen
         if: runner.os == 'Windows'
@@ -131,6 +142,14 @@ jobs:
       # und startet die App ein zweites Mal mit echtem Datenordner (M2)
       - name: Anwendung und Installer bauen
         run: python build.py
+
+      # Ab 0.62 (T3): Gegenprobe der Lizenz-Zuordnung auf jedem System - einer
+      # echten Datei wird die Zuordnung weggenommen, die Pruefung muss sie melden
+      - name: Gegenprobe Lizenz-Zuordnung
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then APP=dist/FISI-Lernplattform.app; else APP=dist/FISI-Lernplattform; fi
+          python lizenzen.py "$APP" --gegenprobe
 
       - uses: actions/upload-artifact@v7
         with:
@@ -208,6 +227,14 @@ jobs:
           echo "Vergleich mit: $ALT"
           curl -fsSL -o "$RUNNER_TEMP/alt.apk" "$ALT"
           python pruefung/apk_pruefen.py "installer_output/FISI-Lernplattform-${VERSION}-Android.apk" "$RUNNER_TEMP/alt.apk"
+
+      # Ab 0.62 (Weg B, E5): Lizenzliste der Handy-App mit der neuen APK
+      # vergleichen. Rot = Bestandteile haben sich geaendert, die Meldung nennt
+      # den Befehl zum Neuerzeugen von mobile/lizenzen_android.txt.
+      - name: Lizenzliste der Handy-App pruefen
+        run: |
+          VERSION=$(python -c "import build; print(build.app_version())")
+          python pruefung/lizenzen_android.py "installer_output/FISI-Lernplattform-${VERSION}-Android.apk" --pruefen
 
       - uses: actions/upload-artifact@v7
         with:

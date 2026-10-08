@@ -4,7 +4,17 @@
   (Schwerpunkt Systemintegration)
   Frueherer Name bis 0.60.1: "FISI Lernplattform" - Lernstand, Einstellungen
   und Updates sind von der Umbenennung nicht betroffen.
+  Copyright (c) 2026 Nico H - Alle Rechte vorbehalten (siehe LICENSE.txt)
 ===========================================================================
+
+Hinweis: Die Fachinformatiker Lernplattform ist ein privates Lernprogramm.
+Sie ist kein Angebot und kein Produkt einer Industrie- und Handelskammer
+(IHK) oder einer anderen Pruefungsstelle und wird von diesen weder
+herausgegeben noch geprueft. Die Aufgaben, Szenarien und Testprojekte sind
+eigene Uebungsaufgaben. Sie enthalten keine offiziellen Pruefungsaufgaben.
+Bezeichnungen wie "AP1", "AP2" oder "Note nach IHK-Schluessel" beschreiben
+nur, wofuer geuebt wird und nach welchem Notenschluessel die Uebung
+ausgewertet wird. Erstellt mit Hilfe von Claude (Anthropic).
 
 Versionsschema bis zur Vollversion 1.0:
   Update (neue Funktionen, Aenderungen) :  0.x    z.B. 0.21 -> 0.22 -> 0.23
@@ -32,7 +42,8 @@ abgerundete Kacheln, Farbverlaeufe):
   Pruefungstrainer   2.174 Fragen, davon 54 automatisch erzeugte (Subnetting,
                      Ports, RAID, Abkuerzungen). Uebung: Test-Sessions mit
                      frei waehlbarer Laenge, Zeitmessung, Erklaerung zu jeder
-                     Antwort und Bewertung nach IHK-Notenschluessel.
+                     Antwort und Note nach IHK-Schluessel (Orientierung,
+                     keine amtliche Note).
                      Pruefung: Klausursimulationen nach dem Aufbau von
                      AP1 und AP2.
 
@@ -324,8 +335,21 @@ Programmdateien (PC):
                         (ab 0.59.3)
   fisi_rahmenplan.py    Ausbildungsrahmenplan: Zuordnung der Inhalte,
                         Abdeckung und Gewichtung der Uebungsauswahl
+  fisi_rechtliches.py   Lizenz, Hinweistext und Erststart-Hinweis (Texte
+                        fuer PC und Handy, ab 0.62)
 
 Weitere Dateien:
+  LICENSE.txt           Lizenz des Programms (Alle Rechte vorbehalten; die
+                        veroeffentlichte Version darf zur eigenen
+                        Pruefungsvorbereitung genutzt werden)
+  THIRD_PARTY_NOTICES.txt  Hinweise zu Fremdbestandteilen: entsteht beim Bau
+                        im Programmordner (nicht im Quellcode), erzeugt von
+                        lizenzen.py; Handy: mobile/lizenzen_android.txt,
+                        erzeugt von pruefung/lizenzen_android.py
+  lizenzen.py           Erzeugt THIRD_PARTY_NOTICES.txt aus dem fertigen
+                        Programm, bricht bei Dateien ohne Lizenz ab
+  lizenztexte/          Feste Lizenztexte fuer die Erzeuger (Herkunft in
+                        lizenztexte/QUELLEN.txt)
   fisi_symbole.otf      Symbolschrift der Oberflaeche (Lizenz in
                         fisi_symbole_LIZENZ.txt)
   icon.ico, icon.png    Programmsymbol

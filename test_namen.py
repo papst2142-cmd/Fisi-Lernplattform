@@ -204,6 +204,30 @@ class NeueAnzeigenamen(unittest.TestCase):
                       read("build.py"))
         self.assertRegex(read(os.path.join("mobile", "pyproject.toml")), r'(?m)^company = "Nico H"$')
 
+    def test_copyright(self):
+        # Ab 0.62 (Plan 5, E2): ueberall genau "Nico H", ohne Punkt
+        feld = "Copyright (c) 2026 Nico H"
+        self.assertEqual(build.COPYRIGHT, feld)
+        self.assertIn("\nAppCopyright=%s\n" % feld, read("FISI-Lernplattform.iss"))
+        self.assertIn('("LegalCopyright", COPYRIGHT)', read("build.py"))
+        self.assertIn('plist["NSHumanReadableCopyright"] = COPYRIGHT', read("build.py"))
+        self.assertIn('"NSHumanReadableCopyright": COPYRIGHT', read("build.py"))
+        self.assertIn("\nCopyright: 2026 Nico H\n", build.DEB_COPYRIGHT)
+        self.assertRegex(read(os.path.join("mobile", "pyproject.toml")),
+                         r'(?m)^copyright = "%s"$' % re.escape(feld))
+        self.assertIn('Pruefung "Copyright der Exe" ($copy -ceq "%s")' % feld,
+                      read(os.path.join(".github", "update-test", "update_test.ps1")))
+        import fisi_rechtliches
+        self.assertEqual(fisi_rechtliches.COPYRIGHT_FELD, feld)
+        self.assertEqual(fisi_rechtliches.COPYRIGHT, feld + " – Alle Rechte vorbehalten")
+        self.assertIn(fisi_rechtliches.COPYRIGHT + "\n", read("LICENSE.txt"))
+        self.assertIn("  %s - Alle Rechte vorbehalten" % feld, read("LIESMICH.txt"))
+        # Gegenprobe: nirgends "Nico H." (mit Punkt)
+        for name in ("build.py", "FISI-Lernplattform.iss", "LICENSE.txt", "LIESMICH.txt",
+                     "fisi_rechtliches.py", os.path.join("mobile", "pyproject.toml"),
+                     os.path.join(".github", "update-test", "update_test.ps1")):
+            self.assertNotIn("Nico H.", read(name), name)
+
     def test_installer_entfernt_alte_verknuepfungen(self):
         # Ohne diese Zeilen haette der Nutzer nach dem Update zwei Startmenue-
         # Eintraege und zwei Desktop-Symbole (Plan 0.61, 7.1)
@@ -223,6 +247,7 @@ class NeueAnzeigenamen(unittest.TestCase):
             app = os.path.join(folder, "FISI-Lernplattform.app")
             os.makedirs(os.path.join(app, "Contents"))
             plist = {"CFBundleDisplayName": "Fachinformatiker Lernplattform",
+                     "NSHumanReadableCopyright": "Copyright (c) 2026 Nico H",
                      "CFBundleIdentifier": "de.fisi.lernplattform",
                      "CFBundleShortVersionString": "0.61"}
             with open(os.path.join(app, "Contents", "Info.plist"), "wb") as handle:

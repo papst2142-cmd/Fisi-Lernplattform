@@ -121,7 +121,7 @@ CHECKLIST_PROPOSAL = [
     ("max40", "Summe höchstens 40 Stunden inklusive Dokumentation"),
     ("eigenleistung", "Eigene Leistung klar erkennbar"),
     ("messbar", "Projektziel messbar beschrieben"),
-    ("ki", "Einsatz von KI-Hilfsmitteln gekennzeichnet (falls die IHK das verlangt)"),
+    ("ki", "Einsatz von KI-Hilfsmitteln gekennzeichnet (frag bei deiner IHK nach)"),
 ]
 CHECKLIST_PRESENTATION = [
     ("p_dauer", "Dauer 12 bis 15 Minuten"),

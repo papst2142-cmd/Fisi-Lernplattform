@@ -23,6 +23,9 @@ dependencies = [
 product = "FI Lernplattform"
 org = "io.github.papst2142cmd"
 company = "Nico H"
+# Ab 0.62: Flet 1.0.1 liest das Feld (flet_cli/commands/build_base.py:1560,
+# "tool.flet.copyright"); Android zeigt es nirgends an
+copyright = "Copyright (c) 2026 Nico H"
 build_number = 6100
 icon_background = "#120A24"
 

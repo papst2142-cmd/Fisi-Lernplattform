@@ -12,6 +12,8 @@ Signaturzertifikat gleich bleiben. Dieses Skript prueft:
   2. Beschriftung unter dem Symbol ist die erwartete (Standard "FI Lernplattform")
   3. Zertifikat (Signatur v2/v3) ist dasselbe wie in der Vergleichs-APK
      (in der CI: die APK des letzten normalen Release)
+  4. ab 0.62: LICENSE.txt, THIRD_PARTY_NOTICES.txt und fisi_rechtliches in
+     der App (assets/app.zip)
 
 Nur Python, ohne apksigner/Android-SDK. keytool kann diese APKs nicht lesen,
 weil sie keine v1-Signatur haben.
@@ -25,6 +27,8 @@ import sys
 import zipfile
 
 PACKAGE = "io.github.papst2142cmd.fisi_lernplattform"
+# Ab 0.62: Lizenz und Hinweise zu Fremdbestandteilen muessen in der App liegen
+APP_FILES = ("LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "fisi_rechtliches.pyc")
 LABEL = "FI Lernplattform"
 SIGNATURE_IDS = {0x7109871A: "v2", 0xF05368C0: "v3"}
 
@@ -99,6 +103,14 @@ def check(new_apk, old_apk=None, label=LABEL):
     lines.append("Beschriftung %r: %s" % (label, "ja" if label in strings else "NEIN"))
     if label not in strings:
         errors.append("Beschriftung %r fehlt im Manifest" % label)
+    import io
+    import zipfile
+    app = zipfile.ZipFile(io.BytesIO(zipfile.ZipFile(new_apk).read("assets/app.zip")))
+    for name in APP_FILES:
+        present = name in app.namelist()
+        lines.append("%s in app.zip: %s" % (name, "ja" if present else "NEIN"))
+        if not present:
+            errors.append("%s fehlt in der App (mobile/vorbereiten.py)" % name)
     new_certs = certificates(new_apk)
     lines.append("Zertifikat neu: %s" % (new_certs or "keins"))
     if not new_certs:

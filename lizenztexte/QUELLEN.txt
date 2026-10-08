@@ -1,0 +1,31 @@
+Herkunft der festen Lizenztexte in diesem Ordner (abgerufen am 08.10.2026)
+Die Texte sind unveraendert kopiert. lizenzen.py und pruefung/lizenzen_android.py
+setzen sie in die erzeugten THIRD_PARTY_NOTICES.txt ein.
+
+Apache-2.0.txt                    /usr/share/common-licenses/Apache-2.0 (Ubuntu 24.04)
+OFL-1.1.txt                       https://raw.githubusercontent.com/google/fonts/main/ofl/lato/OFL.txt
+                                  (nur der Lizenztext ab der Trennlinie, ohne die Lato-Kopfzeilen)
+appimage-laufzeit/type2-runtime.txt  https://raw.githubusercontent.com/AppImage/type2-runtime/main/LICENSE
+appimage-laufzeit/musl.txt           https://raw.githubusercontent.com/kraj/musl/master/COPYRIGHT
+                                     (Spiegel; git.musl-libc.org war aus der Cloud gesperrt)
+appimage-laufzeit/libfuse-LGPL2.txt  https://raw.githubusercontent.com/libfuse/libfuse/master/LGPL2.txt
+appimage-laufzeit/squashfuse.txt     https://raw.githubusercontent.com/vasi/squashfuse/master/LICENSE
+appimage-laufzeit/zstd.txt           https://raw.githubusercontent.com/facebook/zstd/dev/LICENSE
+appimage-laufzeit/zlib.txt           https://raw.githubusercontent.com/madler/zlib/develop/LICENSE
+
+Die Liste der Bestandteile der AppImage-Laufzeit stammt aus der Laufzeit selbst
+(type2-runtime 20251108, Hilfetext "This executable contains code from").
+
+python/license-3.12.rst           https://raw.githubusercontent.com/python/cpython/v3.12.15/Doc/license.rst
+python/license-3.14.rst           https://raw.githubusercontent.com/python/cpython/v3.14.8/Doc/license.rst
+                                  (Python-Dokumentation "History and License" mit dem Teil
+                                  "Licenses and Acknowledgements for Incorporated Software":
+                                  OpenSSL, expat, libffi, zlib, libmpdec, mimalloc, ...)
+sqlite.txt                        https://raw.githubusercontent.com/sqlite/sqlite/version-3.50.4/LICENSE.md
+xz.txt                            https://raw.githubusercontent.com/tukaani-project/xz/v5.4.6/COPYING
+bzip2.txt                         https://gitlab.com/bzip2/bzip2/-/raw/bzip2-1.0.8/LICENSE
+
+Die Versionen der Quellen entsprechen der Handy-App 0.61 (gemessen in der APK:
+OpenSSL 3.5.7, SQLite 3.50.4, XZ 5.4.6, bzip2 1.0.8, zstd 1.5.7, expat 2.8.2).
+Am PC koennen die Versionen abweichen; der Lizenztext dieser Bestandteile ist
+ueber die Versionen gleich.

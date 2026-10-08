@@ -31,6 +31,8 @@ AppVersion={#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoProductVersion={#MyAppVersion}
 AppPublisher=Nico H
+; Ab 0.62: Copyright in den Setup-Eigenschaften (wie LegalCopyright der Exe, build.py)
+AppCopyright=Copyright (c) 2026 Nico H
 DefaultDirName={localappdata}\Programs\FISI-Lernplattform
 DefaultGroupName={#MyAppName}
 ; Ab 0.61: neue Startmenue-Gruppe statt der alten "FISI Lernplattform"

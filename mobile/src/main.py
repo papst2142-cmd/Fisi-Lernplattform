@@ -37,6 +37,7 @@ import flet as ft  # noqa: E402
 import fisi_diagnose as fdg  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_optionen as fo  # noqa: E402
+import fisi_rechtliches as fr  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
@@ -345,7 +346,11 @@ class DashboardScreen(Screen):
         self.timeline_ap1 = ui.ThemeProgress()
         self.timeline = ui.ThemeProgress()
 
+        # Ab 0.62: Platz fuer den Erststart-Hinweis (feste Stelle, nur ein-/
+        # ausgeblendet - siehe FISIMobileApp.maybe_show_notice)
+        self.notice_holder = ft.Container(visible=False)
         return screen_list([
+            self.notice_holder,
             self.hero,
             self.today_card,
             ft.Row([ring_card(DASH_RING_CARDS, self.ring_cards),
@@ -482,7 +487,7 @@ class LearnScreen(Screen):
          "%d Karten in %s Fachbereichen" % (len(KARTEIKARTEN), count_word(len(CATEGORIES))),
          "accent"),
         ("quiz", ft.Icons.TRACK_CHANGES_ROUNDED, "Prüfungstrainer",
-         "%d Aufgaben, mit IHK-Note" % len(QUIZ_QUESTIONS), "primary"),
+         "%d Aufgaben, mit %s" % (len(QUIZ_QUESTIONS), fr.NOTE_KURZ), "primary"),
         ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1-Szenarien",
          "%d Aufgaben der Grundlagenprüfung" % len(AP1_SZENARIEN), ("#2563EB", "#22D3EE")),
         ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2-Szenarien",
@@ -1016,9 +1021,10 @@ class QuizScreen(Screen):
         hint = ("Das Ergebnis wurde gespeichert." if saved
                 else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
         self.lbl_question.value = (
-            "Session beendet\n\nErgebnis: %d von %d richtig (%.1f %%)\nIHK-Note: %s\n"
+            "Session beendet\n\nErgebnis: %d von %d richtig (%.1f %%)\n%s: %s\n"
             "Dauer: %02d:%02d Minuten\n\n%s"
-            % (self.score, total, percentage, note, elapsed // 60, elapsed % 60, hint))
+            % (self.score, total, percentage, fr.NOTE_LANG, note, elapsed // 60,
+               elapsed % 60, hint))
         self.app.notify_progress()
         follow_up, self.follow_up = self.follow_up, None
         if follow_up is not None:
@@ -1084,8 +1090,8 @@ def overall_controls(db):
             hint += " Die Projektnote schätzt du im Abschlussprojekt unter „Übersicht“."
         controls.append(ui.text(hint, size=12, color=C["muted"]))
         return controls
-    controls.append(ui.text("Gesamt %s Punkte · Note %s · %s" % (
-        points_text(result["gesamt"]), result["note"],
+    controls.append(ui.text("Gesamt %s Punkte · %s %s · %s" % (
+        points_text(result["gesamt"]), fr.NOTE_KURZ, result["note"],
         "bestanden" if result["bestanden"] else "nicht bestanden"), size=15,
         weight=ft.FontWeight.BOLD, color=C["green"] if result["bestanden"] else C["red"]))
     for text, ok in result["regeln"]:
@@ -1338,14 +1344,17 @@ class ExamPanel(ft.Column):
             past = [ui.text("Noch keine Prüfung abgelegt.", size=13, color=C["muted"])]
         self.controls = [
             ui.Card("Prüfung nach IHK-Vorbild", [
-                ui.text("Wie in der echten Prüfung: feste Zeit ohne Pause, alle Aufgaben "
-                        "sind Pflicht, keine Musterlösung während der Prüfung. Offene "
-                        "Aufgaben bewertest du nach der Abgabe selbst anhand der "
-                        "Musterlösung, WiSo wird automatisch ausgewertet. Notenschlüssel "
-                        "der IHK: ab 92 Punkten sehr gut, ab 81 gut, ab 67 befriedigend, "
-                        "ab 50 ausreichend, ab 30 mangelhaft.", size=13,
+                ui.text("Aufgebaut wie die echte Prüfung: feste Zeit ohne Pause, alle "
+                        "Aufgaben sind Pflicht, keine Musterlösung während der Prüfung. "
+                        "Offene Aufgaben bewertest du nach der Abgabe selbst anhand der "
+                        "Musterlösung, WiSo wird automatisch ausgewertet. %s: ab 92 "
+                        "Punkten sehr gut, ab 81 gut, ab 67 befriedigend, ab 50 "
+                        "ausreichend, ab 30 mangelhaft." % fr.NOTE_LANG, size=13,
                         color=C["text_soft"]),
-                *rows], accent=C["accent"], subtitle="Verordnung 2020"),
+                # Ab 0.62: Kurzhinweis wie am PC
+                ui.text(fr.HINWEIS_KURZ, size=12, color=C["muted"]),
+                *rows], accent=C["accent"],
+                subtitle="Aufbau nach der Ausbildungsverordnung 2020"),
             ui.Card("Letzte Prüfungen", past, accent=C["purple"],
                     subtitle="%d insgesamt" % len(history)),
             ui.Card("Gesamtergebnis", overall_controls(self.db), accent=C["green"],
@@ -1632,8 +1641,8 @@ class ExamPanel(ft.Column):
         lines = [ft.Row([ui.text("%s Punkte" % points_text(result["punkte"]), size=30,
                                  weight=ft.FontWeight.BOLD,
                                  color=note_color(result["punkte"]))]),
-                 ui.text("IHK-Note %s  ·  Dauer %s" % (result["note"],
-                                                      fp.time_text(result["dauer"])),
+                 ui.text("%s %s  ·  Dauer %s" % (fr.NOTE_KURZ, result["note"],
+                                                 fp.time_text(result["dauer"])),
                          size=14, weight=ft.FontWeight.BOLD)]
         if art == fp.WISO:
             lines.append(ui.text("%d von %d Fragen richtig" % (
@@ -3638,13 +3647,18 @@ class SettingsScreen(Screen):
             ft.Row([ui.GradientButton("Bestenliste löschen", self.reset_records,
                                       kind="danger")]),
         ], accent=C["red"], subtitle=DELETE_SUBTITLE)
-        about = self._area("ueber", [ui.text(
-            "%s Version %s\n\nLernprogramm für die Prüfungsvorbereitung zum Fachinformatiker "
-            "(Schwerpunkt Systemintegration) mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
-            "Testprojekten und Praxis-Rechnern.\n\nDie Handy-App nutzt dieselben "
-            "Lerninhalte wie die PC-Version und ist mit Python und Flet umgesetzt."
-            % (APP_TITLE, APP_VERSION), size=14, color=C["text_dim"])],
-            accent=C["green"])
+        # Ab 0.62: Copyright, Hinweistext und Claude-Hinweis aus fisi_rechtliches
+        # (wortgleich mit dem PC), darunter Lizenz und Fremdbestandteile
+        about = self._area("ueber", [
+            ui.text(fr.about_text(APP_TITLE, APP_VERSION,
+                                  "Die Handy-App nutzt dieselben Lerninhalte wie die "
+                                  "PC-Version und ist mit Python und Flet umgesetzt."),
+                    size=14, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fr.BTN_LIZENZ, lambda _e: self.show_license(),
+                                      kind="ghost"),
+                    ui.GradientButton(fr.BTN_FREMD, lambda _e: self.show_notices(),
+                                      kind="ghost")], wrap=True, spacing=10, run_spacing=10),
+        ], accent=C["green"])
         tools = self._area(fo.DIAGNOSE_ID, report_controls + measure_controls,
                            accent=C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE)
         # Ab 0.59: Reihenfolge aus fisi_optionen (Updates ganz oben, E2)
@@ -3655,6 +3669,39 @@ class SettingsScreen(Screen):
         self.areas = {area["id"]: built[area["id"]] for area in fo.areas(pc=False)}
         self.list_view = screen_list(list(self.areas.values()))
         return self.list_view
+
+    # -- Lizenz und Fremdbestandteile (ab 0.62) ------------------------------
+
+    def show_license(self):
+        """Lizenz als eigene Seite (Zurueck-Pfeil fuehrt in die Optionen)."""
+        content = screen_list([ui.Card(fr.TITEL_LIZENZ, [
+            ui.text(fr.read_file(fr.LICENSE_FILE), size=13, color=C["text_soft"])],
+            accent=C["green"])])
+        self.app.push(fr.CRUMB_LIZENZ, content)
+        return content
+
+    def show_notices(self):
+        """Hinweise zu Fremdbestandteilen: zuerst die Uebersicht, ein Abschnitt
+        kommt erst bei Auswahl auf die Seite (die Datei ist ueber 1,5 MB gross,
+        Plan 0.62, 4.5)."""
+        choices = dict(fr.notice_choices(*fr.load_notices()))
+        body = ui.text(choices[fr.UEBERSICHT], size=12, color=C["text_soft"])
+
+        def choose(event):
+            body.value = choices.get(event.control.value, "")
+            self.app.page.update()
+
+        menu = ft.Dropdown(
+            label=fr.ABSCHNITT, value=fr.UEBERSICHT, expand=True, on_select=choose,
+            options=[ft.dropdown.Option(key=name, text=name) for name in choices],
+            bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
+            border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
+            color=C["text"], text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]))
+        content = screen_list([ui.Card(fr.TITEL_FREMD, [ft.Row([menu]), body],
+                                       accent=C["green"])])
+        self.notices_menu, self.notices_body = menu, body
+        self.app.push(fr.CRUMB_FREMD, content)
+        return content
 
     def _area(self, area_id, controls, accent=None, subtitle=None):
         """Ab 0.59: Bereich der Optionen (Titel aus fisi_optionen). Offen nur
@@ -4867,6 +4914,35 @@ class FISIMobileApp:
         except Exception:
             traceback.print_exc()
 
+    def maybe_show_notice(self):
+        """Ab 0.62: Erststart-Hinweis als kleine Leiste oben auf "Start", bis
+        "Verstanden" gedrueckt wird (Merker je Geraet in einstellungen.json,
+        auch fuer bestehende Nutzer einmal, E6). Nicht modal."""
+        try:
+            if not fr.notice_due():
+                return None
+            holder = self.screens["dashboard"].notice_holder
+
+            def understood(_event):
+                fr.mark_notice_seen()
+                holder.visible = False
+                holder.content = None
+                self.page.update()
+
+            holder.content = ft.Container(
+                content=ft.Column([
+                    ui.text(fr.ERSTSTART, size=13, color=C["text_soft"]),
+                    ft.Row([ui.GradientButton(fr.BTN_VERSTANDEN, understood, kind="ghost",
+                                              height=38)])], spacing=8, tight=True),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border_hi"]),
+                border_radius=12, padding=ft.Padding.symmetric(horizontal=14, vertical=10))
+            holder.visible = True
+            self.page.update()
+            return holder
+        except Exception:
+            traceback.print_exc()
+            return None
+
     def open_search_hit(self, kind, title):
         if kind == fh.SEARCH_KIND:
             self.open_help(fh.HELP_BY_TITLE[title]["id"])
@@ -5229,6 +5305,7 @@ def main(page: ft.Page):
     if os.environ.get("FISI_SELFTEST"):
         return
     app.maybe_start_tour()
+    app.maybe_show_notice()
     app.sync.auto_start()
     app.auto_check(delay=app.AUTO_DELAY)
 
