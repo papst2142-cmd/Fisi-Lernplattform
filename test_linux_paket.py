@@ -369,6 +369,12 @@ class VerknuepfungErneuern(unittest.TestCase):
         self.assertIsNone(fsc.renew_own("deb", self.folder))
         self.assertEqual(self._read(), once)
 
+    def test_f_eigene_umbenannte_bleibt(self):
+        renamed = OLD_SHORTCUT_061.replace("Name=FISI Lernplattform", "Name=Mein Lernen")
+        self._write(renamed)
+        self.assertIsNone(fsc.renew_own("deb", self.folder))
+        self.assertEqual(self._read(), renamed)
+
     def test_d_ohne_verknuepfung_oder_ausserhalb_linux(self):
         self.assertIsNone(fsc.renew_own("appimage", self.folder))
         self.assertFalse(os.path.exists(self.path))

@@ -510,7 +510,7 @@ jobs:
             echo "**AppImage startet nicht?** Es braucht \`/dev/fuse\` und \`fusermount3\` oder \`fusermount\` (Paket \`fuse3\`, \`fuse2\` bzw. \`fuse\`, je nach System; libfuse2 ist nicht mehr nötig). Ohne Installation geht es mit \`--appimage-extract-and-run\`. Unter Debian/Ubuntu/Mint gibt es das .deb-Paket. Mehr dazu in LIESMICH.txt."
             echo ""
             # Ab 0.61 (E3): Haenger-Befehl beim Entpack-Start (im Container gemessen)
-            echo "Wer das AppImage mit \`--appimage-extract-and-run\` startet und bei einem Hänger den Befehl aus LIESMICH.txt nutzt, nimmt dort \`pgrep -i -x -n fisi-lernplattf\` (n statt o). Sonst trifft der Befehl das Startprogramm des AppImage und beendet es."
+            echo "**Hänger-Befehl beim AppImage:** Beim normalen Start gilt der Befehl aus LIESMICH.txt \`kill -USR1 \$(pgrep -i -x -o fisi-lernplattf)\`. Wer das AppImage mit \`--appimage-extract-and-run\` startet, nimmt \`pgrep -i -x -n fisi-lernplattf\` (n statt o); sonst trifft der Befehl das Startprogramm des AppImage und beendet es."
             echo ""
             # Ab 0.61: macOS ehrlich benennen (kein Mac zum Testen)
             echo "**macOS:** Die Mac-Versionen werden automatisch gebaut und auf Mac-Rechnern von GitHub einmal gestartet und geprüft. Auf einem echten Mac von Menschen getestet sind sie nicht."
