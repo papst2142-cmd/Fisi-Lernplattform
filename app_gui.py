@@ -7898,6 +7898,12 @@ class FISIApp:
     def maybe_start_tour(self):
         """Rundgang beim Start (ab 0.56) - nur fuer neue Nutzer (Bestandsschutz,
         siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        # Ab 0.61: eigene Verknuepfung mit altem Namen still erneuern - vor
+        # dem Rundgang, damit es nicht erst nach dessen Schliessen passiert
+        try:
+            fsc.renew_own()
+        except Exception:
+            log_exception(*sys.exc_info())
         tour = None
         try:
             if fh.tour_due(self.db):
@@ -7912,12 +7918,7 @@ class FISIApp:
             self.root.after(2500, self.maybe_ask_shortcut)
 
     def maybe_ask_shortcut(self):
-        """Ab 0.59 (8b): Rueckfrage "Desktop-Verknuepfung anlegen?" (Linux).
-        Ab 0.61 vorher still: eigene Verknuepfung mit altem Namen erneuern."""
-        try:
-            fsc.renew_own()
-        except Exception:
-            log_exception(*sys.exc_info())
+        """Ab 0.59 (8b): Rueckfrage "Desktop-Verknuepfung anlegen?" (Linux)."""
         try:
             if fsc.should_ask():
                 ShortcutDialog(self)

@@ -376,6 +376,16 @@ class VerknuepfungErneuern(unittest.TestCase):
         self.assertIsNone(fsc.renew_own("windows", self.folder))
         self.assertEqual(self._read(), OLD_SHORTCUT_061)
 
+    def test_e_erneuern_vor_dem_rundgang(self):
+        # Container-Test T6: beim ersten Start (Rundgang offen) wartete die
+        # Erneuerung bis zum Schliessen des Rundgangs - jetzt laeuft sie vorher
+        with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        start = source.index("    def maybe_start_tour(self):")
+        body = source[start:source.index("\n    def ", start + 10)]
+        self.assertIn("fsc.renew_own()", body)
+        self.assertLess(body.index("fsc.renew_own()"), body.index("fh.tour_due("))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
