@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Sperre gegen Mehrfachstart (ab 0.59.1)
-===========================================================
+Fachinformatiker Lernplattform - Sperre gegen Mehrfachstart (ab 0.59.1)
+=======================================================================
 
 Ein zweiter Start oeffnet kein zweites Fenster, sondern holt das laufende
 nach vorn (auch aus dem minimierten Zustand). Nur PC unter Linux und

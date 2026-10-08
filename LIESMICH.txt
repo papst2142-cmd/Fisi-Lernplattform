@@ -1,6 +1,9 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.60.1
-  Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.61
+  Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
+  (Schwerpunkt Systemintegration)
+  Frueherer Name bis 0.60.1: "FISI Lernplattform" - Lernstand, Einstellungen
+  und Updates sind von der Umbenennung nicht betroffen.
 ===========================================================================
 
 Versionsschema bis zur Vollversion 1.0:
@@ -123,6 +126,9 @@ INSTALLER-ANLEITUNG.txt. Kurzfassung:
              die Datei mit "arm64" im Namen nehmen, fuer aeltere Macs die
              mit "intel". Beim ersten Start Rechtsklick -> "Oeffnen"
              waehlen (siehe INSTALLER-ANLEITUNG.txt).
+             Hinweis: Die Mac-Versionen werden automatisch gebaut und auf
+             Mac-Rechnern von GitHub einmal gestartet und geprueft. Auf
+             einem echten Mac von Menschen getestet sind sie nicht.
 
 
 UPDATES
@@ -189,7 +195,7 @@ Einmalig einrichten:
        github.com -> Profilbild oben rechts -> Settings -> Developer
        settings -> Personal access tokens -> Fine-grained tokens ->
        "Generate new token"
-       - Token name:        z.B. "FISI Abgleich PC" bzw. "FISI Abgleich Handy"
+       - Token name:        z.B. "Lernplattform Abgleich PC" bzw. "Lernplattform Abgleich Handy"
        - Expiration:        Ablaufdatum waehlen (z.B. 1 Jahr). Danach
                             einfach einen neuen Token erzeugen und eintragen.
        - Repository access: "Only select repositories" -> fisi-lernstand
@@ -476,7 +482,12 @@ Programm haengt (Linux, ab 0.59.2)
     es steht. Unter Linux laesst sich das auch sofort ausloesen: ein
     Terminal oeffnen und eingeben
       kill -USR1 $(pgrep -i -x -o fisi-lernplattf)
-    Das Programm wird dabei nicht beendet. ACHTUNG: Das gilt erst ab
+    Das Programm wird dabei nicht beendet. Wer das AppImage mit
+    --appimage-extract-and-run startet, nimmt stattdessen
+      kill -USR1 $(pgrep -i -x -n fisi-lernplattf)
+    (n statt o). Der Befehl oben wuerde sonst das Startprogramm des
+    AppImage treffen und es beenden. Beim normalen Start bleibt es bei dem
+    Befehl oben. ACHTUNG: Das gilt erst ab
     Version 0.59.2. In Version 0.59.1 und aelter beendet derselbe Befehl
     das Programm. Die Datei steht danach unter Optionen -> "Diagnose und
     Werkzeuge" im Bericht bei "Problem melden".
@@ -487,8 +498,8 @@ Linux mit IBus (Wayland ab 0.59.3, X11 ab 0.60)
     in einer Test-Umgebung geprueft). Sonst kann es beim
     Darstellungswechsel, beim Oeffnen der Suche oder beim Schliessen
     einfrieren (Wayland) oder sehr langsam werden (X11); Umlaute, ss,
-    AltGr-Zeichen und tote Tasten gehen weiter. Programme, die FISI selbst
-    oeffnet (Ordner, Browser), uebernehmen diese Einstellung, praktisch
+    AltGr-Zeichen und tote Tasten gehen weiter. Programme, die das Programm
+    selbst oeffnet (Ordner, Browser), uebernehmen diese Einstellung, praktisch
     ohne Folgen. Wer IBus im Programm braucht (z. B. fuer Chinesisch oder
     Emoji), startet es mit
       FISI_XIM=1 fisi-lernplattform

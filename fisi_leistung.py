@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Leistungsmessung (ab 0.58.1)
-=================================================
+Fachinformatiker Lernplattform - Leistungsmessung (ab 0.58.1)
+=============================================================
 
 Zeichnet auf Wunsch (Schalter in den Optionen, standardmaessig aus) auf, wie
 lange Seitenwechsel, Darstellungswechsel und Aenderungen der Fenstergroesse

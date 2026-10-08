@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Kernmodul
-==============================
+Fachinformatiker Lernplattform - Kernmodul
+==========================================
 
 Enthaelt:
   * Pfadaufloesung fuer die Datenbank (plattformunabhaengig)
@@ -31,8 +31,38 @@ import uuid
 # ============================================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LEGACY_DB_PATH = os.path.join(BASE_DIR, "fisi_lernplattform.db")
-APP_NAME = "FISI-Lernplattform"
+
+# Ab 0.61: technische Namen und Anzeigenamen getrennt (Konzept R2, Abschnitt 3).
+# Datenordner unter Windows (%APPDATA%) und macOS (~/Library/Application Support).
+# NIE AENDERN: Lernstand, Einstellungen, Sperre und Protokolle liegen dort
+# (test_namen.py prueft das).
+DATA_DIR_NAME = "FISI-Lernplattform"
+DATA_DIR_NAME_LINUX = "fisi-lernplattform"   # $XDG_DATA_HOME bzw. ~/.local/share
+DB_FILE_NAME = "fisi_lernplattform.db"       # auch Handy (FLET_APP_STORAGE_DATA)
+LEGACY_DB_PATH = os.path.join(BASE_DIR, DB_FILE_NAME)
+
+# Anzeige (ab 0.61). Nur diese Werte duerfen sich bei einer Umbenennung aendern.
+APP_DISPLAY_NAME = "Fachinformatiker Lernplattform"
+APP_SHORT_NAME = "FI Lernplattform"          # nur an engen Stellen (Handy-Symbol)
+APP_LOGO_TEXT = "FI"                          # Logo PC, Standard-Brotkrume PC/Handy
+# Uebergangsformulierung bis zur Fachrichtungs-Auswahl (Plan 0.63 bewertet neu)
+APP_DESCRIPTION = ("Lernprogramm für die Prüfungsvorbereitung zum Fachinformatiker "
+                   "(Schwerpunkt Systemintegration)")
+
+
+def data_dir(system=None, env=None, home=None):
+    """Ab 0.61: Datenordner des Betriebssystems ("nt", "darwin" oder ein
+    anderes System = Linux). Parameter nur fuer Tests (test_namen.py), sonst
+    gelten die echten Werte."""
+    system = system or ("nt" if os.name == "nt" else sys.platform)
+    env = os.environ if env is None else env
+    home = home or os.path.expanduser("~")
+    if system == "nt":
+        return os.path.join(env.get("APPDATA") or home, DATA_DIR_NAME)
+    if system == "darwin":
+        return os.path.join(home, "Library", "Application Support", DATA_DIR_NAME)
+    root = env.get("XDG_DATA_HOME") or os.path.join(home, ".local", "share")
+    return os.path.join(root, DATA_DIR_NAME_LINUX)
 
 
 def resolve_db_path():
@@ -53,20 +83,12 @@ def resolve_db_path():
     if os.path.exists(LEGACY_DB_PATH):
         return LEGACY_DB_PATH
 
-    if os.name == "nt":
-        root = os.environ.get("APPDATA") or os.path.expanduser("~")
-        folder = os.path.join(root, APP_NAME)
-    elif sys.platform == "darwin":
-        folder = os.path.expanduser("~/Library/Application Support/" + APP_NAME)
-    else:
-        root = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
-        folder = os.path.join(root, "fisi-lernplattform")
-
+    folder = data_dir()
     try:
         os.makedirs(folder, exist_ok=True)
     except OSError:
         return LEGACY_DB_PATH
-    return os.path.join(folder, "fisi_lernplattform.db")
+    return os.path.join(folder, DB_FILE_NAME)
 
 
 # ============================================================================

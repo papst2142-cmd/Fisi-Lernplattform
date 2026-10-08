@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Sicherung und Wiederherstellung
-====================================================
+Fachinformatiker Lernplattform - Sicherung und Wiederherstellung
+================================================================
 
 Speichert den gesamten Lernstand in einer Datei (*.fisisicherung) und spielt
 ihn wieder ein - ohne GitHub, z.B. vor einem Handywechsel. Bewusst ohne
@@ -71,7 +71,7 @@ BTN_RESTORE = "Sicherung einspielen"
 BTN_MERGE = "Zusammenführen"
 BTN_REPLACE = "Alles ersetzen"
 BTN_CANCEL = "Abbrechen"
-FILE_TYPE = "FISI-Sicherung"
+FILE_TYPE = "Lernstand-Sicherung"   # nur Beschriftung im Dateidialog (ab 0.61)
 PREVIEW_HINT = ("Zusammenführen übernimmt alles, was auf diesem Gerät noch fehlt – "
                 "nichts geht verloren, doppelt wird nichts. Alles ersetzen stellt genau "
                 "den Stand der Sicherung her.")
@@ -83,7 +83,7 @@ REPLACE_CONFIRM = ("Letzte Rückfrage: Den Lernstand dieses Geräts jetzt durch 
 ERROR_TITLE = "Sicherung einspielen"
 SAVE_ERROR_TITLE = "Speichern fehlgeschlagen"
 
-MSG_NOT_BACKUP = "Diese Datei ist keine FISI-Sicherung."
+MSG_NOT_BACKUP = "Diese Datei ist keine Sicherung der Lernplattform."
 MSG_DAMAGED = "Die Sicherung ist beschädigt (Prüfsumme stimmt nicht)."
 MSG_NEWER = "Die Sicherung stammt aus Version %s. Bitte zuerst die App aktualisieren."
 MSG_SLOTS_FULL = ("Alle %d Spielstand-Plätze sind belegt. Lösche zuerst einen Platz, "
@@ -103,8 +103,9 @@ def _now():
 
 
 def default_name(now=None):
-    """Vorschlag fuer den Dateinamen, z.B. FISI-Sicherung_2026-10-01_1423.fisisicherung."""
-    return "FISI-Sicherung_%s%s" % ((now or _now()).strftime("%Y-%m-%d_%H%M"), BACKUP_EXT)
+    """Vorschlag fuer den Dateinamen, z.B. Lernplattform-Sicherung_2026-10-01_1423.fisisicherung
+    (ab 0.61; Endung und interne Kennung KIND bleiben)."""
+    return "Lernplattform-Sicherung_%s%s" % ((now or _now()).strftime("%Y-%m-%d_%H%M"), BACKUP_EXT)
 
 
 def _checksum(data, settings):

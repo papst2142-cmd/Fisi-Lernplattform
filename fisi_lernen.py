@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Lernwerkzeuge ab 0.51 (ohne Oberflaeche)
-=============================================================
+Fachinformatiker Lernplattform - Lernwerkzeuge ab 0.51 (ohne Oberflaeche)
+=========================================================================
 
 Gemeinsam fuer PC und Handy:
   * Wiederholungssystem (Spaced Repetition) fuer Karteikarten und

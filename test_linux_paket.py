@@ -65,14 +65,18 @@ class DesktopEintragTest(unittest.TestCase):
 
     def test_menueeintrag_umlaute_und_einzelfenster(self):
         text = build.DESKTOP_ENTRY.format(exec="fisi-lernplattform", wm_class=build.WM_CLASS)
-        self.assertIn("\nComment=Lernprogramm f\u00fcr die Umschulung zum Fachinformatiker "
-                      "Systemintegration\n", text)
+        self.assertIn("\nComment=Lernprogramm f\u00fcr die Pr\u00fcfungsvorbereitung zum "
+                      "Fachinformatiker (Schwerpunkt Systemintegration)\n", text)
+        # Ab 0.61: neuer Name, FISI bleibt Suchwort (F3)
+        self.assertIn("\nName=Fachinformatiker Lernplattform\n", text)
+        self.assertIn("\nKeywords=Fachinformatiker;FI;FISI;", text)
         self.assertIn("\nSingleMainWindow=true\n", text)
         self.assertEqual(text.count("SingleMainWindow="), 1)
 
     def test_verknuepfung_bleibt_ascii(self):
         text = fsc.entry_text("/opt/fisi-lernplattform/FISI-Lernplattform", "fisi-lernplattform")
-        self.assertIn("Comment=Lernprogramm fuer die Umschulung", text)
+        self.assertIn("Comment=Lernprogramm fuer die Pruefungsvorbereitung", text)
+        self.assertIn("\nName=Fachinformatiker Lernplattform\n", text)
         self.assertNotIn("SingleMainWindow", text)
 
     def test_programm_nutzt_denselben_klassennamen(self):
@@ -147,7 +151,7 @@ class DebPaketTest(unittest.TestCase):
         # der Paketbeschreibung einer lokalen .deb als "?" (Test B 0.59.1),
         # obwohl dpkg -s sie richtig anzeigte.
         self.assertEqual(self._field("Description").splitlines()[:2], [
-            "Lernprogramm fuer Fachinformatiker Systemintegration",
+            "Pruefungsvorbereitung Fachinformatiker (Schwerpunkt Systemintegration)",
             " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und"])
         target = os.path.join(self.folder, "steuerung")
         subprocess.run(["dpkg-deb", "-e", self.deb, target], check=True)
@@ -163,7 +167,7 @@ class DebPaketTest(unittest.TestCase):
             raw = handle.read()
         self.assertFalse(raw.startswith(b"\xef\xbb\xbf"), "BOM im Menueeintrag")
         text = raw.decode("utf-8")
-        self.assertIn("\nComment=Lernprogramm f\u00fcr die Umschulung", text)
+        self.assertIn("\nComment=Lernprogramm f\u00fcr die Pr\u00fcfungsvorbereitung", text)
         self.assertIn("\nSingleMainWindow=true\n", text)
 
     def test_menueeintrag_gueltig(self):
@@ -297,6 +301,96 @@ class VorabTextTest(unittest.TestCase):
     def test_fehlende_apk_bricht_ab(self):
         code, _text, _files = self._run(["fisi-lernplattform_0.59_amd64.deb"])
         self.assertNotEqual(code, 0)
+
+
+OLD_SHORTCUT_061 = """[Desktop Entry]
+Type=Application
+Name=FISI Lernplattform
+Comment=Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+Exec="/home/nico/Programme/FISI Lernplattform.AppImage"
+Icon=/home/nico/.local/share/icons/hicolor/512x512/apps/fisi-lernplattform.png
+Terminal=false
+Categories=Education;
+Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
+StartupWMClass=Fisi-lernplattform
+X-FISI-Verknuepfung=true
+"""
+
+
+class VerknuepfungErneuern(unittest.TestCase):
+    """Ab 0.61 (F4/E1): eigene Desktop-Verknuepfung mit dem Namen bis 0.60.1
+    wird beim Start still erneuert - nur die Anzeigezeilen."""
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp()
+        self.path = os.path.join(self.folder, fsc.FILE_NAME)
+        self.old_desktop = os.environ.pop("XDG_CURRENT_DESKTOP", None)   # kein gio
+
+    def tearDown(self):
+        shutil.rmtree(self.folder, ignore_errors=True)
+        if self.old_desktop is not None:
+            os.environ["XDG_CURRENT_DESKTOP"] = self.old_desktop
+
+    def _write(self, text, mode=0o755):
+        with open(self.path, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        os.chmod(self.path, mode)
+
+    def _read(self):
+        with open(self.path, encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_a_eigene_alte_wird_erneuert(self):
+        self._write(OLD_SHORTCUT_061)
+        self.assertEqual(fsc.renew_own("appimage", self.folder), self.path)
+        text = self._read()
+        self.assertIn("\nName=Fachinformatiker Lernplattform\nGenericName=Lernprogramm\n", text)
+        self.assertIn("\nComment=Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker "
+                      "(Schwerpunkt Systemintegration)\n", text)
+        self.assertIn("\nKeywords=Fachinformatiker;FI;FISI;IHK;", text)
+        # Startbefehl, Symbol und Merker Byte fuer Byte gleich
+        for line in OLD_SHORTCUT_061.splitlines():
+            if line.split("=", 1)[0] not in fsc.DISPLAY_KEYS:
+                self.assertIn("\n" + line + "\n", "\n" + text)
+        self.assertEqual(text.count("Exec="), 1)
+        self.assertEqual(os.stat(self.path).st_mode & 0o777, 0o755)
+        self.assertFalse(os.path.exists(self.path + ".tmp"))
+
+    def test_b_fremde_datei_bleibt(self):
+        foreign = OLD_SHORTCUT_061.replace(fsc.MARKER + "\n", "")
+        self._write(foreign)
+        self.assertIsNone(fsc.renew_own("appimage", self.folder))
+        self.assertEqual(self._read(), foreign)
+
+    def test_c_schon_neu_bleibt(self):
+        self._write(OLD_SHORTCUT_061)
+        fsc.renew_own("deb", self.folder)
+        once = self._read()
+        self.assertIsNone(fsc.renew_own("deb", self.folder))
+        self.assertEqual(self._read(), once)
+
+    def test_f_eigene_umbenannte_bleibt(self):
+        renamed = OLD_SHORTCUT_061.replace("Name=FISI Lernplattform", "Name=Mein Lernen")
+        self._write(renamed)
+        self.assertIsNone(fsc.renew_own("deb", self.folder))
+        self.assertEqual(self._read(), renamed)
+
+    def test_d_ohne_verknuepfung_oder_ausserhalb_linux(self):
+        self.assertIsNone(fsc.renew_own("appimage", self.folder))
+        self.assertFalse(os.path.exists(self.path))
+        self._write(OLD_SHORTCUT_061)
+        self.assertIsNone(fsc.renew_own("windows", self.folder))
+        self.assertEqual(self._read(), OLD_SHORTCUT_061)
+
+    def test_e_erneuern_vor_dem_rundgang(self):
+        # Container-Test T6: beim ersten Start (Rundgang offen) wartete die
+        # Erneuerung bis zum Schliessen des Rundgangs - jetzt laeuft sie vorher
+        with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        start = source.index("    def maybe_start_tour(self):")
+        body = source[start:source.index("\n    def ", start + 10)]
+        self.assertIn("fsc.renew_own()", body)
+        self.assertLess(body.index("fsc.renew_own()"), body.index("fh.tour_due("))
 
 
 if __name__ == "__main__":

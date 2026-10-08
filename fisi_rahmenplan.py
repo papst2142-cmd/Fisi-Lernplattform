@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Ausbildungsrahmenplan (ab 0.55, ohne Oberflaeche)
-======================================================================
+Fachinformatiker Lernplattform - Ausbildungsrahmenplan (ab 0.55, ohne Oberflaeche)
+==================================================================================
 
 Gemeinsam fuer PC und Handy:
   * Rahmenplan und Lernfelder als Daten (inhalte/rahmenplan.json)

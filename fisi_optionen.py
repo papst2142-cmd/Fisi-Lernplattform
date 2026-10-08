@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Aufbau der Optionen (ab 0.59)
-==================================================
+Fachinformatiker Lernplattform - Aufbau der Optionen (ab 0.59)
+==============================================================
 
 Gemeinsam fuer PC (app_gui.py) und Handy (mobile/src/main.py), damit beide
 dieselbe Reihenfolge, dieselben Beschriftungen und dieselbe Suche haben.

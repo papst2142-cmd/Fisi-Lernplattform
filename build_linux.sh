@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ===========================================================================
-#  FISI Lernplattform - Linux-Pakete lokal erstellen
+#  Fachinformatiker Lernplattform - Linux-Pakete lokal erstellen
 # ===========================================================================
 #  Ergebnis in installer_output/:
 #    fisi-lernplattform_<Version>_amd64.deb        (Debian, Ubuntu, Mint ...)
@@ -22,7 +22,7 @@ fehler() { echo -e "${ROT}[FEHLER]${AUS} $1" >&2; exit 1; }
 
 echo
 echo "==========================================================="
-echo "  FISI Lernplattform - Linux-Pakete werden erstellt"
+echo "  Fachinformatiker Lernplattform - Linux-Pakete werden erstellt"
 echo "==========================================================="
 echo
 

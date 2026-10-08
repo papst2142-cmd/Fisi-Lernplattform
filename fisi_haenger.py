@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Haenger-Diagnose (ab 0.59.2, nur PC)
-=========================================================
+Fachinformatiker Lernplattform - Haenger-Diagnose (ab 0.59.2, nur PC)
+=====================================================================
 
 Haelt fest, WO das Programm steht, wenn der Hauptfaden haengt oder lange
 blockiert ist - nur Diagnose, kein anderes Verhalten.

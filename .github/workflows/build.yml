@@ -1,5 +1,5 @@
 # ============================================================================
-#  FISI Lernplattform - Installer fuer Windows, Linux und macOS bauen
+#  Fachinformatiker Lernplattform - Installer fuer Windows, Linux und macOS bauen
 # ============================================================================
 #  PyInstaller kann nur fuer das System bauen, auf dem es laeuft. Deshalb
 #  fuehrt GitHub hier build.py auf je einem Windows-, Linux- und macOS-Rechner
@@ -121,6 +121,14 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: python -m pip install -r requirements-build.txt
 
+      # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
+      # Unter macOS laeuft sonst keine Testsammlung.
+      - name: Namens-Waechter (macOS)
+        if: runner.os == 'macOS'
+        run: python test_namen.py
+
+      # Unter macOS prueft build.py ab 0.61 zusaetzlich die Info.plist (M3)
+      # und startet die App ein zweites Mal mit echtem Datenordner (M2)
       - name: Anwendung und Installer bauen
         run: python build.py
 
@@ -187,6 +195,19 @@ jobs:
           APK=$(ls mobile/build/apk/*.apk | head -n 1)
           cp "$APK" "installer_output/FISI-Lernplattform-${VERSION}-Android.apk"
           ls -l installer_output
+
+      # Ab 0.61 (T10): Paketkennung, Beschriftung und Signaturzertifikat. Nur
+      # mit gleichem Paket und gleichem Zertifikat installiert Android die APK
+      # als Update der vorhandenen App (Lernstand bleibt).
+      - name: APK pruefen (Paket, Beschriftung, Zertifikat wie letztes Release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(python -c "import build; print(build.app_version())")
+          ALT=$(gh api repos/${{ github.repository }}/releases/latest --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
+          echo "Vergleich mit: $ALT"
+          curl -fsSL -o "$RUNNER_TEMP/alt.apk" "$ALT"
+          python pruefung/apk_pruefen.py "installer_output/FISI-Lernplattform-${VERSION}-Android.apk" "$RUNNER_TEMP/alt.apk"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -488,6 +509,12 @@ jobs:
             # also nur auf der Release-Seite, nicht im Update-Fenster)
             echo "**AppImage startet nicht?** Es braucht \`/dev/fuse\` und \`fusermount3\` oder \`fusermount\` (Paket \`fuse3\`, \`fuse2\` bzw. \`fuse\`, je nach System; libfuse2 ist nicht mehr nötig). Ohne Installation geht es mit \`--appimage-extract-and-run\`. Unter Debian/Ubuntu/Mint gibt es das .deb-Paket. Mehr dazu in LIESMICH.txt."
             echo ""
+            # Ab 0.61 (E3): Haenger-Befehl beim Entpack-Start (im Container gemessen)
+            echo "**Hänger-Befehl beim AppImage:** Beim normalen Start gilt der Befehl aus LIESMICH.txt \`kill -USR1 \$(pgrep -i -x -o fisi-lernplattf)\`. Wer das AppImage mit \`--appimage-extract-and-run\` startet, nimmt \`pgrep -i -x -n fisi-lernplattf\` (n statt o); sonst trifft der Befehl das Startprogramm des AppImage und beendet es."
+            echo ""
+            # Ab 0.61: macOS ehrlich benennen (kein Mac zum Testen)
+            echo "**macOS:** Die Mac-Versionen werden automatisch gebaut und auf Mac-Rechnern von GitHub einmal gestartet und geprüft. Auf einem echten Mac von Menschen getestet sind sie nicht."
+            echo ""
             # Ab 0.59.1: Linux-Absatz zum .deb und Hinweis zum Update-Fenster
             # (ebenfalls unter "### Herunterladen", nicht im Update-Fenster)
             VERSION=$(python3 -c "import build; print(build.app_version())")
@@ -512,6 +539,6 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
-          name: FISI Lernplattform ${{ env.TAG }}
+          name: Fachinformatiker Lernplattform ${{ env.TAG }}
           body_path: versionshinweise.md
           files: installer/*

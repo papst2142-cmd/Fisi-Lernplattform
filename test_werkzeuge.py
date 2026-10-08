@@ -164,7 +164,7 @@ class DiagnoseTest(TempDataMixin, unittest.TestCase):
 
     def test_dateiname(self):
         name = fd.default_name(datetime.datetime(2026, 10, 2, 14, 23))
-        self.assertEqual(name, "FISI-Problembericht_2026-10-02_1423.txt")
+        self.assertEqual(name, "Lernplattform-Problembericht_2026-10-02_1423.txt")
 
     # -- ab 0.59.2: haenger.log und laeuft.info -----------------------------
 

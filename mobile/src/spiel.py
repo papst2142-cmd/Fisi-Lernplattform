@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform (Handy) - Lernspiel
-======================================
+Fachinformatiker Lernplattform (Handy) - Lernspiel
+==================================================
 
 Die Seite "Spiel" der Handy-App. Die Spiellogik steckt in fisi_game.py (wird
 wie fisi_core.py von mobile/vorbereiten.py hierher kopiert), hier wird nur

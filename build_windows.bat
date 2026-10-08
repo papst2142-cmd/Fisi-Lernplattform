@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================================
-REM  FISI Lernplattform - Windows-Installer lokal erstellen
+REM  Fachinformatiker Lernplattform - Windows-Installer lokal erstellen
 REM ===========================================================================
 REM  Ergebnis: installer_output\FISI-Lernplattform-Setup-<Version>.exe
 REM  Der Installer bringt alles mit und laeuft ohne installiertes Python.
@@ -15,7 +15,7 @@ cd /d "%~dp0"
 
 echo.
 echo ===========================================================
-echo   FISI Lernplattform - Windows-Installer wird erstellt
+echo   Fachinformatiker Lernplattform - Windows-Installer wird erstellt
 echo ===========================================================
 echo.
 

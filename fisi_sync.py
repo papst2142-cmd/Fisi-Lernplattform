@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Abgleich zwischen Geraeten
-===============================================
+Fachinformatiker Lernplattform - Abgleich zwischen Geraeten
+===========================================================
 
 Gleicht den Lernfortschritt zwischen PC und Handy ueber ein privates
 GitHub-Repository ab. Dort liegt eine einzige Datei (lernstand.json.gz) mit

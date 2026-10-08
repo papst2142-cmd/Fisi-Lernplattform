@@ -1,5 +1,5 @@
 ; ============================================================================
-;  FISI Lernplattform - Inno Setup Installer-Skript
+;  Fachinformatiker Lernplattform - Inno Setup Installer-Skript
 ; ============================================================================
 ;  Baut aus dem fertigen Programmordner dist\FISI-Lernplattform\ einen
 ;  richtigen Windows-Installer mit Start-Menue-Eintrag, optionaler
@@ -16,9 +16,11 @@
 ;  danach in installer_output\.
 ; ============================================================================
 
-#define MyAppName "FISI Lernplattform"
+; Ab 0.61: sichtbarer Name neu. AppId, Exe-Name, Installationsordner und
+; Setup-Dateiname bleiben (test_namen.py prueft das).
+#define MyAppName "Fachinformatiker Lernplattform"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.60.1"
+  #define MyAppVersion "0.61"
 #endif
 #define MyAppExeName "FISI-Lernplattform.exe"
 
@@ -28,9 +30,11 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoProductVersion={#MyAppVersion}
-AppPublisher=FISI Lernplattform Projekt
+AppPublisher=Nico H
 DefaultDirName={localappdata}\Programs\FISI-Lernplattform
 DefaultGroupName={#MyAppName}
+; Ab 0.61: neue Startmenue-Gruppe statt der alten "FISI Lernplattform"
+UsePreviousGroup=no
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
 OutputDir=installer_output
@@ -47,6 +51,15 @@ Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Desktop-Verknuepfung erstellen"; GroupDescription: "Zusaetzliche Symbole:"
+
+[InstallDelete]
+; Ab 0.61: Verknuepfungen bis 0.60.1 entfernen (Name "FISI Lernplattform", seit
+; 0.19 unveraendert). Nur diese genauen Namen - umbenannte oder verschobene
+; Verknuepfungen der Nutzer bleiben. Fehlt eine Datei, passiert nichts.
+Type: files; Name: "{autoprograms}\FISI Lernplattform\FISI Lernplattform.lnk"
+Type: files; Name: "{autoprograms}\FISI Lernplattform\FISI Lernplattform deinstallieren.lnk"
+Type: dirifempty; Name: "{autoprograms}\FISI Lernplattform"
+Type: files; Name: "{autodesktop}\FISI Lernplattform.lnk"
 
 [Files]
 Source: "dist\FISI-Lernplattform\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

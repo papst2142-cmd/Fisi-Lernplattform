@@ -334,11 +334,11 @@ class SicherungTest(unittest.TestCase):
         self.assertIn("Lern-Einträge: 9", summary["zeilen"])
         self.assertIn("Gerät: PC test", summary["zeilen"])
         self.assertRegex(summary["zeilen"][0], r"^Erstellt: \d\d\.\d\d\.\d{4}, \d\d:\d\d Uhr$")
-        self.assertRegex(fs.default_name(), r"^FISI-Sicherung_\d{4}-\d\d-\d\d_\d{4}"
+        self.assertRegex(fs.default_name(), r"^Lernplattform-Sicherung_\d{4}-\d\d-\d\d_\d{4}"
                                             r"\.fisisicherung$")
         import datetime
         self.assertEqual(fs.default_name(datetime.datetime(2026, 10, 1, 14, 23)),
-                         "FISI-Sicherung_2026-10-01_1423.fisisicherung")
+                         "Lernplattform-Sicherung_2026-10-01_1423.fisisicherung")
 
     # -- Einstellungen ----------------------------------------------------------
 

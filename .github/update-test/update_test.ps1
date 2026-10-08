@@ -1,5 +1,5 @@
 # ============================================================================
-#  FISI Lernplattform - automatischer Update-Test (ab 0.56)
+#  Fachinformatiker Lernplattform - automatischer Update-Test (ab 0.56)
 # ============================================================================
 #  Laeuft in "Installer bauen" (build.yml) auf einem Windows-Rechner von
 #  GitHub, bevor ein Release veroeffentlicht wird:
@@ -9,6 +9,12 @@
 #       (/WAITPID, /UPDATELOG, /FISIEXE, /LOG), Programm schliesst sich
 #    4. Pruefen: Rueckgabewert 0, neue Version installiert, alter Prozess
 #       weg, update.log ohne Fehler, neue Version startet und endet sauber
+#  Ab 0.61 (Umbenennung, 19 Pruefungen): Version ueber den Registry-Schluessel
+#  der AppId statt ueber den Anzeigenamen; nach dem Update genau eine
+#  Verknuepfung im Startmenue und auf dem Desktop mit neuem Namen, kein alter
+#  Startmenue-Ordner, genau ein Eintrag in "Apps & Features", Lernstand im
+#  selben Ordner. Pruefungen 14 und 16 nur, wenn die alte Version noch den
+#  alten Namen hat (kleiner als 0.61).
 #  Grenze: Auf dem GitHub-Rechner laeuft kein Schutzprogramm (Norton o.ae.).
 #  Ein gruener Test beweist also nicht, dass das Update auf jedem PC klappt.
 # ============================================================================
@@ -31,10 +37,26 @@ function Pruefung($name, [bool]$ok, $detail) {
   $null = $Ergebnisse.Add([pscustomobject]@{ Name = $name; Ok = $ok; Detail = "$detail" })
   Write-Host ("[{0}] {1}: {2}" -f $(if ($ok) { "OK" } else { "FEHLER" }), $name, $detail)
 }
-function Version {
-  (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
-    Where-Object DisplayName -like "FISI*").DisplayVersion
+# Ab 0.61: Inno legt den Schluessel als AppId + "_is1" an - unabhaengig vom
+# Anzeigenamen. Gefunden wird der Eintrag ueber den Namen (alt "FISI*", neu
+# "Fachinformatiker*"); geprueft wird, dass der Schluessel (= AppId) nach dem
+# Update derselbe ist wie bei der alten Version.
+$Uninstall = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+function Eintraege {
+  @(Get-ItemProperty "$Uninstall\*" -ErrorAction SilentlyContinue |
+    Where-Object { $_.DisplayName -like "FISI*" -or $_.DisplayName -like "Fachinformatiker*" })
 }
+function Version { (Eintraege | Select-Object -First 1).DisplayVersion }
+# Verknuepfungen auf die Exe (Ziel gelesen, nicht nur der Dateiname)
+$StartMenue = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
+$Desktop = [Environment]::GetFolderPath("Desktop")
+$Shell = New-Object -ComObject WScript.Shell
+function Verknuepfungen($ordner) {
+  @(Get-ChildItem $ordner -Recurse -Filter *.lnk -ErrorAction SilentlyContinue |
+    Where-Object { $Shell.CreateShortcut($_.FullName).TargetPath -ieq $Exe })
+}
+function Namen($liste) { ($liste | ForEach-Object { $_.FullName.Replace($StartMenue, "Startmenue").Replace($Desktop, "Desktop") }) -join ", " }
+$AlterName = ([version]($AltVersion + ".0" * (3 - $AltVersion.Split(".").Count))) -lt [version]"0.61.0"
 function Prozesse { @(Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue) }
 function Liste($titel) {
   Write-Host "--- Prozesse ($titel):"
@@ -56,12 +78,23 @@ Start-Sleep 5
 Prozesse | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep 2
 
+# 14: Gegenprobe - die alte Version hat die alten Verknuepfungen angelegt
+$sv = @(Verknuepfungen $StartMenue); $dv = @(Verknuepfungen $Desktop)
+$AppKeyAlt = @(Eintraege | ForEach-Object { $_.PSChildName })
+if ($AlterName) {
+  Pruefung "Vorher: alte Verknuepfungen vorhanden" (($sv.Count -eq 1) -and ($sv[0].Name -eq "FISI Lernplattform.lnk") -and ($dv.Count -eq 1)) "$(Namen ($sv + $dv))"
+} else {
+  Pruefung "Vorher: alte Verknuepfungen (entfaellt, alte Version hat schon den neuen Namen)" $true "$(Namen ($sv + $dv))"
+}
+
 Write-Host "=== 2. Alte Version starten"
 Start-Process $Exe | Out-Null
 Start-Sleep 25
 $alt = Prozesse | Sort-Object StartTime | Select-Object -Last 1
 Pruefung "Alte Version laeuft" ($null -ne $alt) "Prozess $($alt.Id)"
 Liste "alte Version laeuft"
+$DB = Join-Path $Daten "fisi_lernplattform.db"
+$dbVorher = Get-Item $DB -ErrorAction SilentlyContinue
 
 Write-Host "=== 3. Update auf $NeuVersion wie aus dem Programm heraus"
 $UpdDir = Join-Path $env:TEMP "FISI-Lernplattform-Update"
@@ -89,6 +122,22 @@ Start-Sleep 25
 Liste "nach dem Update"
 $v = Version
 Pruefung "Installierte Version" ($v -eq $NeuVersion) "erwartet $NeuVersion, gefunden $v"
+# 15-19 (ab 0.61): Namen nach dem Update
+$sn = @(Verknuepfungen $StartMenue)
+Pruefung "Startmenue: genau eine Verknuepfung, neuer Name" (($sn.Count -eq 1) -and ($sn[0].Name -eq "Fachinformatiker Lernplattform.lnk") -and ($sn[0].Directory.Name -eq "Fachinformatiker Lernplattform")) "$($sn.Count): $(Namen $sn)"
+$altOrdner = Join-Path $StartMenue "FISI Lernplattform"
+if ($AlterName) {
+  Pruefung "Alter Startmenue-Ordner entfernt" (-not (Test-Path $altOrdner)) $(if (Test-Path $altOrdner) { "noch da: " + ((Get-ChildItem $altOrdner).Name -join ", ") } else { "nicht mehr vorhanden" })
+} else {
+  Pruefung "Alter Startmenue-Ordner (entfaellt, alte Version hat schon den neuen Namen)" $true "-"
+}
+$dn = @(Verknuepfungen $Desktop)
+Pruefung "Desktop: genau eine Verknuepfung, neuer Name" (($dn.Count -eq 1) -and ($dn[0].Name -eq "Fachinformatiker Lernplattform.lnk")) "$($dn.Count): $(Namen $dn)"
+$en = @(Eintraege)
+Pruefung "Apps und Features: genau ein Eintrag" (($en.Count -eq 1) -and ($en[0].DisplayName -like "Fachinformatiker Lernplattform*") -and ($en[0].Publisher -eq "Nico H") -and ($en[0].DisplayVersion -eq $NeuVersion) -and ($AppKeyAlt.Count -eq 1) -and ($en[0].PSChildName -eq $AppKeyAlt[0])) "$($en.Count): $(($en | ForEach-Object { '{0} / {1} / {2} / Schluessel {3}' -f $_.DisplayName, $_.Publisher, $_.DisplayVersion, $_.PSChildName }) -join '; ') (vorher $($AppKeyAlt -join ', '))"
+$dbNachher = Get-Item $DB -ErrorAction SilentlyContinue
+$neuOrdner = @(Get-ChildItem $env:APPDATA -Directory -Filter "Fachinformatiker*" -ErrorAction SilentlyContinue)
+Pruefung "Lernstand im selben Ordner" (($null -ne $dbVorher) -and ($null -ne $dbNachher) -and ($dbNachher.LastWriteTime -ge $dbVorher.LastWriteTime) -and ($neuOrdner.Count -eq 0)) "$DB, vorher $(if ($dbVorher) { $dbVorher.Length } else { 'fehlt' }) Byte, nachher $(if ($dbNachher) { $dbNachher.Length } else { 'fehlt' }) Byte, neue Ordner: $($neuOrdner.Count)"
 Copy-Item "$Daten\update.log" "$Out\update.log" -ErrorAction SilentlyContinue
 Copy-Item "$Daten\update_installer.log" "$Out\update_installer.log" -ErrorAction SilentlyContinue
 $log = Get-Content "$Daten\update.log" -Encoding utf8 -ErrorAction SilentlyContinue

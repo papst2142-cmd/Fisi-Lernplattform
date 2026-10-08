@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Dashboard Edition
-======================================
+Fachinformatiker Lernplattform - Dashboard Edition
+==================================================
 
-Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration.
+Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
+(Schwerpunkt Systemintegration).
 
 Start:      python3 app_gui.py
 Benoetigt:  Python 3.8 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
@@ -55,6 +56,7 @@ from fisi_core import (  # noqa: E402
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
 )
+from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
 import fisi_game  # noqa: E402
@@ -110,14 +112,14 @@ from fisi_widgets import (  # noqa: E402
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
 )
 
-APP_TITLE = "FISI Lernplattform"
+APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und Handy)
 # Versionsschema bis zur Vollversion 1.0:
 #   Update (neue Funktionen/Aenderungen): 0.x   -> 0.21 -> 0.22 -> 0.23
 #   Fehlerbehebung (Fix):                 0.x.y -> 0.22.1 -> 0.22.2
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.60.1"
+APP_VERSION = "0.61"
 
 
 def _resource_path(filename):
@@ -687,7 +689,7 @@ class Sidebar(ctk.CTkFrame):
                              tk_photo(dot, px(12), px(12)))
         mark.create_image(px(17), px(17), image=self._logo_images[0])
         mark.create_image(px(17), px(17), image=self._logo_images[1])
-        ctk.CTkLabel(logo, text="FISI", text_color=C["text"], font=F["logo"],
+        ctk.CTkLabel(logo, text=APP_LOGO_TEXT, text_color=C["text"], font=F["logo"],
                      height=0).pack(side="left", padx=(12, 0))
         ctk.CTkLabel(logo, text="Lernplattform", text_color=C["muted"],
                      font=F["tiny"], height=0).pack(side="left", padx=(7, 0),
@@ -5320,8 +5322,8 @@ class SettingsView(View):
     def _build_ueber(self, about):
         make_label(about.body,
                    "%s Version %s\n\n"
-                   "Lernprogramm für die Umschulung zum Fachinformatiker "
-                   "Systemintegration mit Karteikarten, Prüfungstrainer, "
+                   "Lernprogramm für die Prüfungsvorbereitung zum Fachinformatiker "
+                   "(Schwerpunkt Systemintegration) mit Karteikarten, Prüfungstrainer, "
                    "AP1-/AP2-Szenarien, Testprojekten und Praxis-Rechnern.\n\n"
                    "Umgesetzt mit Python und CustomTkinter. Die Installer für "
                    "Windows, Linux und macOS bringen alles Nötige mit - es muss "
@@ -6741,7 +6743,7 @@ class UpdateDialog(ctk.CTkToplevel):
         card.pack(fill="both", expand=True, padx=18, pady=18)
         self.card = card
         body = card.body
-        self.lbl_title = make_label(body, "FISI Lernplattform %s ist verfügbar" % info.version,
+        self.lbl_title = make_label(body, "Version %s ist verfügbar" % info.version,
                                     font=F["h2"], anchor="w", justify="left")
         self.lbl_title.pack(anchor="w", side="top")
 
@@ -7814,7 +7816,7 @@ class FISIApp:
         if not getattr(view, "keeps_scroll", False):
             view.to_top()
         self.current = key
-        main, sub = VIEW_TITLES.get(key, ("FISI", ""))
+        main, sub = VIEW_TITLES.get(key, (APP_LOGO_TEXT, ""))
         self.header.set_crumbs(main, sub)
         # Die Suche hat keinen eigenen Menuepunkt - dann bleibt nichts markiert.
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
@@ -7896,6 +7898,12 @@ class FISIApp:
     def maybe_start_tour(self):
         """Rundgang beim Start (ab 0.56) - nur fuer neue Nutzer (Bestandsschutz,
         siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        # Ab 0.61: eigene Verknuepfung mit altem Namen still erneuern - vor
+        # dem Rundgang, damit es nicht erst nach dessen Schliessen passiert
+        try:
+            fsc.renew_own()
+        except Exception:
+            log_exception(*sys.exc_info())
         tour = None
         try:
             if fh.tour_due(self.db):
