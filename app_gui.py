@@ -6427,7 +6427,7 @@ class LegalDialog(ctk.CTkToplevel):
                 anchor="w", pady=(0, 6))
             self.listbox = tk.Listbox(
                 side, width=34, activestyle="none", exportselection=False,
-                font=F["small"], bg=C["card_alt"], fg=C["text_soft"],
+                font=tk_font(F["small"]), bg=C["card_alt"], fg=C["text_soft"],
                 selectbackground=C["purple"], selectforeground="#FFFFFF",
                 highlightthickness=1, highlightbackground=C["field_border"],
                 highlightcolor=C["purple"], relief="flat", borderwidth=0)
@@ -6435,10 +6435,16 @@ class LegalDialog(ctk.CTkToplevel):
                 self.listbox.insert("end", name)
             self.listbox.selection_set(0)
             self.listbox.pack(fill="y", expand=True, side="left")
+            scroll = ctk.CTkScrollbar(side, orientation="vertical",
+                                      command=self.listbox.yview,
+                                      button_color=C["scrollbar"],
+                                      button_hover_color=C["scrollbar_hi"])
+            scroll.pack(fill="y", side="left", padx=(2, 0))
+            self.listbox.configure(yscrollcommand=scroll.set)
             self.listbox.bind("<<ListboxSelect>>", self._selected)
             content = self.choices[fr.UEBERSICHT]
         else:
-            content = fr.read_file(fr.LICENSE_FILE)
+            content = fr.flow_text(fr.read_file(fr.LICENSE_FILE))
         self.text = make_text(card.body, height=18, font=F["small"])
         self.text.pack(fill="both", expand=True, side="top")
         self.choose_text(content)
@@ -8015,6 +8021,10 @@ class FISIApp:
         try:
             if not fr.notice_due():
                 return None
+            # nur eine Leiste, auch wenn erneut aufgerufen
+            current = getattr(self, "notice_bar", None)
+            if current is not None and current.winfo_exists():
+                return current
             view = self.views["dashboard"]
             bar = ctk.CTkFrame(view.content, fg_color=C["card_alt"], corner_radius=12,
                                border_width=1, border_color=C["border_hi"])

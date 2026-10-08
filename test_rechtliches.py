@@ -75,6 +75,13 @@ def _flet_ok():
 
 class WortlautTest(unittest.TestCase):
 
+    def test_lizenz_fliesstext(self):
+        """Absaetze der LICENSE.txt werden fuer die Anzeige zu Fliesstext."""
+        text = fr.flow_text(read("LICENSE.txt"))
+        self.assertIn("darf heruntergeladen, installiert und", text)
+        self.assertEqual(text.count("\n\n"), read("LICENSE.txt").strip().count("\n\n"))
+        self.assertIn(fr.COPYRIGHT, text)
+
     def test_texte_wie_freigegeben(self):
         self.assertEqual(fr.COPYRIGHT, "Copyright (c) 2026 Nico H – Alle Rechte vorbehalten")
         self.assertEqual(fr.CLAUDE_HINWEIS, "Erstellt mit Hilfe von Claude (Anthropic).")
@@ -366,6 +373,8 @@ class PcTest(unittest.TestCase):
         bar = self.app.maybe_show_notice()
         self.pump()
         self.assertIsNotNone(bar)
+        # erneuter Aufruf: keine zweite Leiste
+        self.assertIs(self.app.maybe_show_notice(), bar)
         view = self.app.views["dashboard"]
         self.assertTrue(bar.winfo_ismapped())
         self.assertLess(bar.winfo_y(), view.hero.winfo_y())

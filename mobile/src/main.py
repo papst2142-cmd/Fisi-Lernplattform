@@ -3675,7 +3675,8 @@ class SettingsScreen(Screen):
     def show_license(self):
         """Lizenz als eigene Seite (Zurueck-Pfeil fuehrt in die Optionen)."""
         content = screen_list([ui.Card(fr.TITEL_LIZENZ, [
-            ui.text(fr.read_file(fr.LICENSE_FILE), size=13, color=C["text_soft"])],
+            ui.text(fr.flow_text(fr.read_file(fr.LICENSE_FILE)), size=13,
+                    color=C["text_soft"])],
             accent=C["green"])])
         self.app.push(fr.CRUMB_LIZENZ, content)
         return content

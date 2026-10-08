@@ -124,6 +124,14 @@ def read_file(name):
         return DATEI_FEHLT % name + " (%s)" % error
 
 
+def flow_text(text):
+    """Absaetze zu je einer Zeile zusammenfassen (Handy: LICENSE.txt hat feste
+    Zeilenumbrueche, die auf dem schmalen Bildschirm zu Flatterzeilen fuehren)."""
+    paragraphs = [" ".join(line.strip() for line in block.splitlines())
+                  for block in text.strip().split("\n\n")]
+    return "\n\n".join(paragraphs)
+
+
 def parse_notices(text):
     """THIRD_PARTY_NOTICES.txt -> (Uebersicht, [(Titel, Text), ...]). Die
     Oberflaechen zeigen zuerst nur die Uebersicht und einen Abschnitt erst auf
