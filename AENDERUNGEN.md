@@ -4,6 +4,26 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.61
+
+**Neuer Name: Fachinformatiker Lernplattform.** Das Programm heißt ab
+dieser Version „Fachinformatiker Lernplattform“, auf dem Handy kurz
+„FI Lernplattform“. Lernstand, Einstellungen, Sicherungen und der Abgleich
+bleiben, wo sie sind; Updates kommen weiter wie gewohnt.
+
+- **Windows:** Startmenü und Desktop heißen nach dem Update
+  „Fachinformatiker Lernplattform“, der alte Eintrag verschwindet.
+- **Linux:** Der Menüeintrag heißt neu. Eine vom Programm angelegte
+  Desktop-Verknüpfung wird beim ersten Start umbenannt.
+- **Handy:** Auf dem Handy heißt die App „FI Lernplattform“.
+- **Herausgeber** ist „Nico H“.
+- **Dateinamen:** Sicherungen und Problemberichte bekommen neue Dateinamen
+  („Lernplattform-Sicherung_…“, „Lernplattform-Problembericht_…“). Alte
+  Sicherungen lassen sich weiter einspielen.
+- **AppImage:** neuer Hinweis zum Hänger-Befehl (steht auf der Release-Seite).
+- **macOS:** Die Mac-Versionen werden gebaut und automatisch gestartet,
+  aber nicht von Menschen auf einem echten Mac getestet.
+
 ## 0.60.1
 
 Seiten öffnen beim ersten Mal schneller, weil das Programm sie nach dem

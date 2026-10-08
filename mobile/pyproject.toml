@@ -9,7 +9,7 @@
 
 [project]
 name = "fisi-lernplattform"
-version = "0.60.1"
+version = "0.61"
 description = "Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)"
 requires-python = ">=3.10"
 dependencies = [
@@ -23,7 +23,7 @@ dependencies = [
 product = "FI Lernplattform"
 org = "io.github.papst2142cmd"
 company = "Nico H"
-build_number = 6001
+build_number = 6100
 icon_background = "#120A24"
 
 [tool.flet.app]

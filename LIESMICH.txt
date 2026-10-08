@@ -1,5 +1,5 @@
 ===========================================================================
-  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.60.1
+  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.61
   Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
   (Schwerpunkt Systemintegration)
   Frueherer Name bis 0.60.1: "FISI Lernplattform" - Lernstand, Einstellungen
