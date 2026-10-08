@@ -6420,7 +6420,7 @@ class LegalDialog(ctk.CTkToplevel):
                       if kind == "fremd" else "820x640")
         self.resizable(True, True)
         self.transient(app.root)
-        self.after(250, lambda: _apply_window_icon(self))
+        self._pending = [self.after(250, lambda: _apply_window_icon(self))]
         card = Card(self, title=title, accent=C["green"])
         card.pack(fill="both", expand=True, padx=18, pady=18)
         buttons = transparent_frame(card.body)
@@ -6455,7 +6455,16 @@ class LegalDialog(ctk.CTkToplevel):
         self.text.pack(fill="both", expand=True, side="top")
         self.choose_text(content)
         self.protocol("WM_DELETE_WINDOW", self.destroy)
-        self.after(100, self._focus)
+        self._pending.append(self.after(100, self._focus))
+
+    def destroy(self):
+        # eigene geplante Rueckrufe abbrechen, wenn das Fenster schnell zugeht
+        for pending in self._pending:
+            try:
+                self.after_cancel(pending)
+            except tk.TclError:
+                pass
+        super().destroy()
 
     def _selected(self, _event=None):
         picked = self.listbox.curselection()
@@ -8419,9 +8428,17 @@ def _run_selftest(root, app, log_path):
                 for name in (fr.LICENSE_FILE, fr.NOTICES_FILE):
                     if getattr(sys, "frozen", False) and not fr.find_file(name):
                         failures.append("Rechtliches: %s nicht gefunden" % name)
-                for kind in ("lizenz", "fremd"):
-                    settings_view.show_legal(kind).destroy()
+                # Erst nach gut einer Sekunde schliessen: customtkinter plant
+                # beim Oeffnen eines Fensters Rueckrufe bis 1 s (Windows);
+                # sofort geschlossen, liefen sie ins Leere (CI 0.62)
+                windows = [settings_view.show_legal(kind) for kind in ("lizenz", "fremd")]
+                until = time.monotonic() + 1.3
+                while time.monotonic() < until:
                     root.update()
+                    time.sleep(0.02)
+                for window in windows:
+                    window.destroy()
+                root.update()
                 # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
                 # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
                 tour = app.start_tour()

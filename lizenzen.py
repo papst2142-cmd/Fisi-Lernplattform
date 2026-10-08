@@ -551,6 +551,10 @@ def print_excerpt(path):
     Datei ins Bauprotokoll, damit jeder CI-Lauf den Inhalt belegt."""
     with open(path, encoding="utf-8") as handle:
         text = handle.read()
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")   # Windows-Konsole: Umlaute, Striche
+    except (AttributeError, ValueError):
+        pass
     head = text.split("\n#### ", 1)[0].rstrip()
     sections = text.count("\n#### ")
     print("[..] %s: %d Byte, %d Abschnitte. Anfang der Datei:" % (
