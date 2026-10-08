@@ -1,0 +1,60 @@
+# Probe 0.60 (Abnahme A3): Greift der Notweg? Nachgebaut sind die Bedingungen
+# aus build.yml (tests + release). Statt der Repo-Variable TESTS_UEBERSPRINGEN
+# steht hier ein fester Wert je Fall, damit keine Variable angelegt wird.
+# Nur Echo-Schritte, nichts wird gebaut oder veroeffentlicht.
+name: Notweg-Probe 0.60 (nur Probe)
+on:
+  push:
+    branches: [messung-060]
+    paths: [".github/workflows/notweg-probe.yml"]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Bau (Platzhalter)"
+
+  # Fall A: Variable "ja" -> Test-Jobs uebersprungen
+  tests-a:
+    if: "'ja' != 'ja'"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: exit 1
+  release-a:
+    needs: [build, tests-a]
+    if: >-
+      !cancelled() && needs.build.result == 'success'
+      && ('ja' == 'ja' || needs.tests-a.result == 'success')
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "::notice::Fall A (Variable ja, Tests uebersprungen) - Release-Job LAEUFT, tests=${{ needs.tests-a.result }}"
+
+  # Fall B: Variable fehlt, ein Test rot -> Release muss stehen bleiben
+  tests-b:
+    if: "'' != 'ja'"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: exit 1
+  release-b:
+    needs: [build, tests-b]
+    if: >-
+      !cancelled() && needs.build.result == 'success'
+      && ('' == 'ja' || needs.tests-b.result == 'success')
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "::notice::Fall B FEHLER - Release-Job lief trotz rotem Test"
+
+  # Fall C: Variable fehlt, Tests gruen -> Release laeuft
+  tests-c:
+    if: "'' != 'ja'"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo ok
+  release-c:
+    needs: [build, tests-c]
+    if: >-
+      !cancelled() && needs.build.result == 'success'
+      && ('' == 'ja' || needs.tests-c.result == 'success')
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "::notice::Fall C (Tests gruen) - Release-Job LAEUFT"
