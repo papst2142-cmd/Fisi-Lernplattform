@@ -1046,6 +1046,7 @@ class FoldCard(Card):
                  builder=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
         self._builder = builder
+        self._building = False
         self.key = key or title
         self.fold_title = title
         self.marker = marker
@@ -1128,15 +1129,24 @@ class FoldCard(Card):
 
     @property
     def built(self):
-        """Ab 0.60 (B3): Inhalt schon gebaut (ohne builder immer)."""
+        """Ab 0.60 (B3): Inhalt fertig gebaut (ohne builder immer). Waehrend
+        des Bauens noch nicht: CustomTkinter ruft darin update_idletasks auf,
+        und wartende after_idle-Auffrischungen duerfen dann noch nicht auf
+        die Elemente zugreifen (Abnahme 0.60, Auflage A2)."""
         return self._builder is None
 
     def ensure_built(self):
         """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
         (auch eingeklappt, z.B. fuer den Selbsttest)."""
-        builder, self._builder = self._builder, None
-        if builder is not None:
+        builder = self._builder
+        if builder is None or self._building:
+            return
+        self._building = True
+        try:
             builder(self)
+        finally:
+            self._building = False
+            self._builder = None
 
     def _apply(self):
         if self.opened:
