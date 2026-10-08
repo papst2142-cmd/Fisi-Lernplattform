@@ -1,17 +1,19 @@
-# Nur Messung fuer 0.60 (Zweig messung-060): Darstellungswechsel 0.59.3
-# gegen den Zweig version-060 auf dem Windows-Runner. Baut nichts,
-# veroeffentlicht nichts, wird nie gemergt.
-name: Messung 0.60 (nur Messung)
+# Nur Messung (Zweig messung-060, ab 08.10.2026 auch fuer 0.60.1): Zeitleiste
+# des Vorladens, Oeffnen von Hilfe/"Farben" und Darstellungswechsel fuer
+# 0.59.3, 0.60 und den Zweig version-0601 auf dem Windows-Runner. Baut
+# nichts, veroeffentlicht nichts, wird nie gemergt.
+name: Messung 0.60.1 (nur Messung)
 
 on:
   push:
     branches: [messung-060]
+    paths: [".github/workflows/messung-060.yml", "messung_060/**"]
   workflow_dispatch:
 
 jobs:
   windows:
     runs-on: windows-2025
-    timeout-minutes: 90
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash
@@ -24,56 +26,60 @@ jobs:
           python-version: "3.12"
       - name: Pakete
         run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
-      - name: Fassungen 0.59.3 und version-060
+      - name: Fassungen 0.59.3, 0.60 und version-0601
         run: |
           git worktree add ../v0593 v0.59.3
-          git fetch origin version-060
-          git worktree add ../v060 origin/version-060
-          git -C ../v060 log --oneline -1
-      - name: Oeffnen v0593 vorladen 1
+          git worktree add ../v060 v0.60
+          git fetch origin version-0601
+          git worktree add ../v0601 origin/version-0601
+          for v in v0593 v060 v0601; do git -C ../$v log --oneline -1; done
+      - name: Zeitleiste v0593 (6 Laeufe)
         continue-on-error: true
         run: |
-          timeout 900 python messung_060/messung_oeffnen.py ../v0593 "$RUNNER_TEMP/oe_0593_1.json" 1 > "$RUNNER_TEMP/oe_0593_1.txt" 2>&1 || echo "Rueckgabe $?"
-          grep "^ERG" "$RUNNER_TEMP/oe_0593_1.txt" | while IFS= read -r z; do echo "::notice::v0593 $z"; done
-          tail -3 "$RUNNER_TEMP/oe_0593_1.txt"
-      - name: Oeffnen v0593 vorladen 0
+          for r in 1 2 3 4 5 6; do
+            timeout 600 python messung_060/zeitleiste_0601.py ../v0593 "$RUNNER_TEMP/z_0593_$r.json" > "$RUNNER_TEMP/z_0593_$r.txt" 2>&1 || echo "Rueckgabe $?"
+            grep "^ERG" "$RUNNER_TEMP/z_0593_$r.txt" | while IFS= read -r z; do echo "::notice::$r $z"; done
+          done
+      - name: Zeitleiste v060 (6 Laeufe)
         continue-on-error: true
         run: |
-          timeout 900 python messung_060/messung_oeffnen.py ../v0593 "$RUNNER_TEMP/oe_0593_0.json" 0 > "$RUNNER_TEMP/oe_0593_0.txt" 2>&1 || echo "Rueckgabe $?"
-          grep "^ERG" "$RUNNER_TEMP/oe_0593_0.txt" | while IFS= read -r z; do echo "::notice::v0593 $z"; done
-          tail -3 "$RUNNER_TEMP/oe_0593_0.txt"
-      - name: Oeffnen v060 vorladen 1
+          for r in 1 2 3 4 5 6; do
+            timeout 600 python messung_060/zeitleiste_0601.py ../v060 "$RUNNER_TEMP/z_060_$r.json" > "$RUNNER_TEMP/z_060_$r.txt" 2>&1 || echo "Rueckgabe $?"
+            grep "^ERG" "$RUNNER_TEMP/z_060_$r.txt" | while IFS= read -r z; do echo "::notice::$r $z"; done
+          done
+      - name: Zeitleiste v0601 (6 Laeufe)
         continue-on-error: true
         run: |
-          timeout 900 python messung_060/messung_oeffnen.py ../v060 "$RUNNER_TEMP/oe_060_1.json" 1 > "$RUNNER_TEMP/oe_060_1.txt" 2>&1 || echo "Rueckgabe $?"
-          grep "^ERG" "$RUNNER_TEMP/oe_060_1.txt" | while IFS= read -r z; do echo "::notice::v060 $z"; done
-          tail -3 "$RUNNER_TEMP/oe_060_1.txt"
-      - name: Oeffnen v060 vorladen 0
+          for r in 1 2 3 4 5 6; do
+            timeout 600 python messung_060/zeitleiste_0601.py ../v0601 "$RUNNER_TEMP/z_0601_$r.json" > "$RUNNER_TEMP/z_0601_$r.txt" 2>&1 || echo "Rueckgabe $?"
+            grep "^ERG" "$RUNNER_TEMP/z_0601_$r.txt" | while IFS= read -r z; do echo "::notice::$r $z"; done
+          done
+      - name: Zeitleiste Zusammenfassung
         continue-on-error: true
         run: |
-          timeout 900 python messung_060/messung_oeffnen.py ../v060 "$RUNNER_TEMP/oe_060_0.json" 0 > "$RUNNER_TEMP/oe_060_0.txt" 2>&1 || echo "Rueckgabe $?"
-          grep "^ERG" "$RUNNER_TEMP/oe_060_0.txt" | while IFS= read -r z; do echo "::notice::v060 $z"; done
-          tail -3 "$RUNNER_TEMP/oe_060_0.txt"
-      - name: Darstellungswechsel
-        if: false
+          cd "$RUNNER_TEMP" && python "$GITHUB_WORKSPACE/messung_060/zeitleiste_tab.py" z_*.json > ztab.txt; cat ztab.txt
+          head -10 ztab.txt | while IFS= read -r z; do echo "::notice::$z"; done
+      - name: Darstellungswechsel (3 Runden je 6 Wechsel, alle Bereiche zu)
         continue-on-error: true
         run: |
           for r in 1 2 3; do
-            for f in 0 1; do
-              for v in 0593 060; do
-                echo "=== v$v Farben offen $f Runde $r"
-                MESS_FARBEN_OFFEN=$f MESS_WECHSEL=6 timeout 900 python messung_060/messung_wechsel.py ../v$v "$RUNNER_TEMP/m_${v}_f${f}_${r}.json" > "$RUNNER_TEMP/m_${v}_f${f}_${r}.txt" 2>&1 || echo "Rueckgabe $?"
-              done
+            for v in 0593 060 0601; do
+              echo "=== v$v Runde $r"
+              MESS_FARBEN_OFFEN=0 MESS_WECHSEL=6 timeout 900 python messung_060/messung_wechsel.py ../v$v "$RUNNER_TEMP/m_${v}_$r.json" > "$RUNNER_TEMP/m_${v}_$r.txt" 2>&1 || echo "Rueckgabe $?"
             done
           done
-          cd "$RUNNER_TEMP" && python "$GITHUB_WORKSPACE/messung_060/tab.py" m_*.json > tab.txt; cat tab.txt
-          while IFS= read -r z; do echo "::notice::$z"; done < tab.txt
+          cd "$RUNNER_TEMP"
           python - <<'PY'
           import glob, json, os, statistics as st
-          os.chdir(os.environ["RUNNER_TEMP"])
-          for k in ("0593_f0", "060_f0", "0593_f1", "060_f1"):
-              g = []
-              for f in glob.glob("m_%s_*.json" % k):
-                  g += [x["gesamt_ms"] for x in json.load(open(f, encoding="utf-8"))["wechsel"]]
-              print("::notice::SUMME", k, len(g), round(st.median(g)) if g else None)
+          for k in ("0593", "060", "0601"):
+              g, el = [], []
+              for f in sorted(glob.glob("m_%s_*.json" % k)):
+                  d = json.load(open(f, encoding="utf-8"))
+                  g += [x["gesamt_ms"] for x in d["wechsel"]]
+                  el.append(d["wechsel"][0]["elemente_vorher"])
+              if g:
+                  print("::notice::WECHSEL v%s n=%d Median %d ms (%d-%d) Elemente vorher %s"
+                        % (k, len(g), round(st.median(g)), min(g), max(g), el))
+              else:
+                  print("::notice::WECHSEL v%s keine Werte" % k)
           PY
