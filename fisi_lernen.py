@@ -295,7 +295,36 @@ DAY_CHART_TITLE = "Aufgaben pro Tag"
 DAY_CHART_SUBTITLE = "bewertete Aufgaben, Tagesziel als Linie"
 DAY_CHART_RANGES = [(7, "7 Tage"), (30, "30 Tage")]
 DAY_CHART_SERIES = "Aufgaben"
-LEARN_CHART_SERIES = "Aufgaben pro Tag"   # Legende "Lernverlauf" (Dashboard/Start, ab 0.58)
+# Legende "Lernverlauf" (Dashboard/Start, ab 0.58). Ab 0.60 eigener Name: der
+# Lernverlauf zaehlt alle Lernschritte (auch nur aufgedeckte Karten), das
+# Tagesziel und "Aufgaben pro Tag" im Fortschritt nur bewertete.
+LEARN_CHART_SERIES = "Lernaktivitäten pro Tag"
+
+# Ab 0.60 (K-B): Beschriftungen von Dashboard (PC) und Start (Handy), an
+# beiden Stellen gleich. "Prüfungstrainer" ist der Menuename; "bearbeitet"
+# heisst angesehen oder beantwortet (auch falsch), "richtig" nur richtig.
+DASH_LEARNED = "%d von %d Karten und Fragen bearbeitet"
+DASH_RATE = "Prüfungstrainer %d %% richtig"
+DASH_TOTAL = "Gesamtfortschritt"
+DASH_RING_CARDS = "Karteikarten"
+DASH_RING_QUIZ = "Prüfungstrainer"
+DASH_RING_AP1 = "AP1-Szenarien"
+DASH_RING_AP2 = "AP2-Szenarien"
+DASH_CARDS_SUB = "von %d Karten bearbeitet"
+DASH_QUIZ_SUB = "von %d Fragen beantwortet"
+DASH_SCEN_SUB = "von %d bearbeitet"
+DASH_QUOTE_TITLE = "Erfolgsquote"
+DASH_QUOTE_SUBTITLE = "Prüfungstrainer gesamt"
+DASH_QUOTE_EMPTY = "noch keine Antworten erfasst"
+DASH_SIDEBAR_BAR = "Karten und Fragen bearbeitet"
+
+
+def dash_quote_text(correct, answered):
+    """Unterzeile der Erfolgsquote: gezaehlt werden Antworten (jeder Versuch),
+    nicht verschiedene Fragen."""
+    if not answered:
+        return DASH_QUOTE_EMPTY
+    return "%d von %s richtig" % (correct, plural(answered, "Antwort", "Antworten"))
 WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
 
 
@@ -524,7 +553,7 @@ def practice_next_text(source, count):
     if source == SRC_CARD:
         what = plural(count, "Karteikarte", "Karteikarten")
     else:
-        what = plural(count, "Quizfrage", "Quizfragen")
+        what = plural(count, "Prüfungsfrage", "Prüfungsfragen")
     return "Zum selben Thema gibt es noch %s. Jetzt weiterüben?" % what
 
 

@@ -542,6 +542,8 @@ class PcTourTest(unittest.TestCase):
         self.assertEqual(settings[fh.NAME_KEY], "Alex")
         self.assertTrue(settings[fh.TOUR_SEEN_KEY])
         # Ab 0.56: Name im Feld der Optionen und als Begruessung im Dashboard
+        # (ab 0.60, B3: der Bereich wird erst beim Aufklappen gebaut)
+        settings_view.open_area("rundgang")
         self.assertEqual(settings_view.entry_name.get(), "Alex")
         self.assertEqual(app.views["dashboard"].hero._texts[0], "Hallo Alex")
         settings_view.entry_name.set("  Kim  ")
@@ -555,7 +557,8 @@ class PcTourTest(unittest.TestCase):
         settings_view.entry_name.set("Alex")
         settings_view._save_name()
         self.assertEqual(frp.load_rp_settings()["rp_termin_ap1"], "2027-10-01")
-        # Optionen zeigen die neuen Werte
+        # Optionen zeigen die neuen Werte (ab 0.60, B3: beim Aufklappen gebaut)
+        settings_view.open_area("rahmenplan")
         self.assertTrue(settings_view.rp_vars["rp_abschnitt_d"].get())
         self.assertEqual(settings_view.rp_dates["rp_termin_ap1"].get(), "01.10.2027")
         # Danach nicht mehr von selbst, aber aus den Optionen

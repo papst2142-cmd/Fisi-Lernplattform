@@ -98,7 +98,7 @@ class HandyDiagrammTest(unittest.TestCase):
         chart.set_data(["01.10", "02.10"], [3, 5], "#FFFFFF",
                        name=fisi_lernen.LEARN_CHART_SERIES)
         texts = [shape.value for shape in self._texts(chart)]
-        self.assertIn("Aufgaben pro Tag", texts)
+        self.assertIn("Lernaktivitäten pro Tag", texts)   # ab 0.60 (K-B)
 
     def test_ohne_name_keine_legende(self):
         chart = self.ui.LineChart()

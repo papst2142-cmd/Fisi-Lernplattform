@@ -92,13 +92,16 @@ class BedingungTest(_Frisch):
             env = _umgebung(sitzung, display, modifier, schalter)
             before = dict(env)
             result = fe.apply(env, system)
+            # Ab 0.60 (E3): keine Wayland-Bedingung mehr, X11 genauso
             erwartet = (system == "linux"
-                        and ((sitzung or "").lower() == "wayland" or bool(display))
                         and "@im=ibus" in (modifier or "")
                         and schalter != "1")
             fall = (system, sitzung, display, modifier, schalter)
             self.assertEqual(result["aktiv"], erwartet, fall)
             self.assertEqual(result["vorher"], modifier, fall)
+            wayland = (sitzung or "").lower() == "wayland" or bool(display)
+            self.assertEqual(result["art"], ("" if system != "linux"
+                                             else "Wayland" if wayland else "X11"), fall)
             if erwartet:
                 aktiv += 1
                 self.assertEqual(env["XMODIFIERS"], "@im=none", fall)
@@ -110,8 +113,8 @@ class BedingungTest(_Frisch):
                 self.assertTrue(result["grund"], fall)
             geprueft += 1
         self.assertEqual(geprueft, 3 * 7 * 6 * 4)
-        # linux x (wayland, WAYLAND, nur Display, x11+Display) x (ibus, ibus+foo) x (0, "", None)
-        self.assertEqual(aktiv, 4 * 2 * 3)
+        # linux x (alle 7 Sitzungen) x (ibus, ibus+foo) x (0, "", None)
+        self.assertEqual(aktiv, 7 * 2 * 3)
 
     def test_windows_und_macos_unveraendert(self):
         for system in ("win32", "darwin", "cygwin", "freebsd13"):
@@ -153,11 +156,20 @@ class BedingungTest(_Frisch):
         aktiv = fe.apply({"XDG_SESSION_TYPE": "wayland", "XMODIFIERS": "@im=ibus"}, "linux")
         self.assertEqual(fe.start_text(aktiv),
                          "Sitzung wayland | XMODIFIERS @im=ibus -> @im=none | "
-                         "Eingabe-Umgehung aktiv")
+                         "Eingabe-Umgehung aktiv (Wayland)")
         fe._reset_for_tests()
-        aus = fe.apply({"XDG_SESSION_TYPE": "x11", "XMODIFIERS": "@im=ibus"}, "linux")
-        self.assertEqual(fe.start_text(aus), "Sitzung x11 | XMODIFIERS @im=ibus | "
-                         "Eingabe-Umgehung nein (keine Wayland-Sitzung)")
+        x11 = fe.apply({"XDG_SESSION_TYPE": "x11", "XMODIFIERS": "@im=ibus"}, "linux")
+        self.assertEqual(fe.start_text(x11), "Sitzung x11 | XMODIFIERS @im=ibus -> @im=none | "
+                         "Eingabe-Umgehung aktiv (X11)")
+        fe._reset_for_tests()
+        x11_aus = fe.apply({"XDG_SESSION_TYPE": "x11", "XMODIFIERS": "@im=ibus",
+                            "FISI_XIM": "1"}, "linux")
+        self.assertEqual(fe.start_text(x11_aus), "Sitzung x11 | XMODIFIERS @im=ibus | "
+                         "Eingabe-Umgehung nein (FISI_XIM=1)")
+        fe._reset_for_tests()
+        ohne_sitzung = fe.apply({"DISPLAY": ":0", "XMODIFIERS": "@im=ibus"}, "linux")
+        self.assertEqual(fe.start_text(ohne_sitzung), "Sitzung ? | XMODIFIERS @im=ibus -> "
+                         "@im=none | Eingabe-Umgehung aktiv (X11)")
         fe._reset_for_tests()
         ohne = fe.apply({"XDG_SESSION_TYPE": "wayland", "XMODIFIERS": "@im=fcitx"}, "linux")
         self.assertEqual(fe.start_text(ohne), "Sitzung wayland | XMODIFIERS @im=fcitx | "
@@ -238,7 +250,16 @@ class StartzeileTest(_Frisch):
         text = self._haenger_start(env)
         self.assertRegex(text, r"=== \d{4}-\d\d-\d\d \d\d:\d\d:\d\d \| Start \| Version "
                                r"9\.9-test \| linux \| pid \d+ \| Sitzung wayland \| "
-                               r"XMODIFIERS @im=ibus -> @im=none \| Eingabe-Umgehung aktiv ===")
+                               r"XMODIFIERS @im=ibus -> @im=none \| Eingabe-Umgehung aktiv "
+                               r"\(Wayland\) ===")
+
+    def test_haenger_log_umgehung_aktiv_x11(self):
+        env = dict(os.environ, XDG_SESSION_TYPE="x11", XMODIFIERS="@im=ibus")
+        env.pop("FISI_XIM", None)
+        env.pop("WAYLAND_DISPLAY", None)
+        text = self._haenger_start(env)
+        self.assertIn("| Sitzung x11 | XMODIFIERS @im=ibus -> @im=none | "
+                      "Eingabe-Umgehung aktiv (X11) ===", text)
 
     def test_haenger_log_umgehung_nein(self):
         env = dict(os.environ, XDG_SESSION_TYPE="wayland", XMODIFIERS="@im=ibus",

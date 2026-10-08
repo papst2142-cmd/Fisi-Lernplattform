@@ -97,6 +97,41 @@ Selbst nachvollziehen laesst sich jeder Schritt mit "git status",
 "git log --oneline" und auf der GitHub-Seite im Reiter "Actions".
 
 
+TESTS VOR JEDEM RELEASE (ab 0.60)
+---------------------------------------------------------------------------
+Bei jedem Bau laufen alle Tests (test_*.py) auf Linux und eine Auswahl auf
+Windows (Jobs "Tests Linux" und "Tests Windows" im Reiter "Actions"). Ist
+ein Test rot, entsteht kein Release und keine Testversion. Das ist gewollt:
+ein roter Test wird repariert, nicht uebersprungen.
+
+NOTAUSWEG - nur mit Nicos ausdruecklichem OK, nie von Claude allein:
+  1. Auf GitHub: Settings > Secrets and variables > Actions > Variables >
+     "New repository variable", Name TESTS_UEBERSPRINGEN, Wert ja.
+  2. Im roten Lauf oben rechts "Re-run jobs" > "Re-run failed jobs".
+     Die Test-Jobs werden dann uebersprungen, der Release wartet nicht
+     mehr auf sie (Bau und Update-Test laufen weiter wie immer).
+  3. Danach die Variable TESTS_UEBERSPRINGEN sofort wieder loeschen.
+
+  Zweiter Weg (falls "Re-run failed jobs" die neue Variable nicht sieht),
+  ebenfalls nur mit Nicos ausdruecklichem OK:
+  1. Variable TESTS_UEBERSPRINGEN = ja anlegen (wie oben, Schritt 1).
+  2. Reiter "Actions" > Workflow "Build" > "Run workflow": einen NEUEN
+     Lauf starten und im Feld "tag" die Version eintragen (z.B. v0.60).
+     Ein neuer Lauf liest die Variable sicher. Der Tag muss schon
+     existieren (ihn legt der Release-Ablauf beim Merge auf main an).
+  3. Danach die Variable sofort wieder loeschen.
+
+  Dritter Weg (ganz ohne Variable), ebenfalls nur mit Nicos OK:
+  1. Ein Commit aendert in .github/workflows/build.yml beim Job "release"
+     die Zeile
+       || (needs.tests.result == 'success' && needs.tests-windows.result == 'success'))
+     voruebergehend in
+       || true)
+  2. Release-Lauf wie im zweiten Weg (Schritt 2) neu starten.
+  3. Den Commit SOFORT danach zuruecknehmen (git revert), damit die
+     Bremse wieder greift.
+
+
 EINEN FRUEHEREN STAND WIEDERHERSTELLEN
 ---------------------------------------------------------------------------
   1. git log --oneline

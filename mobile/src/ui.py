@@ -690,7 +690,7 @@ class Ring(ft.Stack):
             content=ft.Column([self.big, self.small], spacing=0, tight=True,
                               horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=size, height=size, alignment=ft.Alignment.CENTER,
-            padding=thickness + 6)
+            padding=thickness + 1)
         # Ab 0.56: TalkBack liest den Ring als ein Element ("12 von 1565
         # Karten 1 Prozent") statt Zahl und Unterzeile einzeln
         self.semantics = ft.Semantics(content=self.canvas, container=True, label="")

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FISI Lernplattform - Eingabemethoden-Umgehung (ab 0.59.3, nur PC, Linux)
+FISI Lernplattform - Eingabemethoden-Umgehung (ab 0.59.3, nur PC, Linux;
+ab 0.60 auch unter X11)
 =========================================================================
 
 Unter Linux mit Wayland (das Programm laeuft dort ueber XWayland) und der
@@ -16,11 +17,17 @@ seine eingebaute Eingabemethode (Compose-Tabelle der Sprache) - deutsche
 Zeichen, AltGr, tote Tasten und Compose gehen weiter, nur die IBus-Extras
 (z. B. Chinesisch, Emoji-Fenster) fehlen im Programm.
 
+Ab 0.60 (E3) auch unter X11: Dort friert das Programm mit IBus zwar nicht
+dauerhaft ein, wird aber sehr langsam (im Container belegt: Start 29-32 s
+statt 1,5 s, Seitenwechsel 18 s statt 5 s, Schliessen bis 6,7 s; mit
+angehaltenem ibus-daemon Notausgang nach 8 s). Mit @im=none wie unter
+Wayland. Nur im Container belegt, nicht auf einem echten X11-Rechner.
+
 Greift nur, wenn ALLE Bedingungen gelten:
-  * Linux
-  * Wayland-Sitzung: XDG_SESSION_TYPE=wayland oder WAYLAND_DISPLAY gesetzt
+  * Linux (Wayland- oder X11-Sitzung)
   * XMODIFIERS enthaelt "@im=ibus"
-  * Schalter FISI_XIM ist nicht "1" (FISI_XIM=1 laesst alles wie bisher)
+  * Schalter FISI_XIM ist nicht "1" (FISI_XIM=1 laesst alles wie bisher;
+    fuer alle, die IBus zum Schreiben im Programm brauchen)
 Unter Windows, macOS und allen anderen Linux-Konstellationen aendert sich
 nichts.
 
@@ -51,14 +58,18 @@ GRUND_SCHON_NONE = "schon @im=none (geerbt oder von Hand)"
 _result = None
 
 
+def session_kind(environ):
+    """Ab 0.60: "Wayland" oder "X11" (fuer die Startzeile)."""
+    wayland = (environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
+               or bool(environ.get("WAYLAND_DISPLAY")))
+    return "Wayland" if wayland else "X11"
+
+
 def wanted(environ, platform):
     """(aktiv, Grund) nach den Bedingungen oben - aendert nichts."""
     if not str(platform).startswith("linux"):
         return False, "kein Linux"
-    wayland = (environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
-               or bool(environ.get("WAYLAND_DISPLAY")))
-    if not wayland:
-        return False, "keine Wayland-Sitzung"
+    # Ab 0.60 (E3): keine Wayland-Bedingung mehr, X11 genauso
     modifiers = environ.get("XMODIFIERS", "")
     if IM_IBUS not in modifiers:
         if IM_NONE in modifiers:
@@ -78,11 +89,13 @@ def apply(environ=None, platform=None):
         return _result
     environ = os.environ if environ is None else environ
     platform = sys.platform if platform is None else platform
-    result = {"aktiv": False, "grund": "", "sitzung": "", "vorher": None,
-              "nachher": None}
+    result = {"aktiv": False, "grund": "", "sitzung": "", "art": "",
+              "vorher": None, "nachher": None}
     try:
         result["sitzung"] = environ.get("XDG_SESSION_TYPE", "") or (
             "wayland" if environ.get("WAYLAND_DISPLAY") else "")
+        if str(platform).startswith("linux"):
+            result["art"] = session_kind(environ)
         result["vorher"] = environ.get("XMODIFIERS")
         active, reason = wanted(environ, platform)
         if active:
@@ -115,8 +128,12 @@ def start_text(info=None):
         if info.get("sitzung"):
             text = "Sitzung %s | %s" % (info["sitzung"], text)
         return text
-    return "Sitzung %s | XMODIFIERS %s -> %s | Eingabe-Umgehung aktiv" % (
+    # Ab 0.60 (E3): dahinter "(X11)" oder "(Wayland)"
+    text = "Sitzung %s | XMODIFIERS %s -> %s | Eingabe-Umgehung aktiv" % (
         info.get("sitzung") or "?", info.get("vorher") or "-", info.get("nachher") or "-")
+    if info.get("art"):
+        text += " (%s)" % info["art"]
+    return text
 
 
 def _reset_for_tests():

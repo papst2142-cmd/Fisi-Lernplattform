@@ -4,6 +4,37 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.60
+
+Schnellerer Wechsel zwischen Hell und Dunkel, klarere Startseite, Tests vor
+jedem Release und die Eingabe-Umgehung jetzt auch unter Linux X11.
+
+- **Schnellerer Wechsel Hell/Dunkel (PC):** Die Optionen bauen ihre
+  Bereiche erst beim Aufklappen, und die alte Oberfläche wird beim Wechsel
+  nicht mehr mit umgefärbt. Der Wechsel geht dadurch schneller. Dafür
+  braucht der Bereich „Farben“ in den Optionen beim ersten Aufklappen
+  etwas länger.
+- **Startseite klarer:** Die Lernserie steht nur noch einmal oben im Banner
+  (PC und Handy), der Schalter „Lernserie anzeigen“ wirkt dort. Ringe und
+  Kacheln heißen „Prüfungstrainer“ statt „Quiz“. Der Ring „Prüfungstrainer“
+  zeigt jetzt groß die Zahl der verschiedenen beantworteten Fragen
+  („von 2174 Fragen beantwortet“), nicht mehr die Zahl aller Antworten.
+- **Handy:** Die Startseite zeigt die Versionsnummer unter der Überschrift.
+  Die Kacheln im Fortschritt heißen wie am PC („Test-Sessions“, „Bestes
+  Ergebnis“), die Lernserie steht nicht mehr doppelt. Die Knöpfe „Hilfe“
+  und „Suchen“ oben haben jetzt einen Namen für Bildschirmleser.
+- **Hilfe:** Beim Öffnen sind alle Abschnitte eingeklappt, wie bei den
+  Optionen (PC und Handy).
+- **Linux mit X11 und IBus:** Die Eingabe-Umgehung aus 0.59.3 gilt jetzt
+  auch in X11-Sitzungen, wenn IBus als Eingabemethode eingestellt ist. Unter
+  X11 ist das bisher nur in einer Test-Umgebung geprüft. Wer IBus im
+  Programm braucht, startet es mit `FISI_XIM=1 fisi-lernplattform`. Mit
+  `FISI_XIM=1` kann das Programm wieder langsamer sein oder hängen. Die
+  erste Zeile in haenger.log nennt jetzt die Sitzungsart („(X11)“ oder
+  „(Wayland)“).
+- **Tests vor jedem Release:** Die automatischen Tests laufen jetzt bei
+  jedem Bau mit (Linux und Windows). Ein roter Test hält den Release auf.
+
 ## 0.59.3
 
 Umgehung für das Einfrieren auf Linux (Wayland) mit IBus und korrigierter

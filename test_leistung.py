@@ -45,6 +45,7 @@ _TMP = tempfile.mkdtemp(prefix="fisi_leistung_")
 os.environ["FISI_DB_PATH"] = os.path.join(_TMP, "leistung.db")
 os.environ["FISI_SELFTEST"] = os.path.join(_TMP, "selbsttest.log")   # kein Netz
 
+import fisi_optionen as fo  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_update  # noqa: E402
 
@@ -333,6 +334,52 @@ class CtkVersionTest(unittest.TestCase):
                       "geprueft - test_leistung.py mit dieser Version laufen lassen "
                       "und CTK_IMAGE_FIX_VERSIONS ergaenzen" % ctk.__version__)
 
+    def test_b1_abmelden_fuer_diese_version_geprueft(self):
+        """Ab 0.60 (B1): detach_appearance greift in customtkinter-Interna;
+        die festgelegte Version muss dafuer geprueft sein."""
+        import customtkinter as ctk
+        import app_gui
+        self.assertIn(ctk.__version__, app_gui.CTK_DETACH_VERSIONS,
+                      "customtkinter %s ist fuer detach_appearance (0.60, B1) nicht "
+                      "geprueft - test_leistung.py laufen lassen und "
+                      "CTK_DETACH_VERSIONS ergaenzen" % ctk.__version__)
+
+    @unittest.skipUnless(HAS_DISPLAY, "kein Display fuer Tk")
+    def test_b1_nur_der_behaelter_wird_abgemeldet(self):
+        import customtkinter as ctk
+        import app_gui
+        from customtkinter.windows.widgets.appearance_mode import AppearanceModeTracker
+        root = ctk.CTk()
+        try:
+            old = ctk.CTkFrame(root)
+            inner = ctk.CTkFrame(old)
+            ctk.CTkLabel(inner, text="alt").pack()
+            ctk.CTkButton(old, text="alt").pack()
+            keep = ctk.CTkFrame(root)
+            ctk.CTkLabel(keep, text="neu").pack()
+            owners = lambda: [str(getattr(cb, "__self__", "")) for cb in
+                              AppearanceModeTracker.callback_list]
+            listed = AppearanceModeTracker.callback_list
+            before = len(owners())
+            # andere Version: nichts geschieht
+            saved = ctk.__version__
+            ctk.__version__ = "0.0.0"
+            try:
+                self.assertEqual(app_gui.detach_appearance(old), 0)
+            finally:
+                ctk.__version__ = saved
+            removed = app_gui.detach_appearance(old)
+            self.assertGreaterEqual(removed, 4)   # Rahmen, Rahmen, Label, Knopf
+            self.assertEqual(len(owners()), before - removed)
+            self.assertIs(AppearanceModeTracker.callback_list, listed)   # dieselbe Liste
+            self.assertFalse([o for o in owners() if o == str(old) or
+                              o.startswith(str(old) + ".")])
+            self.assertTrue([o for o in owners() if o.startswith(str(keep))])
+            old.destroy()   # Abbau danach geht ohne Fehler
+            root.update()
+        finally:
+            root.destroy()
+
     @unittest.skipUnless(HAS_DISPLAY, "kein Display fuer Tk")
     def test_label_und_knopf_tragen_sich_aus(self):
         import customtkinter as ctk
@@ -373,6 +420,10 @@ class PcTest(unittest.TestCase):
         cls.root = ctk.CTk()
         cls.root.report_callback_exception = lambda *exc: cls.errors.append(
             "".join(traceback.format_exception(*exc)))
+        # Ab 0.60 (K-D): Der Windows-Runner hat nur 1024x768 Bildpunkte; Tk
+        # begrenzt das Fenster dort sonst auf die Bildschirmgroesse und die
+        # Groessenwechsel unten haetten keine Wirkung
+        cls.root.maxsize(4000, 3000)
         cls.root.geometry("1360x880+0+0")
         cls.app = app_gui.FISIApp(cls.root)
         cls.pump(0.3)
@@ -437,6 +488,8 @@ class PcTest(unittest.TestCase):
     def test_2_schalter_in_den_optionen(self):
         self.show("settings")
         settings = self.app.views["settings"]
+        settings.open_area(fo.DIAGNOSE_ID)   # ab 0.60 (B3): erst beim Aufklappen gebaut
+        self.pump(0.1)
         self.assertEqual(settings.lbl_perf.cget("text"), fle.STATE_NONE)
         settings.var_perf.set(True)
         settings._toggle_perf()
@@ -447,11 +500,20 @@ class PcTest(unittest.TestCase):
         for key in ("progress", "dashboard", "settings"):
             self.show(key)
         self.pump(0.1)
-        # Fenstergroesse in Schritten aendern (wie Ziehen mit der Maus)
-        for width in range(1360, 1480, 20):
-            self.root.geometry("%dx900" % width)
-            self.pump(0.03)
-        self.pump(self.app_gui.PerfMonitor.RESIZE_END_MS / 1000 + 0.3)
+        # Fenstergroesse in Schritten aendern (wie Ziehen mit der Maus). Ab 0.60
+        # (CI): Auf dem langsamen Windows-Runner dauert ein Schritt laenger als
+        # die 600 ms Pause, nach der ein Zug als beendet gilt - daher die Pause
+        # fuer den Test verlaengern (das Zusammenfassen wird so trotzdem geprueft)
+        monitor = self.app_gui.PerfMonitor
+        saved = monitor.RESIZE_END_MS
+        monitor.RESIZE_END_MS = 5000
+        try:
+            for width in range(1360, 1480, 20):
+                self.root.geometry("%dx900" % width)
+                self.pump(0.03)
+            self.pump(monitor.RESIZE_END_MS / 1000 + 0.3)
+        finally:
+            monitor.RESIZE_END_MS = saved
         self.app.change_color(mode="hell")
         self.pump(0.3)
         self.app.perf.rec.flush()
@@ -482,6 +544,8 @@ class PcTest(unittest.TestCase):
         self.show("settings")
         self.pump(0.1)
         settings = self.app.views["settings"]
+        settings.open_area(fo.DIAGNOSE_ID)   # ab 0.60 (B3)
+        self.pump(0.1)
         self.assertTrue(settings.var_perf.get())
         self.assertIn("Einträge", settings.lbl_perf.cget("text"))
         # Loeschen und Ausschalten

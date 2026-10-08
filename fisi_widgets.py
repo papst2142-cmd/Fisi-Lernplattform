@@ -1033,13 +1033,21 @@ class FoldCard(Card):
     Ab 0.59 (Optionen, marker=True): grosser Pfeil links in der Akzentfarbe,
     rechts gut lesbar "aufklappen"/"einklappen", Kopfzeile hebt sich beim
     Darueberfahren ab. Die Optionen setzen den gemerkten Zustand beim
-    Oeffnen zurueck (reset_states)."""
+    Oeffnen zurueck (reset_states).
+
+    Ab 0.60 (B3, Tempo): Mit builder wird der Inhalt erst beim ersten
+    Aufklappen gebaut - builder(self) fuellt dann self.body. Einmal gebaut
+    bleibt er stehen (Zuklappen baut nichts ab)."""
 
     _open_state = {}
 
     def __init__(self, parent, title, subtitle=None, accent=None, key=None,
-                 opened=False, marker=False, open_text=None, close_text=None, **kwargs):
+                 opened=False, marker=False, open_text=None, close_text=None,
+                 builder=None, after_build=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
+        self._builder = builder
+        self._building = False
+        self._after_build = after_build   # ab 0.60: nach dem Bauen aufrufen
         self.key = key or title
         self.fold_title = title
         self.marker = marker
@@ -1120,7 +1128,32 @@ class FoldCard(Card):
                 pass
         self.after_idle(check)
 
+    @property
+    def built(self):
+        """Ab 0.60 (B3): Inhalt fertig gebaut (ohne builder immer). Waehrend
+        des Bauens noch nicht: CustomTkinter ruft darin update_idletasks auf,
+        und wartende after_idle-Auffrischungen duerfen dann noch nicht auf
+        die Elemente zugreifen (Abnahme 0.60, Auflage A2)."""
+        return self._builder is None
+
+    def ensure_built(self):
+        """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
+        (auch eingeklappt, z.B. fuer den Selbsttest)."""
+        builder = self._builder
+        if builder is None or self._building:
+            return
+        self._building = True
+        try:
+            builder(self)
+        finally:
+            self._building = False
+            self._builder = None
+        if self._after_build is not None:
+            self._after_build()
+
     def _apply(self):
+        if self.opened:
+            self.ensure_built()
         if self.marker:
             self.pointer.configure(image=ctk_image(
                 triangle_image(16, self._pointer_color, self.opened), 16, 16))
@@ -1282,13 +1315,31 @@ class RingStat(tk.Canvas):
         self._photo = tk_photo(image, size, size)
         self.create_image(size / 2, size / 2, image=self._photo)
         center = size / 2
+        lines = self._wrap(small) if small else []
         if big:
             offset = -px(8) if small else 0
+            if len(lines) > 1:
+                offset = -px(13)
             self.create_text(center, center + offset, text=big, fill=C["text"],
                              font=tk_font(F["ring_big"]))
-        if small:
-            self.create_text(center, center + px(15), text=small, fill=C["muted"],
-                             font=tk_font(F["ring_small"]))
+        if lines:
+            below = px(15) if len(lines) == 1 else px(18)
+            self.create_text(center, center + below, text="\n".join(lines),
+                             fill=C["muted"], font=tk_font(F["ring_small"]),
+                             justify="center")
+
+    def _wrap(self, text):
+        """Bricht die kleine Zeile um, wenn sie nicht in den Ring passt
+        (z. B. "von 2174 Fragen" / "beantwortet"). Der Wortlaut bleibt."""
+        inner = self.size - 2 * self.thickness - 14
+        if text_width(text, F["ring_small"]) <= inner:
+            return [text]
+        words = text.split(" ")
+        for cut in range(len(words) - 1, 0, -1):
+            first = " ".join(words[:cut])
+            if text_width(first, F["ring_small"]) <= inner:
+                return [first, " ".join(words[cut:])]
+        return [text]
 
 
 class MiniRing(tk.Canvas):

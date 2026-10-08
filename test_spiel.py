@@ -217,7 +217,7 @@ class AufgabenTest(unittest.TestCase):
         for task in fg.GAME["aufgaben"]:
             links = fg.learn_links(task)
             self.assertTrue(links, task["id"])
-            self.assertTrue(all(hit[0] in ("Karteikarte", "Quizfrage") for hit in links))
+            self.assertTrue(all(hit[0] in ("Karteikarte", "Prüfungsfrage") for hit in links))
 
 
 class SpielstandTest(unittest.TestCase):
