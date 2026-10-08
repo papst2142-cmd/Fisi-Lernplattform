@@ -6408,7 +6408,16 @@ class LegalDialog(ctk.CTkToplevel):
         self.app = app
         title = fr.TITEL_LIZENZ if kind == "lizenz" else fr.TITEL_FREMD
         self.title(title)
-        self.geometry("980x660" if kind == "fremd" else "820x640")
+        self.choices = None
+        self.listbox = None
+        list_chars = 34
+        if kind == "fremd":
+            self.choices = dict(fr.notice_choices(*fr.load_notices()))
+            # Liste so breit wie der laengste Name (hoechstens 60 Zeichen),
+            # das Fenster waechst entsprechend mit
+            list_chars = min(60, max([34] + [len(n) + 1 for n in self.choices]))
+        self.geometry("%dx660" % (980 + 7 * (list_chars - 34))
+                      if kind == "fremd" else "820x640")
         self.resizable(True, True)
         self.transient(app.root)
         self.after(250, lambda: _apply_window_icon(self))
@@ -6417,16 +6426,13 @@ class LegalDialog(ctk.CTkToplevel):
         buttons = transparent_frame(card.body)
         buttons.pack(fill="x", side="bottom", pady=(12, 0))
         NeoButton(buttons, "Schließen", self.destroy, kind="ghost").pack(side="left")
-        self.choices = None
-        self.listbox = None
         if kind == "fremd":
-            self.choices = dict(fr.notice_choices(*fr.load_notices()))
             side = transparent_frame(card.body)
             side.pack(fill="y", side="left", padx=(0, 12))
             make_label(side, fr.ABSCHNITT.upper(), font=F["label"], fg=C["muted"]).pack(
                 anchor="w", pady=(0, 6))
             self.listbox = tk.Listbox(
-                side, width=34, activestyle="none", exportselection=False,
+                side, width=list_chars, activestyle="none", exportselection=False,
                 font=tk_font(F["small"]), bg=C["card_alt"], fg=C["text_soft"],
                 selectbackground=C["purple"], selectforeground="#FFFFFF",
                 highlightthickness=1, highlightbackground=C["field_border"],

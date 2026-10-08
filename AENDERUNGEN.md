@@ -26,7 +26,8 @@ privates Lernprogramm ist und kein Produkt einer IHK.
   Checkliste „frag bei deiner IHK nach“. Neu in der Hilfe: „Rechtliches“.
 - **Dateien:** `LICENSE.txt` und `THIRD_PARTY_NOTICES.txt` liegen im
   Programmordner (Windows, Linux), unter Linux zusätzlich in
-  `/usr/share/doc/fisi-lernplattform/`, im macOS-Paket neben der App.
+  `/usr/share/doc/fisi-lernplattform/`, unter macOS in der App und im
+  Paketfenster neben der App, auf dem Handy in der App.
 - **Kleiner (Linux):** Eine nicht gebrauchte Bibliothek für Terminal-Eingaben
   (readline) ist nicht mehr dabei.
 - **macOS:** Die Mac-Versionen werden gebaut und automatisch gestartet,
