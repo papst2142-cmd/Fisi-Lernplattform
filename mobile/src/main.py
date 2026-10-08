@@ -87,7 +87,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.60"
+APP_VERSION = "0.60.1"
 
 # Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
 VERSION_LINE = "Version %s"

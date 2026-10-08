@@ -4,6 +4,24 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.60.1
+
+Seiten öffnen beim ersten Mal schneller, weil das Programm sie nach dem
+Start früher und in einer neuen Reihenfolge im Hintergrund vorbereitet.
+
+- **Erstes Öffnen schneller (PC):** Nach dem Start bereitet das Programm
+  jetzt zuerst Karteikarten, Spiel, Optionen und Fortschritt vor und fängt
+  damit früher an. Neu vorbereitet werden auch die Hilfe und der Bereich
+  „Farben“ in den Optionen; beide gehen beim ersten Öffnen schneller auf.
+  Das geschieht in kleinen Schritten und pausiert, solange geklickt,
+  getippt oder mit dem Mausrad gescrollt wird.
+- **Wechsel Hell/Dunkel:** Der Wechsel dauert dadurch etwas länger als in
+  0.60, bleibt aber deutlich schneller als vor 0.60. Auf Linux kann der
+  Wechsel dadurch deutlicher länger dauern.
+- **Handy:** keine Änderung außer der Versionsnummer.
+- **macOS:** wird weiter mitgebaut, aber von niemandem auf einem echten
+  Mac getestet.
+
 ## 0.60
 
 Schnellerer Wechsel zwischen Hell und Dunkel, klarere Startseite, Tests vor
