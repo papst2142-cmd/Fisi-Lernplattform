@@ -77,6 +77,25 @@ PYTHON_LIBS = [
 ]
 
 
+
+# Name des eigenen Ubuntu-Pakets (wie PACKAGE_NAME in build.py). Ist es auf
+# dem Baurechner installiert, meldet dpkg -S die Bibliotheken in
+# /opt/fisi-lernplattform/_internal auch als "eigene" Dateien. Das eigene
+# Programm ist aber kein Bestandteil Dritter (Gegenpruefung 0.62).
+OWN_PACKAGE = "fisi-lernplattform"
+
+
+def dpkg_owner(output):
+    """Erstes fremdes Paket aus der Ausgabe von dpkg -S, oder None."""
+    for line in output.splitlines():
+        if line.startswith("diversion") or ": /" not in line:
+            continue
+        for name in line.split(": /")[0].split(","):
+            name = name.strip().split(":")[0]
+            if name and name != OWN_PACKAGE:
+                return name
+    return None
+
 class Component:
     def __init__(self, key, name, version="", license_name="", note=""):
         self.key, self.name, self.version = key, name, version
@@ -318,14 +337,9 @@ class Generator:
         base = os.path.basename(rel)
         if base in self.dpkg_cache:
             return self.dpkg_cache[base]
-        package = None
         try:
             result = subprocess.run(["dpkg", "-S", "*/" + base], capture_output=True, text=True)
-            for line in result.stdout.splitlines():
-                if line.startswith("diversion") or ": /" not in line:
-                    continue
-                package = line.split(":")[0].split(",")[0].strip()
-                break
+            package = dpkg_owner(result.stdout)
         except OSError:
             package = None
         self.dpkg_cache[base] = package

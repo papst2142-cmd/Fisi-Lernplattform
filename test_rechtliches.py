@@ -262,6 +262,21 @@ class LizenzTest(unittest.TestCase):
         self.assertTrue(any(t.startswith("PyInstaller") for t in titles))
         self.assertTrue(lizenzen.counter_check(folder))
 
+    def test_eigenes_paket_ist_kein_fremdbestandteil(self):
+        # Gegenpruefung 0.62: war das eigene .deb installiert, landeten
+        # Ubuntu-Bibliotheken beim Paket fisi-lernplattform
+        import lizenzen
+        self.assertEqual(lizenzen.OWN_PACKAGE, build.PACKAGE_NAME)
+        out = ("fisi-lernplattform: /opt/fisi-lernplattform/_internal/libssl.so.3\n"
+               "libssl3:amd64: /usr/lib/x86_64-linux-gnu/libssl.so.3\n")
+        self.assertEqual(lizenzen.dpkg_owner(out), "libssl3")
+        out = "fisi-lernplattform, libpng16-16:amd64: /usr/lib/libpng16.so.16\n"
+        self.assertEqual(lizenzen.dpkg_owner(out), "libpng16-16")
+        self.assertIsNone(lizenzen.dpkg_owner(
+            "fisi-lernplattform: /opt/fisi-lernplattform/_internal/libx.so\n"))
+        self.assertEqual(lizenzen.dpkg_owner(
+            "diversion by x from: /a\nzlib1g:amd64: /usr/lib/libz.so.1\n"), "zlib1g")
+
     def test_bau_ohne_readline(self):
         source = read("build.py")
         self.assertIn('"--exclude-module", "readline",', source)
