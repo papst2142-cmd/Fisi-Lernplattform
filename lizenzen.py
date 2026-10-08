@@ -295,6 +295,13 @@ class Generator:
                 if "license.terms" in names and re.match(r"^t(cl|k)\d", os.path.basename(base)):
                     comp.texts.append(("%s/license.terms" % os.path.basename(base),
                                        _read(os.path.join(base, "license.terms"))))
+            # sonst (macOS: python.org legt license.terms nicht bei) feste Texte
+            # aus lizenztexte/tcltk (Quelle siehe lizenztexte/QUELLEN.txt)
+            if not comp.texts:
+                for name in ("tcl-license.terms", "tk-license.terms"):
+                    path = os.path.join(TEXTS, "tcltk", name)
+                    if os.path.isfile(path):
+                        comp.texts.append((name, _read(path)))
             if not comp.texts and self.python_license and \
                     python_license_mentions(self.python_license, "Tcl"):
                 comp.texts.append(("Verweis", "Der Lizenztext steht im Abschnitt zu Tcl/Tk "

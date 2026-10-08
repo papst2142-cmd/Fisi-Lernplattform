@@ -24,6 +24,10 @@ python/license-3.14.rst           https://raw.githubusercontent.com/python/cpyth
 sqlite.txt                        https://raw.githubusercontent.com/sqlite/sqlite/version-3.50.4/LICENSE.md
 xz.txt                            https://raw.githubusercontent.com/tukaani-project/xz/v5.4.6/COPYING
 bzip2.txt                         https://gitlab.com/bzip2/bzip2/-/raw/bzip2-1.0.8/LICENSE
+tcltk/tcl-license.terms           https://raw.githubusercontent.com/tcltk/tcl/core-8-6-16/license.terms
+tcltk/tk-license.terms            https://raw.githubusercontent.com/tcltk/tk/core-8-6-16/license.terms
+                                  (nur fuer macOS: die Python-Installation von python.org legt
+                                  license.terms nicht bei; Text ueber die 8.6-Versionen gleich)
 
 Die Versionen der Quellen entsprechen der Handy-App 0.61 (gemessen in der APK:
 OpenSSL 3.5.7, SQLite 3.50.4, XZ 5.4.6, bzip2 1.0.8, zstd 1.5.7, expat 2.8.2).
