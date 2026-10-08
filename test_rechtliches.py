@@ -391,7 +391,9 @@ class PcTest(unittest.TestCase):
                 started = time.perf_counter()
                 window.listbox.selection_clear(0, "end")
                 window.listbox.selection_set("end")
-                window.listbox.event_generate("<<ListboxSelect>>")
+                # direkt aufrufen: <<ListboxSelect>> per event_generate kommt
+                # unter Windows ohne Fokus nicht sicher an (CI 0.62)
+                window._selected()
                 self.pump(2)
                 print("Abschnitt %r nach %.3f s" % (names[-1], time.perf_counter() - started))
                 self.assertIn("vulkan", window.text.get("1.0", "end").lower())
