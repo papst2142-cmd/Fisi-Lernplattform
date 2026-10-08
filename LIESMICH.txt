@@ -494,6 +494,19 @@ Linux mit IBus (Wayland ab 0.59.3, X11 ab 0.60)
       FISI_XIM=1 fisi-lernplattform
     Mit FISI_XIM=1 kann das Programm wieder langsamer sein oder haengen.
 
+Vorladen abschalten (PC, Notschalter ab 0.60.1)
+    Nach dem Start bereitet das Programm die Seiten im Hintergrund vor,
+    damit sie spaeter sofort aufgehen. Macht das auf einem Geraet Probleme
+    (z.B. kurze Haenger direkt nach dem Start), laesst es sich abschalten.
+    Vorher das Programm schliessen, dann so starten:
+      Linux:       FISI_VORLADEN=0 fisi-lernplattform
+      Windows:     in PowerShell
+                   $env:FISI_VORLADEN = "0"
+                   & "$env:LOCALAPPDATA\Programs\FISI-Lernplattform\FISI-Lernplattform.exe"
+    Jede Seite wird dann erst beim ersten Oeffnen aufgebaut (wie vor
+    0.56). Mit FISI_VORLADEN=060 laedt das Programm vor wie in 0.60.
+    Der Schalter gilt nur fuer so gestartete Programme.
+
 "Datenbankfehler" beim Start
     Der Speicherort ist schreibgeschuetzt. Ueber FISI_DB_PATH einen
     beschreibbaren Ort festlegen (siehe "WO WERDEN DIE LERNFORTSCHRITTE
