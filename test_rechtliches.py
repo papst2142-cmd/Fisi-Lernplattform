@@ -337,6 +337,13 @@ class PcTest(unittest.TestCase):
         cls.root.geometry("1360x900+0+0")
         cls.app = app_gui.FISIApp(cls.root)
         cls.pump()
+        # Vorladen (ab 0.60.1) erst abwarten: ein faelliger Vorlade-Schritt
+        # liefe sonst in pump() mit und landete in der Zeitmessung (CI 0.62:
+        # einmal 1,4 s statt 0,04 s)
+        until = time.perf_counter() + 60
+        while not cls.app.preloader.done and time.perf_counter() < until:
+            cls.pump(1)
+            time.sleep(0.02)
 
     @classmethod
     def tearDownClass(cls):
