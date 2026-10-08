@@ -483,7 +483,8 @@ Programm haengt (Linux, ab 0.59.2)
 
 Linux mit IBus (Wayland ab 0.59.3, X11 ab 0.60)
     Unter Linux mit IBus schaltet das Programm fuer sich die IBus-Eingabe
-    ab: unter Wayland ab 0.59.3, unter X11 ab 0.60. Sonst kann es beim
+    ab: unter Wayland ab 0.59.3, unter X11 ab 0.60 (unter X11 bisher nur
+    in einer Test-Umgebung geprueft). Sonst kann es beim
     Darstellungswechsel, beim Oeffnen der Suche oder beim Schliessen
     einfrieren (Wayland) oder sehr langsam werden (X11); Umlaute, ss,
     AltGr-Zeichen und tote Tasten gehen weiter. Programme, die FISI selbst
@@ -491,6 +492,7 @@ Linux mit IBus (Wayland ab 0.59.3, X11 ab 0.60)
     ohne Folgen. Wer IBus im Programm braucht (z. B. fuer Chinesisch oder
     Emoji), startet es mit
       FISI_XIM=1 fisi-lernplattform
+    Mit FISI_XIM=1 kann das Programm wieder langsamer sein oder haengen.
 
 "Datenbankfehler" beim Start
     Der Speicherort ist schreibgeschuetzt. Ueber FISI_DB_PATH einen

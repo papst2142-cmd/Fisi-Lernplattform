@@ -393,11 +393,11 @@ HELP_SECTIONS = [
               "älter beendet derselbe Befehl das Programm. In den „Optionen“ unter "
               "„Diagnose und Werkzeuge“ kopiert „Befehl kopieren“ ihn für dich.\n\n"
               # Ab 0.60 (E3): Eingabe-Umgehung auch unter X11
-              "Unter Linux mit IBus (Wayland, ab 0.60 auch X11) schaltet das Programm für "
-              "sich die IBus-Eingabe ab, sonst kann es einfrieren oder sehr langsam werden. "
-              "Umlaute, ß und AltGr gehen weiter. Wer IBus zum Schreiben braucht (z. B. "
-              "Chinesisch, Emoji), startet es im Terminal so:\n"
-              "FISI_XIM=1 fisi-lernplattform")},
+              "Unter Linux mit IBus schaltet das Programm für sich die IBus-Eingabe ab "
+              "(X11 ab 0.60, bisher nur im Test geprüft), sonst kann es einfrieren. "
+              "Umlaute, ß und AltGr gehen weiter. Wer IBus braucht, startet es mit\n"
+              "FISI_XIM=1 fisi-lernplattform\n"
+              "Mit FISI_XIM=1 kann das Programm wieder langsamer sein oder hängen.")},
     # Ab 0.56 (Nachbesserung): kurze Tastaturhilfe (nur PC)
     {"id": "tastatur", "titel": "Bedienung mit der Tastatur (PC)",
      "reiter": [],
