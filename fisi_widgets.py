@@ -1043,10 +1043,11 @@ class FoldCard(Card):
 
     def __init__(self, parent, title, subtitle=None, accent=None, key=None,
                  opened=False, marker=False, open_text=None, close_text=None,
-                 builder=None, **kwargs):
+                 builder=None, after_build=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
         self._builder = builder
         self._building = False
+        self._after_build = after_build   # ab 0.60: nach dem Bauen aufrufen
         self.key = key or title
         self.fold_title = title
         self.marker = marker
@@ -1147,6 +1148,8 @@ class FoldCard(Card):
         finally:
             self._building = False
             self._builder = None
+        if self._after_build is not None:
+            self._after_build()
 
     def _apply(self):
         if self.opened:

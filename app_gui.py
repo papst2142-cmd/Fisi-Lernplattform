@@ -4871,11 +4871,24 @@ class SettingsView(View):
         else:
             card = FoldCard(self.content, title=area["titel"], accent=accent,
                             subtitle=subtitle, key=fo.state_key(area_id), marker=True,
-                            builder=builder)
+                            builder=builder,
+                            after_build=lambda: self._after_build(area_id))
             self.folds[area_id] = card
         card.pack(fill="x", pady=(14, 0) if self.areas else 0)
         self.areas[area_id] = card
         return card
+
+    def _after_build(self, area_id):
+        """Ab 0.60 (B3): Werte eintragen, sobald ein Bereich fertig gebaut ist
+        (erst dann meldet built() ihn als gebaut)."""
+        if area_id in ("spiel", "loeschen"):
+            self._show_difficulty()
+        elif area_id == fo.DIAGNOSE_ID:
+            self._show_report()
+            self._show_perf_state()
+            self._show_hang_state()
+        elif area_id == "abgleich":
+            self.show_sync_status(*self._sync_status)
 
     def built(self, area_id):
         """Ab 0.60 (B3): Ist der Inhalt dieses Bereichs schon gebaut?"""
@@ -5143,7 +5156,6 @@ class SettingsView(View):
                    "in der „Hilfe“ unter „Abgleich einrichten“.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
-        self.show_sync_status(*self._sync_status)
 
     def _build_sicherung(self, backup):
         make_label(backup.body, fsi.HELP, font=F["small"], fg=C["text_dim"],
@@ -5195,7 +5207,6 @@ class SettingsView(View):
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
-        self._show_difficulty()   # ab 0.60 (B3): beim ersten Aufklappen eintragen
 
     def _build_loeschen(self, danger):
         make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
@@ -5227,7 +5238,6 @@ class SettingsView(View):
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         NeoButton(danger.body, "Bestenliste löschen", self.reset_records,
                   kind="danger").pack(anchor="w", pady=(12, 0))
-        self._show_difficulty()   # ab 0.60 (B3): beim ersten Aufklappen eintragen
 
     def _build_ueber(self, about):
         make_label(about.body,
@@ -5309,10 +5319,6 @@ class SettingsView(View):
                        fg=C["text_dim"]).pack(side="left")
             NeoButton(row, fhg.BTN_COPY, self.copy_kill_command,
                       kind="ghost").pack(side="left", padx=(16, 0))
-        # Ab 0.60 (B3): beim ersten Aufklappen gleich eintragen
-        self._show_report()
-        self._show_perf_state()
-        self._show_hang_state()
 
     def reset_folds(self):
         """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen (ausser

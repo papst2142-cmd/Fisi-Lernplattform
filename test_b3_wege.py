@@ -120,6 +120,9 @@ class WegeTest(unittest.TestCase):
             self.assertTrue(view.folds[area_id].opened, area_id)
             self.assertTrue(view.folds[area_id].body.winfo_children(), area_id)
             self.assertTrue(self.visible(view, view.areas[area_id]), area_id)
+            if area_id == fo.DIAGNOSE_ID:   # Werte nach dem Bauen eingetragen
+                self.assertTrue(view.lbl_hang.cget("text"))
+                self.assertTrue(view.lbl_perf.cget("text"))
             checked += 1
         self.assertGreaterEqual(checked, 10)
 
