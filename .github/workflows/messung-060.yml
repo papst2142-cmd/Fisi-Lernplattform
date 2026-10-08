@@ -30,7 +30,32 @@ jobs:
           git fetch origin version-060
           git worktree add ../v060 origin/version-060
           git -C ../v060 log --oneline -1
+      - name: Oeffnen v0593 vorladen 1
+        continue-on-error: true
+        run: |
+          timeout 900 python messung_060/messung_oeffnen.py ../v0593 "$RUNNER_TEMP/oe_0593_1.json" 1 > "$RUNNER_TEMP/oe_0593_1.txt" 2>&1 || echo "Rueckgabe $?"
+          grep "^ERG" "$RUNNER_TEMP/oe_0593_1.txt" | while IFS= read -r z; do echo "::notice::v0593 $z"; done
+          tail -3 "$RUNNER_TEMP/oe_0593_1.txt"
+      - name: Oeffnen v0593 vorladen 0
+        continue-on-error: true
+        run: |
+          timeout 900 python messung_060/messung_oeffnen.py ../v0593 "$RUNNER_TEMP/oe_0593_0.json" 0 > "$RUNNER_TEMP/oe_0593_0.txt" 2>&1 || echo "Rueckgabe $?"
+          grep "^ERG" "$RUNNER_TEMP/oe_0593_0.txt" | while IFS= read -r z; do echo "::notice::v0593 $z"; done
+          tail -3 "$RUNNER_TEMP/oe_0593_0.txt"
+      - name: Oeffnen v060 vorladen 1
+        continue-on-error: true
+        run: |
+          timeout 900 python messung_060/messung_oeffnen.py ../v060 "$RUNNER_TEMP/oe_060_1.json" 1 > "$RUNNER_TEMP/oe_060_1.txt" 2>&1 || echo "Rueckgabe $?"
+          grep "^ERG" "$RUNNER_TEMP/oe_060_1.txt" | while IFS= read -r z; do echo "::notice::v060 $z"; done
+          tail -3 "$RUNNER_TEMP/oe_060_1.txt"
+      - name: Oeffnen v060 vorladen 0
+        continue-on-error: true
+        run: |
+          timeout 900 python messung_060/messung_oeffnen.py ../v060 "$RUNNER_TEMP/oe_060_0.json" 0 > "$RUNNER_TEMP/oe_060_0.txt" 2>&1 || echo "Rueckgabe $?"
+          grep "^ERG" "$RUNNER_TEMP/oe_060_0.txt" | while IFS= read -r z; do echo "::notice::v060 $z"; done
+          tail -3 "$RUNNER_TEMP/oe_060_0.txt"
       - name: Darstellungswechsel
+        if: false
         continue-on-error: true
         run: |
           for r in 1 2 3; do
