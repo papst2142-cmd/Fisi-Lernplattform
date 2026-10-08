@@ -542,7 +542,21 @@ def generate(folder, output, version="", requirements_file=None):
                          "nicht abschalten):\n  " + "\n  ".join(gen.unassigned))
     with open(output, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(gen.render(version))
+    print_excerpt(output)
     return gen, files
+
+
+def print_excerpt(path):
+    """Ab 0.62 (Nachforderung N1): Groesse, Kopf und Uebersicht der erzeugten
+    Datei ins Bauprotokoll, damit jeder CI-Lauf den Inhalt belegt."""
+    with open(path, encoding="utf-8") as handle:
+        text = handle.read()
+    head = text.split("\n#### ", 1)[0].rstrip()
+    sections = text.count("\n#### ")
+    print("[..] %s: %d Byte, %d Abschnitte. Anfang der Datei:" % (
+        os.path.basename(path), os.path.getsize(path), sections), flush=True)
+    for line in head.splitlines():
+        print("     | " + line, flush=True)
 
 
 def counter_check(folder):

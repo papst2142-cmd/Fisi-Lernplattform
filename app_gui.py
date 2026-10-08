@@ -8413,6 +8413,14 @@ def _run_selftest(root, app, log_path):
                 if "Programmversion: %s" % APP_VERSION not in \
                         settings_view.report_box.get("1.0", "end"):
                     failures.append("Problem melden: Bericht fehlt")
+                # Ab 0.62: Lizenz und Hinweise liegen im fertigen Programm dort,
+                # wo "Ueber das Programm" sie sucht, und beide Fenster oeffnen
+                for name in (fr.LICENSE_FILE, fr.NOTICES_FILE):
+                    if not fr.find_file(name):
+                        failures.append("Rechtliches: %s nicht gefunden" % name)
+                for kind in ("lizenz", "fremd"):
+                    settings_view.show_legal(kind).destroy()
+                    root.update()
                 # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
                 # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
                 tour = app.start_tour()

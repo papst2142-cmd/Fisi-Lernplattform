@@ -439,8 +439,8 @@ def check_macos_bundle(app_path, version):
         wrong.append("App-Datei %s (erwartet %s.app)" % (os.path.basename(app_path), APP_NAME))
     if wrong:
         fail("macOS-App: " + "; ".join(wrong))
-    info("macOS-App geprueft: %s, %s, %s.app" % (DISPLAY_NAME, expected["CFBundleIdentifier"],
-                                                 APP_NAME))
+    info("macOS-App geprueft: %s, %s, %s.app, NSHumanReadableCopyright %r" % (
+        DISPLAY_NAME, expected["CFBundleIdentifier"], APP_NAME, COPYRIGHT))
 
 
 def _run_selftest(command, env, log_path, title):
