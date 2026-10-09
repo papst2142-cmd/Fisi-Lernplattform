@@ -1,0 +1,57 @@
+# Nur Messung (Zweig messung-0622, Plan 0.62.2 Abschnitt 6.4): vorher
+# (main 9e39cbe) und nachher (Zweig version-0622) abwechselnd auf dem
+# Windows-Runner, je 7 Laeufe Zeitleiste und "Optionen ohne Vorladen", dazu
+# 3 Runden je 6 Darstellungswechsel aus den Optionen mit offenem Bereich.
+# Baut nichts, veroeffentlicht nichts, wird nie gemergt.
+name: Messung 0.62.2 (nur Messung)
+
+on:
+  push:
+    branches: [messung-0622]
+    paths: [".github/workflows/messung-0622.yml", "messung_0622/**"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Fassungen vorher (9e39cbe) und nachher (version-0622)
+        run: |
+          git worktree add ../vor 9e39cbe
+          git fetch origin version-0622
+          git worktree add ../nach origin/version-0622
+          for v in vor nach; do echo "::notice::Fassung $v $(git -C ../$v log --oneline -1)"; done
+      - name: Zeitleiste und Optionen ohne Vorladen (7 Laeufe abwechselnd)
+        continue-on-error: true
+        run: |
+          for r in 1 2 3 4 5 6 7; do
+            for v in vor nach; do
+              timeout 600 python messung_0622/messung_0622.py ../$v "$RUNNER_TEMP/z_${v}_$r.json" > "$RUNNER_TEMP/z_${v}_$r.txt" 2>&1 || echo "Rueckgabe $?"
+              grep "^ERG" "$RUNNER_TEMP/z_${v}_$r.txt" || true
+              MESS_ART=ohne_vorladen timeout 300 python messung_0622/messung_0622.py ../$v "$RUNNER_TEMP/o_${v}_$r.json" > "$RUNNER_TEMP/o_${v}_$r.txt" 2>&1 || echo "Rueckgabe $?"
+              grep "^ERG" "$RUNNER_TEMP/o_${v}_$r.txt" || true
+            done
+          done
+      - name: Darstellungswechsel aus den Optionen (3 Runden je 6, Bereich offen)
+        continue-on-error: true
+        run: |
+          for r in 1 2 3; do
+            for v in vor nach; do
+              if [ "$v" = vor ]; then B=farben; else B=optik; fi
+              MESS_FARBEN_OFFEN=1 MESS_BEREICH=$B MESS_WECHSEL=6 timeout 1200 python messung_0622/messung_wechsel.py ../$v "$RUNNER_TEMP/w_${v}_$r.json" > "$RUNNER_TEMP/w_${v}_$r.txt" 2>&1 || echo "::notice::Wechsel $v Runde $r Rueckgabe $?"
+            done
+          done
+      - name: Zusammenfassung
+        run: python messung_0622/tabelle_0622.py "$RUNNER_TEMP" --notice
