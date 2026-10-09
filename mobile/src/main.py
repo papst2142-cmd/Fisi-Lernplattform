@@ -91,7 +91,7 @@ import ui  # noqa: E402
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (wie PC)
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.61"
+APP_VERSION = "0.62"
 
 # Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
 VERSION_LINE = "Version %s"
