@@ -12188,26 +12188,34 @@ def record_subtitle(board):
 
 def badge_status(item):
     """(Zeile unter dem Namen, Farbe-Schluessel) fuer ein Abzeichen:
-    erreichte Stufe mit Tag, sonst der Fortschritt."""
+    erreichte Stufe mit Tag und die naechste Stufe mit Fortschritt (ab 0.62.1,
+    z.B. "Bronze erreicht (Tag 6) · Silber: 71 / 75"), sonst die erste Stufe
+    mit Fortschritt ("Bronze: 42 / 60"). Ziele mit Namen (Rang, Gebaeude):
+    "Silber bei: Fachkraft". Nur Anzeigetext, keine Werte."""
     if item["geheim"]:
         return "noch nicht entdeckt", "muted"
+    earlier = ""
+    if item["je"] > item["stufe"]:
+        earlier = " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
     if item.get("nur_normal") and not item["tier"]:
-        text = "nur auf Normal"
-        if item["je"]:
-            text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
-        return text, "muted"
+        return "nur auf Normal" + earlier, "muted"
+    after = ""
+    following = item["naechste"]
+    if following:
+        progress = item["fortschritt"]
+        if progress == "Wissensstand wird geladen":
+            after = progress
+        elif progress.startswith("nächstes Ziel: "):
+            after = "%s bei: %s" % (following["name"], progress[len("nächstes Ziel: "):])
+        else:
+            after = "%s: %s" % (following["name"], progress or "noch offen")
     if item["tier"]:
         stage = item["stufen"][item["stufe"] - 1]
-        text = "%s · Tag %d" % (stage["name"], stage["erreicht"] or 1)
-        if item["naechste"] and item["fortschritt"]:
-            text += " · %s" % item["fortschritt"]
-        if item["je"] > item["stufe"]:
-            text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
-        return text, item["tier"]
-    text = item["fortschritt"] or "offen"
-    if item["je"]:
-        text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
-    return text, "muted"
+        text = "%s erreicht (Tag %d)" % (stage["name"], stage["erreicht"] or 1)
+        if after:
+            text += " · " + after
+        return text + earlier, item["tier"]
+    return (after or "noch offen") + earlier, "muted"
 
 
 def badge_goals(item):
