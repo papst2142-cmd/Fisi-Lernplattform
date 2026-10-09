@@ -269,13 +269,67 @@ class LizenzTest(unittest.TestCase):
         self.assertEqual(lizenzen.OWN_PACKAGE, build.PACKAGE_NAME)
         out = ("fisi-lernplattform: /opt/fisi-lernplattform/_internal/libssl.so.3\n"
                "libssl3:amd64: /usr/lib/x86_64-linux-gnu/libssl.so.3\n")
-        self.assertEqual(lizenzen.dpkg_owner(out), "libssl3")
+        self.assertEqual(lizenzen.dpkg_owners(out),
+                         [("libssl3", "/usr/lib/x86_64-linux-gnu/libssl.so.3")])
         out = "fisi-lernplattform, libpng16-16:amd64: /usr/lib/libpng16.so.16\n"
-        self.assertEqual(lizenzen.dpkg_owner(out), "libpng16-16")
-        self.assertIsNone(lizenzen.dpkg_owner(
-            "fisi-lernplattform: /opt/fisi-lernplattform/_internal/libx.so\n"))
-        self.assertEqual(lizenzen.dpkg_owner(
-            "diversion by x from: /a\nzlib1g:amd64: /usr/lib/libz.so.1\n"), "zlib1g")
+        self.assertEqual(lizenzen.dpkg_owners(out), [("libpng16-16", "/usr/lib/libpng16.so.16")])
+        self.assertEqual(lizenzen.dpkg_owners(
+            "fisi-lernplattform: /opt/fisi-lernplattform/_internal/libx.so\n"), [])
+        self.assertEqual(lizenzen.dpkg_owners(
+            "diversion by x from: /a\nzlib1g:amd64: /usr/lib/libz.so.1\n"),
+            [("zlib1g", "/usr/lib/libz.so.1")])
+
+    def test_mehrere_pakete_inhalt_entscheidet(self):
+        # Ab 0.62.1 (Teil D): libz.so.1 gibt es in zlib1g (64 Bit) und lib32z1
+        # (32 Bit). Bis 0.62 nahm lizenzen.py das erste Paket der Ausgabe von
+        # dpkg -S; jetzt zaehlt das Paket mit inhaltsgleicher Datei.
+        import lizenzen
+        folder = tempfile.mkdtemp(dir=_TMP)
+
+        def write(name, data):
+            path = os.path.join(folder, name)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "wb") as handle:
+                handle.write(data)
+            return path
+
+        lib32 = write("usr/lib32/libz.so.1", b"\x7fELF 32 Bit")
+        lib64 = write("usr/lib/x86_64-linux-gnu/libz.so.1", b"\x7fELF 64 Bit")
+        bundled = write("dist/_internal/libz.so.1", b"\x7fELF 64 Bit")
+        out = ("lib32z1: %s\nzlib1g:amd64: %s\n" % (lib32, lib64))
+        pairs = lizenzen.dpkg_owners(out)
+        self.assertEqual(lizenzen.pick_package(pairs, bundled), ("zlib1g", None))
+        # Gegenprobe 1: andere Reihenfolge der Ausgabe, gleiches Ergebnis
+        self.assertEqual(lizenzen.pick_package(pairs[::-1], bundled), ("zlib1g", None))
+        # Gegenprobe 2: die 32-Bit-Datei mitgeliefert -> lib32z1 (es wird wirklich verglichen)
+        write("dist/_internal/libz.so.1", b"\x7fELF 32 Bit")
+        self.assertEqual(lizenzen.pick_package(pairs, bundled), ("lib32z1", None))
+        # Gegenprobe 3: passt zu keinem Paket -> Luecke statt Raten
+        write("dist/_internal/libz.so.1", b"\x7fELF anders")
+        package, gap = lizenzen.pick_package(pairs, bundled)
+        self.assertIsNone(package)
+        self.assertIn("nicht eindeutig", gap)
+        self.assertIn("lib32z1, zlib1g", gap)
+        # Nur ein Paket: wie bisher ohne Vergleich (auch ohne Datei)
+        self.assertEqual(lizenzen.pick_package([("libssl3", "/fehlt")], bundled),
+                         ("libssl3", None))
+        self.assertEqual(lizenzen.pick_package([], bundled), (None, None))
+
+    def test_nicht_eindeutig_wird_luecke(self):
+        # Die Luecke landet in der Hinweisdatei (Abschnitt "nicht eindeutig"),
+        # die CI prueft danach, dass es keinen solchen Abschnitt gibt (build.yml)
+        import lizenzen
+        gen = lizenzen.Generator(tempfile.mkdtemp(dir=_TMP), system="linux")
+        gen.dpkg_cache["libz.so.1"] = (None, "Ubuntu-Paket nicht eindeutig (Kandidaten: a, b)")
+        comp = gen.assign("_internal/libz.so.1")
+        self.assertIn("nicht eindeutig", comp.name)
+        self.assertIn("nicht eindeutig", comp.gap)
+        gen.dpkg_cache["libz.so.1"] = ("zlib1g", None)
+        gen.components.clear()
+        self.assertEqual(gen.assign("_internal/libz.so.1").name, "zlib1g (Ubuntu-Paket)")
+        source = read(".github", "workflows", "build.yml")
+        self.assertIn("lib32", source)
+        self.assertIn("nicht eindeutig", source)
 
     def test_bau_ohne_readline(self):
         source = read("build.py")
