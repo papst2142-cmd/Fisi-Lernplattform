@@ -4186,7 +4186,7 @@ class CalcView(View):
 
         NeoButton(raid.body, "Berechnen", self.calc_raid,
                   kind="primary").pack(anchor="w", pady=(12, 0))
-        self.txt_raid = make_text(raid.body, height=9, readonly=True,
+        self.txt_raid = make_text(raid.body, height=10, readonly=True,
                                   font=F["mono_small"])
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
@@ -4220,7 +4220,7 @@ class CalcView(View):
 
         NeoButton(screen.body, "Berechnen", self.calc_screen,
                   kind="accent").pack(anchor="w")
-        self.txt_screen = make_text(screen.body, height=8, readonly=True,
+        self.txt_screen = make_text(screen.body, height=13, readonly=True,
                                     font=F["mono_small"])
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)

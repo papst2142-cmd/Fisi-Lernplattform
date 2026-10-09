@@ -19,6 +19,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 9   PC-Trainer unveraendert bis auf freigegebenen Wortlaut; Handy-Form
            von Schritt 3 mit denselben Werten
   Z12      RAID 10 mit 4, 6, 8 Festplatten (2, 3, 4), ungerade: ungueltig
+  PC       Ergebnis-Kaesten RAID und Bildschirm hoch genug (kein Scrollen)
 
 Test 8 (Fingerabdruck der Spielwerte) ist das vorhandene Werkzeug aus dem
 Bericht 0.54; Ergebnis steht im Bericht 0.62.3.
@@ -429,6 +430,29 @@ class TrainerTest(unittest.TestCase):
             self.assertIn("random.randrange(1 << 30), schmal=True)", handle.read())
         with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
             self.assertNotRegex(handle.read(), r"trainer_(round|task)\([^)]*schmal")
+
+
+class PcKaestenTest(unittest.TestCase):
+    """Ab 0.62.3: Die Ergebnis-Kaesten am PC zeigen alle Zeilen ohne Scrollen
+    (Tk-Textfeld: sichtbar sind height - 1 Zeilen, an den Fotos gemessen).
+    RAID 10 hat seit Z12 9 Zeilen, der Bildschirm mit Bildrate 30 (Z8) 12."""
+
+    def _hoehe(self, name):
+        with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        return int(re.search(r"self\.txt_%s = make_text\([^)]*height=(\d+)" % name,
+                             source).group(1))
+
+    def test_raid(self):
+        zeilen = max(fc.raid_report(*eingabe).count("\n") + 1 for eingabe in rt.RAID_INPUTS)
+        self.assertEqual(zeilen, 9)
+        self.assertGreaterEqual(self._hoehe("raid") - 1, zeilen)
+
+    def test_bildschirm(self):
+        zeilen = max(fc.screen_report(*eingabe).count("\n") + 1
+                     for eingabe in rt.SCREEN_INPUTS)
+        self.assertEqual(zeilen, 12)
+        self.assertGreaterEqual(self._hoehe("screen") - 1, zeilen)
 
 
 class Raid10Test(unittest.TestCase):
