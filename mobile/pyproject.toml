@@ -9,7 +9,7 @@
 
 [project]
 name = "fisi-lernplattform"
-version = "0.61"
+version = "0.62"
 description = "Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)"
 requires-python = ">=3.10"
 dependencies = [
@@ -23,7 +23,10 @@ dependencies = [
 product = "FI Lernplattform"
 org = "io.github.papst2142cmd"
 company = "Nico H"
-build_number = 6100
+# Ab 0.62: Flet 1.0.1 liest das Feld (flet_cli/commands/build_base.py:1560,
+# "tool.flet.copyright"); Android zeigt es nirgends an
+copyright = "Copyright (c) 2026 Nico H"
+build_number = 6200
 icon_background = "#120A24"
 
 [tool.flet.app]

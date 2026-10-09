@@ -27,7 +27,7 @@ case "$TEIL" in
                      $(for d in $LANG_DATEIEN; do echo "-e $d"; done)) ;;
   windows) DATEIEN="test_einzelstart.py test_haenger.py test_update.py test_update_fenster.py
                     test_leistung.py test_werkzeuge.py test_optionen.py test_sicherung.py
-                    test_beenden.py test_namen.py" ;;
+                    test_beenden.py test_namen.py test_rechtliches.py" ;;
   *) echo "Unbekannter Teil: $TEIL"; exit 2 ;;
 esac
 

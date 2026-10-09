@@ -102,6 +102,10 @@ class DebPaketTest(unittest.TestCase):
         with open(os.path.join(program, build.APP_NAME), "w") as handle:
             handle.write("#!/bin/sh\necho Platzhalter\n")
         os.chmod(os.path.join(program, build.APP_NAME), 0o755)
+        # Ab 0.62: Lizenzdateien legt build_app neben das Programm
+        for name in build.LEGAL_FILES:
+            with open(os.path.join(program, name), "w", encoding="utf-8") as handle:
+                handle.write("Platzhalter %s\n" % name)
         root = os.path.join(cls.folder, "root")
         os.makedirs(root)
         shutil.copy(os.path.join(HERE, "icon.png"), os.path.join(root, "icon.png"))
@@ -124,6 +128,17 @@ class DebPaketTest(unittest.TestCase):
     def _field(self, name):
         return subprocess.run(["dpkg-deb", "-f", self.deb, name], check=True,
                               capture_output=True, text=True).stdout.strip()
+
+    def test_lizenz_und_hinweise(self):
+        # Ab 0.62: Lizenz und Hinweise im Programmordner und unter /usr/share/doc
+        listing = subprocess.run(["dpkg-deb", "-c", self.deb], check=True,
+                                 capture_output=True, text=True).stdout
+        for path in ("./opt/fisi-lernplattform/LICENSE.txt",
+                     "./opt/fisi-lernplattform/THIRD_PARTY_NOTICES.txt",
+                     "./usr/share/doc/fisi-lernplattform/LICENSE.txt",
+                     "./usr/share/doc/fisi-lernplattform/THIRD_PARTY_NOTICES.txt",
+                     "./usr/share/doc/fisi-lernplattform/copyright"):
+            self.assertIn(path + "\n", listing)
 
     def test_depends(self):
         self.assertEqual(self._field("Depends"), "libxft2, libxss1")

@@ -29,6 +29,7 @@ Ablauf:
 import datetime
 
 import fisi_rahmenplan as frp
+import fisi_rechtliches as fr
 from fisi_update import REPOSITORY, load_settings, save_settings
 
 # ============================================================================
@@ -248,14 +249,17 @@ HELP_SECTIONS = [
                 "Abschlussprojekt"],
      "text": ("Im „Prüfungstrainer“ übst du Prüfungsfragen mit Erklärung. Schalte oben auf "
               "„Prüfung“, um eine Prüfung nach IHK-Vorbild zu schreiben: AP1 oder einen "
-              "der drei Teile der AP2 (Konzeption, Netzwerke, WiSo). Wie in der echten "
-              "Prüfung läuft eine feste Zeit. Offene Aufgaben bewertest du nach der "
-              "Abgabe selbst anhand der Musterlösung, WiSo wird automatisch ausgewertet. "
-              "Danach siehst du Punkte und IHK-Note.\n\n"
+              "der drei Teile der AP2 (Konzeption, Netzwerke, WiSo). Sie ist aufgebaut "
+              "wie die echte Prüfung: Es läuft eine feste Zeit. Offene Aufgaben "
+              "bewertest du nach der Abgabe selbst anhand der Musterlösung, WiSo wird "
+              "automatisch ausgewertet. Danach siehst du Punkte und die %s.\n\n"
               "„AP1-Szenarien“ und „AP2-Szenarien“ sind längere Aufgaben wie in der "
               "Prüfung, mit Musterlösung. Im „Testprojekt“ übst du Kundenaufträge, im "
               "„Abschlussprojekt“ planst du dein eigenes IHK-Projekt vom Antrag bis zum "
-              "Fachgespräch. Am Handy findest du alles unter „Lernen“.")},
+              "Fachgespräch. Am Handy findest du alles unter „Lernen“.\n\n%s"
+              # Ab 0.62: KI-Hinweis hier (kein eigener Abschnitt "Abschlussprojekt",
+              # Auflage A6), Wortlaut aus fisi_rechtliches
+              % (fr.NOTE_LANG, fr.KI_HINWEIS))},
     {"id": "rechner", "titel": "Rechner (Subnetting, RAID, USV)",
      "reiter": ["Rechner"],
      "text": ("Unter „Rechner“ gibt es vier Rechner: „Subnetting / VLSM“ (IPv4 und IPv6), "
@@ -440,6 +444,14 @@ HELP_SECTIONS = [
               "Release-Seite. Lädst du selbst, dann nur von " + RELEASE_PAGE_TEXT + ", und "
               "vergleiche die Prüfsumme (SHA-256). Abschalten musst du dafür nichts. Bist "
               "du unsicher, frag nach, bevor du etwas erlaubst.")},
+    # Ab 0.62: Hinweistext, Copyright und Claude-Hinweis (Wortlaut aus
+    # fisi_rechtliches, wie unter "Über das Programm")
+    {"id": "rechtliches", "titel": "Rechtliches",
+     "reiter": ["Optionen"],
+     "text": ("%s\n\n%s. %s\n\nIn den „Optionen“ unter „%s“ findest du „%s“ und "
+              "„%s“ (Bestandteile anderer Hersteller und ihre Lizenzen)."
+              % (fr.HINWEIS, fr.COPYRIGHT, fr.CLAUDE_HINWEIS, "Über das Programm",
+                 fr.BTN_LIZENZ, fr.BTN_FREMD))},
 ]
 HELP_IDS = [section["id"] for section in HELP_SECTIONS]
 HELP_BY_ID = {section["id"]: section for section in HELP_SECTIONS}

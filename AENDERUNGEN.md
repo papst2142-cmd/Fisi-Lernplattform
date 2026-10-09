@@ -4,6 +4,35 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62
+
+**Die Fachinformatiker Lernplattform bringt jetzt ihre Lizenz und die
+Hinweise zu Fremdbestandteilen mit** und sagt deutlich, dass sie ein
+privates Lernprogramm ist und kein Produkt einer IHK.
+
+- **Über das Programm** (Optionen, PC und Handy): Copyright-Zeile, Hinweis
+  zum Programm und „Erstellt mit Hilfe von Claude (Anthropic).“ Dazu zwei
+  Knöpfe: „Lizenz“ und „Hinweise zu Fremdbestandteilen“ (welche Bausteine
+  anderer Hersteller im Programm stecken und ihre Lizenztexte).
+- **Hinweis beim Start:** Einmal erscheint oben auf der Startseite eine
+  kleine Leiste mit dem Hinweis, bis du „Verstanden“ drückst. Das gilt je
+  Gerät, auch nach dem Update. Lernstand und Abgleich bleiben unberührt.
+- **Prüfungstrainer:** Die Note heißt jetzt „Note nach IHK-Schlüssel
+  (Orientierung, keine amtliche Note)“, in Listen und Tabellen kurz „Note
+  (Orientierung)“. Die Prüfungskarte sagt „Übungsprüfung, keine offizielle
+  IHK-Prüfung.“ Der Untertitel ist am PC und Handy gleich.
+- **Abschlussprojekt:** In der Hilfe unter „Prüfung (AP1 und AP2)“ steht
+  ein Hinweis zu KI-Hilfsmitteln in der Projektdokumentation, in der
+  Checkliste „frag bei deiner IHK nach“. Neu in der Hilfe: „Rechtliches“.
+- **Dateien:** `LICENSE.txt` und `THIRD_PARTY_NOTICES.txt` liegen im
+  Programmordner (Windows, Linux), unter Linux zusätzlich in
+  `/usr/share/doc/fisi-lernplattform/`, unter macOS in der App und im
+  Paketfenster neben der App, auf dem Handy in der App.
+- **Kleiner (Linux):** Eine nicht gebrauchte Bibliothek für Terminal-Eingaben
+  (readline) ist nicht mehr dabei.
+- **macOS:** Die Mac-Versionen werden gebaut und automatisch gestartet,
+  aber nicht von Menschen auf einem echten Mac getestet.
+
 ## 0.61
 
 **Neuer Name: Fachinformatiker Lernplattform.** Das Programm heißt ab

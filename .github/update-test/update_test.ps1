@@ -15,6 +15,8 @@
 #  Startmenue-Ordner, genau ein Eintrag in "Apps & Features", Lernstand im
 #  selben Ordner. Pruefungen 14 und 16 nur, wenn die alte Version noch den
 #  alten Namen hat (kleiner als 0.61).
+#  Ab 0.62 (21 Pruefungen): LICENSE.txt und THIRD_PARTY_NOTICES.txt im
+#  Programmordner (20), Dateieigenschaft LegalCopyright der Exe (21).
 #  Grenze: Auf dem GitHub-Rechner laeuft kein Schutzprogramm (Norton o.ae.).
 #  Ein gruener Test beweist also nicht, dass das Update auf jedem PC klappt.
 # ============================================================================
@@ -160,6 +162,12 @@ Pruefung "Kein Prozess bleibt uebrig" (((Prozesse).Count -eq 0) -and $ende) "$((
 $fehler = ""
 if (Test-Path "$Daten\fehler.log") { $fehler = (Get-Content "$Daten\fehler.log" -Raw -Encoding utf8); Copy-Item "$Daten\fehler.log" "$Out\fehler.log" }
 Pruefung "fehler.log leer" ([string]::IsNullOrWhiteSpace($fehler)) $(if ($fehler) { "Eintraege vorhanden" } else { "keine Eintraege" })
+# 20-21 (ab 0.62): Lizenzdateien im Programmordner, Copyright der Exe
+$lic = Get-Item (Join-Path $Ziel "LICENSE.txt") -ErrorAction SilentlyContinue
+$tpn = Get-Item (Join-Path $Ziel "THIRD_PARTY_NOTICES.txt") -ErrorAction SilentlyContinue
+Pruefung "Lizenzdateien im Programmordner" (($null -ne $lic) -and ($null -ne $tpn) -and ($lic.Length -gt 0) -and ($tpn.Length -gt 0)) "LICENSE.txt $(if ($lic) { $lic.Length } else { 'fehlt' }) Byte, THIRD_PARTY_NOTICES.txt $(if ($tpn) { $tpn.Length } else { 'fehlt' }) Byte"
+$copy = (Get-Item $Exe -ErrorAction SilentlyContinue).VersionInfo.LegalCopyright
+Pruefung "Copyright der Exe" ($copy -ceq "Copyright (c) 2026 Nico H") "LegalCopyright '$copy'"
 Prozesse | Stop-Process -Force -ErrorAction SilentlyContinue
 
 # Zusammenfassung fuer die Seite des Laufs und das Protokoll
