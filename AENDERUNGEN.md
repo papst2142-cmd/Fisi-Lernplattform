@@ -4,6 +4,23 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62.1
+
+Am Handy wurde der untere Rand der Seiten angepasst, damit ihn die
+Android-Bedienleiste nicht mehr verdeckt.
+
+- **Handy:** Seiten, die über den Zurück-Pfeil geöffnet werden (zum Beispiel
+  Hilfe, Karteikarten, Lizenz, Spiel › Reise), lassen sich jetzt bis zum Ende
+  scrollen. Das letzte Element, etwa die Angabe „Karte 1 / 1565“, soll frei
+  über der Bedienleiste stehen.
+- **PC und Handy:** Gestufte Erfolge nennen die nächste Stufe, zum Beispiel
+  „Bronze erreicht (Tag 6) · Silber: 71 / 75“ oder „Silber bei: Fachkraft“.
+  Nur die Beschriftung ist neu; Stufen, Schwellen und Spielwerte bleiben
+  gleich.
+- **Linux-Paket:** Die Hinweisdatei zu Fremdbestandteilen nennt für die
+  mitgelieferte Kompressionsbibliothek das richtige Paket „zlib1g“ statt
+  „lib32z1“. Der Lizenztext war schon vorher richtig.
+
 ## 0.62
 
 **Die Fachinformatiker Lernplattform bringt jetzt ihre Lizenz und die
