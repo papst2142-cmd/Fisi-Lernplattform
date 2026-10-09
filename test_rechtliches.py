@@ -437,6 +437,24 @@ class PcTest(unittest.TestCase):
             window.destroy()
             self.pump()
 
+    def test_c_fenster_sofort_schliessen(self):
+        # Ab 0.62 (Fix 48de549): Wird ein Lizenzfenster sofort wieder
+        # geschlossen, bricht es seine geplanten Rueckrufe (Symbol, Fokus) ab.
+        # Ohne Warten: geprueft wird die Liste von Tk ("after info").
+        self.app.show_view("settings")
+        self.pump()
+        view = self.app.views["settings"]
+        for kind in ("lizenz", "fremd"):
+            window = view.show_legal(kind)
+            pending = list(window._pending)
+            self.assertEqual(len(pending), 2, kind)
+            planned = set(self.root.tk.splitlist(self.root.tk.call("after", "info")))
+            self.assertTrue(set(pending) <= planned, kind)
+            window.destroy()
+            planned = set(self.root.tk.splitlist(self.root.tk.call("after", "info")))
+            self.assertFalse(set(pending) & planned, kind)
+            self.pump()
+
 
 @unittest.skipUnless(_flet_ok(), "flet fehlt")
 class HandyTest(unittest.TestCase):
