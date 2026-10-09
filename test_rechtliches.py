@@ -296,8 +296,15 @@ class LizenzTest(unittest.TestCase):
         lib32 = write("usr/lib32/libz.so.1", b"\x7fELF 32 Bit")
         lib64 = write("usr/lib/x86_64-linux-gnu/libz.so.1", b"\x7fELF 64 Bit")
         bundled = write("dist/_internal/libz.so.1", b"\x7fELF 64 Bit")
-        out = ("lib32z1: %s\nzlib1g:amd64: %s\n" % (lib32, lib64))
-        pairs = lizenzen.dpkg_owners(out)
+        # Ausgabe von dpkg -S wie auf dem Runner (lib32z1 zuerst); die Pfade
+        # zeigen auf die Dateien oben (unter Windows nur fuer den Vergleich
+        # gebaut, dpkg -S laeuft nur unter Linux)
+        out = ("lib32z1: /usr/lib32/libz.so.1\n"
+               "zlib1g:amd64: /usr/lib/x86_64-linux-gnu/libz.so.1\n")
+        self.assertEqual(lizenzen.dpkg_owners(out),
+                         [("lib32z1", "/usr/lib32/libz.so.1"),
+                          ("zlib1g", "/usr/lib/x86_64-linux-gnu/libz.so.1")])
+        pairs = [("lib32z1", lib32), ("zlib1g", lib64)]
         self.assertEqual(lizenzen.pick_package(pairs, bundled), ("zlib1g", None))
         # Gegenprobe 1: andere Reihenfolge der Ausgabe, gleiches Ergebnis
         self.assertEqual(lizenzen.pick_package(pairs[::-1], bundled), ("zlib1g", None))
