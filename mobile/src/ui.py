@@ -137,8 +137,8 @@ class FoldCard(Card):
 
     Ab 0.59 (Optionen, marker=True, wie am PC): Pfeil links in der
     Akzentfarbe, rechts "aufklappen"/"einklappen", ganze Kopfzeile mindestens
-    48 dp hoch, TalkBack liest "Farben, eingeklappt" und sagt Wechsel an
-    (live_region). Die Optionen vergessen den Zustand beim Oeffnen
+    48 dp hoch, TalkBack liest "Optische Anpassungen, eingeklappt" und sagt
+    Wechsel an (live_region). Die Optionen vergessen den Zustand beim Oeffnen
     (reset_states)."""
 
     _open_state = {}
@@ -187,7 +187,8 @@ class FoldCard(Card):
         self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
                                           border_radius=8, padding=ft.Padding.symmetric(
                                               vertical=10 if marker else 6))
-        # TalkBack liest "Farben, Schaltfläche, aufklappen" statt der Einzelteile
+        # TalkBack liest "Optische Anpassungen, Schaltfläche, aufklappen" statt
+        # der Einzelteile
         self.header_semantics = ft.Semantics(content=self.header_button, button=True,
                                              container=True, live_region=True if marker
                                              else None)

@@ -35,9 +35,10 @@ import fisi_verknuepfung as fsc  # noqa: E402
 from fisi_lernen import DELETE_TITLE  # noqa: E402
 
 # Ab 0.59.2 (U): "problem" und "leistung" stehen als Zwischenueberschriften
-# im letzten Bereich "diagnose"
-PC_IDS = ["updates", "rundgang", "schrift", "farben", "tagesziel", "rahmenplan", "abgleich",
-          "sicherung", "datenbank", "lerninhalte", "spiel", "loeschen", "ueber", "diagnose"]
+# im Bereich "diagnose". Ab 0.62.2: "schrift" und "farben" sind "optik",
+# "rahmenplan" steht in "lerninhalte", "ueber" ist der letzte Bereich.
+PC_IDS = ["updates", "rundgang", "optik", "tagesziel", "abgleich", "sicherung",
+          "datenbank", "lerninhalte", "spiel", "loeschen", "diagnose", "ueber"]
 NAMES_DARK = {"violett": "Violett", "nachtblau": "Nachtblau", "tannengruen": "Tannengrün",
               "aubergine": "Aubergine", "anthrazit": "Anthrazit", "schwarz": "Schwarz"}
 NAMES_LIGHT = {"violett": "Flieder", "nachtblau": "Hellblau", "tannengruen": "Mintgrün",
@@ -90,13 +91,37 @@ class AufbauTest(unittest.TestCase):
         opened = [area["id"] for area in fo.AREAS if fo.opened_at_start(area["id"])]
         self.assertEqual(opened, ["updates"])
 
+    def test_nur_ueber_startet_aufgeklappt(self):
+        # Ab 0.62.2 (E-B3): ein Klappbereich, der beim Oeffnen offen ist
+        unfolded = [area["id"] for area in fo.AREAS if fo.unfolded_at_start(area["id"])]
+        self.assertEqual(unfolded, [fo.ABOUT_ID])
+        self.assertFalse(fo.opened_at_start(fo.ABOUT_ID))
+        # "vorlagen" steht in den Klappbereichen, ist aber kein Bereich (G-06)
+        self.assertFalse(fo.unfolded_at_start(fo.TEMPLATES_ID))
+
     # -- ab 0.59.2 (U): Diagnose und Werkzeuge ------------------------------
 
-    def test_diagnose_ist_der_letzte_bereich(self):
+    def test_ueber_ist_der_letzte_diagnose_der_vorletzte_bereich(self):
+        # bis 0.62.1 war "Diagnose und Werkzeuge" der letzte Bereich (U)
         for pc in (True, False):
-            self.assertEqual(fo.areas(pc)[-1]["id"], fo.DIAGNOSE_ID)
+            self.assertEqual(fo.areas(pc)[-1]["id"], fo.ABOUT_ID)
+            self.assertEqual(fo.areas(pc)[-2]["id"], fo.DIAGNOSE_ID)
         self.assertEqual(fo.DIAGNOSE_TITLE, "Diagnose und Werkzeuge")
         self.assertFalse(fo.opened_at_start(fo.DIAGNOSE_ID))
+        self.assertFalse(fo.unfolded_at_start(fo.DIAGNOSE_ID))
+
+    def test_zusammengelegte_bereiche(self):
+        # Ab 0.62.2: Zwischenueberschriften in fisi_optionen (PC und Handy)
+        self.assertEqual(fo.AREA_BY_ID[fo.OPTIK_ID]["titel"], "Optische Anpassungen")
+        self.assertEqual([(item["id"], item["titel"]) for item in fo.sections(fo.OPTIK_ID)],
+                         [("schrift", th.FONT_TITLE), ("farben", "Farben")])
+        self.assertEqual([(item["id"], item["titel"]) for item in fo.sections(fo.LEARN_ID)],
+                         [("rahmenplan", frp.OPTIONS_TITLE)])
+        for old in ("schrift", "farben", "rahmenplan"):
+            self.assertNotIn(old, fo.AREA_BY_ID)
+        self.assertEqual(fo.sections(fo.DIAGNOSE_ID, pc=False),
+                         fo.diagnose_sections(pc=False))
+        self.assertEqual(fo.sections("tagesziel"), [])
 
     def test_diagnose_abschnitte(self):
         import fisi_haenger as fhg
@@ -129,8 +154,8 @@ class AufbauTest(unittest.TestCase):
 
     def test_titel_wie_in_den_modulen(self):
         titles = {area["id"]: area["titel"] for area in fo.AREAS}
-        self.assertEqual(titles["schrift"], th.FONT_TITLE)
-        self.assertEqual(titles["rahmenplan"], frp.OPTIONS_TITLE)
+        self.assertEqual(fo.section_title(fo.OPTIK_ID, "schrift"), th.FONT_TITLE)
+        self.assertEqual(fo.section_title(fo.LEARN_ID, "rahmenplan"), frp.OPTIONS_TITLE)
         self.assertEqual(titles["sicherung"], fsi.TITLE)
         self.assertEqual(titles["diagnose"], fo.DIAGNOSE_TITLE)
         self.assertEqual(titles["loeschen"], DELETE_TITLE)
@@ -141,8 +166,10 @@ class AufbauTest(unittest.TestCase):
         self.assertEqual(fo.tile_columns(th.font_factor("sehr_gross")), 3)
 
     def test_beschriftung_bereich_und_zustand(self):
-        self.assertEqual(th.fold_label("Farben", False), "Farben, eingeklappt")
-        self.assertEqual(th.fold_label("Farben", True), "Farben, aufgeklappt")
+        self.assertEqual(th.fold_label("Optische Anpassungen", False),
+                         "Optische Anpassungen, eingeklappt")
+        self.assertEqual(th.fold_label("Optische Anpassungen", True),
+                         "Optische Anpassungen, aufgeklappt")
         self.assertEqual((th.FOLD_OPEN_TEXT, th.FOLD_CLOSE_TEXT), ("aufklappen", "einklappen"))
 
     def test_keine_neue_einstellung(self):
@@ -178,11 +205,14 @@ class SucheTest(unittest.TestCase):
     def test_treffer_im_unterbereich_vorlagen(self):
         for query in ("Vorlagen", "Schwarz", "Weiß", "hintergrund", "Cyan/Pink"):
             hits = fo.search_options(query)
-            self.assertIn("farben", [hit[0] for hit in hits], query)
-            self.assertTrue([hit for hit in hits if hit[0] == "farben"][0][3], query)
-            self.assertEqual(fo.hit_target("Farben", query), ("farben", True), query)
-        # "Regler" liegt in Farben, aber nicht in den Vorlagen
-        self.assertEqual(fo.hit_target("Farben", "Regler"), ("farben", False))
+            self.assertIn("optik", [hit[0] for hit in hits], query)
+            self.assertTrue([hit for hit in hits if hit[0] == "optik"][0][3], query)
+            self.assertEqual(fo.hit_target("Optische Anpassungen", query), ("optik", True),
+                             query)
+        # "Regler" liegt bei den Farben, aber nicht in den Vorlagen
+        self.assertEqual(fo.hit_target("Optische Anpassungen", "Regler"), ("optik", False))
+        # ab 0.62.2 gibt es keinen Bereich "Farben" mehr
+        self.assertEqual(fo.hit_target("Farben", "Vorlagen"), (None, False))
 
     def test_kein_treffer(self):
         self.assertEqual(fo.search_options("xyzzy-nichts"), [])
@@ -194,7 +224,25 @@ class SucheTest(unittest.TestCase):
         self.assertEqual(fo.search_options("Speicherort", pc=False), [])
 
     def test_titel_trifft_auch(self):
-        self.assertEqual(fo.search_options("schriftgröße")[0][0], "schrift")
+        self.assertEqual(fo.search_options("optische")[0][0], "optik")
+
+    def test_neue_orte_der_suchwoerter(self):
+        # Ab 0.62.2 (Plan 7.2 Test 4): Schrift und Farben -> optik, Rahmenplan
+        # -> lerninhalte; kein Treffer zeigt die alten Bereichs-Titel
+        for word, area_id in (("schriftgröße", "optik"), ("Sehr groß", "optik"),
+                              ("Farbe", "optik"), ("Regler", "optik"),
+                              ("Rahmenplan", "lerninhalte"), ("Prüfungstermin", "lerninhalte"),
+                              ("Lernfeld", "lerninhalte")):
+            for pc in (True, False):
+                hits = fo.search_options(word, pc=pc)
+                self.assertIn(area_id, [hit[0] for hit in hits], (word, pc))
+        for word in ("Farbe", "Schrift", "Rahmenplan", "Vorlagen", "Regler"):
+            titles = [hit[1] for hit in fo.search_options(word)]
+            for old in ("Farben", th.FONT_TITLE, frp.OPTIONS_TITLE):
+                self.assertNotIn(old, titles, word)
+        self.assertTrue(fo.search_options("Vorlagen")[0][3])
+        self.assertFalse([hit for hit in fo.search_options("Regler")
+                          if hit[0] == "optik"][0][3])
 
 
 # ============================================================================
@@ -429,19 +477,25 @@ class OptionenPcTest(unittest.TestCase):
         self.pump()
         return self.app.views["settings"]
 
-    def test_a_beim_oeffnen_alles_zu_ausser_updates(self):
+    def test_a_beim_oeffnen_alles_zu_ausser_updates_und_ueber(self):
         view = self.open_settings()
         self.assertEqual(list(view.areas), PC_IDS)
         for key, card in view.areas.items():
             if key == "updates":
                 self.assertNotIsInstance(card, self.fw.FoldCard, key)
                 self.assertTrue(card.body.winfo_ismapped(), key)
+            elif key == fo.ABOUT_ID:
+                # ab 0.62.2 (E-B3): offen, gebaut und sichtbar
+                self.assertIsInstance(card, self.fw.FoldCard, key)
+                self.assertTrue(card.opened and card.built, key)
+                self.assertTrue(card.body.winfo_ismapped(), key)
             else:
                 self.assertIsInstance(card, self.fw.FoldCard, key)
                 self.assertFalse(card.opened, key)
                 self.assertFalse(card.body.winfo_ismapped(), key)
-        # Ab 0.60 (B3): "Vorlagen" entsteht erst mit dem Bereich "Farben"
-        if not view.built("farben"):
+        # Ab 0.60 (B3): "Vorlagen" entsteht erst mit dem Bereich (ab 0.62.2
+        # "Optische Anpassungen")
+        if not view.built("optik"):
             self.assertNotIn("vorlagen", view.folds)
         else:
             self.assertFalse(view.folds["vorlagen"].opened)
@@ -450,13 +504,16 @@ class OptionenPcTest(unittest.TestCase):
 
     def test_a2_bereiche_erst_beim_aufklappen_gebaut(self):
         """Ab 0.60 (B3): Inhalt erst beim ersten Aufklappen (auch ueber die
-        Suche), danach bleibt er stehen; Updates ist sofort gebaut."""
+        Suche), danach bleibt er stehen; Updates ist sofort gebaut, ab 0.62.2
+        auch "Über das Programm" (startet aufgeklappt, G-04)."""
         self.fw.FoldCard.reset_states(fo.STATE_PREFIX)
         fresh = self.app_gui.SettingsView(self.app.view_area, self.app)
         try:
             self.assertTrue(fresh.built("updates"))
+            self.assertTrue(fresh.built(fo.ABOUT_ID))
+            self.assertTrue(fresh.folds[fo.ABOUT_ID].body.winfo_children())
             for key in PC_IDS:
-                if key == "updates":
+                if key in ("updates", fo.ABOUT_ID):
                     continue
                 fold = fresh.folds[key]
                 self.assertFalse(fold.built, key)
@@ -474,31 +531,35 @@ class OptionenPcTest(unittest.TestCase):
             self.assertIn("vorlagen", fresh.folds)
             self.assertIn("Programmversion", fresh.report_box.get("1.0", "end"))
             # Zuklappen baut nichts ab, erneutes Aufklappen baut nicht doppelt
-            children = len(fresh.folds["farben"].body.winfo_children())
+            children = len(fresh.folds["optik"].body.winfo_children())
             fresh.reset_folds()
-            fresh.open_area("farben")
-            self.assertEqual(len(fresh.folds["farben"].body.winfo_children()), children)
+            fresh.open_area("optik")
+            self.assertEqual(len(fresh.folds["optik"].body.winfo_children()), children)
         finally:
             fresh.destroy()
 
     def test_b_mehrere_offen_und_beim_naechsten_oeffnen_wieder_zu(self):
         view = self.open_settings()
-        view.folds["farben"].toggle()
+        view.folds["optik"].toggle()
         view.folds["tagesziel"].toggle()
         view.folds["vorlagen"].toggle()
+        view.folds[fo.ABOUT_ID].toggle()   # zu
         self.pump()
-        self.assertTrue(view.folds["farben"].opened and view.folds["tagesziel"].opened)
+        self.assertTrue(view.folds["optik"].opened and view.folds["tagesziel"].opened)
         self.assertTrue(view.folds["vorlagen"].body.winfo_ismapped())
+        self.assertFalse(view.folds[fo.ABOUT_ID].opened)
         view = self.open_settings()
-        self.assertFalse(any(fold.opened for fold in view.folds.values()))
+        # ab 0.62.2 (E-B3): nur "Über das Programm" ist wieder offen (G-04)
+        self.assertEqual([key for key, fold in view.folds.items() if fold.opened],
+                         [fo.ABOUT_ID])
         self.assertFalse([key for key, value in self.fw.FoldCard._open_state.items()
                           if key.startswith(fo.STATE_PREFIX) and value])
 
     def test_c_kopfzeile_pfeil_hinweis_und_beschriftung(self):
         view = self.open_settings()
-        fold = view.folds["farben"]
+        fold = view.folds["optik"]
         self.assertEqual(fold.arrow.cget("text"), "aufklappen")
-        self.assertEqual(fold.accessible_name(), "Farben, eingeklappt")
+        self.assertEqual(fold.accessible_name(), "Optische Anpassungen, eingeklappt")
         self.assertEqual(fold.pointer.winfo_x() < fold.title_label.winfo_x(), True)
         for widget in fold.head.winfo_children():
             self.assertEqual(widget.cget("cursor"), "hand2")
@@ -507,7 +568,7 @@ class OptionenPcTest(unittest.TestCase):
         self.pump()
         self.assertTrue(fold.opened)
         self.assertEqual(fold.arrow.cget("text"), "einklappen")
-        self.assertEqual(fold.accessible_name(), "Farben, aufgeklappt")
+        self.assertEqual(fold.accessible_name(), "Optische Anpassungen, aufgeklappt")
         fold.toggle()
 
     def test_d_tastatur(self):
@@ -525,7 +586,10 @@ class OptionenPcTest(unittest.TestCase):
 
     def test_e_eingeklappte_inhalte_nicht_per_tab(self):
         view = self.open_settings()
-        closed = [fold.body for fold in view.folds.values()]
+        # ab 0.62.2 ist "Über das Programm" offen, seine Knoepfe duerfen den
+        # Fokus bekommen
+        closed = [fold.body for fold in view.folds.values() if not fold.opened]
+        self.assertEqual(len(closed), len(view.folds) - 1)
         widget = view.btn_update
         seen = []
         for _step in range(40):
@@ -552,24 +616,26 @@ class OptionenPcTest(unittest.TestCase):
         view = self.app.views["settings"]
         self.assertEqual(self.app.current, "settings")
         self.assertTrue(view.folds["abgleich"].opened)
-        self.assertFalse(view.folds["farben"].opened)
+        self.assertFalse(view.folds["optik"].opened)
         self.assertGreater(view.canvas.yview()[0], 0.0)
         # Suchfeld leeren: nichts klappt wieder zu
         self.app.header.search_entry.delete(0, "end")
         self.pump()
         self.assertTrue(view.folds["abgleich"].opened)
 
-    def test_f2_diagnose_letzter_bereich_mit_allen_werkzeugen(self):
-        # ab 0.59.2 (U): ganz unten, eingeklappt, enthaelt Problem melden,
-        # Leistungsmessung und Haenger-Diagnose
+    def test_f2_diagnose_vorletzter_bereich_mit_allen_werkzeugen(self):
+        # ab 0.59.2 (U): eingeklappt, enthaelt Problem melden, Leistungsmessung
+        # und Haenger-Diagnose; ab 0.62.2 (E-B2) steht "Über das Programm"
+        # darunter (bis 0.62.1 war Diagnose ganz unten)
         import fisi_haenger as fhg
         view = self.open_settings()
         card = view.areas["diagnose"]
-        self.assertIs(card, list(view.areas.values())[-1])
+        self.assertIs(card, list(view.areas.values())[-2])
+        self.assertIs(view.areas[fo.ABOUT_ID], list(view.areas.values())[-1])
         self.assertFalse(card.opened)
         card.toggle()
         self.pump()
-        self.assertGreater(card.winfo_y(), view.areas["ueber"].winfo_y())
+        self.assertLess(card.winfo_y(), view.areas[fo.ABOUT_ID].winfo_y())
         body = str(card.body)
         for widget in (view.report_box, view.lbl_perf, view.lbl_hang):
             self.assertTrue(str(widget).startswith(body + "."), str(widget))
@@ -605,26 +671,34 @@ class OptionenPcTest(unittest.TestCase):
         view = self.app.views["settings"]
         self.assertEqual(self.app.current, "settings")
         self.assertTrue(view.folds["diagnose"].opened)
-        self.assertGreater(view.canvas.yview()[0], 0.5)
+        # ab 0.62.2 steht "Ueber" darunter: statt "weit unten" pruefen, dass
+        # die Seite gescrollt hat und der Kopf von "Diagnose" im Blick ist
+        height = float(max(1, view.inner.winfo_height()))
+        top = (view.areas["diagnose"].winfo_rooty() - view.inner.winfo_rooty()) / height
+        first, last = view.canvas.yview()
+        self.assertGreater(first, 0.0)
+        self.assertLessEqual(first, top + 0.02)   # Rundung der Scrollflaeche
+        self.assertLess(top, last)
 
     def test_g_suche_oeffnet_vorlagen_und_trefferliste(self):
         self.open_settings()
         self.app.do_search("Vorlagen")
         self.pump()
         texts = [child.cget("text") for child in _labels(self.app.views["search"].results_box)]
-        self.assertIn("Farben", texts)
+        self.assertIn("Optische Anpassungen", texts)
+        self.assertNotIn("Farben", texts)
         self.assertIn(fo.SEARCH_KIND, texts)
-        self.app.open_search_hit(fo.SEARCH_KIND, "Farben")
+        self.app.open_search_hit(fo.SEARCH_KIND, "Optische Anpassungen")
         self.pump()
         view = self.app.views["settings"]
-        self.assertTrue(view.folds["farben"].opened and view.folds["vorlagen"].opened)
+        self.assertTrue(view.folds["optik"].opened and view.folds["vorlagen"].opened)
 
     def test_h_zustandszeile_in_beiden_klappzustaenden(self):
         view = self.open_settings()
         panel = view.custom_colors
         expected = th.custom_state_text(panel.values, panel.mode)
         self.assertEqual(panel.state_line.cget("text"), expected)
-        view.folds["farben"].toggle()
+        view.folds["optik"].toggle()
         view.folds["vorlagen"].toggle()
         self.pump()
         self.assertEqual(panel.state_line.cget("text"), expected)
@@ -651,12 +725,12 @@ class OptionenPcTest(unittest.TestCase):
     def test_j_neuaufbau_behaelt_offene_bereiche(self):
         """Farb- oder Schriftwechsel in den Optionen: offene Bereiche bleiben offen."""
         view = self.open_settings()
-        view.folds["farben"].toggle()
+        view.folds["optik"].toggle()
         view.folds["vorlagen"].toggle()
         self.app.change_color(background_id="nachtblau")
         self.pump(20)
         view = self.app.views["settings"]
-        self.assertTrue(view.folds["farben"].opened and view.folds["vorlagen"].opened)
+        self.assertTrue(view.folds["optik"].opened and view.folds["vorlagen"].opened)
         self.assertFalse(view.folds["tagesziel"].opened)
         self.app.change_color(background_id=th.DEFAULT_BACKGROUND)
         self.pump(20)
@@ -686,9 +760,9 @@ class OptionenPcTest(unittest.TestCase):
 
         self.assertEqual(window_width(),
                          max(view.canvas.winfo_width(), view.inner.winfo_reqwidth()))
-        view.folds["farben"].toggle()
+        view.folds["optik"].toggle()
         self.pump()
-        view.folds["farben"].toggle()
+        view.folds["optik"].toggle()
         self.pump()
         self.assertEqual(window_width(),
                          max(view.canvas.winfo_width(), view.inner.winfo_reqwidth()))
@@ -765,6 +839,10 @@ class OptionenHandyTest(unittest.TestCase):
         for key, card in screen.areas.items():
             if key == "updates":
                 self.assertNotIsInstance(card, self.ui.FoldCard, key)
+            elif key == "ueber":   # ab 0.62.2: "Ueber" startet aufgeklappt
+                self.assertIsInstance(card, self.ui.FoldCard, key)
+                self.assertTrue(card.opened, key)
+                self.assertTrue(card.body.visible, key)
             else:
                 self.assertIsInstance(card, self.ui.FoldCard, key)
                 self.assertFalse(card.opened, key)
@@ -773,14 +851,14 @@ class OptionenHandyTest(unittest.TestCase):
 
     def test_talkback_beschriftung_und_ansage(self):
         screen = self.screen()
-        fold = screen.folds["farben"]
-        self.assertEqual(fold.header_semantics.label, "Farben, eingeklappt")
+        fold = screen.folds["optik"]
+        self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, eingeklappt")
         self.assertTrue(fold.header_semantics.button)
         self.assertTrue(fold.header_semantics.live_region)
         self.assertFalse(fold.header_semantics.expanded)
         self.assertEqual(fold.arrow_text.value, "aufklappen")
         fold.toggle()
-        self.assertEqual(fold.header_semantics.label, "Farben, aufgeklappt")
+        self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, aufgeklappt")
         self.assertTrue(fold.header_semantics.expanded)
         self.assertEqual(fold.arrow_text.value, "einklappen")
 
@@ -792,11 +870,15 @@ class OptionenHandyTest(unittest.TestCase):
 
     def test_mehrere_offen_und_beim_oeffnen_wieder_zu(self):
         screen = self.screen()
-        screen.folds["farben"].toggle()
+        screen.folds["optik"].toggle()
         screen.folds["diagnose"].toggle()
-        self.assertTrue(screen.folds["farben"].opened and screen.folds["diagnose"].opened)
+        screen.folds["ueber"].toggle()   # zu
+        self.assertTrue(screen.folds["optik"].opened and screen.folds["diagnose"].opened)
+        self.assertFalse(screen.folds["ueber"].opened)
         screen.reset_folds()
-        self.assertFalse(any(fold.opened for fold in screen.folds.values()))
+        # ab 0.62.2: nur "Ueber" ist danach wieder offen
+        self.assertEqual([key for key, fold in screen.folds.items() if fold.opened],
+                         ["ueber"])
 
     def test_reiterwechsel_klappt_zu(self):
         screen = self.screen()
@@ -809,23 +891,23 @@ class OptionenHandyTest(unittest.TestCase):
         self.app.crumb_sub = SimpleNamespace(value="")
         self.app.lbl_version = SimpleNamespace(visible=True)   # ab 0.60 (K-C)
         self.app.tab = "dashboard"
-        screen.folds["farben"].toggle()
+        screen.folds["optik"].toggle()
         self.app.show_tab("settings")
-        self.assertFalse(screen.folds["farben"].opened)
+        self.assertFalse(screen.folds["optik"].opened)
         # Neuaufbau nach Farbwechsel (_recoloring): bleibt offen
-        screen.folds["farben"].toggle()
+        screen.folds["optik"].toggle()
         self.app.tab = "dashboard"
         self.app._recoloring = True
         try:
             self.app.show_tab("settings")
         finally:
             self.app._recoloring = False
-        self.assertTrue(screen.folds["farben"].opened)
+        self.assertTrue(screen.folds["optik"].opened)
 
     def test_suche_oeffnet_bereich_und_vorlagen(self):
         screen = self.screen()
-        self.assertEqual(screen.open_area("farben", templates=True), screen.areas["farben"])
-        self.assertTrue(screen.folds["farben"].opened and screen.folds["vorlagen"].opened)
+        self.assertEqual(screen.open_area("optik", templates=True), screen.areas["optik"])
+        self.assertTrue(screen.folds["optik"].opened and screen.folds["vorlagen"].opened)
         self.assertIsNone(screen.open_area("datenbank"))   # gibt es am Handy nicht
         search = self.main.SCREEN_CLASSES["search"](self.app)
         search.search("Token")
@@ -846,12 +928,13 @@ class OptionenHandyTest(unittest.TestCase):
         self.assertIn("Abgleich PC und Handy", texts)
 
     def test_diagnose_am_handy(self):
-        # ab 0.59.2 (U): letzter Bereich, Problem melden und Leistungsmessung,
-        # keine Haenger-Diagnose
+        # ab 0.59.2 (U): Problem melden und Leistungsmessung, keine
+        # Haenger-Diagnose; ab 0.62.2 vorletzter Bereich (danach "Ueber")
         import fisi_haenger as fhg
         screen = self.screen()
         card = screen.areas["diagnose"]
-        self.assertIs(card, list(screen.areas.values())[-1])
+        self.assertIs(card, list(screen.areas.values())[-2])
+        self.assertIs(screen.areas["ueber"], list(screen.areas.values())[-1])
         self.assertFalse(card.opened)
         texts = []
 

@@ -3471,7 +3471,8 @@ class SettingsScreen(Screen):
                                    selectable=True)
         self._report_key = None
         # Ab 0.59.2 (U): Problem melden und Leistungsmessung stehen als
-        # Zwischenueberschriften im letzten Bereich "Diagnose und Werkzeuge"
+        # Zwischenueberschriften im Bereich "Diagnose und Werkzeuge" (bis 0.62.1
+        # der letzte, ab 0.62.2 der vorletzte vor "Über das Programm")
         sections = {item["id"]: item["titel"] for item in fo.diagnose_sections(pc=False)}
         report_controls = [
             ui.label(sections["problem"]),
@@ -3507,15 +3508,9 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
-        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar wie am PC
-        fonts = self._area("schrift", [
-            ui.PillGroup(fisi_theme.FONT_CHOICES, initial=fisi_theme.FONT_IDS.index(
-                fisi_theme.current_font_size), on_change=self._change_font_size),
-            ui.text(fisi_theme.FONT_HINT, size=11, color=C["muted"]),
-        ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
-
-        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
-        # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
+        # Ab 0.62.2: "Optische Anpassungen" mit den Zwischenueberschriften
+        # SCHRIFTGRÖSSE (ab 0.56, je Geraet) und FARBEN (ab 0.56; ab 0.57
+        # eigene Farben mit Reglern, je Darstellung), wie am PC
         self.custom_colors = CustomColors(self._save_custom)
         # Ab 0.59 (E7, E8): Kacheln als eingeklappter Unterbereich "Vorlagen"
         templates = ui.FoldCard(fo.TEMPLATES_TITLE, [
@@ -3529,13 +3524,19 @@ class SettingsScreen(Screen):
         ], accent=C["accent"], key=fo.state_key(fo.TEMPLATES_ID), marker=True, padding=12)
         templates.bgcolor = C["card_alt"]
         self.folds[fo.TEMPLATES_ID] = templates
-        colors = self._area("farben", [
+        optik = self._area(fo.OPTIK_ID, [
+            ui.label(fo.section_title(fo.OPTIK_ID, "schrift")),
+            ui.PillGroup(fisi_theme.FONT_CHOICES, initial=fisi_theme.FONT_IDS.index(
+                fisi_theme.current_font_size), on_change=self._change_font_size),
+            ui.text(fisi_theme.FONT_HINT, size=11, color=C["muted"]),
+            ft.Container(height=6),
+            ui.label(fo.section_title(fo.OPTIK_ID, "farben")),
             ui.label("Darstellung"),
             ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
                 fisi_theme.current_mode), on_change=self._change_mode),
             templates,
             self.custom_colors,
-        ], accent=C["accent"], subtitle="nur für dieses Gerät")
+        ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
         values = learning_settings()
@@ -3574,7 +3575,8 @@ class SettingsScreen(Screen):
                     size=11, color=C["muted"]),
         ], accent=C["green"], subtitle="nur für dieses Gerät")
 
-        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
+        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer
+        # Aufgaben); ab 0.62.2 im Bereich "Lerninhalte" (unten)
         plan_values = frp.load_rp_settings()
         switches = [self._switch(frp.SECTION_OPTION_TEXT[section],
                                  plan_values[frp.SECTION_SETTING[section]],
@@ -3597,7 +3599,10 @@ class SettingsScreen(Screen):
                                        keyboard=ft.KeyboardType.DATETIME,
                                        on_change=lambda e, k=key: self._rp_date_changed(k, e))
                          for key in ("rp_termin_ap1", "rp_termin_ap2")}
-        plan = self._area("rahmenplan", [
+        plan_controls = [
+            ft.Container(height=6),
+            ui.label(fo.section_title(fo.LEARN_ID, "rahmenplan")),
+            ui.text("nur für dieses Gerät", size=11, color=C["muted"]),
             ui.text(frp.OPTIONS_SUBTITLE, size=13, color=C["text_dim"])] + switches + [
             ui.text(frp.WEIGHT_OPTION_HINT, size=11, color=C["muted"]),
             ui.text(frp.FIELD_OPTION_TEXT, size=13, color=C["text_dim"]),
@@ -3607,7 +3612,7 @@ class SettingsScreen(Screen):
             ft.Row([ui.text(frp.AP2_DATE_TEXT, size=13, color=C["text_dim"], expand=True),
                     ft.Container(content=self.rp_dates["rp_termin_ap2"], width=150)]),
             self.lbl_rp,
-        ], accent=C["purple"], subtitle="nur für dieses Gerät")
+        ]
 
         # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am PC)
         # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
@@ -3626,8 +3631,9 @@ class SettingsScreen(Screen):
             ui.text(fh.NAME_OPTION_HINT, size=11, color=C["muted"]),
         ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
 
-        content = self._area("lerninhalte", [
-            ui.text("\n".join(lines), size=14, color=C["text_dim"])], accent=C["purple"])
+        content = self._area(fo.LEARN_ID, [
+            ui.text("\n".join(lines), size=14, color=C["text_dim"])] + plan_controls,
+            accent=C["purple"])
         game = self._area("spiel", [
             self.lbl_difficulty,
             ui.label("Wohnungen"),
@@ -3666,7 +3672,7 @@ class SettingsScreen(Screen):
         ], accent=C["red"], subtitle=DELETE_SUBTITLE)
         # Ab 0.62: Copyright, Hinweistext und Claude-Hinweis aus fisi_rechtliches
         # (wortgleich mit dem PC), darunter Lizenz und Fremdbestandteile
-        about = self._area("ueber", [
+        about = self._area(fo.ABOUT_ID, [
             ui.text(fr.about_text(APP_TITLE, APP_VERSION,
                                   "Die Handy-App nutzt dieselben Lerninhalte wie die "
                                   "PC-Version und ist mit Python und Flet umgesetzt."),
@@ -3679,10 +3685,10 @@ class SettingsScreen(Screen):
         tools = self._area(fo.DIAGNOSE_ID, report_controls + measure_controls,
                            accent=C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE)
         # Ab 0.59: Reihenfolge aus fisi_optionen (Updates ganz oben, E2)
-        built = {"updates": updates, "rundgang": tour, "schrift": fonts, "farben": colors,
-                 "tagesziel": goal, "rahmenplan": plan, "abgleich": sync,
-                 "sicherung": backup, "lerninhalte": content, "spiel": game,
-                 "loeschen": danger, "ueber": about, fo.DIAGNOSE_ID: tools}
+        built = {"updates": updates, "rundgang": tour, fo.OPTIK_ID: optik,
+                 "tagesziel": goal, "abgleich": sync,
+                 "sicherung": backup, fo.LEARN_ID: content, "spiel": game,
+                 "loeschen": danger, fo.DIAGNOSE_ID: tools, fo.ABOUT_ID: about}
         self.areas = {area["id"]: built[area["id"]] for area in fo.areas(pc=False)}
         self.list_view = screen_list(list(self.areas.values()))
         return self.list_view
@@ -3722,21 +3728,26 @@ class SettingsScreen(Screen):
         return content
 
     def _area(self, area_id, controls, accent=None, subtitle=None):
-        """Ab 0.59: Bereich der Optionen (Titel aus fisi_optionen). Offen nur
-        Updates (E1; bis 0.59.1 auch Problem melden), sonst Klappbereich (E4)."""
+        """Ab 0.59: Bereich der Optionen (Titel aus fisi_optionen). Offen ohne
+        Klappkopf nur Updates (E1; bis 0.59.1 auch Problem melden), sonst
+        Klappbereich (E4). Ab 0.62.2 (E-B3) startet "Über das Programm"
+        aufgeklappt (fo.unfolded_at_start)."""
         area = fo.AREA_BY_ID[area_id]
         if fo.opened_at_start(area_id):
             return ui.Card(area["titel"], controls, accent=accent, subtitle=subtitle)
         fold = ui.FoldCard(area["titel"], controls, accent=accent, subtitle=subtitle,
-                           key=fo.state_key(area_id), marker=True)
+                           key=fo.state_key(area_id), marker=True,
+                           opened=fo.unfolded_at_start(area_id))
         self.folds[area_id] = fold
         return fold
 
     def reset_folds(self):
-        """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen."""
+        """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen. Ab 0.62.2
+        (E-B3) ist "Über das Programm" danach wieder aufgeklappt; "Vorlagen"
+        ist kein Bereich der Liste und bleibt zu."""
         ui.FoldCard.reset_states(fo.STATE_PREFIX)
-        for fold in self.folds.values():
-            fold.set_opened(False)
+        for area_id, fold in self.folds.items():
+            fold.set_opened(fo.unfolded_at_start(area_id))
         ui.FoldCard.reset_states(fo.STATE_PREFIX)
 
     def open_area(self, area_id, templates=False):
@@ -4819,7 +4830,8 @@ class FISIMobileApp:
     def _show_tab(self, key):
         self.close_toast()
         # Ab 0.59 (E4): Wer die Optionen von einem anderen Reiter aus oeffnet,
-        # findet alle Bereiche eingeklappt; beim Neuaufbau nach einem Farb-
+        # findet alle Bereiche eingeklappt (ab 0.62.2 ausser "Über das
+        # Programm", fo.unfolded_at_start); beim Neuaufbau nach einem Farb-
         # oder Schriftwechsel bleiben die offenen Bereiche offen
         entering = (key == "settings" and getattr(self, "tab", None) != "settings"
                     and not getattr(self, "_recoloring", False))

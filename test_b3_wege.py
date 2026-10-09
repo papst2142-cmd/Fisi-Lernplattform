@@ -4,9 +4,12 @@ Bereiche erst beim Aufklappen gebaut werden (B3).
 
   * jeder Suchtreffer (Strg+F) oeffnet seinen noch nie geoeffneten Bereich,
     baut ihn und holt ihn in den sichtbaren Teil
-  * Treffer fuer "Vorlagen" klappt auch die Vorlagen im Bereich Farben auf
-  * Darstellungswechsel mit offenem Bereich "Farben", danach ein zweiter Bereich
-  * Einrichtung im Rundgang, waehrend "Rahmenplan" noch nicht gebaut ist:
+  * Treffer fuer "Vorlagen" klappt auch die Vorlagen im Bereich
+    "Optische Anpassungen" auf (bis 0.62.1: Bereich "Farben")
+  * Darstellungswechsel mit offenem Bereich "Optische Anpassungen", danach
+    ein zweiter Bereich
+  * Einrichtung im Rundgang, waehrend "Lerninhalte" (mit dem Rahmenplan,
+    ab 0.62.2) noch nicht gebaut ist:
     der Bereich zeigt danach die neuen Werte
   * Tab-Taste durch die Optionen: Reihenfolge der Bereiche, nichts doppelt,
     nichts aus zugeklappten Bereichen
@@ -134,21 +137,21 @@ class WegeTest(unittest.TestCase):
         self.settle()
         word = fo.TEMPLATES_TITLE
         hits = fo.search_options(word, True)
-        self.assertTrue([hit for hit in hits if hit[0] == "farben" and hit[3]])
+        self.assertTrue([hit for hit in hits if hit[0] == "optik" and hit[3]])
         self.app.last_query = word
-        self.app.open_search_hit(fo.SEARCH_KIND, fo.AREA_BY_ID["farben"]["titel"])
+        self.app.open_search_hit(fo.SEARCH_KIND, fo.AREA_BY_ID["optik"]["titel"])
         self.settle()
         view = self.view()
-        self.assertTrue(view.folds["farben"].opened)
+        self.assertTrue(view.folds["optik"].opened)
         self.assertTrue(view.folds[fo.TEMPLATES_ID].opened)
         self.assertTrue(self.visible(view, view.folds[fo.TEMPLATES_ID]))
 
     # -- Darstellungswechsel ---------------------------------------------------
 
-    def test_c_wechsel_mit_offenen_farben_dann_zweiter_bereich(self):
+    def test_c_wechsel_mit_offener_optik_dann_zweiter_bereich(self):
         self.app.show_view("settings")
         self.settle()
-        self.view().open_area("farben")
+        self.view().open_area("optik")
         self.settle()
         was_light = self.theme.light
         target = self.theme.MODE_DARK if was_light else self.theme.MODE_LIGHT
@@ -163,9 +166,9 @@ class WegeTest(unittest.TestCase):
                 self.settle()
                 self.assertTrue(view.built(area_id), area_id)
                 self.assertTrue(view.folds[area_id].body.winfo_children(), area_id)
-            view.open_area("farben")
+            view.open_area("optik")
             self.settle()
-            self.assertTrue(view.built("farben"))
+            self.assertTrue(view.built("optik"))
         finally:
             back = self.theme.MODE_LIGHT if was_light else self.theme.MODE_DARK
             self.app.change_color(mode=back)
@@ -178,7 +181,7 @@ class WegeTest(unittest.TestCase):
         import fisi_rahmenplan as frp
         self.app.show_view("dashboard")
         self.settle()
-        # Zweimal umfaerben: danach sind die Optionen frisch, "Rahmenplan" ungebaut
+        # Zweimal umfaerben: danach sind die Optionen frisch, "Lerninhalte" ungebaut
         mode = self.theme.current_mode
         other = self.theme.MODE_LIGHT if mode == self.theme.MODE_DARK else self.theme.MODE_DARK
         for target in (other, mode):
@@ -186,7 +189,7 @@ class WegeTest(unittest.TestCase):
             self.settle(10)
         view = self.app.views.built("settings")
         if view is not None:
-            self.assertFalse(view.built("rahmenplan"))
+            self.assertFalse(view.built("lerninhalte"))
         before = frp.load_rp_settings()
         sections = {section: not before[key] for section, key in frp.SECTION_SETTING.items()}
         self.assertFalse(fh.save_setup("Test", sections, "", ""))
@@ -195,7 +198,7 @@ class WegeTest(unittest.TestCase):
         self.app.show_view("settings")
         self.settle()
         view = self.view()
-        view.open_area("rahmenplan")
+        view.open_area("lerninhalte")
         self.settle()
         for section, key in frp.SECTION_SETTING.items():
             if key in view.rp_vars:
@@ -214,7 +217,7 @@ class WegeTest(unittest.TestCase):
         self.settle()
         view = self.view()
         view.reset_folds()
-        view.open_area("farben")
+        view.open_area("optik")
         view.open_area("tagesziel")
         self.settle()
         heads = {view.folds[area_id].head: area_id for area_id in view.folds}
@@ -233,8 +236,8 @@ class WegeTest(unittest.TestCase):
         self.assertEqual(len(inside), len(set(map(str, inside))), "doppelt erreicht")
         order = [heads[w] for w in inside if w in heads]
         expected = [area["id"] for area in fo.areas(True) if area["id"] in view.folds]
-        # "Vorlagen" ist ein eigener Klappkopf innerhalb von "Farben"
-        expected.insert(expected.index("farben") + 1, fo.TEMPLATES_ID)
+        # "Vorlagen" ist ein eigener Klappkopf innerhalb von "Optische Anpassungen"
+        expected.insert(expected.index("optik") + 1, fo.TEMPLATES_ID)
         self.assertEqual(order, expected)
         closed = [view.folds[a].body for a in view.folds
                   if not view.folds[a].opened]
@@ -242,10 +245,10 @@ class WegeTest(unittest.TestCase):
             for body in closed:
                 self.assertFalse(str(widget).startswith(str(body) + "."), str(widget))
         # Inhalt eines offenen Bereichs liegt zwischen seinem Kopf und dem naechsten
-        farben = view.folds["farben"]
-        positions = [i for i, w in enumerate(inside) if str(w).startswith(str(farben.body) + ".")]
+        optik = view.folds["optik"]
+        positions = [i for i, w in enumerate(inside) if str(w).startswith(str(optik.body) + ".")]
         self.assertTrue(positions)
-        head_at = inside.index(farben.head)
+        head_at = inside.index(optik.head)
         next_head = inside.index(view.folds["tagesziel"].head)
         self.assertTrue(all(head_at < i < next_head for i in positions))
 

@@ -558,7 +558,7 @@ class PcTourTest(unittest.TestCase):
         settings_view._save_name()
         self.assertEqual(frp.load_rp_settings()["rp_termin_ap1"], "2027-10-01")
         # Optionen zeigen die neuen Werte (ab 0.60, B3: beim Aufklappen gebaut)
-        settings_view.open_area("rahmenplan")
+        settings_view.open_area("lerninhalte")   # ab 0.62.2 dort
         self.assertTrue(settings_view.rp_vars["rp_abschnitt_d"].get())
         self.assertEqual(settings_view.rp_dates["rp_termin_ap1"].get(), "01.10.2027")
         # Danach nicht mehr von selbst, aber aus den Optionen

@@ -182,8 +182,8 @@ TOUR_PAGES = [
               "„Optionen“ jederzeit wieder starten.")},
     {"id": "einrichten", "titel": "Jetzt einrichten",
      "text": ("Alle Angaben sind freiwillig und gelten nur für dieses Gerät. Rahmenplan "
-              "und Termine kannst du später in den „Optionen“ unter „Rahmenplan“ "
-              "ändern.")},
+              "und Termine kannst du später in den „Optionen“ unter „Lerninhalte“ "
+              "bei „Rahmenplan“ ändern.")},
 ]
 
 SETUP_NAME = "Dein Name"
@@ -292,7 +292,8 @@ HELP_SECTIONS = [
               "„Rahmenplan-Abdeckung“ zeigt für jeden Punkt des Ausbildungsrahmenplans, "
               "wie gut du ihn schon kannst. Mit „Jetzt üben“ übst du gezielt einen "
               "Punkt.\n\n"
-              "In den „Optionen“ unter „Rahmenplan“ stellst du ein, welche Abschnitte "
+              "In den „Optionen“ unter „Lerninhalte“ bei „Rahmenplan“ stellst du ein, "
+              "welche Abschnitte "
               "angezeigt werden, dein aktuelles Lernfeld und die Termine für AP1 und AP2. "
               "Ist „Übungsauswahl nach Rahmenplan gewichten“ an, kommen in den sechs "
               "Monaten vor einem Termin neue Aufgaben zu prüfungsrelevanten Themen etwas "
@@ -338,7 +339,8 @@ HELP_SECTIONS = [
     # Ab 0.57 (Entscheidung Nico F5): eigene Farben mit Reglern
     {"id": "farben", "titel": "Eigene Farben",
      "reiter": ["Optionen"],
-     "text": ("In den „Optionen“ unter „Farben“ liegen die „Vorlagen“ mit „Grundfarbe“ "
+     "text": ("In den „Optionen“ unter „Optische Anpassungen“ bei „Farben“ liegen die "
+              "„Vorlagen“ mit „Grundfarbe“ "
               "und „Hintergrund“ (zum Aufklappen). In der hellen Darstellung heißen die "
               "Hintergründe nach ihrer hellen Fläche: „Flieder“, „Hellblau“, „Mintgrün“, "
               "„Rosé“, „Hellgrau“ und „Weiß“.\n\n"
@@ -356,7 +358,7 @@ HELP_SECTIONS = [
               "Gerät und nur für die gewählte Darstellung (Hell oder Dunkel).")},
     {"id": "problem", "titel": "Problem melden",
      "reiter": ["Optionen"],
-     "text": ("Wenn etwas nicht klappt: In den „Optionen“ ganz unten unter „Diagnose und "
+     "text": ("Wenn etwas nicht klappt: In den „Optionen“ unter „Diagnose und "
               "Werkzeuge“ steht bei „Problem melden“ ein "
               "Bericht mit Programmversion, Gerät, Datenordner und Fehlerprotokoll. "
               "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
@@ -413,7 +415,8 @@ HELP_SECTIONS = [
               "• Eingabe oder Leertaste drückt Knöpfe, schaltet Schalter um und klappt "
               "Bereiche auf und zu.\n"
               "• Esc überspringt den Rundgang.\n\n"
-              "Die Schrift vergrößerst du in den „Optionen“ unter „Schriftgröße“ mit "
+              "Die Schrift vergrößerst du in den „Optionen“ unter „Optische "
+              "Anpassungen“ bei „Schriftgröße“ mit "
               "„Groß“ oder „Sehr groß“.")},
     {"id": "schutzprogramm", "titel": "Warnung vom Schutzprogramm",
      "reiter": [],

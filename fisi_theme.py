@@ -293,7 +293,8 @@ def darken(color, amount=0.15):
 # ============================================================================
 #
 # Lokal je Geraet ("darstellung"): "dunkel" (Standard) oder "hell", waehlbar
-# unter Optionen > Farben. Im Hellmodus bekommt jeder Hintergrund eine
+# unter Optionen > Farben (ab 0.62.2 Optionen > Optische Anpassungen >
+# Farben). Im Hellmodus bekommt jeder Hintergrund eine
 # helle Fassung im selben Farbton; Texte werden dunkel, und alle Farben, die
 # auch als Schrift dienen (Akzente, Fachbereiche, Erfolg/Fehler/Warnung),
 # werden so weit abgedunkelt, dass sie auf jeder Flaeche 4,5:1 erreichen.

@@ -1102,7 +1102,8 @@ class FoldCard(Card):
     @classmethod
     def reset_states(cls, prefix):
         """Ab 0.59 (E4): gemerkte Zustaende mit diesem Schluessel-Anfang
-        vergessen (die Optionen starten dann wieder eingeklappt)."""
+        vergessen (die Optionen starten dann wieder eingeklappt, ab 0.62.2
+        bis auf "Über das Programm")."""
         for key in [key for key in cls._open_state if key.startswith(prefix)]:
             del cls._open_state[key]
 
@@ -1111,7 +1112,7 @@ class FoldCard(Card):
 
     def accessible_name(self):
         """Ab 0.59: Beschriftung fuer Tastatur und Screenreader, z.B.
-        "Farben, eingeklappt" (gleich wie am Handy)."""
+        "Optische Anpassungen, eingeklappt" (gleich wie am Handy)."""
         return fold_label(self.fold_title, self.opened)
 
     def _hover_in(self, _event=None):
