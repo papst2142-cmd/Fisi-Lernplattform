@@ -308,12 +308,15 @@ class LizenzTest(unittest.TestCase):
         self.assertEqual(lizenzen.pick_package(pairs, bundled), ("zlib1g", None))
         # Gegenprobe 1: andere Reihenfolge der Ausgabe, gleiches Ergebnis
         self.assertEqual(lizenzen.pick_package(pairs[::-1], bundled), ("zlib1g", None))
-        # Gegenprobe 2: die 32-Bit-Datei mitgeliefert -> lib32z1 (es wird wirklich verglichen)
-        write("dist/_internal/libz.so.1", b"\x7fELF 32 Bit")
-        self.assertEqual(lizenzen.pick_package(pairs, bundled), ("lib32z1", None))
+        # Gegenprobe 2: die 32-Bit-Datei mitgeliefert -> lib32z1 (es wird wirklich verglichen).
+        # Je Gegenprobe ein eigener Ordner: filecmp merkt sich Ergebnisse nach Pfad,
+        # Groesse und Zeitstempel; ueberschriebene gleich grosse Dateien koennten
+        # unter Windows (grobe Zeitstempel) sonst das alte Ergebnis liefern.
+        bundled32 = write("dist32/_internal/libz.so.1", b"\x7fELF 32 Bit")
+        self.assertEqual(lizenzen.pick_package(pairs, bundled32), ("lib32z1", None))
         # Gegenprobe 3: passt zu keinem Paket -> Luecke statt Raten
-        write("dist/_internal/libz.so.1", b"\x7fELF anders")
-        package, gap = lizenzen.pick_package(pairs, bundled)
+        other = write("dist_anders/_internal/libz.so.1", b"\x7fELF anders")
+        package, gap = lizenzen.pick_package(pairs, other)
         self.assertIsNone(package)
         self.assertIn("nicht eindeutig", gap)
         self.assertIn("lib32z1, zlib1g", gap)
