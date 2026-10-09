@@ -13,7 +13,8 @@ jede Schrift wird einem Bestandteil mit Lizenztext zugeordnet:
   * Pillow-Wheel (pillow.libs, PIL/.dylibs, Namen mit Pruefsummen-Endung)
   * Python selbst (libpython, python3*.dll, Standardbibliothek)
   * Linux: Ubuntu-Paket ueber "dpkg -S", Text aus /usr/share/doc/<Paket>/copyright
-    des Baurechners (CI: ubuntu-22.04)
+    des Baurechners (CI: ubuntu-22.04); gibt es den Dateinamen in mehreren
+    Paketen, zaehlt das Paket mit inhaltsgleicher Datei (ab 0.62.1)
   * Windows/macOS: Bibliotheken der Python-Installation (OpenSSL, SQLite, ...)
     nach Namen; den Text sucht das Skript in der LICENSE.txt dieser
     Python-Installation. Steht er dort nicht, wird die Luecke ausdruecklich
@@ -31,6 +32,7 @@ Aufruf:
 """
 
 import datetime
+import filecmp
 import os
 import platform
 import re
@@ -85,16 +87,43 @@ PYTHON_LIBS = [
 OWN_PACKAGE = "fisi-lernplattform"
 
 
-def dpkg_owner(output):
-    """Erstes fremdes Paket aus der Ausgabe von dpkg -S, oder None."""
+def dpkg_owners(output):
+    """Alle fremden Pakete mit ihrem Pfad aus der Ausgabe von dpkg -S:
+    [(Paket, Pfad)] in der Reihenfolge der Ausgabe."""
+    pairs = []
     for line in output.splitlines():
         if line.startswith("diversion") or ": /" not in line:
             continue
-        for name in line.split(": /")[0].split(","):
+        names, path = line.split(": /", 1)
+        for name in names.split(","):
             name = name.strip().split(":")[0]
-            if name and name != OWN_PACKAGE:
-                return name
-    return None
+            pair = (name, "/" + path.strip())
+            if name and name != OWN_PACKAGE and pair not in pairs:
+                pairs.append(pair)
+    return pairs
+
+
+def pick_package(pairs, bundled):
+    """Ab 0.62.1 (Teil D): Ubuntu-Paket einer mitgelieferten Datei als
+    (Paket, None), oder (None, Luecke). Gibt es den Dateinamen in mehreren
+    Paketen (z.B. libz.so.1 in zlib1g und lib32z1), zaehlt nur das Paket, dessen
+    Datei inhaltsgleich mit der mitgelieferten ist. Passt keines oder mehr als
+    eines, wird nicht geraten, sondern eine Luecke gemeldet."""
+    packages = []
+    for name, _path in pairs:
+        if name not in packages:
+            packages.append(name)
+    if len(packages) <= 1:
+        return (packages[0] if packages else None), None
+    same = []
+    for name, path in pairs:
+        if name not in same and os.path.isfile(path) and \
+                filecmp.cmp(path, bundled, shallow=False):
+            same.append(name)
+    if len(same) == 1:
+        return same[0], None
+    return None, ("Ubuntu-Paket nicht eindeutig (Kandidaten: %s, inhaltsgleich: %s)"
+                  % (", ".join(packages), ", ".join(same) or "keines"))
 
 class Component:
     def __init__(self, key, name, version="", license_name="", note=""):
@@ -334,16 +363,17 @@ class Generator:
     # -- Regeln --------------------------------------------------------------
 
     def _dpkg_package(self, rel):
+        """(Paket, None) oder (None, Luecke), siehe pick_package."""
         base = os.path.basename(rel)
         if base in self.dpkg_cache:
             return self.dpkg_cache[base]
         try:
             result = subprocess.run(["dpkg", "-S", "*/" + base], capture_output=True, text=True)
-            package = dpkg_owner(result.stdout)
+            found = pick_package(dpkg_owners(result.stdout), os.path.join(self.folder, rel))
         except OSError:
-            package = None
-        self.dpkg_cache[base] = package
-        return package
+            found = (None, None)
+        self.dpkg_cache[base] = found
+        return found
 
     def assign(self, rel):
         """Bestandteil fuer eine Datei, oder None."""
@@ -386,9 +416,14 @@ class Generator:
             return self.python_component()
         # Linux: Ubuntu-Paket des Baurechners
         if self.system.startswith("linux"):
-            package = self._dpkg_package(rel)
+            package, gap = self._dpkg_package(rel)
             if package:
                 return self.ubuntu_component(package)
+            if gap:
+                comp = self.comp("deb?:" + base, "%s (Ubuntu-Paket nicht eindeutig)" % base,
+                                 "", "")
+                comp.gap = gap
+                return comp
             if re.match(r"^lib(tcl|tk)[\d.]*\.so", lower):
                 return self.tcltk_component()
             return None

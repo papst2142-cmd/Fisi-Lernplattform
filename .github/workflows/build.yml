@@ -151,6 +151,16 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then APP=dist/FISI-Lernplattform.app; else APP=dist/FISI-Lernplattform; fi
           python lizenzen.py "$APP" --gegenprobe
 
+      # Ab 0.62.1 (Teil D): Unter Linux nennt die Hinweisdatei das Ubuntu-Paket
+      # mit inhaltsgleicher Datei (zlib1g, nicht lib32z1); kein 32-Bit-Paket und
+      # keine Luecke "nicht eindeutig" (lizenzen.py meldet sie statt zu raten)
+      - name: Hinweisdatei ohne lib32 und ohne unklare Pakete (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          NOTICES=dist/FISI-Lernplattform/THIRD_PARTY_NOTICES.txt
+          grep -n "^#### " "$NOTICES" | grep -i -e "lib32" -e "nicht eindeutig" && exit 1
+          grep -c "^#### zlib1g (Ubuntu-Paket)" "$NOTICES"
+
       - uses: actions/upload-artifact@v7
         with:
           name: installer-${{ matrix.label }}
