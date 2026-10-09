@@ -43,12 +43,13 @@ import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
-    AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
-    CALC_EXPLAIN_UPS, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
+    AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID_HANDY,
+    CALC_EXPLAIN_SCREEN_HANDY, CALC_EXPLAIN_SUBNET_HANDY, CALC_EXPLAIN_UPS_HANDY,
+    UPS_SIMPLE_TEXT, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
     UPS_TASKS, UPS_UNITS, ups_calculate, ups_picture_summary, ups_task_text,
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
-    CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
+    CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
     REMINDER_TOAST_MS, TOAST_MS, KIND_QUIZ, count_word, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
     RAID_LEVELS, STATUS_FILTERS, SZENARIEN, TOPIC_NAME, TOPIC_SHORT, TOPICS,
@@ -2752,8 +2753,9 @@ class TrainerPanel(ft.Column):
                                 if count else "")
 
     def start_round(self):
+        # Ab 0.62.3 (F-E7): schmal=True - Schritt 3 der IPv4-Aufgaben Oktett fuer Oktett
         self.tasks = trainer_round(self.kind_pills.get(), self.level_pills.get(),
-                                   random.randrange(1 << 30))
+                                   random.randrange(1 << 30), schmal=True)
         self.index, self.results = 0, []
         self.load_task()
 
@@ -2816,7 +2818,9 @@ class TrainerPanel(ft.Column):
         self.tasks = []
         self.fields_box.controls = []
         self.steps.visible = False
-        self.lbl_feedback.value = ""
+        # Ab 0.62.3 wie am PC
+        self.lbl_feedback.value = "Starte eine neue Runde oder wähle eine andere Aufgabenart."
+        self.lbl_feedback.color = C["text_dim"]
         self.btn_check.visible = False
         self.lbl_counter.value = ""
         self.show_stats()
@@ -2830,39 +2834,43 @@ class CalcScreen(Screen):
 
     def build(self):
         self.entry_ip = ui.entry("192.168.1.50/24", on_change=None)
-        self.out_subnet = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True)
+        # Ab 0.62.3: Anzeigen und Rechenwege ohne Umbruch, seitlich wischbar (Box A)
+        self.out_subnet = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
+                                      scroll=True)
         subnet = ui.Card("Subnetting / VLSM", [
             ui.text("IP-Adresse mit Präfix (z.B. 192.168.1.50/24)", size=13,
                     color=C["text_dim"]),
             self.entry_ip,
             ft.Row([ui.GradientButton("Berechnen", self.calc_subnet, kind="accent")]),
-            self.out_subnet, *self._explain(CALC_EXPLAIN_SUBNET),
+            self.out_subnet, *self._explain(CALC_EXPLAIN_SUBNET_HANDY),
         ], accent=C["accent"], subtitle="IPv4 und IPv6")
 
         self.raid_pills = ui.PillGroup([(level, level) for level in RAID_LEVELS], initial=2)
         self.entry_disks = ui.entry("4", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_size = ui.entry("1000", keyboard=ft.KeyboardType.NUMBER, expand=True)
-        self.out_raid = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True)
+        self.out_raid = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
+                                    scroll=True)
         raid = ui.Card("RAID-Kapazität", [
             ui.text("RAID-Level", size=13, color=C["text_dim"]), self.raid_pills,
             self._field("Anzahl Festplatten", self.entry_disks),
-            self._field("Kapazität je Platte (GB)", self.entry_size),
+            self._field("Kapazität je Festplatte (GB)", self.entry_size),
             ft.Row([ui.GradientButton("Berechnen", self.calc_raid)]),
-            self.out_raid, *self._explain(CALC_EXPLAIN_RAID),
-        ], accent=C["purple"], subtitle="Netto, Parität, Effizienz")
+            self.out_raid, *self._explain(CALC_EXPLAIN_RAID_HANDY),
+        ], accent=C["purple"], subtitle="Nutzkapazität, Verlust, Effizienz")
 
         self.entry_width = ui.entry("1920", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_height = ui.entry("1080", keyboard=ft.KeyboardType.NUMBER, expand=True)
-        self.entry_fps = ui.entry("0", keyboard=ft.KeyboardType.NUMBER, expand=True)
+        self.entry_fps = ui.entry("30", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.depth_pills = ui.PillGroup(COLOR_DEPTHS, initial=2)
-        self.out_screen = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True)
+        self.out_screen = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
+                                      scroll=True)
         screen = ui.Card("Bildschirm-Datenvolumen", [
             self._field("Breite (Pixel)", self.entry_width),
             self._field("Höhe (Pixel)", self.entry_height),
-            self._field("Bildwiederholrate (fps, optional)", self.entry_fps),
+            self._field("Bildrate (fps, optional)", self.entry_fps),
             ui.text("Farbtiefe", size=13, color=C["text_dim"]), self.depth_pills,
             ft.Row([ui.GradientButton("Berechnen", self.calc_screen, kind="accent")]),
-            self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN),
+            self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN_HANDY),
         ], accent=C["green"], subtitle="Pixel, Farbtiefe, Datenrate")
         # Ab 0.51: Umschalter Rechner / Trainer
         self.calc_box = ft.Column([subnet, raid, screen, self._build_ups()], spacing=14,
@@ -2897,7 +2905,10 @@ class CalcScreen(Screen):
                           for mode, caption in UPS_MODES], wrap=True, spacing=10,
                          run_spacing=10)
         self.ups_picture = ui.UpsPicture()
-        self.out_ups = ui.read_box("", mono=True)
+        self.out_ups = ui.read_box("", mono=True, scroll=True)
+        # Ab 0.62.3: der Hinweis "Vereinfacht: ..." steht unter der Tabelle als
+        # normaler Text, damit er umbrechen darf (die Tabelle wischt seitlich)
+        self.out_ups_hint = ui.text("", size=12, color=C["text_dim"])
         self.ups_task = 0
         self.ups_solution = False
         self.out_ups_task = ui.read_box("", mono=True)
@@ -2909,7 +2920,8 @@ class CalcScreen(Screen):
         return ui.Card(UPS_TITLE, [
             *rows, buttons,
             ui.text(UPS_RULE_TEXT, size=12, color=C["text_dim"]),
-            self.ups_picture, self.out_ups, *self._explain(CALC_EXPLAIN_UPS),
+            self.ups_picture, self.out_ups, self.out_ups_hint,
+            *self._explain(CALC_EXPLAIN_UPS_HANDY),
             ui.label(UPS_TASKS_TITLE),
             ft.Row([ui.GradientButton(UPS_TASK_NEXT, self.next_ups_task, kind="ghost",
                                       height=40), self.btn_ups_solution],
@@ -2939,7 +2951,12 @@ class CalcScreen(Screen):
             if not quiet:
                 self.toast(str(error), C["red"])
             return
-        self.out_ups.content.value = result["text"]
+        # Der Hinweis steht am Ende des Textes (ups_calculate, wie am PC)
+        table, found, rest = result["text"].partition("\n\n" + UPS_SIMPLE_TEXT)
+        if not found or rest:
+            table = result["text"]
+        ui.set_box(self.out_ups, table)
+        self.out_ups_hint.value = UPS_SIMPLE_TEXT if found and not rest else ""
         self.ups_picture.set_picture(result["bild"], ups_picture_summary(result["bild"]))
 
     def _on_tab(self, value):
@@ -2954,7 +2971,7 @@ class CalcScreen(Screen):
 
     @staticmethod
     def _explain(explanation):
-        box = ui.read_box(explanation, mono=True)
+        box = ui.read_box(explanation, mono=True, scroll=True)
         box.visible = False
         button = ui.GradientButton("Rechenweg anzeigen", None, kind="ghost", height=40)
 
@@ -2967,7 +2984,7 @@ class CalcScreen(Screen):
 
     def _run(self, output, calculation):
         try:
-            output.content.value = calculation()
+            ui.set_box(output, calculation())
         except InputError as error:
             self.toast(str(error), C["red"])
 

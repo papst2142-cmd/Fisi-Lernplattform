@@ -260,7 +260,7 @@ HELP_SECTIONS = [
               # Ab 0.62: KI-Hinweis hier (kein eigener Abschnitt "Abschlussprojekt",
               # Auflage A6), Wortlaut aus fisi_rechtliches
               % (fr.NOTE_LANG, fr.KI_HINWEIS))},
-    {"id": "rechner", "titel": "Rechner (Subnetting, RAID, USV)",
+    {"id": "rechner", "titel": "Rechner (Subnetting, RAID, Bildschirm, USV)",
      "reiter": ["Rechner"],
      "text": ("Unter „Rechner“ gibt es vier Rechner: „Subnetting / VLSM“ (IPv4 und IPv6), "
               "„RAID-Kapazität“, „Bildschirm-Datenvolumen“ und ganz unten "

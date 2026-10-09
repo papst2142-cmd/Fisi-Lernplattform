@@ -617,13 +617,26 @@ def check_row(caption, value=False, on_change=None):
                   spacing=4, vertical_alignment=ft.CrossAxisAlignment.START)
 
 
-def read_box(value="", mono=False):
-    """Mehrzeiliger Text zum Lesen (Aufgaben, Loesungen, Rechenergebnisse)."""
+def read_box(value="", mono=False, scroll=False):
+    """Mehrzeiliger Text zum Lesen (Aufgaben, Loesungen, Rechenergebnisse).
+
+    scroll=True (ab 0.62.3, Rechenwege und Rechner-Anzeigen): Zeilen brechen
+    nicht um, sondern lassen sich seitlich wischen - so bleiben Spalten und
+    Bitreihen gerade, auch wenn eine Zeile breiter als der Bildschirm ist.
+    Der Text steht dann in einer waagrecht scrollbaren Zeile; zum Setzen
+    set_box() nutzen (box.data ist immer das Text-Element)."""
+    text = ft.Text(value, size=13 if mono else 14, color=C["text_dim"],
+                   font_family=MONO if mono else None, selectable=True, no_wrap=scroll)
+    content = ft.Row([text], scroll=ft.ScrollMode.AUTO) if scroll else text
     return ft.Container(
-        content=ft.Text(value, size=13 if mono else 14, color=C["text_dim"],
-                        font_family=MONO if mono else None, selectable=True),
+        content=content, data=text,
         bgcolor=C["card_alt"], border_radius=12, padding=14,
         border=ft.Border.all(1, C["border"]))
+
+
+def set_box(box, value):
+    """Text einer read_box setzen (mit und ohne scroll)."""
+    box.data.value = value
 
 
 def list_row(title, subtitle, accent, on_click, active=False, sub_color=None):

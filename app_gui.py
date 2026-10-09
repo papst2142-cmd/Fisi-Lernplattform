@@ -4165,7 +4165,7 @@ class CalcView(View):
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
-                    subtitle="Netto, Parität, Effizienz")
+                    subtitle="Nutzkapazität, Verlust, Effizienz")
         raid.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         make_label(raid.body, "RAID-Level", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
@@ -4179,7 +4179,7 @@ class CalcView(View):
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_disks = EntryBox(grid, width=8, value="4")
         self.entry_disks.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(grid, "Kapazität je Platte (GB)", font=F["small"],
+        make_label(grid, "Kapazität je Festplatte (GB)", font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_size = EntryBox(grid, width=8, value="1000")
         self.entry_size.grid(row=1, column=1, sticky="w", padx=12, pady=4)
@@ -4206,10 +4206,10 @@ class CalcView(View):
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_height = EntryBox(screen_grid, width=8, value="1080")
         self.entry_height.grid(row=1, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Bildwiederholrate (fps, optional)",
+        make_label(screen_grid, "Bildrate (fps, optional)",
                    font=F["small"], fg=C["text_dim"]).grid(
                        row=0, column=2, sticky="w", padx=(24, 0), pady=4)
-        self.entry_fps = EntryBox(screen_grid, width=8, value="0")
+        self.entry_fps = EntryBox(screen_grid, width=8, value="30")
         self.entry_fps.grid(row=0, column=3, sticky="w", padx=12, pady=4)
         self.entry_fps.entry.bind("<Return>", lambda _e: self.calc_screen())
 
