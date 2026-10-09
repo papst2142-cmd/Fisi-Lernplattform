@@ -375,8 +375,9 @@ class PartsTest(AppCase):
         self.assertFalse(help_view.parts_pending)
         self.assertEqual(len(help_view.folds), len(self.app_gui.fh.HELP_SECTIONS))
         self.assertTrue(all(not f.opened for f in help_view.folds.values()))
-        # "Farben" gebaut, aber eingeklappt
-        farben = app.views.built("settings").folds["farben"]
+        # "Farben" gebaut, aber eingeklappt (ab 0.62.2 im Bereich
+        # "Optische Anpassungen", ein Teil mehr fuer die Schriftgroesse)
+        farben = app.views.built("settings").folds["optik"]
         self.assertTrue(farben.built)
         self.assertFalse(farben.opened)
         self.assertEqual(len(app.views.built("settings").custom_colors.sliders), 9)
@@ -384,7 +385,7 @@ class PartsTest(AppCase):
         parts = {task: ms for task, ms in pre.block_ms.items()
                  if task[0] in ("part", "area")}
         self.assertIn(("part", "help"), parts)
-        self.assertIn(("area", "settings", "farben"), parts)
+        self.assertIn(("area", "settings", "optik"), parts)
         for task, ms in parts.items():
             self.assertLessEqual(ms, PART_LIMIT_MS, "%s: %d ms" % (task, ms))
         print("\nVORLADEN fertig %d ms, laengster Teil %s"
@@ -395,7 +396,7 @@ class PartsTest(AppCase):
         self.root.update()
         self.assertIs(app.views.built("help"), help_view)
         app.show_view("settings")
-        app.views["settings"].open_area("farben")
+        app.views["settings"].open_area("optik")
         self.root.update()
         self.assertEqual(hint["shown"], 0)
         self.assertEqual(self.errors, [])
@@ -473,8 +474,10 @@ class PartsTest(AppCase):
     def half_farben(self, parts=2):
         self.stop_preloader()
         settings = self.app.views["settings"]
-        fold = settings.folds["farben"]
-        for _ in range(parts):
+        fold = settings.folds["optik"]
+        # ab 0.62.2 steht vorne der Teil "Schriftgroesse": ein Teil mehr, damit
+        # wie bisher "parts" Farben-Teile gebaut sind
+        for _ in range(parts + 1):
             fold.build_part()
         self.assertFalse(fold.built)
         return settings, fold
@@ -482,7 +485,7 @@ class PartsTest(AppCase):
     def test_halbes_farben_aufklappen(self):
         settings, fold = self.half_farben(parts=5)
         self.app.show_view("settings")
-        settings.open_area("farben")
+        settings.open_area("optik")
         self.root.update()
         self.assertTrue(fold.built)
         self.assertTrue(fold.opened)
@@ -493,7 +496,7 @@ class PartsTest(AppCase):
         fo = self.app_gui.fo
         settings, fold = self.half_farben(parts=1)
         self.app.last_query = "Vorlagen"
-        self.app.open_search_hit(fo.SEARCH_KIND, fo.AREA_BY_ID["farben"]["titel"])
+        self.app.open_search_hit(fo.SEARCH_KIND, fo.AREA_BY_ID["optik"]["titel"])
         self.root.update()
         self.assertTrue(fold.built)
         self.assertTrue(settings.folds[fo.TEMPLATES_ID].opened)
@@ -516,7 +519,7 @@ class PartsTest(AppCase):
         pre.last_input = 0
         self.assertTrue(self.pump_until(lambda: pre.done), "Vorladen nach Wechsel nicht fertig")
         self.assert_help_complete(app.views.built("help"))
-        self.assertTrue(app.views.built("settings").folds["farben"].built)
+        self.assertTrue(app.views.built("settings").folds["optik"].built)
         self.assertEqual(self.errors, [])
 
     def test_mausrad_zaehlt_als_eingabe(self):
@@ -549,7 +552,7 @@ class PartsTest(AppCase):
         steps = [line[column("nach")] for line in lines if line[column("ereignis")] == fle.EVENT_PRELOAD]
         # (die ersten Schritte koennen vor dem Einschalten gelaufen sein)
         self.assertIn("help:teil", steps)
-        self.assertIn("settings:farben", steps)
+        self.assertIn("settings:optik", steps)
         self.assertEqual(events.count(fle.EVENT_PRELOAD_DONE), 1)
         app.perf.set_active(False)
         self.assertEqual(self.errors, [])
@@ -623,7 +626,7 @@ class Switch060Test(AppCase):
         for key in self.app_gui.PRELOAD_VIEWS:
             self.assertIsNotNone(app.views.built(key), key)
         self.assertIsNone(app.views.built("help"))
-        self.assertFalse(app.views.built("settings").folds["farben"].built)
+        self.assertFalse(app.views.built("settings").folds["optik"].built)
         self.assertEqual(self.errors, [])
 
 

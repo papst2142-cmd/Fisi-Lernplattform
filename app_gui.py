@@ -120,7 +120,7 @@ APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und 
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.62.1"
+APP_VERSION = "0.62.2"
 
 
 def _resource_path(filename):
@@ -4919,10 +4919,12 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
-        fisi_optionen). Offen beim Oeffnen nur Updates (E1; bis 0.59.1 auch
+        fisi_optionen). Offen ohne Klappkopf nur Updates (E1; bis 0.59.1 auch
         Problem melden), alle anderen sind Klappbereiche (E4: Zustand nicht
         gespeichert). Ab 0.60 (B3): Den Inhalt der Klappbereiche baut
-        builder erst beim ersten Aufklappen (auch ueber die Suche)."""
+        builder erst beim ersten Aufklappen (auch ueber die Suche). Ab 0.62.2
+        (E-B3): "Über das Programm" startet aufgeklappt und ist damit gleich
+        gebaut (fo.unfolded_at_start)."""
         area = fo.AREA_BY_ID[area_id]
         if fo.opened_at_start(area_id):
             card = Card(self.content, title=area["titel"], accent=accent, subtitle=subtitle)
@@ -4931,7 +4933,7 @@ class SettingsView(View):
         else:
             card = FoldCard(self.content, title=area["titel"], accent=accent,
                             subtitle=subtitle, key=fo.state_key(area_id), marker=True,
-                            builder=builder,
+                            opened=fo.unfolded_at_start(area_id), builder=builder,
                             after_build=lambda: self._after_build(area_id))
             self.folds[area_id] = card
         card.pack(fill="x", pady=(14, 0) if self.areas else 0)
@@ -4992,22 +4994,15 @@ class SettingsView(View):
         self._area("rundgang", C["green"], subtitle=fh.OPTIONS_SUBTITLE,
                    builder=self._build_rundgang)
 
-        # Ab 0.56: Schriftgroesse (je Geraet); ab 0.59 eingeklappt wie alle
-        self._area("schrift", C["accent"], subtitle=fisi_theme.FONT_SUBTITLE,
-                   builder=self._build_schrift)
-
-        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
-        # Ab 0.60.1 in Teilen (Vorladen), siehe _farben_parts
-        self._area("farben", C["accent"], subtitle="nur für dieses Gerät",
-                   builder=self._farben_parts())
+        # Ab 0.62.2: "Optische Anpassungen" mit den Zwischenueberschriften
+        # SCHRIFTGRÖSSE (ab 0.56, je Geraet) und FARBEN (ab 0.56, Inhalt ab
+        # 0.60.1 in Teilen fuer das Vorladen, siehe _farben_parts)
+        self._area(fo.OPTIK_ID, C["accent"], subtitle=fisi_theme.FONT_SUBTITLE,
+                   builder=[self._build_schrift] + self._farben_parts())
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
         self._area("tagesziel", C["green"], subtitle="nur für dieses Gerät",
                    builder=self._build_tagesziel)
-
-        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
-        self._area("rahmenplan", C["purple"], subtitle="nur für dieses Gerät",
-                   builder=self._build_rahmenplan)
 
         self._area("abgleich", C["accent"], subtitle="über ein privates GitHub-Repository",
                    builder=self._build_abgleich)
@@ -5018,7 +5013,10 @@ class SettingsView(View):
 
         self._area("datenbank", C["accent"], builder=self._build_datenbank)
 
-        self._area("lerninhalte", C["purple"], builder=self._build_lerninhalte)
+        # Ab 0.62.2: Lerninhalte mit der Zwischenueberschrift RAHMENPLAN (ab 0.55,
+        # Abdeckung im Fortschritt, Gewichtung neuer Aufgaben, je Geraet)
+        self._area(fo.LEARN_ID, C["purple"],
+                   builder=[self._build_lerninhalte, self._build_rahmenplan])
 
         self._area("spiel", C["accent2"], builder=self._build_spiel)
 
@@ -5027,14 +5025,22 @@ class SettingsView(View):
         self._area("loeschen", C["red"], subtitle=DELETE_SUBTITLE,
                    builder=self._build_loeschen)
 
-        self._area("ueber", C["green"], builder=self._build_ueber)
-
-        # Ab 0.59.2 (U): alle Werkzeuge zum Melden und Messen im letzten
-        # Bereich "Diagnose und Werkzeuge" (eingeklappt), Zwischenueberschriften
+        # Ab 0.59.2 (U): alle Werkzeuge zum Melden und Messen im Bereich
+        # "Diagnose und Werkzeuge" (eingeklappt), Zwischenueberschriften
         # wie bei "Löschen". Inhalte unveraendert; ab 0.60 (B3) wie alle
         # Klappbereiche erst beim ersten Aufklappen gebaut.
         self._area(fo.DIAGNOSE_ID, C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE,
                    builder=self._build_diagnose)
+
+        # Ab 0.62.2 (E-B2, E-B3): ganz unten, beim Oeffnen aufgeklappt
+        self._area(fo.ABOUT_ID, C["green"], builder=self._build_ueber)
+
+    def _section(self, card, area_id, section_id, first=False):
+        """Ab 0.62.2: Zwischenueberschrift in einem zusammengelegten Bereich
+        (Titel aus fisi_optionen, Aussehen wie bei "Löschen")."""
+        make_label(card.body, fo.section_title(area_id, section_id).upper(),
+                   font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                        pady=(0 if first else 20, 6))
 
     def _build_rundgang(self, tour):
         make_label(tour.body, fh.OPTIONS_TEXT, font=F["small"], fg=C["text_dim"],
@@ -5059,6 +5065,7 @@ class SettingsView(View):
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
 
     def _build_schrift(self, fonts):
+        self._section(fonts, fo.OPTIK_ID, "schrift", first=True)
         self.font_choice = fisi_game_gui.ChoiceRow(
             fonts.body, fisi_theme.FONT_CHOICES, fisi_theme.current_font_size,
             self.app.change_font_size)
@@ -5069,7 +5076,9 @@ class SettingsView(View):
     def _farben_parts(self):
         """Ab 0.60.1: Inhalt von "Farben" in Teilen (je ca. 30-110 ms), damit
         das Vorladen ihn verdeckt bauen kann, ohne einen Klick lange warten
-        zu lassen. Beim Aufklappen laufen alle restlichen Teile auf einmal."""
+        zu lassen. Beim Aufklappen laufen alle restlichen Teile auf einmal.
+        Ab 0.62.2 stehen die Teile in "Optische Anpassungen" hinter dem
+        Schrift-Teil."""
         def custom_start(colors):
             # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
             self.custom_colors = CustomColors(colors.body, self._save_custom, in_parts=True)
@@ -5087,6 +5096,7 @@ class SettingsView(View):
         return parts + [custom_rest]
 
     def _build_farben_mode(self, colors):
+        self._section(colors, fo.OPTIK_ID, "farben")
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
         fisi_game_gui.ChoiceRow(colors.body, fisi_theme.MODES, fisi_theme.current_mode,
@@ -5164,6 +5174,11 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
     def _build_rahmenplan(self, plan):
+        # Ab 0.62.2 im Bereich "Lerninhalte"; der fruehere Untertitel steht
+        # als kleine Zeile unter der Ueberschrift
+        self._section(plan, fo.LEARN_ID, "rahmenplan")
+        make_label(plan.body, "nur für dieses Gerät", font=F["tiny"], fg=C["muted"],
+                   justify="left", anchor="w").pack(anchor="w", pady=(0, 6))
         make_label(plan.body, frp.OPTIONS_SUBTITLE, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(0, 10))
         values = frp.load_rp_settings()
@@ -5271,6 +5286,8 @@ class SettingsView(View):
                  "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
                  "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
                  "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
+                 # ab 0.62.2 wie am Handy (F4)
+                 "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN),
                  ""]
         for category in CATEGORIES:
             lines.append("%s: %d Inhalte" % (CATEGORY_SHORT[category],
@@ -5423,10 +5440,12 @@ class SettingsView(View):
 
     def reset_folds(self):
         """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen (ausser
-        Updates, das kein Klappbereich ist)."""
+        Updates, das kein Klappbereich ist). Ab 0.62.2 (E-B3) ist "Über das
+        Programm" danach wieder aufgeklappt; "Vorlagen" ist kein Bereich der
+        Liste und bleibt zu."""
         FoldCard.reset_states(fo.STATE_PREFIX)
-        for fold in self.folds.values():
-            fold.set_opened(False)
+        for area_id, fold in self.folds.items():
+            fold.set_opened(fo.unfolded_at_start(area_id))
         FoldCard.reset_states(fo.STATE_PREFIX)
 
     def open_area(self, area_id, templates=False):
@@ -5530,7 +5549,7 @@ class SettingsView(View):
         dazu den Namen. Ab 0.60 (B3) nur, was schon gebaut ist."""
         if self.built("rundgang"):
             self.entry_name.set(fh.load_name())
-        if not self.built("rahmenplan"):
+        if not self.built(fo.LEARN_ID):   # ab 0.62.2: Rahmenplan in "Lerninhalte"
             return
         values = frp.load_rp_settings()
         for key, var in self.rp_vars.items():
@@ -7182,11 +7201,12 @@ class LazyViews(dict):
 # ("tab", Ansicht, Reiter) - einen Reiter von Firma bzw. Reise vorbauen -,
 # ab 0.60.1 ("part", Ansicht) - ein Teil einer Ansicht, die sich in Teilen
 # bauen laesst (Hilfe) - oder ("area", Ansicht, Bereich) - ein Teil eines
-# Klappbereichs der Optionen ("Farben").
+# Klappbereichs der Optionen (bis 0.62.1 "Farben", ab 0.62.2 "Optische
+# Anpassungen" mit Schriftgroesse und Farben).
 # Ab 0.60.1: Reihenfolge nach Nutzung (Freigabe Plan 0.60.1, Abschnitt 6):
 # zuerst die Seiten, die man direkt nach dem Start oeffnet.
 PRELOAD_ORDER = (("view", "cards"), ("view", "game"), ("view", "settings"),
-                 ("view", "progress"), ("area", "settings", "farben"),
+                 ("view", "progress"), ("area", "settings", "optik"),
                  ("view", "quiz"), ("view", "ap1scenarios"), ("view", "scenarios"),
                  ("view", "testproject"), ("view", "help"), ("view", "calc"),
                  ("view", "notebook"), ("view", "abschluss"))
@@ -7238,7 +7258,7 @@ def preload_tasks(slot_chosen, mode="normal"):
 
 def task_label(task):
     """Ab 0.60.1: Name eines Schritts fuer Diagnose und Messdatei, z.B.
-    "help", "help:teil" oder "settings:farben"."""
+    "help", "help:teil" oder "settings:optik"."""
     if task[0] == "view":
         return task[1]
     if task[0] == "part":
@@ -7258,9 +7278,10 @@ class ViewPreloader:
     beim Beenden mit allen anderen abgebrochen (FISIApp.on_close); ein
     Schritt nach dem Schliessen tut nichts.
 
-    Ab 0.60.1: Hilfe und "Farben" werden in kleinen Teilen gebaut (je Teil
-    ein Zeitgeber), damit ein Klick nie lange wartet. Braucht jemand die
-    Ansicht vorher, baut sie den Rest sofort fertig (LazyViews, FoldCard)."""
+    Ab 0.60.1: Hilfe und "Farben" (ab 0.62.2 "Optische Anpassungen") werden
+    in kleinen Teilen gebaut (je Teil ein Zeitgeber), damit ein Klick nie
+    lange wartet. Braucht jemand die Ansicht vorher, baut sie den Rest
+    sofort fertig (LazyViews, FoldCard)."""
 
     # Voreinstellungen (auch fuer Tests, die ohne __init__ anlegen)
     mode = "normal"
@@ -7902,7 +7923,8 @@ class FISIApp:
 
     def _show_view(self, key):
         # Ab 0.59 (E4): Wer die Optionen von einer anderen Seite aus oeffnet,
-        # findet alle Bereiche eingeklappt. Beim Neuaufbau nach einem Farb-
+        # findet alle Bereiche eingeklappt (ab 0.62.2 ausser "Über das
+        # Programm", fo.unfolded_at_start). Beim Neuaufbau nach einem Farb-
         # oder Schriftwechsel (_recolor) bleiben die offenen Bereiche offen.
         # Ab 0.60 (K-G, E11): fuer die Hilfe gilt dasselbe.
         entering = (key in ("settings", "help") and self.current != key

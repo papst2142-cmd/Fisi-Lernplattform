@@ -1,5 +1,5 @@
 ===========================================================================
-  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.62.1
+  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.62.2
   Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
   (Schwerpunkt Systemintegration)
   Frueherer Name bis 0.60.1: "FISI Lernplattform" - Lernstand, Einstellungen
@@ -82,11 +82,13 @@ abgerundete Kacheln, Farbverlaeufe):
                      (Abschnitt, Position, Punkt) oder je Lernfeld, mit
                      "Jetzt ueben" an jedem Punkt.
 
-  Optionen           Updates, Farben (dunkel oder hell), Tagesziel,
-                     Rahmenplan (weitere Fachrichtungen, Gewichtung der
+  Optionen           Updates, Optische Anpassungen (Schriftgroesse,
+                     Farben dunkel oder hell), Tagesziel, Abgleich PC und
+                     Handy, Sicherung des Lernstands als Datei, Lerninhalte
+                     mit Rahmenplan (weitere Fachrichtungen, Gewichtung der
                      Uebungsauswahl, aktuelles Lernfeld, Pruefungstermine),
-                     Abgleich PC und Handy, Sicherung des Lernstands als
-                     Datei und Zuruecksetzen der Daten.
+                     Zuruecksetzen der Daten, Diagnose und Ueber das
+                     Programm.
 
 Die fuenf Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
 Datenschutz, Systeme, RAID & Hardware, Wirtschaft & Prozesse sowie

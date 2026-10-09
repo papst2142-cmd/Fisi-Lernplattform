@@ -376,7 +376,7 @@ class TastaturPcTest(unittest.TestCase):
         self.app.show_view("settings")
         self.settle()
         # ab 0.60 (B3): wie von Hand zuerst den Bereich "Schriftgroesse" oeffnen
-        self.app.views["settings"].open_area("schrift")
+        self.app.views["settings"].open_area("optik")   # ab 0.62.2 (Schriftgroesse)
         self.settle()
         try:
             self.app.change_font_size("gross")

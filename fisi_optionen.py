@@ -8,13 +8,18 @@ Gemeinsam fuer PC (app_gui.py) und Handy (mobile/src/main.py), damit beide
 dieselbe Reihenfolge, dieselben Beschriftungen und dieselbe Suche haben.
 
 - AREAS: alle Bereiche der Optionen in der angezeigten Reihenfolge.
-  "Updates" steht ganz oben (E2). Beim Oeffnen der Optionen sind alle
-  Bereiche eingeklappt, ausser "Updates" (E1; bis 0.59.1 auch "Problem
-  melden"). Der Klappzustand wird nicht gespeichert (E4) - es gibt keine
-  neue Einstellung.
+  "Updates" steht ganz oben (E2) und ist kein Klappbereich. Beim Oeffnen der
+  Optionen sind alle Bereiche eingeklappt (E1; bis 0.59.1 auch "Problem
+  melden" offen), ab 0.62.2 ausser "Über das Programm" (E-B3,
+  unfolded_at_start). Der Klappzustand wird nicht gespeichert (E4) - es gibt
+  keine neue Einstellung.
 - Ab 0.59.2 (U): "Problem melden", "Leistungsmessung" und am PC die
-  "Hänger-Diagnose" stehen zusammen im letzten Bereich "Diagnose und
-  Werkzeuge" (Zwischenueberschriften wie bei "Löschen", DIAGNOSE_SECTIONS).
+  "Hänger-Diagnose" stehen zusammen im Bereich "Diagnose und Werkzeuge"
+  (Zwischenueberschriften wie bei "Löschen", DIAGNOSE_SECTIONS).
+- Ab 0.62.2: "Schriftgröße" und "Farben" stehen zusammen im Bereich
+  "Optische Anpassungen", der "Rahmenplan" im Bereich "Lerninhalte"
+  (Zwischenueberschriften, SECTIONS). "Über das Programm" steht ganz unten,
+  unter "Diagnose und Werkzeuge" (E-B2).
 - search_options(): Treffer fuer die Suche (Strg+F). Ein Treffer oeffnet die
   Optionen, klappt den Bereich (und ggf. den Unterbereich "Vorlagen") auf und
   springt hin (E5).
@@ -34,7 +39,7 @@ SEARCH_KIND = "Optionen"
 # Optionen vergessen, E4)
 STATE_PREFIX = "optionen_"
 
-# Unterbereich im Bereich "Farben" (Entscheidung F1)
+# Unterbereich im Bereich "Optische Anpassungen" bei "Farben" (Entscheidung F1)
 TEMPLATES_ID = "vorlagen"
 TEMPLATES_TITLE = "Vorlagen"
 TEMPLATES_HINT = ("Ein Klick auf eine Vorlage stellt die Farben ein. Sind eigene Farben "
@@ -44,7 +49,8 @@ TEMPLATES_TEXT = ("Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der
                   "Fehler, Warnung bleiben gleich (in der hellen Darstellung etwas "
                   "dunkler, damit sie gut lesbar sind).")
 
-# Ab 0.59.2 (U): Bereich ganz unten mit allen Werkzeugen zum Melden und Messen
+# Ab 0.59.2 (U): Bereich mit allen Werkzeugen zum Melden und Messen (ab 0.62.2
+# der vorletzte, darunter steht nur noch "Über das Programm")
 DIAGNOSE_ID = "diagnose"
 DIAGNOSE_TITLE = "Diagnose und Werkzeuge"
 DIAGNOSE_SUBTITLE = "Fehler melden, messen, Hänger finden"
@@ -56,16 +62,28 @@ DIAGNOSE_SECTIONS = [
     {"id": "haenger", "titel": HANG_TITLE, "nur_pc": True},
 ]
 
-# id, Titel, offen beim Oeffnen, nur am PC, Stichwoerter fuer die Suche
+# Ab 0.62.2: zusammengelegte Bereiche und ihre Zwischenueberschriften
+OPTIK_ID = "optik"
+OPTIK_TITLE = "Optische Anpassungen"
+COLORS_TITLE = "Farben"
+LEARN_ID = "lerninhalte"
+ABOUT_ID = "ueber"
+SECTIONS = {
+    OPTIK_ID: [{"id": "schrift", "titel": fisi_theme.FONT_TITLE},
+               {"id": "farben", "titel": COLORS_TITLE}],
+    LEARN_ID: [{"id": "rahmenplan", "titel": frp.OPTIONS_TITLE}],
+}
+
+# id, Titel, offen (kein Klappbereich), aufgeklappt beim Oeffnen, nur am PC,
+# Stichwoerter fuer die Suche
 AREAS = [
     {"id": "updates", "titel": "Updates", "offen": True,
      "stichwoerter": ["Update", "Version", "aktualisieren", "Desktop-Verknüpfung"]},
     {"id": "rundgang", "titel": fh.OPTIONS_TITLE,
      "stichwoerter": ["Rundgang", "Hilfe", "Name", "Einführung"]},
-    {"id": "schrift", "titel": fisi_theme.FONT_TITLE,
-     "stichwoerter": ["Schrift", "Schriftgröße", "groß", "Sehr groß"]},
-    {"id": "farben", "titel": "Farben",
-     "stichwoerter": ["Farbe", "Darstellung", "Dunkel", "Hell", TEMPLATES_TITLE,
+    {"id": OPTIK_ID, "titel": OPTIK_TITLE,
+     "stichwoerter": ["Schrift", "Schriftgröße", "groß", "Sehr groß",
+                      "Farbe", "Darstellung", "Dunkel", "Hell", TEMPLATES_TITLE,
                       "Grundfarbe", "Hintergrund", "Eigene Farben", "Regler",
                       "Farbton", "Sättigung", "Helligkeit", "Akzent"]
      + [item["name"] for item in fisi_theme.PRESETS]
@@ -73,31 +91,30 @@ AREAS = [
      + list(fisi_theme.LIGHT_NAMES.values())},
     {"id": "tagesziel", "titel": "Tagesziel",
      "stichwoerter": ["Ziel", "Lernserie", "Erinnerung", "Aufgaben pro Tag"]},
-    {"id": "rahmenplan", "titel": frp.OPTIONS_TITLE,
-     "stichwoerter": ["Rahmenplan", "Lernfeld", "Prüfungstermin", "Gewichtung", "AP1",
-                      "AP2"]},
     {"id": "abgleich", "titel": "Abgleich PC und Handy",
      "stichwoerter": ["Abgleich", "Repository", "Token", "Zugangsschlüssel", "GitHub"]},
     {"id": "sicherung", "titel": fsi.TITLE,
      "stichwoerter": ["Sicherung", "Backup", "wiederherstellen"]},
     {"id": "datenbank", "titel": "Datenbank", "nur_pc": True,
      "stichwoerter": ["Datenbank", "Speicherort", "FISI_DB_PATH"]},
-    {"id": "lerninhalte", "titel": "Lerninhalte",
-     "stichwoerter": ["Lerninhalte", "Anzahl", "Karteikarten gesamt"]},
+    {"id": LEARN_ID, "titel": "Lerninhalte",
+     "stichwoerter": ["Lerninhalte", "Anzahl", "Karteikarten gesamt",
+                      "Rahmenplan", "Lernfeld", "Prüfungstermin", "Gewichtung", "AP1",
+                      "AP2"]},
     {"id": "spiel", "titel": "Spiel",
      "stichwoerter": ["Spiel", "Wohnungen", "Miete", "Schwierigkeitsgrad"]},
     {"id": "loeschen", "titel": DELETE_TITLE,
      "stichwoerter": ["Löschen", "zurücksetzen", "Lerndaten", "Historie", "Spielstand",
                       "Bestenliste"]},
-    {"id": "ueber", "titel": "Über das Programm",
-     "stichwoerter": ["Über", "Programm", "Version"]},
-    # Ab 0.59.2 (U): immer der letzte Bereich
     {"id": DIAGNOSE_ID, "titel": DIAGNOSE_TITLE,
      "stichwoerter": ["Diagnose", "Werkzeuge", fdg.TITLE, "Problem", "Fehler",
                       "fehler.log", "Bericht", "melden", fle.TITLE, "Leistung",
                       "Messung", "Messdatei"],
      # nur am PC gesucht (die Hänger-Diagnose gibt es am Handy nicht)
      "stichwoerter_pc": [HANG_TITLE, "Hänger", "haenger.log", "hängt"]},
+    # Ab 0.62.2 (E-B2, E-B3): ganz unten, beim Oeffnen der Optionen aufgeklappt
+    {"id": ABOUT_ID, "titel": "Über das Programm", "aufgeklappt": True,
+     "stichwoerter": ["Über", "Programm", "Version"]},
 ]
 AREA_BY_ID = {area["id"]: area for area in AREAS}
 AREA_BY_TITLE = {area["titel"]: area for area in AREAS}
@@ -123,10 +140,34 @@ def diagnose_sections(pc=True):
     return [item for item in DIAGNOSE_SECTIONS if pc or not item.get("nur_pc")]
 
 
+def sections(area_id, pc=True):
+    """Ab 0.62.2: Zwischenueberschriften eines zusammengelegten Bereichs."""
+    if area_id == DIAGNOSE_ID:
+        return diagnose_sections(pc)
+    return list(SECTIONS.get(area_id, []))
+
+
+def section_title(area_id, section_id):
+    """Titel einer Zwischenueberschrift (PC und Handy lesen ihn von hier)."""
+    for item in sections(area_id):
+        if item["id"] == section_id:
+            return item["titel"]
+    raise KeyError(section_id)
+
+
 def opened_at_start(area_id):
-    """E1: Nur "Updates" ist beim Oeffnen offen (bis 0.59.1 auch "Problem
-    melden", ab 0.59.2 im eingeklappten Bereich "Diagnose und Werkzeuge")."""
+    """E1: Nur "Updates" ist offen und kein Klappbereich (bis 0.59.1 auch
+    "Problem melden", ab 0.59.2 im eingeklappten Bereich "Diagnose und
+    Werkzeuge")."""
     return bool(AREA_BY_ID[area_id].get("offen"))
+
+
+def unfolded_at_start(area_id):
+    """Ab 0.62.2 (E-B3): Klappbereiche, die beim Oeffnen der Optionen
+    aufgeklappt sind (nur "Über das Programm"). Mit .get, weil auch der
+    Unterbereich "Vorlagen" in den Klappbereichen steht, aber kein Bereich
+    der Liste ist."""
+    return bool(AREA_BY_ID.get(area_id, {}).get("aufgeklappt"))
 
 
 def state_key(area_id):
@@ -145,7 +186,7 @@ def search_options(query, pc=True):
         words = [word for word in all_words if needle in word.lower()]
         if needle not in area["titel"].lower() and not words:
             continue
-        templates = area["id"] == "farben" and any(
+        templates = area["id"] == OPTIK_ID and any(
             needle in word.lower() for word in TEMPLATE_WORDS)
         shown = words or all_words
         detail = "Bereich in den Optionen: " + ", ".join(shown[:6])
@@ -159,6 +200,6 @@ def hit_target(title, query=""):
     if area is None:
         return None, False
     needle = str(query or "").strip().lower()
-    templates = area["id"] == "farben" and bool(needle) and any(
+    templates = area["id"] == OPTIK_ID and bool(needle) and any(
         needle in word.lower() for word in TEMPLATE_WORDS)
     return area["id"], templates

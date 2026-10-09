@@ -4,6 +4,24 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62.2
+
+Die Optionen sind aufgeräumt: Weniger Bereiche, verwandte Einstellungen
+stehen zusammen. PC und Handy haben dieselbe Reihenfolge.
+
+- **Optische Anpassungen** (neu): Hier stehen jetzt „Schriftgröße“ und
+  darunter „Farben“ mit Darstellung, Vorlagen und eigenen Farben.
+- **Lerninhalte:** Die Einstellungen zum Rahmenplan (Fachrichtungen,
+  Gewichtung, Lernfeld, Prüfungstermine) stehen jetzt hier, unter der
+  Anzahl der Inhalte.
+- **Über das Programm** steht jetzt ganz unten und ist beim Öffnen der
+  Optionen aufgeklappt. Zuklappen geht wie bei den anderen Bereichen.
+- Die Suche führt zu „Optische Anpassungen“ bzw. „Lerninhalte“. Hilfe und
+  Rundgang nennen die neuen Orte. Einstellungen, Lernstand und Abgleich
+  bleiben unverändert.
+- Am PC zeigt „Lerninhalte“ jetzt auch die Anzahl der Testprojekte, wie am
+  Handy.
+
 ## 0.62.1
 
 Am Handy wurde der untere Rand der Seiten angepasst, damit ihn die
