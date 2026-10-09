@@ -475,7 +475,9 @@ class PartsTest(AppCase):
         self.stop_preloader()
         settings = self.app.views["settings"]
         fold = settings.folds["optik"]
-        for _ in range(parts):
+        # ab 0.62.2 steht vorne der Teil "Schriftgroesse": ein Teil mehr, damit
+        # wie bisher "parts" Farben-Teile gebaut sind
+        for _ in range(parts + 1):
             fold.build_part()
         self.assertFalse(fold.built)
         return settings, fold

@@ -376,7 +376,7 @@ class InhaltTest(Case):
                            texts.index(fo.COLORS_TITLE.upper()))
         texts = self.handy_texts(screen.areas[fo.LEARN_ID])
         plan_at = texts.index(frp.OPTIONS_TITLE.upper())
-        self.assertLess(texts.index(frp.OPTIONS_SUBTITLE), len(texts))
+        self.assertGreater(texts.index(frp.OPTIONS_SUBTITLE), plan_at)
         lines = [text for text in texts if text and "gesamt" in text]
         self.assertTrue(lines)
         from fisi_core import PROJEKTARBEITEN
