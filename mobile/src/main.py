@@ -125,6 +125,23 @@ def screen_list(controls, spacing=14):
                        padding=ft.Padding.only(left=16, right=16, top=4, bottom=24))
 
 
+def safe_content(content):
+    """Ab 0.62.1: Inhalt einer Ansicht mit Abstand zu den Systemleisten von
+    Android (Bedienleiste unten, im Querformat auch seitlich). Die App zeichnet
+    bis an den Bildschirmrand; SafeArea nimmt die echte Hoehe der Leisten des
+    Geraets (3 Tasten oder Gesten) und ist ohne Leiste (PC-Test, Web) 0.
+    expand=True ist noetig: Flet gibt nur direkten Kindern einer Ansicht mit
+    expand die volle Hoehe. Ohne expand waere die Hoehe unbegrenzt, die Liste
+    darin wuerde so hoch wie ihr ganzer Inhalt und scrollte nicht mehr."""
+    return ft.SafeArea(content=content, expand=True)
+
+
+def view_content(view):
+    """Ab 0.62.1: eingehaengter Inhalt einer Ansicht (ohne SafeArea-Huelle)."""
+    content = view.controls[0] if view.controls else None
+    return content.content if isinstance(content, ft.SafeArea) else content
+
+
 def status_color(key):
     """Farbe zum Lernstand einer Frage (Schluessel aus status_label, ab 0.39)."""
     return {LEVEL_RED: C["red"], LEVEL_YELLOW: C["yellow"], "fertig": C["green"],
@@ -4670,7 +4687,7 @@ class FISIMobileApp:
 
         page.views.clear()
         page.views.append(ft.View(
-            route="/", controls=[self.body], appbar=self._appbar(root=True),
+            route="/", controls=[safe_content(self.body)], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
     def change_color(self, preset_id=None, background_id=None, mode=None, font_size=None,
@@ -4833,7 +4850,7 @@ class FISIMobileApp:
     def push(self, crumbs, content):
         self.close_toast()
         self.page.views.append(ft.View(
-            route="/%d" % len(self.page.views), controls=[content],
+            route="/%d" % len(self.page.views), controls=[safe_content(content)],
             appbar=self._appbar(root=False, crumbs=crumbs), bgcolor=C["bg"], padding=0))
         self.page.update()
 
@@ -4849,7 +4866,7 @@ class FISIMobileApp:
 
     def scroll_top(self):
         view = self.page.views[-1]
-        content = view.controls[0] if view.controls else None
+        content = view_content(view)
         if isinstance(content, ft.ListView):
             # scroll_to ist in flet 1.0 eine Coroutine
             async def scroll():
@@ -4886,8 +4903,7 @@ class FISIMobileApp:
         """Hilfe oeffnen (ab 0.56), auf Wunsch mit aufgeklapptem Abschnitt."""
         screen = self.screens["help"]
         views = self.page.views
-        on_top = bool(views) and bool(views[-1].controls) and \
-            views[-1].controls[0] is screen.root
+        on_top = bool(views) and view_content(views[-1]) is screen.root
         if not on_top:
             screen.reset_folds()   # ab 0.60 (K-G, E11)
         if section_id:
@@ -5175,8 +5191,7 @@ class FISIMobileApp:
                     PRACTICE_NEXT_TITLE, practice_next_text(next_source, len(next_keys)),
                     lambda: self._practice_part(rest))
         views = self.page.views
-        on_top = bool(views) and bool(views[-1].controls) and \
-            views[-1].controls[0] is screen.root
+        on_top = bool(views) and view_content(views[-1]) is screen.root
         if on_top or (len(views) == 1 and self.body.content is screen.root):
             # Die Seite ist schon offen (Auswertung im Pruefungstrainer)
             self.scroll_top()
