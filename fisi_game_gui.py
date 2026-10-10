@@ -2256,6 +2256,9 @@ class TabCache:
             if cached is not None:
                 cached[1].destroy()
             self._tab_build(build)
+        # Ab 0.62.3: ein vorgebauter Reiter liegt unter der Hintergrundflaeche
+        # (prepare_tab legt ihn mit lower() nach unten) - nach vorn holen
+        self._tab_body.lift()
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()

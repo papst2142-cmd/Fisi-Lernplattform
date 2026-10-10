@@ -294,7 +294,7 @@ class HandyTest(unittest.TestCase):
         walk(card)
         for caption in fc.UPS_FIELD_CAPTIONS.values():
             self.assertIn(caption, labels)
-        self.assertIn("USV passend", screen.out_ups.content.value)
+        self.assertIn("USV passend", screen.out_ups.data.value)   # ab 0.62.3 set_box
 
     def test_fehler_als_hinweis(self):
         screen = self.handy.CalcScreen.__new__(self.handy.CalcScreen)

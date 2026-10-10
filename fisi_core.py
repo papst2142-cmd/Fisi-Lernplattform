@@ -25,6 +25,8 @@ import sqlite3
 import datetime
 import unicodedata
 import uuid
+from decimal import Decimal, ROUND_HALF_UP, localcontext
+from fractions import Fraction
 
 # ============================================================================
 #  PFADE
@@ -2168,14 +2170,23 @@ def ipv4_values(network):
     Genutzt vom Subnetz-Rechner und von den IP-Plaenen im Lernspiel."""
     hosts = network.num_addresses - 2 if network.prefixlen < 31 else \
         (2 if network.prefixlen == 31 else 1)
-    host_list = list(network.hosts())
+    if network.prefixlen < 31:
+        # Ab 0.62.3 ohne Adressliste (Netzadresse + 1, Broadcast-Adresse - 1):
+        # list(network.hosts()) brauchte bei /8 rund 16 s und 1,7 GB Speicher
+        first = network.network_address + 1
+        last = network.broadcast_address - 1
+    else:
+        # /31 und /32 wie bisher (hoechstens zwei Adressen)
+        host_list = list(network.hosts())
+        first = host_list[0] if host_list else network.network_address
+        last = host_list[-1] if host_list else network.broadcast_address
     return {
         "netz": network.network_address,
         "maske": network.netmask,
         "wildcard": network.hostmask,
         "broadcast": network.broadcast_address,
-        "erste": host_list[0] if host_list else network.network_address,
-        "letzte": host_list[-1] if host_list else network.broadcast_address,
+        "erste": first,
+        "letzte": last,
         "hosts": hosts,
         "adressen": network.num_addresses,
         "praefix": network.prefixlen,
@@ -2195,24 +2206,26 @@ def subnet_report(value):
 
     if network.version == 4:
         v = ipv4_values(network)
+        # Ab 0.62.3: /31 hat keine Broadcast-Adresse (Punkt-zu-Punkt, RFC 3021)
+        broadcast = "keine (/31, RFC 3021)" if v["praefix"] == 31 else v["broadcast"]
         lines = [
-            "Netzwerk-Adresse      : %s" % v["netz"],
+            "Netzadresse           : %s" % v["netz"],
             "Subnetzmaske          : %s" % v["maske"],
             "Wildcard-Maske        : %s" % v["wildcard"],
-            "Broadcast-Adresse     : %s" % v["broadcast"],
+            "Broadcast-Adresse     : %s" % broadcast,
             "Erste Host-Adresse    : %s" % v["erste"],
             "Letzte Host-Adresse   : %s" % v["letzte"],
-            "Nutzbare Hosts        : %d" % v["hosts"],
-            "Adressen gesamt       : %d" % v["adressen"],
-            "CIDR-Präfix           : /%d" % v["praefix"],
+            "Nutzbare Hosts        : %s" % de_int(v["hosts"]),
+            "Adressen gesamt       : %s" % de_int(v["adressen"]),
+            "Präfixlänge           : /%d" % v["praefix"],
         ]
     else:
         lines = [
-            "Netzwerk-Adresse      : %s" % network.network_address,
+            "Netzadresse           : %s" % network.network_address,
             "Präfixlänge           : /%d" % network.prefixlen,
             "Erste Adresse         : %s" % network.network_address,
             "Letzte Adresse        : %s" % network[-1],
-            "Adressen gesamt       : %d" % network.num_addresses,
+            "Adressen gesamt       : %s" % de_int(network.num_addresses),
         ]
     return "\n".join(lines)
 
@@ -2252,8 +2265,19 @@ def raid_input_values(level, disks, size):
     return raid_values(level, disks, size)
 
 
+def raid_tolerance_lines(level, disks, tolerance):
+    """Ausfalltoleranz als Zeilen. Ab 0.62.3 bei RAID 10 wie im Rechenweg:
+    1 Festplatte sicher, bis zu Anzahl / 2, wenn je Spiegelpaar nur eine
+    ausfaellt (ungerade Anzahl ist ungueltig und kommt hier nicht an)."""
+    text = plural(tolerance, "Festplatte", "Festplatten")
+    if level != "RAID 10":
+        return [text]
+    return [text + " sicher", "(bis zu %d, wenn je Spiegelpaar" % (disks // 2),
+            "nur eine ausfällt)"]
+
+
 def raid_report(level, disks_text, size_text):
-    """Berechnet Nettokapazitaet, Paritaetsverlust und Effizienz eines RAID."""
+    """Berechnet Nutzkapazitaet, Verlust und Effizienz eines RAID."""
     try:
         disks = int(disks_text)
         size = float(size_text.replace(",", "."))
@@ -2270,15 +2294,20 @@ def raid_report(level, disks_text, size_text):
         return ("Ungültige Konfiguration für %s.\n\n"
                 "Benötigt werden mindestens %d Festplatten%s."
                 % (level, minimum, extra))
-    return "\n".join([
+    # Ab 0.62.3: deutsche Schreibweise, Plattengroesse mit Nachkommastellen,
+    # "Redundanz" statt "Paritaet" (RAID 0/1/10 haben keine Paritaet)
+    tolerance = raid_tolerance_lines(level, disks, values["toleranz"])
+    lines = [
         "RAID-Level            : %s" % level,
-        "Festplatten           : %d x %.0f GB" % (disks, size),
-        "Bruttokapazität       : %.2f GB" % values["brutto"],
-        "Nutzkapazität         : %.2f GB" % values["netto"],
-        "Parität / Verlust     : %.2f GB" % values["verlust"],
-        "Speichereffizienz     : %.1f %%" % values["effizienz"],
-        "Ausfalltoleranz       : %s" % plural(values["toleranz"], "Festplatte", "Festplatten"),
-    ])
+        "Festplatten           : %d x %s GB" % (disks, _de_short(size)),
+        "Bruttokapazität       : %s GB" % de_number(values["brutto"]),
+        "Nutzkapazität         : %s GB" % de_number(values["netto"]),
+        "Redundanz / Verlust   : %s GB" % de_number(values["verlust"]),
+        "Speichereffizienz     : %s %%" % de_number(values["effizienz"], 1),
+        "Ausfalltoleranz       : %s" % tolerance[0],
+    ]
+    lines += [" " * 24 + line for line in tolerance[1:]]
+    return "\n".join(lines)
 
 
 def screen_report(width_text, height_text, depth, fps_text):
@@ -2291,11 +2320,11 @@ def screen_report(width_text, height_text, depth, fps_text):
         fps = float(fps_raw) if fps_raw else 0.0
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
-                         "Bildwiederholrate eingeben.")
+                         "Bildrate eingeben.")
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
     if fps < 0:
-        raise InputError("Die Bildwiederholrate darf nicht negativ sein.")
+        raise InputError("Die Bildrate darf nicht negativ sein.")
 
     pixels = width * height
     bits = pixels * depth
@@ -2303,14 +2332,16 @@ def screen_report(width_text, height_text, depth, fps_text):
     data_kb = data_bytes / 1024
     data_mb = data_kb / 1024
 
+    # Ab 0.62.3: deutsche Schreibweise, Doppelpunkte untereinander und
+    # KiB/MiB/GiB, weil durch 1024 geteilt wird (Mbit/s bleibt dezimal)
     lines = [
         "Auflösung             : %d x %d Pixel" % (width, height),
-        "Pixel gesamt          : %s" % format(pixels, ","),
+        "Pixel gesamt          : %s" % de_int(pixels),
         "Farbtiefe             : %d Bit/Pixel" % depth,
-        "Datenmenge pro Bild   : %d Bit" % bits,
-        "                       : %s Byte" % format(int(data_bytes), ","),
-        "                       : %.2f KB" % data_kb,
-        "                       : %.2f MB" % data_mb,
+        "Datenmenge pro Bild   : %s Bit" % de_int(bits),
+        "                      : %s Byte" % de_int(int(data_bytes)),
+        "                      : %s KiB" % de_number(data_kb),
+        "                      : %s MiB" % de_number(data_mb),
     ]
     if fps > 0:
         bytes_per_sec = data_bytes * fps
@@ -2319,10 +2350,10 @@ def screen_report(width_text, height_text, depth, fps_text):
         gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
         lines += [
             "",
-            "Bildwiederholrate     : %.0f Bilder/Sekunde" % fps,
-            "Datenrate             : %.2f MB/s" % mb_per_sec,
-            "                       : %.2f Mbit/s" % mbit_per_sec,
-            "                       : %.2f GB/Minute" % gb_per_min,
+            "Bildrate (fps)        : %.0f Bilder/Sekunde" % fps,
+            "Datenrate             : %s MiB/s" % de_number(mb_per_sec),
+            "                      : %s Mbit/s" % de_number(mbit_per_sec),
+            "                      : %s GiB/Minute" % de_number(gb_per_min),
         ]
     return "\n".join(lines)
 
@@ -2411,9 +2442,23 @@ UPS_SIMPLE_TEXT = (
 
 
 def de_number(value, digits=2):
-    """Zahl in deutscher Schreibweise (1.234,56)."""
-    text = "{:,.{}f}".format(value, digits)
+    """Zahl in deutscher Schreibweise (1.234,56). Ab 0.62.3 kaufmaennisch
+    gerundet: 390,625 -> 390,63 (vorher je nach interner Darstellung 390,62).
+    Unendlich und "nan" (Eingabe "inf") wie bis 0.62.2 ohne Decimal."""
+    if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
+        text = "{:,.{}f}".format(value, digits)
+    else:
+        exact = Decimal(repr(value)) if isinstance(value, float) else Decimal(value)
+        with localcontext() as context:
+            context.prec = 400       # auch 1e300 (Eingabe "1e300") ohne Fehler
+            rounded = exact.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+        text = "{:,.{}f}".format(rounded, digits)
     return text.replace(",", "#").replace(".", ",").replace("#", ".")
+
+
+def de_int(value):
+    """Ganze Zahl mit Tausenderpunkten (ab 0.62.3), auch sehr gross (IPv6)."""
+    return "{:,}".format(int(value)).replace(",", ".")
 
 
 def _de_short(value, digits=2):
@@ -2603,7 +2648,7 @@ def ups_calculate(mode, fields, unit="W"):
                de_number(battery_wh)),
             "",
             "Laufzeit (Akku neu)   : %s min" % de_number(runtime["neu"], 1),
-            "Laufzeit Lebensende   : %s min (%s %% Kapazität)"
+            "Laufzeit (Lebensende) : %s min (%s %% Kapazität)"
             % (de_number(runtime["ende"], 1), de_number(ups_end_share(aging), 0)),
         ]
         picture["akku"] = "%s Wh" % de_number(battery_wh, 0)
@@ -2624,7 +2669,7 @@ def ups_calculate(mode, fields, unit="W"):
             picture["urteil"] = "passend" if passend else "zu klein"
             lines += ["", "Empfehlung            : USV %s"
                       % ("passend" if passend else "zu klein")]
-            lines += ["  %s  %s" % ("ok  " if ok else "NEIN", text)
+            lines += ["  %s  %s" % ("ja  " if ok else "nein", text)
                       for ok, text in checks]
             if rated_w is None:
                 lines.append("  Hinweis: ohne Nennleistung in W nur VA geprüft.")
@@ -2646,7 +2691,7 @@ UPS_TASKS = [
     {"titel": "Akku-Kapazität (Beispiel EnerSys)",
      "frage": "Eine USV soll 450 W Last 8 Stunden lang versorgen. Der "
               "Wechselrichter hat bei dieser Last einen Wirkungsgrad von 84 %, "
-              "der Akkustrang hat 48 V. Wie viel Ah braucht der Strang?",
+              "der Akku-Strang hat 48 V. Wie viel Ah braucht der Strang?",
      "annahmen": "Kein Alterungszuschlag, volle Nennkapazität nutzbar.",
      "werte": {"w": 450, "eta": 84, "min": 480, "v": 48, "alt": 0}},
     {"titel": "Laufzeit eines vorhandenen Akkus",
@@ -2657,13 +2702,13 @@ UPS_TASKS = [
      "werte": {"w": 300, "eta": 85, "v": 12, "ah": 9, "reihe": 2, "par": 1,
                "alt": 25}},
     {"titel": "Passt die USV?",
-     "frage": "Angeschlossen sind 1200 VA bei einem Leistungsfaktor von 0,9. "
-              "Die USV hat 1500 VA und 1000 W Nennleistung. Ist sie nach der "
+     "frage": "Angeschlossen sind 1.200 VA bei einem Leistungsfaktor von 0,9. "
+              "Die USV hat 1.500 VA und 1.000 W Nennleistung. Ist sie nach der "
               "80-%-Regel passend?",
      "annahmen": "Nur die Leistung wird geprüft, nicht die Laufzeit.",
      "werte": {"s": 1200, "pf": 0.9, "nenn_va": 1500, "nenn_w": 1000}},
     {"titel": "Akku mit Alterungszuschlag",
-     "frage": "Ein Switch-Schrank braucht 1000 W für 10 Minuten. Wirkungsgrad "
+     "frage": "Ein Switch-Schrank braucht 1.000 W für 10 Minuten. Wirkungsgrad "
               "90 %, Strangspannung 48 V, Alterungszuschlag 25 %. Wie viel Wh "
               "und Ah braucht der Akku?",
      "annahmen": "Volle Nennkapazität nutzbar.",
@@ -2694,9 +2739,15 @@ def ups_task_solution(index):
     if index in (1, 4):
         need = ups_battery_need(w["w"], w["eta"], w["min"], w["alt"], w["v"])
         hours = _de_short(need["stunden"], 4)
-        steps = ["Zeit = %s min / 60 = %s h" % (_de_short(w["min"]), hours),
+        hours_first = hours + " h"
+        fraction = Fraction(w["min"], 60)
+        if fraction.denominator != 1 and round(need["stunden"], 4) != need["stunden"]:
+            # Ab 0.62.3: 10 min = 1/6 h, damit der Zwischenwert nachrechenbar ist
+            hours_first = "%s h (≈ %s h)" % (fraction, hours)
+            hours = str(fraction)
+        steps = ["Zeit = %s min / 60 = %s" % (_de_short(w["min"]), hours_first),
                  "Energie Last = %s W x %s h = %s Wh"
-                 % (w["w"], hours, de_number(need["last_wh"])),
+                 % (de_number(w["w"], 0), hours, de_number(need["last_wh"])),
                  "Energie Akku = %s Wh / %s = %s Wh"
                  % (de_number(need["last_wh"]), _de_short(w["eta"] / 100.0),
                     de_number(need["akku_wh"]))]
@@ -2796,8 +2847,8 @@ CALC_EXPLAIN_UPS = (
     "   am Lebensende: 23,04 min x 0,8 = 18,43 min\n\n"
     "EMPFEHLUNG\n"
     "   Die Last soll höchstens 80 % der USV-Nennleistung betragen\n"
-    "   (in VA und in W). Beispiel USV 1500 VA / 900 W:\n"
-    "   667 / 1500 = 44 %, 600 / 900 = 67 % -> passend,\n"
+    "   (in VA und in W). Beispiel USV 1.500 VA / 900 W:\n"
+    "   667 / 1.500 = 44 %, 600 / 900 = 67 % -> passend,\n"
     "   18,43 min am Lebensende >= 15 min -> passend.\n\n"
     "QUELLEN\n"
     "   Leistungsfaktor = P / S: Wikipedia, Leistungsfaktor\n"
@@ -2808,78 +2859,91 @@ CALC_EXPLAIN_UPS = (
 )
 
 # Rechenwege zum Aufklappen unter den Praxis-Rechnern
+# Ab 0.62.3 (Teil E): Begriffe einheitlich (Netzadresse, Host-Adresse,
+# Hostbits, Praefixlaenge, UND/ODER, Nutzkapazitaet, Festplatten, KiB/MiB),
+# Spalten gerade, Fehler aus der Pruefung e3 berichtigt. Zu jedem Rechenweg
+# gibt es eine Handy-Fassung (..._HANDY, weiter unten) mit denselben
+# Schritten und Zahlen, aber hoechstens 28 Zeichen je Zeile.
 CALC_EXPLAIN_SUBNET = (
     "RECHENWEG SUBNETTING\n"
     "Am Beispiel 192.168.1.50/24\n\n"
-    "SCHRITT 1: Präfix in Subnetzmaske umwandeln\n"
-    "   Das Präfix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
-    "   links auf 1 gesetzt sind. /24 bedeutet: die ersten 24 Bits der\n"
-    "   32-Bit-Adresse sind 1, der Rest ist 0.\n"
+    "SCHRITT 1: Präfixlänge in Subnetzmaske umwandeln\n"
+    "   Die Präfixlänge (die Zahl nach dem /) gibt an, wie viele\n"
+    "   Bits von links auf 1 gesetzt sind. /24 bedeutet: die ersten\n"
+    "   24 Bit der 32-Bit-Subnetzmaske sind 1, der Rest ist 0.\n"
     "   /24 = 11111111.11111111.11111111.00000000\n"
-    "       =    255   .   255   .   255   .    0\n"
+    "       =   255   .  255   .  255   .   0\n"
     "   -> Subnetzmaske: 255.255.255.0\n\n"
-    "SCHRITT 2: Netzwerk-Adresse berechnen\n"
-    "   Netzwerk-Adresse = IP-Adresse AND Subnetzmaske\n"
-    "   (bitweise UND-Verknüpfung: nur wenn IP UND Maske an\n"
-    "   derselben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
-    "     192.168.1.50   = 11000000.10101000.00000001.00110010\n"
-    "   AND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
+    "SCHRITT 2: Netzadresse berechnen\n"
+    "   Netzadresse = IP-Adresse UND Subnetzmaske\n"
+    "   (bitweise UND-Verknüpfung: nur wenn IP-Adresse und\n"
+    "   Maske an derselben Stelle eine 1 haben, bleibt dort\n"
+    "   eine 1 stehen)\n"
+    "     192.168.1.50    = 11000000.10101000.00000001.00110010\n"
+    "   UND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
     "   -------------------------------------------------------\n"
-    "     Ergebnis         = 11000000.10101000.00000001.00000000\n"
-    "   -> Netzwerk-Adresse: 192.168.1.0\n\n"
+    "     Ergebnis        = 11000000.10101000.00000001.00000000\n"
+    "   -> Netzadresse: 192.168.1.0\n\n"
     "SCHRITT 3: Broadcast-Adresse berechnen\n"
     "   Wildcard-Maske = invertierte Subnetzmaske (alle Bits\n"
     "   umgedreht): 255.255.255.0 -> 0.0.0.255\n"
-    "   Broadcast-Adresse = Netzwerk-Adresse OR Wildcard-Maske\n"
-    "   (alle Host-Bits werden auf 1 gesetzt)\n"
+    "   Broadcast-Adresse = Netzadresse ODER Wildcard-Maske\n"
+    "   (bitweise ODER-Verknüpfung: alle Hostbits\n"
+    "   werden auf 1 gesetzt)\n"
     "   -> Broadcast-Adresse: 192.168.1.255\n\n"
     "SCHRITT 4: Nutzbare Host-Adressen zählen\n"
     "   Anzahl aller Adressen im Netz = 2^(32 - Präfixlänge)\n"
-    "   Bei /24: 2^(32-24) = 2^8 = 256 Adressen\n"
-    "   Davon sind die Netzwerk-Adresse (192.168.1.0) und die\n"
+    "   Bei /24: 2^(32 - 24) = 2^8 = 256 Adressen\n"
+    "   Davon sind die Netzadresse (192.168.1.0) und die\n"
     "   Broadcast-Adresse (192.168.1.255) nicht als Host vergebbar,\n"
     "   deshalb -2:\n"
     "   Nutzbare Hosts = 2^(32 - Präfixlänge) - 2 = 256 - 2 = 254\n"
-    "   -> erste nutzbare Adresse: 192.168.1.1\n"
-    "   -> letzte nutzbare Adresse: 192.168.1.254\n\n"
+    "   -> erste Host-Adresse: 192.168.1.1\n"
+    "   -> letzte Host-Adresse: 192.168.1.254\n\n"
     "HINWEIS ZU IPv6\n"
     "   IPv6 kennt keine Broadcast-Adresse, daher entfällt dort der\n"
-    "   Abzug der -2 und alle Adressen im Netz gelten als nutzbar."
+    "   Abzug von 2 Adressen. Gezählt werden alle\n"
+    "   2^(128 - Präfixlänge) Adressen (einzelne Adressen sind\n"
+    "   reserviert, z.B. Subnet-Router-Anycast)."
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
     "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
-    "RAID 0 - Striping (min. 2 Platten)\n"
-    "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
-    "   Formel:  Netto = Anzahl x Kapazität\n"
+    "RAID 0 - Striping (ohne Redundanz, min. 2 Festplatten)\n"
+    "   Die Daten werden ohne Redundanz auf alle Festplatten verteilt.\n"
+    "   Formel:  Nutzkapazität = Anzahl x Kapazität\n"
     "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
-    "   Ausfalltoleranz: 0 Platten (fällt eine aus, sind alle Daten weg)\n\n"
-    "RAID 1 - Mirroring (min. 2 Platten)\n"
-    "   Die Daten werden 1:1 auf eine zweite Platte gespiegelt.\n"
-    "   Formel:  Netto = 1 x Kapazität\n"
-    "   Beispiel: 1000 GB nutzbar (bei 4 Platten stehen nur 1000 GB\n"
-    "   Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
-    "   Ausfalltoleranz: n-1 Platten\n\n"
-    "RAID 5 - Parity, verteilte Parität (min. 3 Platten)\n"
-    "   Eine Platte Kapazität wird rechnerisch für Paritätsdaten\n"
-    "   verwendet (die Parität selbst liegt verteilt auf allen Platten).\n"
-    "   Formel:  Netto = (Anzahl - 1) x Kapazität\n"
+    "   Ausfalltoleranz: 0 Festplatten (fällt eine aus, sind alle\n"
+    "   Daten weg)\n\n"
+    "RAID 1 - Spiegelung (Mirroring, min. 2 Festplatten)\n"
+    "   Die Daten werden 1:1 auf alle weiteren Festplatten gespiegelt\n"
+    "   (bei 2 Festplatten auf die zweite).\n"
+    "   Formel:  Nutzkapazität = 1 x Kapazität\n"
+    "   Beispiel: 1000 GB nutzbar (bei 4 Festplatten stehen nur\n"
+    "   1000 GB Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
+    "   Ausfalltoleranz: n-1 Festplatten\n\n"
+    "RAID 5 - verteilte Parität (min. 3 Festplatten)\n"
+    "   Eine Festplatte Kapazität wird rechnerisch für Paritätsdaten\n"
+    "   verwendet (die Parität selbst liegt verteilt auf allen\n"
+    "   Festplatten).\n"
+    "   Formel:  Nutzkapazität = (Anzahl - 1) x Kapazität\n"
     "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
-    "   Ausfalltoleranz: 1 Platte\n\n"
-    "RAID 6 - Double Parity (min. 4 Platten)\n"
+    "   Ausfalltoleranz: 1 Festplatte\n\n"
+    "RAID 6 - doppelte Parität (min. 4 Festplatten)\n"
     "   Wie RAID 5, aber mit doppelter Parität für mehr Sicherheit.\n"
-    "   Formel:  Netto = (Anzahl - 2) x Kapazität\n"
+    "   Formel:  Nutzkapazität = (Anzahl - 2) x Kapazität\n"
     "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
-    "   Ausfalltoleranz: 2 Platten\n\n"
-    "RAID 10 - Spiegelung + Striping (min. 4 Platten, gerade Anzahl)\n"
-    "   Je zwei Platten werden gespiegelt (RAID 1), diese Spiegel-\n"
-    "   Paare werden anschließend im Striping-Verfahren (RAID 0)\n"
-    "   zusammengefasst.\n"
-    "   Formel:  Netto = (Anzahl / 2) x Kapazität\n"
+    "   Ausfalltoleranz: 2 Festplatten\n\n"
+    "RAID 10 - Spiegelung + Striping (min. 4 Festplatten, gerade Anzahl)\n"
+    "   Je zwei Festplatten werden gespiegelt (RAID 1), diese\n"
+    "   Spiegelpaare werden anschließend im Striping-Verfahren\n"
+    "   (RAID 0) zusammengefasst.\n"
+    "   Formel:  Nutzkapazität = (Anzahl / 2) x Kapazität\n"
     "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
-    "   Ausfalltoleranz: 1 Platte je Spiegel-Paar\n\n"
+    "   Ausfalltoleranz: 1 Festplatte sicher (bis zu 2, wenn je\n"
+    "   Spiegelpaar nur eine ausfällt)\n\n"
     "SPEICHEREFFIZIENZ\n"
-    "   Effizienz = Nettokapazität / Bruttokapazität x 100\n"
+    "   Effizienz = Nutzkapazität / Bruttokapazität x 100\n"
     "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
 )
 CALC_EXPLAIN_SCREEN = (
@@ -2891,30 +2955,391 @@ CALC_EXPLAIN_SCREEN = (
     "SCHRITT 2: Datenmenge pro Bild in Bit berechnen\n"
     "   Jedes Pixel benötigt für seine Farbe eine feste Anzahl Bit,\n"
     "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
-    "   True Color mit rund 16,7 Mio. Farben: je 8 Bit für Rot,\n"
+    "   True Color mit rund 16,8 Mio. Farben: je 8 Bit für Rot,\n"
     "   Grün und Blau).\n"
     "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
     "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
-    "SCHRITT 3: In Byte, KB und MB umrechnen\n"
+    "SCHRITT 3: In Byte, KiB und MiB umrechnen\n"
     "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
     "   jeweils durch 1024 geteilt, um die nächstgrößere Einheit\n"
-    "   zu erhalten (Byte -> KB -> MB).\n"
+    "   zu erhalten (Byte -> KiB -> MiB).\n"
     "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
-    "   KB   = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KB\n"
-    "   MB   = KB / 1024          -> 6.075,00 / 1024 = 5,93 MB\n"
+    "   KiB  = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KiB\n"
+    "   MiB  = KiB / 1024         -> 6.075,00 / 1024 = 5,93 MiB\n"
     "   -> Ein einzelnes Bild in dieser Auflösung und Farbtiefe\n"
-    "      benötigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
+    "      benötigt also rund 5,93 MiB unkomprimierten Speicher.\n\n"
     "SCHRITT 4: Datenrate bei bewegten Bildern (Video)\n"
     "   Bei Videos wird nicht nur ein Bild, sondern mehrere Bilder\n"
-    "   pro Sekunde angezeigt (Bildwiederholrate, engl. frames per\n"
+    "   pro Sekunde angezeigt (Bildrate, engl. frames per\n"
     "   second, fps). Die Datenrate gibt an, wie viele Daten dafür\n"
     "   pro Sekunde anfallen.\n"
-    "   Datenrate = Datenmenge pro Bild x Bildwiederholrate (fps)\n"
+    "   Datenrate = Datenmenge pro Bild x Bildrate (fps)\n"
     "   Beispiel bei 30 fps: 6.220.800 Byte x 30 = 186.624.000 Byte/s\n"
-    "   -> das sind rund 177,98 MB/s bzw. 1.492,99 Mbit/s bzw.\n"
-    "      rund 10,43 GB/Minute.\n"
+    "   -> das sind rund 177,98 MiB/s (das sind 1.492,99 Mbit/s)\n"
+    "      bzw. rund 10,43 GiB/Minute.\n"
     "   Dieser enorme Wert zeigt, warum Videos in der Praxis fast\n"
     "   immer komprimiert (z.B. per H.264/H.265) übertragen werden."
+)
+
+# Ab 0.62.3 (Teil E, F-E1): Handy-Fassungen der vier Rechenwege. Dieselben
+# Schritte, Zahlen und Ergebnisse in derselben Reihenfolge wie am PC, aber
+# hoechstens 28 Zeichen je Zeile (passt am Galaxy S24 auch bei "Sehr gross"),
+# Bitreihen Oktett fuer Oktett. Am Handy sind die Zeilen also kuerzer als am
+# PC (dort bis 67 Zeichen). test_rechenweg.py prueft Laenge, Zahlen,
+# Reihenfolge und Schritte gegen die PC-Texte.
+CALC_EXPLAIN_HANDY_WIDTH = 28
+CALC_EXPLAIN_SUBNET_HANDY = (
+    "RECHENWEG SUBNETTING\n"
+    "Am Beispiel 192.168.1.50/24\n"
+    "\n"
+    "SCHRITT 1: Präfixlänge in\n"
+    "Subnetzmaske umwandeln\n"
+    " Die Präfixlänge (die Zahl\n"
+    " nach dem /) gibt an, wie\n"
+    " viele Bits von links auf 1\n"
+    " gesetzt sind. /24 bedeutet:\n"
+    " die ersten 24 Bit der\n"
+    " 32-Bit-Subnetzmaske sind 1,\n"
+    " der Rest ist 0.\n"
+    " /24, Oktett für Oktett:\n"
+    " 1. Oktett 11111111 = 255\n"
+    " 2. Oktett 11111111 = 255\n"
+    " 3. Oktett 11111111 = 255\n"
+    " 4. Oktett 00000000 =   0\n"
+    " -> Subnetzmaske:\n"
+    "    255.255.255.0\n"
+    "\n"
+    "SCHRITT 2: Netzadresse\n"
+    "berechnen\n"
+    " Netzadresse = IP-Adresse\n"
+    " UND Subnetzmaske\n"
+    " (bitweise UND-Verknüpfung:\n"
+    " nur wenn IP-Adresse und\n"
+    " Maske an derselben Stelle\n"
+    " eine 1 haben, bleibt dort\n"
+    " eine 1 stehen)\n"
+    " 192.168.1.50 UND\n"
+    " 255.255.255.0, Oktett für\n"
+    " Oktett:\n"
+    " 1. Oktett\n"
+    "       192 = 11000000\n"
+    "   UND 255 = 11111111\n"
+    "  Ergebnis = 11000000\n"
+    " 2. Oktett\n"
+    "       168 = 10101000\n"
+    "   UND 255 = 11111111\n"
+    "  Ergebnis = 10101000\n"
+    " 3. Oktett\n"
+    "         1 = 00000001\n"
+    "   UND 255 = 11111111\n"
+    "  Ergebnis = 00000001\n"
+    " 4. Oktett\n"
+    "        50 = 00110010\n"
+    "   UND   0 = 00000000\n"
+    "  Ergebnis = 00000000\n"
+    " -> Netzadresse:\n"
+    "    192.168.1.0\n"
+    "\n"
+    "SCHRITT 3: Broadcast-Adresse\n"
+    "berechnen\n"
+    " Wildcard-Maske =\n"
+    " invertierte Subnetzmaske\n"
+    " (alle Bits umgedreht):\n"
+    " 255.255.255.0 -> 0.0.0.255\n"
+    " Broadcast-Adresse =\n"
+    " Netzadresse ODER\n"
+    " Wildcard-Maske\n"
+    " (bitweise ODER-Verknüpfung:\n"
+    " alle Hostbits werden auf 1\n"
+    " gesetzt)\n"
+    " -> Broadcast-Adresse:\n"
+    "    192.168.1.255\n"
+    "\n"
+    "SCHRITT 4: Nutzbare\n"
+    "Host-Adressen zählen\n"
+    " Anzahl aller Adressen im\n"
+    " Netz = 2^(32 - Präfixlänge)\n"
+    " Bei /24: 2^(32 - 24) = 2^8\n"
+    " = 256 Adressen\n"
+    " Davon sind die Netzadresse\n"
+    " (192.168.1.0) und die\n"
+    " Broadcast-Adresse\n"
+    " (192.168.1.255) nicht als\n"
+    " Host vergebbar, deshalb -2:\n"
+    " Nutzbare Hosts =\n"
+    " 2^(32 - Präfixlänge) - 2\n"
+    " = 256 - 2 = 254\n"
+    " -> erste Host-Adresse:\n"
+    "    192.168.1.1\n"
+    " -> letzte Host-Adresse:\n"
+    "    192.168.1.254\n"
+    "\n"
+    "HINWEIS ZU IPv6\n"
+    " IPv6 kennt keine\n"
+    " Broadcast-Adresse, daher\n"
+    " entfällt dort der Abzug von\n"
+    " 2 Adressen. Gezählt werden\n"
+    " alle 2^(128 - Präfixlänge)\n"
+    " Adressen (einzelne Adressen\n"
+    " sind reserviert, z.B.\n"
+    " Subnet-Router-Anycast)."
+)
+CALC_EXPLAIN_RAID_HANDY = (
+    "RECHENWEG RAID\n"
+    "Am Beispiel 4 Festplatten\n"
+    "x 1000 GB\n"
+    "(Bruttokapazität 4000 GB)\n"
+    "\n"
+    "RAID 0 - Striping (ohne\n"
+    "Redundanz, min. 2\n"
+    "Festplatten)\n"
+    " Die Daten werden ohne\n"
+    " Redundanz auf alle\n"
+    " Festplatten verteilt.\n"
+    " Formel:\n"
+    " Nutzkapazität =\n"
+    " Anzahl x Kapazität\n"
+    " Beispiel:\n"
+    " 4 x 1000 GB = 4000 GB\n"
+    " nutzbar\n"
+    " Ausfalltoleranz:\n"
+    " 0 Festplatten (fällt eine\n"
+    " aus, sind alle Daten weg)\n"
+    "\n"
+    "RAID 1 - Spiegelung\n"
+    "(Mirroring, min. 2\n"
+    "Festplatten)\n"
+    " Die Daten werden 1:1 auf\n"
+    " alle weiteren Festplatten\n"
+    " gespiegelt (bei 2\n"
+    " Festplatten auf die\n"
+    " zweite).\n"
+    " Formel:\n"
+    " Nutzkapazität =\n"
+    " 1 x Kapazität\n"
+    " Beispiel: 1000 GB nutzbar\n"
+    " (bei 4 Festplatten stehen\n"
+    " nur 1000 GB Nutzkapazität\n"
+    " zur Verfügung, der Rest ist\n"
+    " Spiegelung)\n"
+    " Ausfalltoleranz:\n"
+    " n-1 Festplatten\n"
+    "\n"
+    "RAID 5 - verteilte Parität\n"
+    "(min. 3 Festplatten)\n"
+    " Eine Festplatte Kapazität\n"
+    " wird rechnerisch für\n"
+    " Paritätsdaten verwendet\n"
+    " (die Parität selbst liegt\n"
+    " verteilt auf allen\n"
+    " Festplatten).\n"
+    " Formel:\n"
+    " Nutzkapazität =\n"
+    " (Anzahl - 1) x Kapazität\n"
+    " Beispiel:\n"
+    " (4 - 1) x 1000 GB = 3000 GB\n"
+    " nutzbar\n"
+    " Ausfalltoleranz:\n"
+    " 1 Festplatte\n"
+    "\n"
+    "RAID 6 - doppelte Parität\n"
+    "(min. 4 Festplatten)\n"
+    " Wie RAID 5, aber mit\n"
+    " doppelter Parität für mehr\n"
+    " Sicherheit.\n"
+    " Formel:\n"
+    " Nutzkapazität =\n"
+    " (Anzahl - 2) x Kapazität\n"
+    " Beispiel:\n"
+    " (4 - 2) x 1000 GB = 2000 GB\n"
+    " nutzbar\n"
+    " Ausfalltoleranz:\n"
+    " 2 Festplatten\n"
+    "\n"
+    "RAID 10 - Spiegelung +\n"
+    "Striping (min. 4\n"
+    "Festplatten, gerade Anzahl)\n"
+    " Je zwei Festplatten werden\n"
+    " gespiegelt (RAID 1), diese\n"
+    " Spiegelpaare werden\n"
+    " anschließend im\n"
+    " Striping-Verfahren (RAID 0)\n"
+    " zusammengefasst.\n"
+    " Formel:\n"
+    " Nutzkapazität =\n"
+    " (Anzahl / 2) x Kapazität\n"
+    " Beispiel:\n"
+    " (4 / 2) x 1000 GB = 2000 GB\n"
+    " nutzbar\n"
+    " Ausfalltoleranz:\n"
+    " 1 Festplatte sicher (bis zu\n"
+    " 2, wenn je Spiegelpaar nur\n"
+    " eine ausfällt)\n"
+    "\n"
+    "SPEICHEREFFIZIENZ\n"
+    " Effizienz =\n"
+    " Nutzkapazität /\n"
+    " Bruttokapazität x 100\n"
+    " Beispiel RAID 5:\n"
+    " 3000 GB / 4000 GB x 100\n"
+    " = 75 %"
+)
+CALC_EXPLAIN_SCREEN_HANDY = (
+    "RECHENWEG\n"
+    "BILDSCHIRM-DATENVOLUMEN\n"
+    "Am Beispiel 1920 x 1080\n"
+    "Pixel, 24 Bit Farbtiefe\n"
+    "\n"
+    "SCHRITT 1: Pixel gesamt\n"
+    "ermitteln\n"
+    " Pixel gesamt =\n"
+    " Breite x Höhe\n"
+    " Beispiel: 1920 x 1080\n"
+    " = 2.073.600 Pixel\n"
+    "\n"
+    "SCHRITT 2: Datenmenge pro\n"
+    "Bild in Bit berechnen\n"
+    " Jedes Pixel benötigt für\n"
+    " seine Farbe eine feste\n"
+    " Anzahl Bit, die sogenannte\n"
+    " Farbtiefe (z.B. 8 Bit = 256\n"
+    " Farben, 24 Bit = True Color\n"
+    " mit rund 16,8 Mio. Farben:\n"
+    " je 8 Bit für Rot, Grün und\n"
+    " Blau).\n"
+    " Datenmenge (Bit) =\n"
+    " Pixel gesamt x Farbtiefe\n"
+    " Beispiel:\n"
+    " 2.073.600 x 24 Bit\n"
+    " = 49.766.400 Bit\n"
+    "\n"
+    "SCHRITT 3: In Byte, KiB und\n"
+    "MiB umrechnen\n"
+    " Da 1 Byte = 8 Bit sind,\n"
+    " wird durch 8 geteilt;\n"
+    " danach wird jeweils durch\n"
+    " 1024 geteilt, um die\n"
+    " nächstgrößere Einheit zu\n"
+    " erhalten\n"
+    " (Byte -> KiB -> MiB).\n"
+    " Byte = Bit / 8\n"
+    " -> 49.766.400 / 8\n"
+    " = 6.220.800 Byte\n"
+    " KiB = Byte / 1024\n"
+    " -> 6.220.800 / 1024\n"
+    " = 6.075,00 KiB\n"
+    " MiB = KiB / 1024\n"
+    " -> 6.075,00 / 1024\n"
+    " = 5,93 MiB\n"
+    " -> Ein einzelnes Bild in\n"
+    " dieser Auflösung und\n"
+    " Farbtiefe benötigt also\n"
+    " rund 5,93 MiB\n"
+    " unkomprimierten Speicher.\n"
+    "\n"
+    "SCHRITT 4: Datenrate bei\n"
+    "bewegten Bildern (Video)\n"
+    " Bei Videos wird nicht nur\n"
+    " ein Bild, sondern mehrere\n"
+    " Bilder pro Sekunde\n"
+    " angezeigt (Bildrate, engl.\n"
+    " frames per second, fps).\n"
+    " Die Datenrate gibt an, wie\n"
+    " viele Daten dafür pro\n"
+    " Sekunde anfallen.\n"
+    " Datenrate =\n"
+    " Datenmenge pro Bild\n"
+    " x Bildrate (fps)\n"
+    " Beispiel bei 30 fps:\n"
+    " 6.220.800 Byte x 30\n"
+    " = 186.624.000 Byte/s\n"
+    " -> das sind rund\n"
+    " 177,98 MiB/s (das sind\n"
+    " 1.492,99 Mbit/s) bzw. rund\n"
+    " 10,43 GiB/Minute.\n"
+    " Dieser enorme Wert zeigt,\n"
+    " warum Videos in der Praxis\n"
+    " fast immer komprimiert\n"
+    " (z.B. per H.264/H.265)\n"
+    " übertragen werden."
+)
+CALC_EXPLAIN_UPS_HANDY = (
+    "RECHENWEG USV-KAPAZITÄT\n"
+    "Am Beispiel 600 W Last,\n"
+    "Wirkungsgrad 80 %,\n"
+    "15 Minuten, Akku 2 x 12 V in\n"
+    "Reihe (24 V),\n"
+    "Alterungszuschlag 25 %\n"
+    "\n"
+    "SCHRITT 1: VA und W\n"
+    " Wirkleistung P (W) =\n"
+    " Scheinleistung S (VA)\n"
+    " x Leistungsfaktor\n"
+    " 600 W / 0,9 = 667 VA\n"
+    " (Leistungsfaktor 0,9 ist\n"
+    " eine Annahme, der echte\n"
+    " Wert steht auf dem\n"
+    " Typenschild).\n"
+    "\n"
+    "SCHRITT 2: Energie für die\n"
+    "Last\n"
+    " Energie (Wh) =\n"
+    " Last (W) x Zeit (h)\n"
+    " = 600 W x 0,25 h = 150 Wh\n"
+    "\n"
+    "SCHRITT 3: Verluste der USV\n"
+    " Der Akku muss mehr liefern,\n"
+    " weil die USV Verluste hat:\n"
+    " 150 Wh / 0,8 = 187,5 Wh\n"
+    "\n"
+    "SCHRITT 4: Alterungszuschlag\n"
+    " Ein Bleiakku gilt mit 80 %\n"
+    " Restkapazität als\n"
+    " verbraucht. Damit er auch\n"
+    " dann reicht, plant man 25 %\n"
+    " mehr ein (Faktor 1,25):\n"
+    " 187,5 Wh x 1,25\n"
+    " = 234,38 Wh\n"
+    "\n"
+    "SCHRITT 5: Kapazität in Ah\n"
+    " Ah = Wh / Strangspannung\n"
+    " = 234,38 Wh / 24 V\n"
+    " = 9,77 Ah\n"
+    "\n"
+    "LAUFZEIT (umgekehrt)\n"
+    " Akku-Energie =\n"
+    " 24 V x 12 Ah = 288 Wh\n"
+    " Laufzeit =\n"
+    " 288 Wh x 0,8 / 600 W x 60\n"
+    " = 23,04 min (neu)\n"
+    " am Lebensende:\n"
+    " 23,04 min x 0,8\n"
+    " = 18,43 min\n"
+    "\n"
+    "EMPFEHLUNG\n"
+    " Die Last soll höchstens\n"
+    " 80 % der USV-Nennleistung\n"
+    " betragen (in VA und in W).\n"
+    " Beispiel USV 1.500 VA /\n"
+    " 900 W:\n"
+    " 667 / 1.500 = 44 %,\n"
+    " 600 / 900 = 67 %\n"
+    " -> passend,\n"
+    " 18,43 min am Lebensende\n"
+    " >= 15 min -> passend.\n"
+    "\n"
+    "QUELLEN\n"
+    " Leistungsfaktor = P / S:\n"
+    " Wikipedia, Leistungsfaktor\n"
+    " Ah-Formel und\n"
+    " Wirkungsgrad 0,80: EnerSys,\n"
+    " Runtime and right-sizing a\n"
+    " UPS\n"
+    " Faktor 1,25 und 80 %:\n"
+    " IEEE 485 (Vertiv/Battcon\n"
+    " 2000)\n"
+    " 80 % Auslastung: Schneider\n"
+    " Electric, FAQ000268376"
 )
 
 

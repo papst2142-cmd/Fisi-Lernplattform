@@ -120,7 +120,7 @@ APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und 
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.62.2"
+APP_VERSION = "0.62.3"
 
 
 def _resource_path(filename):
@@ -4165,7 +4165,7 @@ class CalcView(View):
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
-                    subtitle="Netto, Parität, Effizienz")
+                    subtitle="Nutzkapazität, Verlust, Effizienz")
         raid.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         make_label(raid.body, "RAID-Level", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
@@ -4179,14 +4179,14 @@ class CalcView(View):
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_disks = EntryBox(grid, width=8, value="4")
         self.entry_disks.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(grid, "Kapazität je Platte (GB)", font=F["small"],
+        make_label(grid, "Kapazität je Festplatte (GB)", font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_size = EntryBox(grid, width=8, value="1000")
         self.entry_size.grid(row=1, column=1, sticky="w", padx=12, pady=4)
 
         NeoButton(raid.body, "Berechnen", self.calc_raid,
                   kind="primary").pack(anchor="w", pady=(12, 0))
-        self.txt_raid = make_text(raid.body, height=9, readonly=True,
+        self.txt_raid = make_text(raid.body, height=10, readonly=True,
                                   font=F["mono_small"])
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
@@ -4206,10 +4206,10 @@ class CalcView(View):
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_height = EntryBox(screen_grid, width=8, value="1080")
         self.entry_height.grid(row=1, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Bildwiederholrate (fps, optional)",
+        make_label(screen_grid, "Bildrate (fps, optional)",
                    font=F["small"], fg=C["text_dim"]).grid(
                        row=0, column=2, sticky="w", padx=(24, 0), pady=4)
-        self.entry_fps = EntryBox(screen_grid, width=8, value="0")
+        self.entry_fps = EntryBox(screen_grid, width=8, value="30")
         self.entry_fps.grid(row=0, column=3, sticky="w", padx=12, pady=4)
         self.entry_fps.entry.bind("<Return>", lambda _e: self.calc_screen())
 
@@ -4220,7 +4220,7 @@ class CalcView(View):
 
         NeoButton(screen.body, "Berechnen", self.calc_screen,
                   kind="accent").pack(anchor="w")
-        self.txt_screen = make_text(screen.body, height=8, readonly=True,
+        self.txt_screen = make_text(screen.body, height=13, readonly=True,
                                     font=F["mono_small"])
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)

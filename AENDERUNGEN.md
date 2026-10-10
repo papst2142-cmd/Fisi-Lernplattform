@@ -4,6 +4,24 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62.3
+
+Am PC blieben Erfolge und einige Firma-Reiter nach dem Programmstart
+manchmal leer. Das ist behoben. Außerdem sind alle Rechner und Rechenwege
+geprüft und einheitlich; am Handy passen die Rechenwege jetzt auf den
+Bildschirm.
+
+- Erfolge und Firma (PC): Nach dem Programmstart sind „Erfolge“ und alle Firma-Reiter sofort zu sehen.
+- Rechenwege am Handy: eigene, schmale Fassung (höchstens 28 Zeichen je Zeile), Subnetting Oktett für Oktett. Ergebnisse und Rechenwege brechen nicht mehr um und lassen sich seitlich wischen.
+- Trainer am Handy: Schritt 3 (UND-Verknüpfung) Oktett für Oktett.
+- Einheitliche Begriffe: Netzadresse, Präfixlänge, Broadcast-Adresse, erste/letzte Host-Adresse, Nutzkapazität, Redundanz / Verlust, Festplatten, Bildrate (fps), Akku-Strang, UND/ODER, ja/nein.
+- Deutsche Zahlenschreibweise in den Ergebnis-Anzeigen aller Rechner und in den USV-Texten (2.073.600; 75,0 %).
+- Große Netze (z.B. /8) rechnet der Subnetz-Rechner jetzt sofort.
+- PC: Die Ergebniskästen von RAID und Bildschirm zeigen alle Zeilen.
+- Die Rechner runden kaufmännisch (z. B. 28,125 → 28,13). Vorher wurde bei einer 5 an der letzten Stelle je nach interner Darstellung mal ab-, mal aufgerundet.
+
+Geänderte Zahlen und Angaben: Z1 bis Z12, Z14, Z15 wie im Bericht 0.62.3 Abschnitt 7.
+
 ## 0.62.2
 
 Die Optionen sind aufgeräumt: Weniger Bereiche, verwandte Einstellungen

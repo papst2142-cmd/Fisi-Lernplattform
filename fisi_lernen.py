@@ -652,7 +652,22 @@ def _dotted_binary(address):
     return ".".join(format(octet, "08b") for octet in address.packed)
 
 
-def _ipv4_task(rng, level):
+def _ipv4_and_narrow(address, network):
+    """Ab 0.62.3 (F-E7): Schritt 3 der IPv4-Aufgabe fuer das Handy, Oktett
+    fuer Oktett untereinander, hoechstens 28 Zeichen je Zeile. Gleiche
+    Bitreihen und gleiches Ergebnis wie am PC, dazu je Oktett der Dezimalwert."""
+    lines = ["3. UND-Verknüpfung je Oktett"]
+    for number, (addr, mask, net) in enumerate(zip(address.packed, network.netmask.packed,
+                                                   network.network_address.packed), 1):
+        lines += ["   Oktett %d:" % number,
+                  "     Adresse %s" % format(addr, "08b"),
+                  "     Maske   %s" % format(mask, "08b"),
+                  "     UND     %s = %d" % (format(net, "08b"), net)]
+    lines.append("   Ergebnis: %s" % network.network_address)
+    return lines
+
+
+def _ipv4_task(rng, level, schmal=False):
     prefix = {1: rng.randint(24, 30), 2: rng.randint(17, 30),
               3: rng.randint(8, 30)}[level]
     first = rng.choice([10, 172, 192])
@@ -669,8 +684,8 @@ def _ipv4_task(rng, level):
     last_host = network.broadcast_address - 1
     block_octet = prefix // 8
     fields = [("netz", "Netzadresse"), ("maske", "Subnetzmaske"),
-              ("broadcast", "Broadcast"), ("erste", "Erster Host"),
-              ("letzte", "Letzter Host"), ("hosts", "Nutzbare Hosts")]
+              ("broadcast", "Broadcast-Adresse"), ("erste", "Erste Host-Adresse"),
+              ("letzte", "Letzte Host-Adresse"), ("hosts", "Nutzbare Hosts")]
     solution = {"netz": str(network.network_address), "maske": str(network.netmask),
                 "broadcast": str(network.broadcast_address), "erste": str(first_host),
                 "letzte": str(last_host), "hosts": str(hosts)}
@@ -682,11 +697,17 @@ def _ipv4_task(rng, level):
     steps = [
         "1. Präfix /%d: %d Bit Netzanteil, %d Bit Hostanteil." % (prefix, prefix, 32 - prefix),
         "2. Maske: %d Einsen = %s" % (prefix, network.netmask),
-        "3. Adresse binär:  %s" % _dotted_binary(address),
-        "   Maske binär:    %s" % _dotted_binary(network.netmask),
-        "   UND-Verknüpfung: %s = %s" % (_dotted_binary(network.network_address),
-                                         network.network_address),
     ]
+    if schmal:
+        steps += _ipv4_and_narrow(address, network)
+    else:
+        # Ab 0.62.3: die drei Bitreihen beginnen in derselben Spalte
+        steps += [
+            "3. Adresse binär:   %s" % _dotted_binary(address),
+            "   Maske binär:     %s" % _dotted_binary(network.netmask),
+            "   UND-Verknüpfung: %s = %s" % (_dotted_binary(network.network_address),
+                                             network.network_address),
+        ]
     if prefix % 8:
         mask_octet = network.netmask.packed[block_octet]
         steps.append("   Kurzweg: Blockgröße im %d. Oktett = 256 - %d = %d; "
@@ -695,8 +716,8 @@ def _ipv4_task(rng, level):
                         address.packed[block_octet],
                         network.network_address.packed[block_octet]))
     steps += [
-        "4. Broadcast: alle Hostbits auf 1 = %s" % network.broadcast_address,
-        "5. Hostbereich: %s bis %s (Netzadresse + 1 bis Broadcast - 1)"
+        "4. Broadcast-Adresse: alle Hostbits auf 1 = %s" % network.broadcast_address,
+        "5. Hostbereich: %s bis %s (Netzadresse + 1 bis Broadcast-Adresse - 1)"
         % (first_host, last_host),
         "6. Nutzbare Hosts: 2^%d - 2 = %d" % (32 - prefix, hosts),
     ]
@@ -739,7 +760,7 @@ def _vlsm_task(rng, level):
         net = ipaddress.IPv4Network((start, prefix))
         nets[index] = net
         steps.append("%d. %s: %d Hosts + 2 = %d Adressen nötig -> Block %d (/%d) -> %s, "
-                     "Broadcast %s" % (number, departments[index], wanted[index],
+                     "Broadcast-Adresse %s" % (number, departments[index], wanted[index],
                                        wanted[index] + 2, size, prefix, net,
                                        net.broadcast_address))
         start += size
@@ -782,7 +803,7 @@ def _number_task(rng, level):
             steps.append("   ...")
     elif given == "hex":
         hex_digits = format(value, "X")
-        terms = ["%s·16^%d" % (digit, len(hex_digits) - 1 - i)
+        terms = ["%s x 16^%d" % (digit, len(hex_digits) - 1 - i)
                  for i, digit in enumerate(hex_digits)]
         steps.append("Hex -> Dezimal: %s = %d" % (" + ".join(terms), value))
     else:
@@ -839,15 +860,20 @@ TRAINER_BUILDERS = {"ipv4": _ipv4_task, "vlsm": _vlsm_task, "zahlen": _number_ta
                     "ipv6": _ipv6_task}
 
 
-def trainer_task(kind, level, seed):
-    """Eine Aufgabe, durch kind, level und seed eindeutig festgelegt."""
+def trainer_task(kind, level, seed, schmal=False):
+    """Eine Aufgabe, durch kind, level und seed eindeutig festgelegt.
+    schmal=True (ab 0.62.3, nur das Handy): Schritt 3 der IPv4-Aufgaben
+    Oktett fuer Oktett; Aufgabe, Loesung und alle anderen Schritte gleich."""
     rng = random.Random("%s-%d-%s" % (kind, level, seed))
+    if kind == "ipv4":
+        return _ipv4_task(rng, level, schmal)
     return TRAINER_BUILDERS[kind](rng, level)
 
 
-def trainer_round(kind, level, seed, count=TRAINER_ROUND):
+def trainer_round(kind, level, seed, count=TRAINER_ROUND, schmal=False):
     """Eine Runde mit count Aufgaben (fester Startwert seed)."""
-    return [trainer_task(kind, level, "%s-%d" % (seed, number)) for number in range(count)]
+    return [trainer_task(kind, level, "%s-%d" % (seed, number), schmal)
+            for number in range(count)]
 
 
 def trainer_summary(results):
