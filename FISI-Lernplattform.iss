@@ -20,7 +20,7 @@
 ; Setup-Dateiname bleiben (test_namen.py prueft das).
 #define MyAppName "Fachinformatiker Lernplattform"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.62.2"
+  #define MyAppVersion "0.62.3"
 #endif
 #define MyAppExeName "FISI-Lernplattform.exe"
 

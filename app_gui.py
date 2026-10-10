@@ -120,7 +120,7 @@ APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und 
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.62.2"
+APP_VERSION = "0.62.3"
 
 
 def _resource_path(filename):
