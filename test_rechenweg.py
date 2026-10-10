@@ -478,5 +478,24 @@ class Raid10Test(unittest.TestCase):
             self.assertNotIn("bis zu", fc.raid_report(level, "6", "1000"))
 
 
+class RundungGrenzwerteTest(unittest.TestCase):
+    """Nachforderung N1: Die kaufmaennische Rundung (Decimal) darf bei
+    Eingaben wie "inf", "1e27" oder "1e300" nicht abstuerzen. Unendlich und
+    nan zeigen wie bis 0.62.2 "inf" und "nan"."""
+
+    def test_de_number_grenzwerte(self):
+        self.assertEqual(fc.de_number(float("inf")), "inf")
+        self.assertEqual(fc.de_number(float("nan"), 1), "nan")
+        self.assertEqual(fc.de_number(1e27, 0), "1.000.000.000.000.000.000.000.000.000")
+        self.assertTrue(fc.de_number(1e300).endswith(",00"))
+        self.assertEqual(fc.de_number(390.625), "390,63")
+
+    def test_rechner_stuerzen_nicht_ab(self):
+        for size in ("inf", "1e27", "nan"):
+            self.assertIn("Bruttokapazität", fc.raid_report("RAID 0", "2", size))
+        for fps in ("inf", "1e300"):
+            self.assertIn("Datenrate", fc.screen_report("1920", "1080", "24", fps))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

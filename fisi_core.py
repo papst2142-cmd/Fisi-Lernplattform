@@ -25,7 +25,7 @@ import sqlite3
 import datetime
 import unicodedata
 import uuid
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 from fractions import Fraction
 
 # ============================================================================
@@ -2443,10 +2443,16 @@ UPS_SIMPLE_TEXT = (
 
 def de_number(value, digits=2):
     """Zahl in deutscher Schreibweise (1.234,56). Ab 0.62.3 kaufmaennisch
-    gerundet: 390,625 -> 390,63 (vorher zur geraden Ziffer: 390,62)."""
-    exact = Decimal(repr(value)) if isinstance(value, float) else Decimal(value)
-    rounded = exact.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
-    text = "{:,.{}f}".format(rounded, digits)
+    gerundet: 390,625 -> 390,63 (vorher je nach interner Darstellung 390,62).
+    Unendlich und "nan" (Eingabe "inf") wie bis 0.62.2 ohne Decimal."""
+    if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
+        text = "{:,.{}f}".format(value, digits)
+    else:
+        exact = Decimal(repr(value)) if isinstance(value, float) else Decimal(value)
+        with localcontext() as context:
+            context.prec = 400       # auch 1e300 (Eingabe "1e300") ohne Fehler
+            rounded = exact.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+        text = "{:,.{}f}".format(rounded, digits)
     return text.replace(",", "#").replace(".", ",").replace("#", ".")
 
 
