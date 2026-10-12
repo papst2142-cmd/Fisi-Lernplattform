@@ -4,6 +4,34 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62.4
+
+Der Abgleich schützt deinen Lernstand jetzt besser: bei der Zeitumstellung
+am 25. Oktober, bei Geräten in verschiedenen Zeitzonen und bei einer falsch
+gestellten Uhr. Die Rechner lesen Zahlen mit Tausenderpunkt richtig, und im
+Spiel blockieren ausgeschiedene Mitarbeiter keine Projekte mehr.
+
+Bitte alle Geräte gleichzeitig aktualisieren; der volle Schutz gilt 7 Tage nach dem letzten Abgleich eines alten Geräts.
+Bis dahin gleicht der Abgleich so ab wie in Version 0.62.3.
+
+- Abgleich nach dem Löschen: Löschst du auf einem Gerät, zum Beispiel alle Lerndaten oder die Historie, entfernt der Abgleich auf den anderen Geräten nur Einträge von vor der Löschung. Was danach gelernt wurde, bleibt. Das gilt jetzt auch, wenn die Geräte in verschiedenen Zeitzonen stehen, und in der Nacht der Zeitumstellung.
+- Falsche Uhr beim Löschen: Geht die Uhr eines Geräts falsch, speichert es die Löschung mit der Uhrzeit von GitHub. Danach erscheint ein Hinweis, zum Beispiel „Die Uhr dieses Geräts geht um 2 Stunden vor. Die Löschung wurde mit der Uhrzeit von GitHub gespeichert.“
+- Falsche Uhr beim Lernen: Hat der Abgleich die falsche Uhr schon bemerkt, rechnet das Gerät neue Einträge richtig ein.
+- Löschung aus der Zukunft: Kommt eine Löschung mit einer Uhrzeit in der Zukunft an, setzt das Programm sie auf die Uhrzeit von GitHub. Es meldet: „Eine Löschmarke lag in der Zukunft (falsche Uhr) und wurde auf die Uhrzeit von GitHub gesetzt.“
+- Kaputte Löschangabe: Sie wird nicht angewendet, es wird nichts gelöscht. Meldung: „Die Abgleich-Datei enthält eine ungültige Löschmarke. Sie wurde nicht angewendet.“
+- Meldung nach dem Abgleich: Sie nennt jetzt auch, wie viele Einträge wegen einer Löschung entfernt wurden, zum Beispiel „3 Einträge wegen einer Löschung entfernt“.
+- Sicherung zusammenführen: Eine Löschung aus der Zukunft in der Sicherung wird nicht angewendet („Die Sicherung enthält eine Löschmarke in der Zukunft. Sie wurde nicht angewendet.“). Die Meldung nennt auch hier die Zahl der entfernten Einträge.
+- Lernstand: Jeder neue Eintrag speichert jetzt seine Zeitzone mit. Das richtet das Programm beim ersten Start von selbst ein, nichts geht verloren.
+- Spiel: Wer entlassen wird, selbst kündigt oder zu einem Mitbewerber geht, verlässt jetzt alle Projektteams und das Serverfarm-Team. Das Projekt zeigt danach „noch kein Team“, und du kannst ein neues Team setzen. „Team ändern“ lässt ausgeschiedene Personen still weg. Spielstände, in denen ein Projekt deshalb festhing, laufen nach dem Update wieder. Andere Spielregeln ändern sich nicht.
+- Rechner RAID, Bildschirm und USV, Zahlen eingeben: Das Komma ist das Dezimalzeichen (1,5). Ein Punkt vor genau drei Ziffern ist ein Tausenderpunkt (1.000 ist tausend, ebenso 12.500 und 1.000.000). Sonst ist der Punkt ein Dezimalpunkt (1.5 ist 1,5; 0.125 bleibt 0,125). Bisher las der RAID-Rechner „1.000“ als 1. Leerzeichen zwischen Dreiergruppen gehen auch (1 000).
+- Rechner, Meldungen: Ungültige Eingaben wie 1,000.5, 1e5, inf oder mehr als 3 Nachkommastellen nennen jetzt das Feld, zum Beispiel „Bitte eine Zahl eingeben: Kapazität je Festplatte (GB). Zum Beispiel 1.000 oder 1,5.“ Felder für ganze Zahlen melden „Bitte eine ganze Zahl eingeben: …“, leere Felder „Bitte einen Wert eingeben: …“.
+- RAID-Rechenweg: Zahlen ab 1.000 stehen mit Tausenderpunkt (4 x 1.000 GB = 4.000 GB), am PC und am Handy. Am Handy sind drei Zeilen neu umbrochen.
+- Mac mit Apple-Chip: Das Installationspaket wird auf einem neueren Bau-Rechner (macOS 15) erstellt. Für dich ändert sich nichts.
+- Bildrate: Über 1.000 Bilder pro Sekunde meldet der Rechner „Die Bildrate ist zu groß (höchstens 1.000 Bilder pro Sekunde). Nachkommastellen bitte mit Komma eingeben, zum Beispiel 23,976.“ So fällt eine Eingabe wie 23.976 sofort auf.
+
+Bekannt: Bitte Nachkommastellen mit Komma eingeben, zum Beispiel Akku 7,2 Ah.
+„7.200“ liest der Rechner als 7.200.
+
 ## 0.62.3
 
 Am PC blieben Erfolge und einige Firma-Reiter nach dem Programmstart

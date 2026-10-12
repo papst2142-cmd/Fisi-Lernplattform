@@ -92,7 +92,7 @@ import ui  # noqa: E402
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (wie PC)
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.62.3"
+APP_VERSION = "0.62.4"
 
 # Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
 VERSION_LINE = "Version %s"
@@ -4033,10 +4033,17 @@ class SettingsScreen(Screen):
     def reset_records(self, _event=None):
         def confirmed():
             if self.app.screens["game"].game.reset_records():
-                self.toast("Die Bestenliste wurde gelöscht.", C["green"])
+                self.toast(self._with_clock_fix("Die Bestenliste wurde gelöscht."),
+                           C["green"])
                 self.app.notify_progress()
 
         self.app.confirm("Bestenliste löschen", fisi_game.RECORDS_ASK, confirmed)
+
+    def _with_clock_fix(self, text):
+        """Ab 0.62.4: Hinweis, wenn die Loeschung mit der Uhrzeit von GitHub
+        gespeichert wurde (falsche Geraeteuhr). Text wie am PC."""
+        hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
+        return text + " " + hint if hint else text
 
     # -- Sicherung ------------------------------------------------------------
 
@@ -4184,6 +4191,9 @@ class SettingsScreen(Screen):
         """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
         def confirmed():
             if self.db.clear_history():
+                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
+                if hint:
+                    self.toast(hint, C["green"])
                 self.app.notify_progress()
 
         self.app.confirm("Historie löschen",
@@ -4193,7 +4203,8 @@ class SettingsScreen(Screen):
     def reset_all(self, _event=None):
         def confirmed():
             if self.db.reset_all():
-                self.toast("Alle Lerndaten wurden gelöscht.", C["green"])
+                self.toast(self._with_clock_fix("Alle Lerndaten wurden gelöscht."),
+                           C["green"])
                 self.app.notify_progress()
 
         self.app.confirm("Alles zurücksetzen",

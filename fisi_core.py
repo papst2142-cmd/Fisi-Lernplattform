@@ -416,6 +416,21 @@ RECORD_TABLES = {
     "spiel_bestenliste": ("timestamp", "durchgang", "art", "schluessel", "wert", "daten"),
 }
 
+# Ab 0.62.4: Abstand der Ortszeit zu UTC in Minuten (z.B. 120 im Sommer in
+# Deutschland). timestamp bleibt Ortszeit, weil Statistik, Lernserie und
+# "Heute" daran haengen. Mit dem Abstand vergleicht der Abgleich Eintraege und
+# Loeschzeitpunkte ueber Zeitzonen und die Zeitumstellung hinweg richtig.
+# Nur in den Tabellen, die ein Loeschzeitpunkt betrifft; Eintraege aelterer
+# Versionen haben ihn nicht (NULL = wie bisher als Text vergleichen).
+UTC_OFFSET = "utc_offset"
+MARKED_TABLES = list(EVENT_TABLES) + list(GAME_TABLES) + list(RECORD_TABLES)
+for _table in MARKED_TABLES:
+    for _tables in (EVENT_TABLES, GAME_TABLES, RECORD_TABLES):
+        if _table in _tables:       # direkt hinter timestamp
+            _tables[_table] = _tables[_table][:1] + (UTC_OFFSET,) + _tables[_table][1:]
+    OPTIONAL_COLUMNS[_table] = OPTIONAL_COLUMNS.get(_table, ()) + (UTC_OFFSET,)
+del _table, _tables
+
 # Alles, was zwischen den Geraeten abgeglichen wird
 SYNC_TABLES = dict(EVENT_TABLES)
 SYNC_TABLES.update(GAME_TABLES)
@@ -460,6 +475,58 @@ def purge_superseded_project_rows(cur):
         "      AND neu.uid > abschlussprojekt.uid)))")
 
 
+# ============================================================================
+#  ZEIT MIT ZONE (ab 0.62.4)
+# ============================================================================
+
+# sync_meta-Schluessel (nur lokal, wird nicht abgeglichen): wie weit die Uhr
+# dieses Geraets beim letzten Abgleich von der Uhrzeit von GitHub abwich
+CLOCK_KEY = "uhr_abweichung"
+# Ab dieser Abweichung gilt die Geraeteuhr als falsch (Sekunden)
+CLOCK_TOLERANCE = 300
+# So lange gilt eine gemessene Abweichung (Sekunden, nach der Geraeteuhr)
+CLOCK_VALID = 24 * 3600
+
+
+def device_now():
+    """Jetzt als Ortszeit mit Zone. Ueber UTC ermittelt, damit auch die
+    doppelte Stunde der Zeitumstellung den richtigen Abstand bekommt."""
+    return datetime.datetime.now(datetime.timezone.utc).astimezone()
+
+
+def offset_minutes(moment):
+    """Abstand eines Zeitpunkts mit Zone zu UTC in ganzen Minuten."""
+    return int(moment.utcoffset().total_seconds() // 60)
+
+
+def format_with_zone(moment):
+    """Zeitpunkt als Text mit Abstand zu UTC, z.B. 2026-10-25 02:30:00+02:00.
+    Immer +HH:MM oder -HH:MM, nie "Z": Die ersten 19 Zeichen sind wie bisher,
+    aeltere Versionen vergleichen so weiter richtig als Text."""
+    minutes = offset_minutes(moment)
+    return "%s%s%02d:%02d" % (moment.strftime("%Y-%m-%d %H:%M:%S"),
+                              "-" if minutes < 0 else "+",
+                              abs(minutes) // 60, abs(minutes) % 60)
+
+
+def clock_deviation(value, now=None):
+    """Gemessene Abweichung der Geraeteuhr in Sekunden aus dem gespeicherten
+    Wert, oder None, wenn sie fehlt, unlesbar oder zu alt ist (die Uhr
+    koennte inzwischen gestellt worden sein)."""
+    try:
+        data = json.loads(value)
+        seconds = float(data["s"])
+        measured = datetime.datetime.fromisoformat(data["gemessen"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    if measured.tzinfo is None:
+        return None
+    age = ((now or device_now()) - measured).total_seconds()
+    if age < 0 or age > CLOCK_VALID:
+        return None
+    return seconds
+
+
 class DBManager:
     """SQLite-Anbindung fuer Testergebnisse und einzelne Lern-Ereignisse.
 
@@ -471,6 +538,9 @@ class DBManager:
     def __init__(self, db_path=None, error_handler=None):
         self.db_path = db_path or resolve_db_path()
         self.error_handler = error_handler
+        # Ab 0.62.4: Um wie viele Sekunden die letzte Loeschmarke wegen einer
+        # falschen Geraeteuhr korrigiert wurde (0 = nicht), fuer den Hinweis
+        self.last_clock_fix = 0
         self.init_db()
 
     # -- Infrastruktur ------------------------------------------------------
@@ -682,7 +752,36 @@ class DBManager:
 
     @staticmethod
     def _now():
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return device_now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def _stamp(self):
+        """Ortszeit als Text und ihr Abstand zu UTC in Minuten (ab 0.62.4),
+        aus demselben Augenblick. Wich die Uhr beim letzten Abgleich um mehr
+        als CLOCK_TOLERANCE von GitHub ab, enthaelt der Abstand diese
+        Abweichung: Dann ist "Ortszeit minus Abstand" die echte UTC-Zeit, und
+        eine Loeschung erfasst auch Eintraege, die mit der falschen Uhr
+        entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher."""
+        moment = device_now()
+        offset = offset_minutes(moment)
+        deviation = clock_deviation(self.get_meta(CLOCK_KEY), moment)
+        if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
+            offset += int(round(deviation / 60.0))
+        return moment.strftime("%Y-%m-%d %H:%M:%S"), offset
+
+    @staticmethod
+    def _marker_now(cur):
+        """Zeitpunkt fuer eine Loeschmarke (ab 0.62.4): Ortszeit mit Zone.
+        Wich die Uhr beim letzten Abgleich um mehr als CLOCK_TOLERANCE von
+        GitHub ab, gilt stattdessen die Uhrzeit von GitHub. Liefert (Text,
+        korrigierte Sekunden oder 0)."""
+        moment = device_now()
+        row = cur.execute("SELECT value FROM sync_meta WHERE key = ?",
+                          (CLOCK_KEY,)).fetchone()
+        deviation = clock_deviation(row[0], moment) if row else None
+        if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
+            moment = (moment - datetime.timedelta(seconds=deviation)).astimezone()
+            return format_with_zone(moment), deviation
+        return format_with_zone(moment), 0
 
     @staticmethod
     def _now_fine():
@@ -709,24 +808,26 @@ class DBManager:
 
     def save_test_result(self, score, total, percentage, note, duration_seconds):
         return bool(self._execute(
-            "INSERT INTO test_results (timestamp, score, total, percentage, note,"
-            " duration_seconds, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), score, total, percentage, note, duration_seconds, self._uid()),
+            "INSERT INTO test_results (timestamp, utc_offset, score, total, percentage, note,"
+            " duration_seconds, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), score, total, percentage, note, duration_seconds, self._uid()),
             commit=True, default=False))
 
     def log_card(self, category, question, mode, correct):
         correct_value = None if correct is None else (1 if correct else 0)
         self._execute(
-            "INSERT INTO card_events (timestamp, category, question, mode, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), category, question, mode, correct_value, self._uid()),
+            "INSERT INTO card_events (timestamp, utc_offset,"
+            " category, question, mode, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), category, question, mode, correct_value, self._uid()),
             commit=True, default=False)
 
     def log_quiz_answer(self, category, question, correct):
         self._execute(
-            "INSERT INTO quiz_answers (timestamp, category, question, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), category, question, 1 if correct else 0, self._uid()),
+            "INSERT INTO quiz_answers (timestamp, utc_offset,"
+            " category, question, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), category, question, 1 if correct else 0, self._uid()),
             commit=True, default=False)
 
     @staticmethod
@@ -737,23 +838,26 @@ class DBManager:
         """correct: Selbsteinschaetzung nach dem Aufdecken (ab 0.39), None =
         nur angesehen."""
         self._execute(
-            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme, correct,"
-            " uid) VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._flag(correct), self._uid()),
+            "INSERT INTO scenario_events (timestamp, utc_offset,"
+            " scenario_index, title, theme, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     def log_project(self, index, title, category, correct=None):
         self._execute(
-            "INSERT INTO project_events (timestamp, project_index, title, category, correct,"
-            " uid) VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, category, self._flag(correct), self._uid()),
+            "INSERT INTO project_events (timestamp, utc_offset,"
+            " project_index, title, category, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, category, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     def log_ap1(self, index, title, theme, correct=None):
         self._execute(
-            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._flag(correct), self._uid()),
+            "INSERT INTO ap1_events (timestamp, utc_offset,"
+            " scenario_index, title, theme, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     # -- Ab 0.51: Trainer, Pruefungen, Abschlussprojekt ----------------------
@@ -761,9 +865,9 @@ class DBManager:
     def log_trainer(self, kind, level, correct):
         """Eine geloeste Aufgabe des Subnetting-Trainers."""
         return bool(self._execute(
-            "INSERT INTO trainer_aufgaben (timestamp, art, stufe, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), kind, int(level), 1 if correct else 0, self._uid()),
+            "INSERT INTO trainer_aufgaben (timestamp, utc_offset, art, stufe, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, int(level), 1 if correct else 0, self._uid()),
             commit=True, default=False))
 
     def trainer_stats(self):
@@ -775,9 +879,10 @@ class DBManager:
     def save_exam(self, kind, points, note, duration, data):
         """Ergebnis einer Klausursimulation (data: dict, als JSON gespeichert)."""
         return bool(self._execute(
-            "INSERT INTO pruefungen (timestamp, art, punkte, note, dauer, daten, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), kind, float(points), note, int(duration),
+            "INSERT INTO pruefungen (timestamp, utc_offset,"
+            " art, punkte, note, dauer, daten, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, float(points), note, int(duration),
              json.dumps(data, ensure_ascii=False), self._uid()),
             commit=True, default=False))
 
@@ -867,9 +972,10 @@ class DBManager:
         """Ein Ereignis des Lernspiels (data ist JSON-Text). run: Durchgang
         (ab 0.48), ohne Angabe der aktive Durchgang dieses Geraets."""
         return bool(self._execute(
-            "INSERT INTO spiel_ereignisse (timestamp, typ, daten, geraet, uid, lauf)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), kind, data, device or "", self._uid(), self._run(run)),
+            "INSERT INTO spiel_ereignisse (timestamp, utc_offset,"
+            " typ, daten, geraet, uid, lauf)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, data, device or "", self._uid(), self._run(run)),
             commit=True, default=False))
 
     def game_events(self, run=_ACTIVE):
@@ -1004,9 +1110,10 @@ class DBManager:
     def log_record(self, run, kind, key, value, data=""):
         """Eine Zeile der Bestenliste (data ist JSON-Text)."""
         return bool(self._execute(
-            "INSERT INTO spiel_bestenliste (timestamp, durchgang, art, schluessel, wert,"
-            " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), run or "", kind, key, value, data or "{}", self._uid()),
+            "INSERT INTO spiel_bestenliste (timestamp, utc_offset,"
+            " durchgang, art, schluessel, wert,"
+            " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), run or "", kind, key, value, data or "{}", self._uid()),
             commit=True, default=False))
 
     def records(self):
@@ -1033,8 +1140,9 @@ class DBManager:
             cur = conn.cursor()
             for table in RECORD_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("bestenliste_reset_at", self._now()))
+                        ("bestenliste_reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1056,8 +1164,9 @@ class DBManager:
             cur = conn.cursor()
             for table in HISTORY_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("history_cleared_at", self._now()))
+                        ("history_cleared_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1074,8 +1183,9 @@ class DBManager:
             cur = conn.cursor()
             for table in EVENT_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("reset_at", self._now()))
+                        ("reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1094,8 +1204,9 @@ class DBManager:
             cur = conn.cursor()
             for table in GAME_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("spiel_reset_at", self._now()))
+                        ("spiel_reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -2145,6 +2256,91 @@ class InputError(ValueError):
     """Ungueltige Benutzereingabe - der Text ist fuer die Anzeige gedacht."""
 
 
+# Ab 0.62.4 (B-D-15, Plan 0.62.4 Abschnitt 3.5, Entscheidung F-7 A): eine
+# gemeinsame Leseregel fuer die Zahlfelder von RAID, Bildschirm und USV.
+#  1. Komma ist immer das Dezimalzeichen ("1,5" = 1,5; "1,000" = 1).
+#  2. Punkt vor vollstaendigen Dreiergruppen ist ein Tausenderpunkt, wenn die
+#     Zahl nicht mit 0 beginnt ("1.000", "12.500", "1.000.000", "1.000,5").
+#  3. Sonst ist ein einzelner Punkt ein Dezimalpunkt ("1.5", "0.125").
+#  4. Abgelehnt: englische Mischform ("1,000.5"), schiefe Gruppen ("1.00,5"),
+#     e-Schreibweise, "_", inf, nan, fremde Ziffern, mehr als 20 Zeichen,
+#     mehr als 3 Nachkommastellen.
+#  7. Ganzzahlfelder melden "1.5" als "ganze Zahl".
+# Leerzeichen (auch geschuetzt oder schmal) duerfen Dreiergruppen trennen
+# ("1 000"), "-0" wird 0. Obergrenzen je Feld kommen erst mit 0.62.5.
+# raid_values, raid_input_values, raid_input_problem und ipv4_values (Spiel)
+# bleiben unberuehrt; die Regel gilt nur fuer die Text-Lesestellen.
+NUMBER_MAX_CHARS = 20
+NUMBER_MAX_DECIMALS = 3          # reicht fuer 23,976 Bilder/Sekunde
+_NUMBER_GROUPS = re.compile(r"[1-9][0-9]{0,2}(\.[0-9]{3})+")
+_NUMBER_GROUPS_SPACE = re.compile(r"[1-9][0-9]{0,2}([   ][0-9]{3})+(,[0-9]+)?")
+
+
+class _NumberProblem(ValueError):
+    """Interner Grund, warum read_number ablehnt: "leer", "keine Zahl" oder
+    "Nachkommastellen" (die Meldung fuer die Anzeige baut read_number)."""
+
+
+def _number_value(text):
+    """Liest einen Text nach der Leseregel oben als float oder wirft
+    _NumberProblem. Ohne Meldungstext, ohne Grenzen."""
+    raw = str(text if text is not None else "").strip()
+    if not raw:
+        raise _NumberProblem("leer")
+    if len(raw) > NUMBER_MAX_CHARS:
+        raise _NumberProblem("keine Zahl")
+    negative = raw.startswith("-")
+    if negative:
+        raw = raw[1:]
+    if _NUMBER_GROUPS_SPACE.fullmatch(raw):
+        raw = re.sub(r"[   ]", ".", raw)
+    if not re.fullmatch(r"[0-9.,]+", raw) or raw.count(",") > 1:
+        raise _NumberProblem("keine Zahl")          # e, _, inf, nan, fremde Ziffern
+    whole, comma, rest = raw.partition(",")
+    decimal = bool(comma)
+    if comma:
+        if "." in whole:
+            if not _NUMBER_GROUPS.fullmatch(whole):
+                raise _NumberProblem("keine Zahl")  # 1.00,5 / 1,000.5 / 1.000.5
+            whole = whole.replace(".", "")
+    elif "." in whole:
+        if _NUMBER_GROUPS.fullmatch(whole):          # Tausenderpunkt
+            whole = whole.replace(".", "")
+        elif whole.count(".") == 1:                  # Dezimalpunkt
+            whole, _point, rest = whole.partition(".")
+            decimal = True
+        else:
+            raise _NumberProblem("keine Zahl")      # 1.000.5 / 1.2.3
+    if decimal:
+        if not rest.isdigit():                       # "5," / "5." ohne Ziffer danach
+            raise _NumberProblem("keine Zahl")
+        if len(rest) > NUMBER_MAX_DECIMALS:
+            raise _NumberProblem("Nachkommastellen")
+    whole = whole or "0"                             # ",5" / ".5" = 0,5
+    if not whole.isdigit():
+        raise _NumberProblem("keine Zahl")
+    value = float(whole + ("." + rest if rest else ""))
+    return 0.0 if value == 0 else (-value if negative else value)
+
+
+def read_number(text, caption, ganz=False):
+    """Liest ein Zahlfeld der Rechner (RAID, Bildschirm, USV) nach der
+    gemeinsamen Leseregel. caption = Feldbeschriftung fuer die Meldung.
+    Liefert float, bei ganz=True int. Fehler -> InputError."""
+    try:
+        value = _number_value(text)
+    except _NumberProblem as problem:
+        if str(problem) == "leer":
+            raise InputError("Bitte einen Wert eingeben: %s." % caption) from None
+        raise InputError("Bitte eine Zahl eingeben: %s. Zum Beispiel %s."
+                         % (caption, "1.000" if ganz else "1.000 oder 1,5")) from None
+    if ganz:
+        if value != int(value):
+            raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
+        return int(value)
+    return value
+
+
 RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10"]
 
 # Mindestanzahl Platten und Formel -> (Nettokapazitaet, Ausfalltoleranz)
@@ -2278,12 +2474,9 @@ def raid_tolerance_lines(level, disks, tolerance):
 
 def raid_report(level, disks_text, size_text):
     """Berechnet Nutzkapazitaet, Verlust und Effizienz eines RAID."""
-    try:
-        disks = int(disks_text)
-        size = float(size_text.replace(",", "."))
-    except ValueError:
-        raise InputError("Bitte gültige Zahlen für Anzahl und "
-                         "Kapazität eingeben.")
+    # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
+    disks = read_number(disks_text, "Anzahl Festplatten", ganz=True)
+    size = read_number(size_text, "Kapazität je Festplatte (GB)")
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
 
@@ -2310,21 +2503,30 @@ def raid_report(level, disks_text, size_text):
     return "\n".join(lines)
 
 
+SCREEN_FPS_MAX = 1000
+
+
 def screen_report(width_text, height_text, depth, fps_text):
     """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
+    # Ab 0.62.4: gemeinsame Leseregel (read_number); Bildrate leer = ohne
+    width = read_number(width_text, "Breite (Pixel)", ganz=True)
+    height = read_number(height_text, "Höhe (Pixel)", ganz=True)
     try:
-        width = int(width_text)
-        height = int(height_text)
         depth = int(depth)
-        fps_raw = fps_text.strip().replace(",", ".")
-        fps = float(fps_raw) if fps_raw else 0.0
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
                          "Bildrate eingeben.")
+    fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
     if fps < 0:
         raise InputError("Die Bildrate darf nicht negativ sein.")
+    # Ab 0.62.4: "23.976" liest die Leseregel als 23976 (Tausenderpunkt);
+    # ueber 1.000 fps gibt es eine Meldung statt einer falschen Rechnung
+    if fps > SCREEN_FPS_MAX:
+        raise InputError("Die Bildrate ist zu groß (höchstens %s Bilder pro "
+                         "Sekunde). Nachkommastellen bitte mit Komma eingeben, "
+                         "zum Beispiel 23,976." % de_int(SCREEN_FPS_MAX))
 
     pixels = width * height
     bits = pixels * depth
@@ -2474,19 +2676,8 @@ def ups_number(fields, key):
     Grenzen. Fehler kommen als InputError mit der Feldbeschriftung."""
     caption = UPS_FIELD_CAPTIONS[key]
     low, high, integer, zero_ok = UPS_LIMITS[key]
-    raw = str(fields.get(key, "") or "").strip().replace(" ", "")
-    if not raw:
-        raise InputError("Bitte einen Wert eingeben: %s." % caption)
-    raw = raw.replace(".", "").replace(",", ".") if raw.count(".") and \
-        raw.count(",") else raw.replace(",", ".")
-    try:
-        value = float(raw)
-    except ValueError:
-        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
-    if value != value or value in (float("inf"), float("-inf")):
-        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
-    if integer and value != int(value):
-        raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
+    # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
+    value = read_number(str(fields.get(key, "") or ""), caption, ganz=integer)
     too_small = value < low if zero_ok else value <= low
     if too_small or value > high:
         if zero_ok:
@@ -2908,43 +3099,43 @@ CALC_EXPLAIN_SUBNET = (
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
-    "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
+    "Am Beispiel 4 Festplatten x 1.000 GB (Bruttokapazität 4.000 GB)\n\n"
     "RAID 0 - Striping (ohne Redundanz, min. 2 Festplatten)\n"
     "   Die Daten werden ohne Redundanz auf alle Festplatten verteilt.\n"
     "   Formel:  Nutzkapazität = Anzahl x Kapazität\n"
-    "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
+    "   Beispiel: 4 x 1.000 GB = 4.000 GB nutzbar\n"
     "   Ausfalltoleranz: 0 Festplatten (fällt eine aus, sind alle\n"
     "   Daten weg)\n\n"
     "RAID 1 - Spiegelung (Mirroring, min. 2 Festplatten)\n"
     "   Die Daten werden 1:1 auf alle weiteren Festplatten gespiegelt\n"
     "   (bei 2 Festplatten auf die zweite).\n"
     "   Formel:  Nutzkapazität = 1 x Kapazität\n"
-    "   Beispiel: 1000 GB nutzbar (bei 4 Festplatten stehen nur\n"
-    "   1000 GB Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
+    "   Beispiel: 1.000 GB nutzbar (bei 4 Festplatten stehen nur\n"
+    "   1.000 GB Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
     "   Ausfalltoleranz: n-1 Festplatten\n\n"
     "RAID 5 - verteilte Parität (min. 3 Festplatten)\n"
     "   Eine Festplatte Kapazität wird rechnerisch für Paritätsdaten\n"
     "   verwendet (die Parität selbst liegt verteilt auf allen\n"
     "   Festplatten).\n"
     "   Formel:  Nutzkapazität = (Anzahl - 1) x Kapazität\n"
-    "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
+    "   Beispiel: (4 - 1) x 1.000 GB = 3.000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Festplatte\n\n"
     "RAID 6 - doppelte Parität (min. 4 Festplatten)\n"
     "   Wie RAID 5, aber mit doppelter Parität für mehr Sicherheit.\n"
     "   Formel:  Nutzkapazität = (Anzahl - 2) x Kapazität\n"
-    "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Beispiel: (4 - 2) x 1.000 GB = 2.000 GB nutzbar\n"
     "   Ausfalltoleranz: 2 Festplatten\n\n"
     "RAID 10 - Spiegelung + Striping (min. 4 Festplatten, gerade Anzahl)\n"
     "   Je zwei Festplatten werden gespiegelt (RAID 1), diese\n"
     "   Spiegelpaare werden anschließend im Striping-Verfahren\n"
     "   (RAID 0) zusammengefasst.\n"
     "   Formel:  Nutzkapazität = (Anzahl / 2) x Kapazität\n"
-    "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Beispiel: (4 / 2) x 1.000 GB = 2.000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Festplatte sicher (bis zu 2, wenn je\n"
     "   Spiegelpaar nur eine ausfällt)\n\n"
     "SPEICHEREFFIZIENZ\n"
     "   Effizienz = Nutzkapazität / Bruttokapazität x 100\n"
-    "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
+    "   Beispiel RAID 5: 3.000 GB / 4.000 GB x 100 = 75 %"
 )
 CALC_EXPLAIN_SCREEN = (
     "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
@@ -3087,8 +3278,8 @@ CALC_EXPLAIN_SUBNET_HANDY = (
 CALC_EXPLAIN_RAID_HANDY = (
     "RECHENWEG RAID\n"
     "Am Beispiel 4 Festplatten\n"
-    "x 1000 GB\n"
-    "(Bruttokapazität 4000 GB)\n"
+    "x 1.000 GB\n"
+    "(Bruttokapazität 4.000 GB)\n"
     "\n"
     "RAID 0 - Striping (ohne\n"
     "Redundanz, min. 2\n"
@@ -3100,7 +3291,7 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " Anzahl x Kapazität\n"
     " Beispiel:\n"
-    " 4 x 1000 GB = 4000 GB\n"
+    " 4 x 1.000 GB = 4.000 GB\n"
     " nutzbar\n"
     " Ausfalltoleranz:\n"
     " 0 Festplatten (fällt eine\n"
@@ -3117,9 +3308,9 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Formel:\n"
     " Nutzkapazität =\n"
     " 1 x Kapazität\n"
-    " Beispiel: 1000 GB nutzbar\n"
+    " Beispiel: 1.000 GB nutzbar\n"
     " (bei 4 Festplatten stehen\n"
-    " nur 1000 GB Nutzkapazität\n"
+    " nur 1.000 GB Nutzkapazität\n"
     " zur Verfügung, der Rest ist\n"
     " Spiegelung)\n"
     " Ausfalltoleranz:\n"
@@ -3137,8 +3328,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl - 1) x Kapazität\n"
     " Beispiel:\n"
-    " (4 - 1) x 1000 GB = 3000 GB\n"
-    " nutzbar\n"
+    " (4 - 1) x 1.000 GB\n"
+    " = 3.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 1 Festplatte\n"
     "\n"
@@ -3151,8 +3342,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl - 2) x Kapazität\n"
     " Beispiel:\n"
-    " (4 - 2) x 1000 GB = 2000 GB\n"
-    " nutzbar\n"
+    " (4 - 2) x 1.000 GB\n"
+    " = 2.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 2 Festplatten\n"
     "\n"
@@ -3169,8 +3360,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl / 2) x Kapazität\n"
     " Beispiel:\n"
-    " (4 / 2) x 1000 GB = 2000 GB\n"
-    " nutzbar\n"
+    " (4 / 2) x 1.000 GB\n"
+    " = 2.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 1 Festplatte sicher (bis zu\n"
     " 2, wenn je Spiegelpaar nur\n"
@@ -3181,7 +3372,7 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität /\n"
     " Bruttokapazität x 100\n"
     " Beispiel RAID 5:\n"
-    " 3000 GB / 4000 GB x 100\n"
+    " 3.000 GB / 4.000 GB x 100\n"
     " = 75 %"
 )
 CALC_EXPLAIN_SCREEN_HANDY = (
