@@ -23,6 +23,7 @@ Nur unter Linux/macOS (Zeitzone je Prozess ueber TZ).
 Start:  python test_abgleich.py
 """
 
+import datetime
 import gzip
 import json
 import os
@@ -43,6 +44,7 @@ CODE = os.path.abspath(os.environ.get("ABGLEICH_CODE") or HERE)
 GERAET = os.path.join(HERE, "pruefung", "abgleich_geraet.py")
 IN_CI = bool(os.environ.get("GITHUB_ACTIONS") or os.environ.get("CI"))
 DAY = 86400.0
+MIXED_HOLD = 7 * DAY      # fisi_sync.MIXED_HOLD
 TWO_H = 7200.0
 INVALID = "ungültige Löschmarke"
 FUTURE_BACKUP = "Sicherung enthält eine Löschmarke in der Zukunft"
@@ -627,6 +629,34 @@ class AbgleichTest(unittest.TestCase):
         bericht("Test 9b: %d Hochladungen ohne neue Eintraege in 5 Runden" % zuviel)
         self.assertEqual(zuviel, 0, "Hin und Her")
         self.stabil([n1, o, n2])
+
+    def test_09c_mischfrist_mit_falscher_uhr(self):
+        """Gegenpruefung A-9, F4: Kurz vor Ende der 7-Tage-Frist nach einem
+        alten Geraet muss ein neues Geraet mit Uhr +1 Tag gleichzeitig mit den
+        anderen umschalten (Uhrzeit von GitHub), sonst vergleicht es schon in
+        UTC und das andere noch als Text, und ein Eintrag wechselt hin und her."""
+        n1, n2 = self.geraet("N1"), self.geraet("N2", "UTC")
+        gesehen = (datetime.datetime.now(datetime.timezone.utc)
+                   - datetime.timedelta(seconds=MIXED_HOLD - 6 * 3600))
+        for device in (n1, n2):
+            device("setmeta", "mischbetrieb", gesehen.isoformat())
+            device("lerne", 1, "vorher")
+        self.alle_sync([n1, n2, n1], 1)
+        n1("uhr", DAY)
+        n1.sync()                       # misst die Abweichung
+        n1("lerne", 1, "e")
+        n1.sync()
+        pause()
+        n2("reset_all")
+        n2.sync()
+        pause()
+        vorher = commits()
+        self.alle_sync([n1, n2], 4)
+        zuviel = commits() - vorher
+        e = [device.namen().get("n1-e", 0) for device in (n1, n2)]
+        bericht("Test 9c: %d Hochladungen in 4 Ruherunden, Eintrag E behalten %s" % (zuviel, e))
+        self.assertEqual(zuviel, 0, "Hin und Her")
+        self.assertEqual(e[0], e[1], "uneinheitlicher Stand")
 
     # ------------------------------------------------------------------ 10
     def test_10a_sicherung_zukunftsmarke(self):

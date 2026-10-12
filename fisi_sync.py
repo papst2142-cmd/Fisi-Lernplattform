@@ -418,7 +418,9 @@ def _note_mixed(db, remote, deviation):
         db.set_meta(MIXED_KEY, now.isoformat())
     elif remote is not None:
         seen = _parse_utc(remote.get(MIXED_KEY))
-        if seen is not None and seen <= now and (local is None or seen > local):
+        # Ein Wert weit in der Zukunft (falsche Uhr) haelt nicht ewig fest
+        if seen is not None and (seen - now).total_seconds() <= MIXED_HOLD and (
+                local is None or seen > local):
             local = seen
             db.set_meta(MIXED_KEY, seen.isoformat())
     return _mixed_recent(db, now)
@@ -515,7 +517,7 @@ def _delete_before(cur, table, marker):
     return gone
 
 
-def merge_into_local(db, remote, check_future=True, stats=None):
+def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     """Uebernimmt fehlende Eintraege und Loeschzeitpunkte aus remote in die
     lokale Datenbank. Liefert die Zahl der neu uebernommenen Eintraege.
 
@@ -539,7 +541,11 @@ def merge_into_local(db, remote, check_future=True, stats=None):
     # Ebenso, solange ein altes Geraet vor kurzem mitgeschrieben hat
     # (MIXED_KEY): Sonst fielen z.B. Eintraege eines Geraets mit falscher Uhr
     # unter eine Zukunftsmarke, die ein altes Geraet festhaelt.
-    zone = remote.get(WRITER_KEY) is not None and not _mixed_recent(db)
+    # Der Abgleich gibt mixed mit der Uhrzeit von GitHub mit, damit alle
+    # Geraete gleichzeitig umschalten (Gegenpruefung A-9, F4).
+    if mixed is None:
+        mixed = _mixed_recent(db)
+    zone = remote.get(WRITER_KEY) is not None and not mixed
     for source in (local_markers, remote_markers):
         for key in _invalid_markers(source, zone):
             del source[key]
@@ -657,7 +663,8 @@ def sync(db, settings=None, device=""):
                                                "gemessen": device_now().isoformat()}))
             clamped = _clamp_future_markers(db, remote, deviation, mixed) or clamped
         if remote:
-            received += merge_into_local(db, remote, check_future=False, stats=stats)
+            received += merge_into_local(db, remote, check_future=False, stats=stats,
+                                         mixed=mixed)
         local = export_local(db)
         remote_uids = _uids(remote) if remote else {}
         local_uids = _uids(local)
@@ -714,12 +721,15 @@ def _correct_own_entries(db, remote, deviation):
                     if uid in skip:
                         continue
                     try:
-                        plain = offset_minutes(datetime.datetime.strptime(
-                            str(stamp)[:19], "%Y-%m-%d %H:%M:%S").astimezone())
+                        moment = datetime.datetime.strptime(str(stamp)[:19],
+                                                            "%Y-%m-%d %H:%M:%S")
+                        # beide Lesarten der doppelten Stunde (Zeitumstellung)
+                        plain = {offset_minutes(moment.replace(fold=fold).astimezone())
+                                 for fold in (0, 1)}
                     except (TypeError, ValueError, OverflowError, OSError):
                         continue
-                    if offset == plain:
-                        updates.append((plain + shift, rowid))
+                    if offset in plain:
+                        updates.append((offset + shift, rowid))
                 conn.executemany("UPDATE %s SET utc_offset = ? WHERE rowid = ?" % table,
                                  updates)
     finally:
