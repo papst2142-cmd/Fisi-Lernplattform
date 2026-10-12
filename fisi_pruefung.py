@@ -25,6 +25,7 @@ in der Tabelle pruefungen (wird abgeglichen).
 """
 
 import datetime
+import math
 import random
 import re
 import time
@@ -380,6 +381,13 @@ def latest_results(history):
     return latest
 
 
+def _abrunden(wert):
+    """Auf eine Nachkommastelle abrunden (ab 0.63.1, B-C-01): Die Kachel zeigt
+    nie mehr, als Note und Regeln werten (49,97 -> 49,9, nicht 50). Vorher auf
+    9 Stellen runden, damit Gleitkomma-Reste (49,99999999999999) nicht kippen."""
+    return math.floor(round(wert, 9) * 10) / 10
+
+
 def overall(scores):
     """Gesamtergebnis aus {bereich: punkte} (bereiche aus WEIGHTS). Fehlt ein
     Bereich, ist das Ergebnis unvollstaendig (complete False).
@@ -397,7 +405,7 @@ def overall(scores):
     hint = ""
     if not passed:
         hint = _supplement_hint(scores)
-    return {"complete": True, "gesamt": round(total, 1), "teil2": round(part2, 1),
+    return {"complete": True, "gesamt": _abrunden(total), "teil2": _abrunden(part2),
             "note": ihk_note(total), "regeln": rules, "bestanden": passed,
             "ergaenzung": hint}
 
