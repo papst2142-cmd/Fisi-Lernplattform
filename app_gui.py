@@ -3255,11 +3255,7 @@ class FinalProjectView(View):
         self.app.notify_progress(refresh_view=False)
 
     def _delete_project(self):
-        if not messagebox.askyesno(
-                "Projekt löschen",
-                "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig machen "
-                "und gilt nach dem Abgleich auch auf dem Handy."
-                % fpj.project_title(self.fields)):
+        if not messagebox.askyesno(fpj.DELETE_TITLE, fpj.delete_question(self.fields)):
             return
         self.pending.clear()
         fpj.delete_project(self.db, self.project)
