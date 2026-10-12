@@ -1,0 +1,55 @@
+# Nur Messung (Zweig messung-063, Plan 0.63 Abschnitt 8, T7, F-63-14): vorher
+# (main cf4912b, 0.62.5) und nachher (version-063 701cfed) abwechselnd auf dem
+# Windows-Runner, 7 Runden, je mit und ohne Vorladen (FISI_VORLADEN=0):
+# Rechner oeffnen, Reiterwechsel, Berechnen IPv4/IPv6, Rechenweg, dazu nachher
+# Moduswechsel IPv4<->IPv6, erster Wechsel und Blaettern.
+# Baut nichts, veroeffentlicht nichts, wird nie gemergt.
+name: Messung 0.63 (nur Messung)
+
+on:
+  push:
+    branches: [messung-063]
+    paths: [".github/workflows/messung-063.yml", "messung_063/**"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Fassungen vorher (cf4912b) und nachher (701cfed)
+        run: |
+          git fetch origin main
+          git worktree add ../vor cf4912b
+          git worktree add ../nach 701cfed
+          for v in vor nach; do echo "::notice::Fassung $v $(git -C ../$v log --oneline -1)"; done
+          python -c "import sys, customtkinter, tkinter; print('::notice::Python', sys.version.split()[0], 'customtkinter', customtkinter.__version__, 'Tk', tkinter.TkVersion)"
+      - name: Rechner vorher/nachher (7 Runden abwechselnd, mit und ohne Vorladen)
+        continue-on-error: true
+        run: |
+          for r in 1 2 3 4 5 6 7; do
+            for v in vor nach; do
+              for art in normal 0; do
+                MESS_FASSUNG=$v FISI_VORLADEN=$art timeout 400 python messung_063/mess_rechner_063.py ../$v "$RUNNER_TEMP/m_${v}_${art}_$r.json" > "$RUNNER_TEMP/m_${v}_${art}_$r.txt" 2>&1 || echo "::warning::Lauf $r $v $art Rueckgabe $?"
+                grep -h "^ERG\|^ABBRUCH" "$RUNNER_TEMP/m_${v}_${art}_$r.txt" || tail -5 "$RUNNER_TEMP/m_${v}_${art}_$r.txt"
+              done
+            done
+          done
+      - name: Rohwerte (JSON) im Log
+        run: |
+          for f in "$RUNNER_TEMP"/m_*.json; do
+            echo "ROH $(basename "$f") $(python -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1]))))" "$f")"
+          done
+      - name: Zusammenfassung
+        run: python messung_063/tabelle_063.py "$RUNNER_TEMP" --notice
