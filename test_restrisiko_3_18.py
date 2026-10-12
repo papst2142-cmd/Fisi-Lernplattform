@@ -12,11 +12,18 @@ noch mit der alten Abweichung: Eine Loeschung auf A bekam eine Marke
 2 Stunden zu frueh, ein eigener Eintrag lag 2 Stunden zu frueh. Bis 0.62.4
 blieb dann ein Eintrag von B, der vor der Loeschung entstand; ein eigener
 Eintrag von A nach einer Loeschung von B ging verloren.
-Ab 0.62.5: Hat sich die gemessene Abweichung seit der letzten Messung um
-mehr als 5 Minuten geaendert (die Uhr wurde gestellt), liest der Abgleich
-eigene neue Marken und eigene noch nicht hochgeladene Eintraege, die die alte
-Abweichung enthalten, mit der neuen Abweichung - wenn das zeitlich moeglich
-ist (fisi_sync._undo_stale_correction).
+Ab 0.62.5 (Entscheidung Nico 12.10.2026 12:03 UTC "sauber in 0.62.5"): Beim
+Messen merkt sich das Geraet zusaetzlich den Stand einer Laufzeit-Uhr (seit
+Systemstart, laeuft auch im Ruhezustand weiter, laesst sich nicht stellen)
+und die Kennung von Systemstart und Prozess. Beim Stempeln (_stamp,
+_marker_now ueber clock_deviation) zeigt der Vergleich mit der Laufzeit-Uhr,
+ob und um wie viel die Uhr seit der Messung gestellt wurde. Ist sie danach
+(gemessene Abweichung + Sprung) richtig (<= 5 Minuten), wird die alte
+Abweichung nicht mehr eingerechnet. Sonst - Sprung zu einer weiter falschen
+Uhr, Neustart des Systems (Sprung nicht feststellbar), Messung aus einem
+aelteren Stand ohne die neuen Felder - wie 0.62.4. Der Behelf im Abgleich
+(fisi_sync._undo_stale_correction, Commit 4528241) entfaellt und mit ihm der
+neue Verlustweg R-a (test_grenze_3_abgleich_spaet_nach_dem_loeschen).
 
 Restrisiko 18 (Nachtrag trifft aeltere eigene Eintraege): A lernt offline mit
 richtiger Uhr, danach geht die Uhr von A 2 Stunden vor. Bis 0.62.4 verschob
@@ -33,16 +40,23 @@ Grenz-Tests halten fest, was nach dem Fix bewusst bleibt (siehe dort).
 Jedes Geraet ist ein eigener Prozess mit eigener Wegwerf-Datenbank, eigenem
 HOME und eigener Zeitzone; abgeglichen wird gegen die Attrappe auf 127.0.0.1
 (Werkzeuge aus test_abgleich.py). Die Zeit laeuft ueber die verstellbare
-Geraeteuhr und den Date-Kopf der Attrappe (wie test_03d). Keine echten Daten.
+Geraeteuhr und den Date-Kopf der Attrappe (wie test_03d); die Laufzeit-Uhr
+der Geraete laeuft mit der verstrichenen Zeit mit, nicht mit dem Stellen der
+Uhr (Behelf in pruefung/abgleich_geraet.py, "uhr SEK LAUF"). Keine echten
+Uhren werden gestellt, keine echten Daten.
 
 Gegen einen anderen Stand:  ABGLEICH_CODE=<ordner> python test_restrisiko_3_18.py
 Nur unter Linux/macOS (Zeitzone je Prozess ueber TZ).
 """
 
+import datetime
+import json
 import os
 import shutil
 import sys
+import time
 import unittest
+from unittest import mock
 
 import test_abgleich as ta
 
@@ -54,6 +68,7 @@ class RestrisikoTest(unittest.TestCase):
     def setUp(self):
         ta.server_reset()
         self.geraete = []
+        self.stand = {}         # Name -> [Zeitzone, Uhr (s), Laufzeit-Zusatz (s)]
 
     def tearDown(self):
         for geraet in self.geraete:
@@ -62,14 +77,36 @@ class RestrisikoTest(unittest.TestCase):
     def geraet(self, name, tz="Europe/Berlin"):
         device = ta.Geraet(self.id().rsplit(".", 1)[-1], name, tz)
         self.geraete.append(device)
+        self.stand[name] = [tz, 0.0, 0.0]
         return device
 
     def zeit(self, stunden, **uhren):
         """Echte Zeit + stunden fuer GitHub und alle Geraete; uhren gibt je
-        Geraet die zusaetzliche Abweichung seiner Uhr (Sekunden)."""
+        Geraet die zusaetzliche Abweichung seiner Uhr (Sekunden). Die
+        Laufzeit-Uhr der Geraete laeuft nur mit der verstrichenen Zeit
+        (stunden) mit: Aendert sich die Abweichung, wurde die Uhr gestellt."""
         ta.att.STATE.ctl["datum_versatz"] = stunden * HOUR
         for device in self.geraete:
-            device("uhr", stunden * HOUR + uhren.get(device.name, 0.0))
+            stand = self.stand.get(device.name)
+            extra = stand[2] if stand else 0.0
+            uhr = stunden * HOUR + uhren.get(device.name, 0.0)
+            if stand:
+                stand[1] = uhr
+            device("uhr", uhr, stunden * HOUR + extra)
+
+    def neu_starten(self, device, *befehle):
+        """Programm auf device beenden und neu starten (gleiche Datenbank,
+        gleiches HOME, gleicher Systemstart, gleiche Uhr); danach befehle."""
+        tz, uhr, extra = self.stand[device.name]
+        device.close()
+        self.geraete.remove(device)
+        neu = ta.Geraet(self.id().rsplit(".", 1)[-1], device.name, tz)
+        self.geraete.append(neu)
+        lauf = ta.att.STATE.ctl.get("datum_versatz", 0.0) + extra
+        neu("uhr", uhr, lauf)
+        for befehl in befehle:
+            neu(*befehl)
+        return neu
 
     def ruhe(self, geraete):
         """Zwei Runden nur Abgleich: nichts mehr hochladen (kein Hin und Her)."""
@@ -85,14 +122,20 @@ class RestrisikoTest(unittest.TestCase):
         return zahlen
 
     # ------------------------------------------------------------ Restrisiko 3
-    def _risiko_3(self, uhr_vorher, stunden_bis_stellen):
+    def _risiko_3(self, uhr_vorher, stunden_bis_stellen, start=(), neustart=None):
+        """start: Befehle an A gleich zu Beginn; neustart: None, oder Befehle
+        nach einem Neustart des Programms auf A nach dem Stellen der Uhr."""
         a, b = self.geraet("A"), self.geraet("B", "UTC")
+        for befehl in start:
+            a(*befehl)
         self.zeit(0, A=uhr_vorher)
         a("lerne", 2, "vorher")
         b("lerne", 2, "vorher")
         for device in (a, b, a):
             device.sync()                       # A misst seine Abweichung
         self.zeit(stunden_bis_stellen)          # Uhr von A richtig gestellt
+        if neustart is not None:
+            a = self.neu_starten(a, *neustart)
         b("lerne", 3, "fenster")                # B lernt offline, VOR der Loeschung
         ta.pause()
         a("reset_all")                          # Loeschung auf A
@@ -179,6 +222,36 @@ class RestrisikoTest(unittest.TestCase):
         (clock_deviation, Alter < 0). Die Loeschung greift."""
         _, zahlen = self._risiko_3(TWO_H, 0)
         self.assertEqual(zahlen, {"A": 0, "B": 0})
+
+    def test_risiko_3_programm_neu_gestartet(self):
+        """Wie Risiko 3, aber das Programm auf A wurde nach dem Stellen der Uhr
+        neu gestartet (gleicher Systemstart): Die Kennung des Systemstarts
+        (Linux, Android: /proc/sys/kernel/random/boot_id) zeigt, dass die
+        Laufzeit-Uhr weiterlief - der Sprung wird erkannt."""
+        if not os.path.exists("/proc/sys/kernel/random/boot_id"):
+            self.skipTest("keine Kennung des Systemstarts (nur Linux)")
+        _, zahlen = self._risiko_3(TWO_H, 3, neustart=())
+        self.assertEqual(zahlen, {"A": 0, "B": 0})
+
+    def test_risiko_3_ohne_startkennung_gleicher_prozess(self):
+        """Wie Risiko 3 auf einem System ohne lesbare Kennung des
+        Systemstarts (Windows, macOS), Programm nicht neu gestartet: Die
+        Kennung des Prozesses genuegt, der Sprung wird erkannt."""
+        _, zahlen = self._risiko_3(TWO_H, 3, start=[("ohne_start",)])
+        self.assertEqual(zahlen, {"A": 0, "B": 0})
+
+    def test_grenze_3_ohne_startkennung_neu_gestartet(self):
+        """BEWUSST FESTGEHALTENE GRENZE: Ohne Kennung des Systemstarts
+        (Windows, macOS) und nach einem Neustart des Programms ist nicht zu
+        erkennen, ob die Laufzeit-Uhr weiterlief. Dann wie 0.62.4 (Messung bis
+        24 h eingerechnet): Bs Eintraege vor der Loeschung bleiben. Sicher
+        statt ungewiss: ein Neustart des Systems mit weiter falscher Uhr darf
+        die Abweichung nicht verlieren (test_neustart_bekannte_abweichung).
+        Der PC gleicht beim Programmstart ab und misst dann neu.
+        (4528241 mit Behelf im Abgleich: {"A": 0, "B": 0}, dafuer R-a.)"""
+        _, zahlen = self._risiko_3(TWO_H, 3, start=[("ohne_start",)],
+                                   neustart=[("ohne_start",)])
+        self.assertEqual(zahlen, {"A": 3, "B": 3})
 
     # ----------------------------------------------------------- Restrisiko 18
     def _risiko_18(self, uhr_danach):
@@ -295,23 +368,21 @@ class RestrisikoTest(unittest.TestCase):
         self.assertEqual(self._grenze_3(2.5), {"A": 3, "B": 3})
 
     def test_grenze_3_abgleich_spaet_nach_dem_loeschen(self):
-        """BEWUSST FESTGEHALTENE GRENZE des Fixes: Gleicht A erst mehr als 2 h
-        nach dem Loeschen ab und wurde die Uhr dazwischen gestellt, ist nicht
-        zu erkennen, ob vor oder nach dem Stellen geloescht wurde. Der Abgleich
-        nimmt "nach dem Stellen" an (sonst bliebe Restrisiko 3): Die Marke
-        liegt dann 2 h spaeter, Bs Eintraege aus diesen 2 h gehen verloren -
-        so wie in 0.62.3, das die Ortszeit der falschen Uhr nahm.
-        (0.62.4: {"A": 3, "B": 3}.)"""
-        self.assertEqual(self._grenze_3(3.5), {"A": 0, "B": 0})
+        """R-a aus 4528241 darf nicht entstehen: A loescht noch MIT falscher
+        Uhr (Marke richtig, Messung gilt), die Uhr wird danach gestellt, A
+        gleicht erst mehr als 2 h nach dem Loeschen ab. Die Marke bleibt, Bs
+        Eintraege nach der Loeschung bleiben (wie 0.62.4). Der Uhrsprung wird
+        beim Stempeln erkannt, nicht erst im Abgleich - die Marke von vor dem
+        Stellen wird nicht mehr umgedeutet.
+        (4528241: {"A": 0, "B": 0} - Verlustweg R-a.)"""
+        self.assertEqual(self._grenze_3(3.5), {"A": 3, "B": 3})
 
-    def test_grenze_f6_uhr_nach_gestellt(self):
-        """BEWUSST FESTGEHALTENE GRENZE (A-9 G1/F6, wie 0.62.4): Uhr von A
-        geht 2 h NACH, gemessen; 3 h spaeter gestellt; A lernt, B loescht
-        danach. Der Eintrag laege mit der alten Abweichung 2 h zu spaet und
-        bleibt (die Loeschung greift fuer ihn nicht; kein Verlust). Eigene
-        Eintraege werden nach einem Uhrsprung nur spaeter gelesen, nie
-        frueher - frueher koennte einen Eintrag unter eine Loeschung schieben,
-        der mit noch falscher Uhr richtig gestempelt war."""
+    def test_risiko_f6_uhr_nach_gestellt(self):
+        """A-9 G1/F6 (R-c aus 4528241): Uhr von A geht 2 h NACH, gemessen;
+        3 h spaeter gestellt; A lernt, B loescht danach. Der Sprung wird beim
+        Stempeln erkannt: Der Eintrag liegt richtig, die Loeschung greift.
+        (0.62.4 und 4528241: {"A": 1, "B": 1} - der Eintrag lag mit der
+        alten Abweichung 2 h zu spaet und blieb.)"""
         a, b = self.geraet("A"), self.geraet("B", "UTC")
         self.zeit(0, A=-TWO_H)
         a("lerne", 2, "vorher")
@@ -325,7 +396,201 @@ class RestrisikoTest(unittest.TestCase):
         b.sync()
         for device in (a, b, a):
             device.sync()
-        self.assertEqual(self.ergebnis("Grenze F6", (a, b), "a-x"), {"A": 1, "B": 1})
+        self.assertEqual(self.ergebnis("Risiko F6", (a, b), "a-x"), {"A": 0, "B": 0})
+
+
+    # ------------------------------------------- Schutz: wie 0.62.4, wenn unsicher
+    def _bekannte_abweichung_loeschen(self, nach_messung):
+        """Uhr von A geht die ganze Zeit +2 h vor und ist gemessen. Nach der
+        Messung nach_messung(a) (Neustart, alte Form der Messung ...). B lernt
+        vor As Loeschung offline, danach lernen B und A weiter; A gleicht erst
+        spaeter ab. Liefert die Zahlen fuer b-vor, b-nach und a-nach."""
+        a, b = self.geraet("A"), self.geraet("B", "UTC")
+        self.zeit(0, A=TWO_H)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        for device in (a, b, a):
+            device.sync()                       # A misst +2 h
+        self.zeit(0.5, A=TWO_H)
+        a = nach_messung(a)
+        self.zeit(0.7, A=TWO_H)
+        b("lerne", 3, "vor")                    # VOR der Loeschung, offline
+        ta.pause()
+        self.zeit(1, A=TWO_H)
+        a("reset_all")                          # Marke mit bekannter Abweichung
+        self.zeit(1.2, A=TWO_H)
+        b("lerne", 3, "nach")                   # NACH der Loeschung
+        b.sync()
+        self.zeit(1.3, A=TWO_H)
+        a("lerne", 2, "nach")                   # NACH der Loeschung
+        self.zeit(2, A=TWO_H)
+        for device in (a, b, a, b):
+            device.sync()
+        self.ruhe((a, b))
+        return {etikett: self.ergebnis("Bekannte Abweichung", (a, b), etikett)
+                for etikett in ("b-vor", "b-nach", "a-nach")}
+
+    def test_neustart_bekannte_abweichung(self):
+        """Neustart des Systems (neue Kennung des Systemstarts) mit weiter
+        falscher Uhr: Ein Sprung ist nicht feststellbar, die Messung gilt wie
+        in 0.62.4 weiter - die Marke liegt richtig, nichts nach der Loeschung
+        geht verloren. Gegenprobe: Die Laufzeit-Uhr nach dem Neustart steht so,
+        dass ein Vergleich ueber den Neustart hinweg "Uhr richtig gestellt"
+        ergaebe (Marke dann 2 h in der Zukunft, auf GitHub-Zeit des Abgleichs
+        gesetzt: b-nach und a-nach verloren)."""
+        def neustart(a):
+            self.stand["A"][2] = TWO_H
+            a("neustart")
+            self.zeit(0.5, A=TWO_H)
+            return a
+        zahlen = self._bekannte_abweichung_loeschen(neustart)
+        self.assertEqual(zahlen, {"b-vor": {"A": 0, "B": 0}, "b-nach": {"A": 3, "B": 3},
+                                  "a-nach": {"A": 2, "B": 2}})
+
+    def test_alte_messung_ohne_neue_felder(self):
+        """Eine Messung aus 0.62.4 (nur "s" und "gemessen", ohne Laufzeit-Uhr
+        und Kennungen) gilt wie in 0.62.4: Die Marke liegt richtig."""
+        def alte_form(a):
+            messung = json.loads(a.marke("uhr_abweichung"))
+            a("setmeta", "uhr_abweichung",
+              json.dumps({"s": messung["s"], "gemessen": messung["gemessen"]}))
+            return a
+        zahlen = self._bekannte_abweichung_loeschen(alte_form)
+        self.assertEqual(zahlen, {"b-vor": {"A": 0, "B": 0}, "b-nach": {"A": 3, "B": 3},
+                                  "a-nach": {"A": 2, "B": 2}})
+
+    def test_grenze_3_alte_messung_ohne_neue_felder(self):
+        """BEWUSST FESTGEHALTENE GRENZE: Stammt die noch gueltige Messung aus
+        0.62.4 (ohne Laufzeit-Uhr), ist ein Sprung nicht feststellbar - wie
+        0.62.4 ({"A": 3, "B": 3}). Endet mit dem ersten Abgleich nach dem
+        Update (neue Messung), spaetestens nach 24 h."""
+        a, b = self.geraet("A"), self.geraet("B", "UTC")
+        self.zeit(0, A=TWO_H)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        for device in (a, b, a):
+            device.sync()
+        messung = json.loads(a.marke("uhr_abweichung"))
+        a("setmeta", "uhr_abweichung",
+          json.dumps({"s": messung["s"], "gemessen": messung["gemessen"]}))
+        self.zeit(3)
+        b("lerne", 3, "fenster")
+        ta.pause()
+        a("reset_all")
+        for device in (a, b, a, b):
+            device.sync()
+        self.ruhe((a, b))
+        self.assertEqual(self.ergebnis("Grenze 3 alte Messung", (a, b), "b-fenster"),
+                         {"A": 3, "B": 3})
+
+
+class UhrsprungKernTest(unittest.TestCase):
+    """clock_deviation mit Laufzeit-Uhr (fisi_core, ab 0.62.5) ohne Geraete:
+    Messung zur Laufzeit 1000 s im Systemstart S1, Prozess P1."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, ta.CODE)
+        try:
+            import fisi_core
+        finally:
+            sys.path.remove(ta.CODE)
+        cls.core = fisi_core
+
+    def abweichung(self, s, wand, laufzeit, start="S1", prozess="P1", jetzt_start="S1",
+                   jetzt_prozess="P1", **felder):
+        """s gemessen; wand/laufzeit = verstrichene Sekunden auf Geraeteuhr
+        bzw. Laufzeit-Uhr seit der Messung; felder ersetzen gespeicherte
+        Felder (... = Feld fehlt)."""
+        core = self.core
+        gemessen = datetime.datetime(2026, 10, 12, 10, 0, tzinfo=datetime.timezone.utc)
+        data = {"s": s, "gemessen": gemessen.isoformat(), "lauf": 1000.0,
+                "start": start, "prozess": prozess}
+        data.update(felder)
+        data = {k: v for k, v in data.items() if v is not ...}
+        jetzt = gemessen + datetime.timedelta(seconds=wand)
+        with mock.patch.object(core, "_boot_clock", lambda: 1000.0 + laufzeit), \
+                mock.patch.object(core, "_boot_id", lambda: jetzt_start), \
+                mock.patch.object(core, "PROCESS_TOKEN", jetzt_prozess):
+            return core.clock_deviation(json.dumps(data), jetzt)
+
+    def test_kein_sprung(self):
+        self.assertEqual(self.abweichung(TWO_H, 3 * HOUR, 3 * HOUR), TWO_H)
+
+    def test_vorgehende_uhr_richtig_gestellt(self):
+        """Restrisiko 3: +2 h gemessen, um 2 h zurueckgestellt."""
+        self.assertLessEqual(abs(self.abweichung(TWO_H, HOUR, 3 * HOUR)), 300)
+
+    def test_nachgehende_uhr_richtig_gestellt(self):
+        """A-9 F6: -2 h gemessen, um 2 h vorgestellt."""
+        self.assertLessEqual(abs(self.abweichung(-TWO_H, 5 * HOUR, 3 * HOUR)), 300)
+
+    def test_auf_weiter_falsche_uhr_gestellt(self):
+        """+1 h gemessen, auf +3 h verstellt (A-9 G2): wie 0.62.4."""
+        self.assertEqual(self.abweichung(HOUR, 5 * HOUR, 3 * HOUR), HOUR)
+
+    def test_schwelle_danach(self):
+        """Nach dem Stellen noch 290 s daneben: richtig; 310 s: weiter falsch."""
+        self.assertEqual(self.abweichung(TWO_H, 3 * HOUR - TWO_H + 290, 3 * HOUR), 290)
+        self.assertEqual(self.abweichung(TWO_H, 3 * HOUR - TWO_H + 310, 3 * HOUR), TWO_H)
+
+    def test_schwelle_sprung(self):
+        """Ein Sprung bis 300 s ist keiner (Gangabweichung, Stellen um
+        Sekunden): 400 s gemessen, 290 s zurueck -> 400 bleibt."""
+        self.assertEqual(self.abweichung(400, 3 * HOUR - 290, 3 * HOUR), 400)
+        self.assertLessEqual(abs(self.abweichung(400, 3 * HOUR - 310, 3 * HOUR)), 300)
+
+    def test_anderer_systemstart(self):
+        """Neustart des Systems: Laufzeit-Uhr nicht vergleichbar - wie 0.62.4."""
+        self.assertEqual(self.abweichung(TWO_H, HOUR, 3 * HOUR, jetzt_start="S2",
+                                         jetzt_prozess="P2"), TWO_H)
+
+    def test_gleicher_systemstart_anderer_prozess(self):
+        self.assertLessEqual(abs(self.abweichung(TWO_H, HOUR, 3 * HOUR,
+                                                 jetzt_prozess="P2")), 300)
+
+    def test_ohne_startkennung(self):
+        """Ohne Kennung des Systemstarts: nur im selben Prozess."""
+        self.assertLessEqual(abs(self.abweichung(TWO_H, HOUR, 3 * HOUR, start=None,
+                                                 jetzt_start=None)), 300)
+        self.assertEqual(self.abweichung(TWO_H, HOUR, 3 * HOUR, start=None,
+                                         jetzt_start=None, jetzt_prozess="P2"), TWO_H)
+
+    def test_alte_messung_ohne_felder(self):
+        """Messung aus 0.62.4: wie 0.62.4."""
+        self.assertEqual(self.abweichung(TWO_H, HOUR, 3 * HOUR, lauf=..., start=...,
+                                         prozess=...), TWO_H)
+
+    def test_unlesbare_felder(self):
+        self.assertEqual(self.abweichung(TWO_H, HOUR, 3 * HOUR, lauf="x"), TWO_H)
+        self.assertEqual(self.abweichung(TWO_H, HOUR, 3 * HOUR, lauf=None), TWO_H)
+
+    def test_laufzeit_rueckwaerts(self):
+        """Laufzeit-Uhr kleiner als beim Messen (kann nur ein anderer
+        Systemstart sein): wie 0.62.4."""
+        self.assertEqual(self.abweichung(-TWO_H, 6700, -500.0), -TWO_H)
+
+    def test_alter_bleibt(self):
+        """Weiter wie 0.62.4: aelter als 24 h oder in der Zukunft -> None."""
+        self.assertIsNone(self.abweichung(TWO_H, 25 * HOUR, 25 * HOUR))
+        self.assertIsNone(self.abweichung(TWO_H, -60, 3 * HOUR))
+
+    def test_messung_schreiben(self):
+        """clock_measurement schreibt s, gemessen, Laufzeit und Kennungen;
+        gleich danach gilt die Messung."""
+        core = self.core
+        value = core.clock_measurement(TWO_H)
+        data = json.loads(value)
+        self.assertEqual(set(data), {"s", "gemessen", "lauf", "start", "prozess"})
+        self.assertEqual(data["prozess"], core.PROCESS_TOKEN)
+        self.assertEqual(core.clock_deviation(value), TWO_H)
+
+    def test_laufzeit_uhr(self):
+        """Linux/Android: Laufzeit-Uhr mit Ruhezustand (CLOCK_BOOTTIME)."""
+        if not hasattr(time, "CLOCK_BOOTTIME"):
+            self.skipTest("nur Linux")
+        self.assertAlmostEqual(self.core._boot_clock(),
+                               time.clock_gettime(time.CLOCK_BOOTTIME), delta=1.0)
 
 
 def tearDownModule():
