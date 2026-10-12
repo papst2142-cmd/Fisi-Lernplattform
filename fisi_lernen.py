@@ -883,6 +883,7 @@ from fisi_core import (CALC_EXPLAIN_HANDY_WIDTH, de_int, hosts_explain,  # noqa:
                        ipv4_text, split_entry, split_explain, split_network,
                        subnet_addr_text, subnet_by_hosts, subnet_hosts_text,
                        subnet_net_text)
+from fisi_core import _explain_list_indexes, _wrap_para  # noqa: E402
 
 TRAINER_NAMES = ["Verwaltung", "Produktion", "Vertrieb", "Lager", "Technik", "Gäste-WLAN",
                  "Server", "Entwicklung", "Einkauf", "Buchhaltung"]
@@ -1001,6 +1002,29 @@ def _split_pick_lines(result, number, schmal):
     return lines
 
 
+# 0.63.1 (Antwort 7 auf Meldung 10, Variante T): Der Trainer zeigt kein Ergebnis
+# mit allen Subnetzen. Die Lueckenzeile des Rechenwegs sagt darum hier
+# "(nicht einzeln aufgelistet)"; der Rechner (fisi_core) bleibt beim alten Satz.
+TRAINER_GAP_OLD = "(alle im Ergebnis)"
+TRAINER_GAP_NEW = "(nicht einzeln aufgelistet)"
+
+
+def _split_gap_lines(result, steps, narrow):
+    """Lueckenzeile im Trainer-Rechenweg ersetzen: am PC in der Zeile, am Handy
+    den Absatz mit derselben Kern-Hilfe (_wrap_para, 28 Zeichen) neu umbrechen."""
+    gap = _explain_list_indexes(result["anzahl"])[1]
+    if not gap:
+        return steps, narrow
+    steps = [line.replace(TRAINER_GAP_OLD, TRAINER_GAP_NEW) for line in steps]
+    text = "Subnetz %s bis %s: je + Schrittweite " % (de_int(gap[0]), de_int(gap[1]))
+    old = _wrap_para(text + TRAINER_GAP_OLD, "", CALC_EXPLAIN_HANDY_WIDTH)
+    new = _wrap_para(text + TRAINER_GAP_NEW, "", CALC_EXPLAIN_HANDY_WIDTH)
+    for start in range(len(narrow) - len(old) + 1):
+        if narrow[start:start + len(old)] == old:
+            return steps, narrow[:start] + new + narrow[start + len(old):]
+    return steps, narrow
+
+
 def _split_task(rng, level):
     """Netz aufteilen: N gleich grosse Subnetze (Stufe 3 auch IPv6, zur Haelfte
     an Nibble-Grenzen)."""
@@ -1032,12 +1056,13 @@ def _split_task(rng, level):
         steps, narrow = [], []
     steps += split_explain(result).split("\n") + _split_pick_lines(result, number, False)
     narrow += split_explain(result, True).split("\n") + _split_pick_lines(result, number, True)
+    steps, narrow = _split_gap_lines(result, steps, narrow)
     entry = split_entry(result, number - 1)
     size = result["groesse"]
     if version == 4:
         fields = [("praefix", "Neue Präfixlänge"), ("maske", "Subnetzmaske"),
                   ("adressen", "Adressen je Subnetz"), ("hosts", "Nutzbare Hosts je Subnetz"),
-                  ("netz", "Netzadresse des %d. Subnetzes" % number),
+                  ("netz", "Netzadresse des %d. Subnetzes (ohne Präfix)" % number),
                   ("broadcast", "Broadcast-Adresse des %d. Subnetzes" % number)]
         solution = {"maske": ipv4_text(result["maske"]), "adressen": de_int(size),
                     "hosts": de_int(result["hosts"]), "broadcast": ipv4_text(entry["ende"])}
@@ -1050,7 +1075,7 @@ def _split_task(rng, level):
     else:
         fields = [("praefix", "Neue Präfixlänge"),
                   ("adressen", "Adressen je Subnetz (als 2^n)"),
-                  ("netz", "Netzadresse des %d. Subnetzes" % number),
+                  ("netz", "Netzadresse des %d. Subnetzes (ohne Präfix)" % number),
                   ("letzte", "Letzte Adresse des %d. Subnetzes" % number)]
         solution = {"adressen": "2^%d" % (width - result["neu"]),
                     "letzte": subnet_addr_text(6, entry["ende"])}
@@ -1064,9 +1089,9 @@ def _split_task(rng, level):
                     netz=_ip_matcher(ipaddress.ip_address(entry["netz"]) if version == 4
                                      else ipaddress.IPv6Address(entry["netz"])))
     text = ("Das Netz %s soll in %s gleich große Subnetze %saufgeteilt werden. "
-            "Geben Sie an: %s." % (net_text, de_int(wanted),
-                                   "an Nibble-Grenzen (4-Bit-Grenzen) " if nibble else "",
-                                   asked))
+            "Gib an: %s." % (net_text, de_int(wanted),
+                             "an Nibble-Grenzen (4-Bit-Grenzen) " if nibble else "",
+                             asked))
     task = TrainerTask("teilen", level, text, fields, solution, steps, matchers)
     task.steps_schmal = narrow
     return task
@@ -1120,7 +1145,7 @@ def _hosts_task(rng, level):
     wants = ", ".join("%s: %s" % (item["name"], subnet_hosts_text(item["bedarf"]))
                       for item in subnets)
     text = ("Das Netz %s soll nach Hostbedarf aufgeteilt werden: %s. Vergeben wird "
-            "lückenlos ab der ersten Adresse, das größte Subnetz zuerst. Geben Sie je "
+            "lückenlos ab der ersten Adresse, das größte Subnetz zuerst. Gib je "
             "Subnetz Netzadresse/Präfix und Subnetzmaske an, dazu die Broadcast-Adresse "
             "des %d. vergebenen Subnetzes und den freien Rest in Adressen."
             % (net_text, wants, number))

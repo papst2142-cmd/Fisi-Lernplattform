@@ -3091,10 +3091,10 @@ import rechenweg_texte as rt      # noqa: E402
 TR_STARTWERTE = 200
 TR_TEILEN = re.compile(r"Das Netz (\S+)/(\d+) soll in ([0-9.]+) gleich große Subnetze "
                        r"(an Nibble-Grenzen \(4-Bit-Grenzen\) )?aufgeteilt werden\. "
-                       r"Geben Sie an: (.*)\.$")
+                       r"Gib an: (.*)\.$")
 TR_BEDARF = re.compile(r"Das Netz (\S+)/(\d+) soll nach Hostbedarf aufgeteilt werden: "
                        r"(.*)\. Vergeben wird lückenlos ab der ersten Adresse, das größte "
-                       r"Subnetz zuerst\. Geben Sie je Subnetz Netzadresse/Präfix und "
+                       r"Subnetz zuerst\. Gib je Subnetz Netzadresse/Präfix und "
                        r"Subnetzmaske an, dazu die Broadcast-Adresse des (\d+)\. vergebenen "
                        r"Subnetzes und den freien Rest in Adressen\.$")
 
@@ -3250,9 +3250,21 @@ class TrainerTeilenTest(unittest.TestCase):
             for schmal, zeilen in ((False, task.steps), (True, task.steps_schmal)):
                 pc = fc.split_explain(kern, schmal).split("\n")
                 vorne = zeilen.index(pc[0])
-                self.assertEqual(zeilen[vorne:vorne + len(pc)], pc, task.text)
+                # 0.63.1 (Antwort 7): Lueckenzeile im Trainer "(nicht einzeln
+                # aufgelistet)"; Handy-Absatz neu umbrochen, darum dort flach verglichen
+                ende = next(i for i, z in enumerate(zeilen)
+                            if z.startswith("SCHRITT 6: Gefragt ist")) - 1
+                if not schmal:
+                    pc = [z.replace(TR_LUECKE_ALT, TR_LUECKE_NEU) for z in pc]
+                    self.assertEqual(zeilen[vorne:ende], pc, task.text)
+                elif TR_LUECKE_ALT in " ".join(" ".join(pc).split()):
+                    self.assertEqual(" ".join(" ".join(zeilen[vorne:ende]).split()),
+                                     " ".join(" ".join(pc).split()).replace(TR_LUECKE_ALT,
+                                                                           TR_LUECKE_NEU))
+                else:
+                    self.assertEqual(zeilen[vorne:ende], pc, task.text)
                 self.assertEqual(vorne > 0, e["nibble"], task.text)
-                schluss = zeilen[vorne + len(pc):]
+                schluss = zeilen[ende:]
                 self.assertEqual(schluss[0], "", task.text)
                 self.assertTrue(schluss[1].startswith("SCHRITT 6: Gefragt ist"), task.text)
                 kurz = tr_ohne_leer(schluss)
@@ -3274,13 +3286,13 @@ class TrainerTeilenTest(unittest.TestCase):
         Teilantworten nicht unbemerkt wandern."""
         task = fl.trainer_task("teilen", 1, 7)
         self.assertEqual(task.text, "Das Netz 192.168.39.0/24 soll in 6 gleich große Subnetze "
-                         "aufgeteilt werden. Geben Sie an: neue Präfixlänge, Subnetzmaske, "
+                         "aufgeteilt werden. Gib an: neue Präfixlänge, Subnetzmaske, "
                          "Adressen und nutzbare Hosts je Subnetz sowie Netzadresse und "
                          "Broadcast-Adresse des 6. Subnetzes.")
         self.assertEqual(task.fields, [
             ("praefix", "Neue Präfixlänge"), ("maske", "Subnetzmaske"),
             ("adressen", "Adressen je Subnetz"), ("hosts", "Nutzbare Hosts je Subnetz"),
-            ("netz", "Netzadresse des 6. Subnetzes"),
+            ("netz", "Netzadresse des 6. Subnetzes (ohne Präfix)"),
             ("broadcast", "Broadcast-Adresse des 6. Subnetzes")])
         self.assertEqual(task.solution, {
             "praefix": "/27", "maske": "255.255.255.224", "adressen": "32", "hosts": "30",
@@ -3398,7 +3410,7 @@ class TrainerBedarfTest(unittest.TestCase):
         self.assertEqual(task.text, (
             "Das Netz 172.16.49.0/24 soll nach Hostbedarf aufgeteilt werden: Produktion: "
             "67 Hosts, Lager: 27 Hosts, Server: 23 Hosts. Vergeben wird lückenlos ab der "
-            "ersten Adresse, das größte Subnetz zuerst. Geben Sie je Subnetz "
+            "ersten Adresse, das größte Subnetz zuerst. Gib je Subnetz "
             "Netzadresse/Präfix und Subnetzmaske an, dazu die Broadcast-Adresse des 2. "
             "vergebenen Subnetzes und den freien Rest in Adressen."))
         self.assertEqual(task.fields, [
@@ -3661,6 +3673,111 @@ class TrainerEingabeformTest(unittest.TestCase):
                     self.assertRegex(loesung, r"^[0-9a-f.:/^]+$", (task.text, key))
                     if key.startswith("netz"):
                         self.assertEqual("/" in loesung, art == "bedarf", rueckmeldung)
+
+
+# ---------------------------------------------------------------------------
+#  0.63.1 (Plan 0.63.1 Abschnitt 3.4/3.5/3.8, Antworten 7, 8, 9 auf Meldung 10)
+#  Lueckenzeile im Trainer-Rechenweg, Anrede "du", Feldbeschriftung
+#  "(ohne Praefix)". Gegen den Cherry-Pick-Stand (Baum 792a37f) rot.
+# ---------------------------------------------------------------------------
+
+TR_LUECKE_NEU = "(nicht einzeln aufgelistet)"
+TR_LUECKE_ALT = "(alle im Ergebnis)"
+TR_LUECKE_PC = re.compile(r"^  \.\.\s+Nr\. ([0-9.]+) bis ([0-9.]+): je \+ Schrittweite (.*)$")
+
+
+class TrainerLueckenzeileTest(unittest.TestCase):
+    """Antwort 7 (Variante T): Im Trainer gibt es kein Ergebnis mit allen
+    Subnetzen. Die Lueckenzeile im Rechenweg sagt darum "(nicht einzeln
+    aufgelistet)", PC und Handy, IPv4 und IPv6, alle 3 x 200 Aufgaben; PC-Zeilen
+    hoechstens 75, Handy-Zeilen hoechstens 28 Zeichen (echter Erzeuger). Der
+    Rechner (split_explain) bleibt beim alten Satz (fisi_core unberuehrt)."""
+
+    def test_luecke_nicht_einzeln_aufgelistet(self):
+        mit_luecke, versionen, laengste = 0, set(), [0, 0]
+        for _stufe, task in tr_aufgaben("teilen"):
+            for zeile in task.steps:
+                self.assertLessEqual(len(zeile), 75, (task.text, zeile))
+            for zeile in task.steps_schmal:
+                self.assertLessEqual(len(zeile), GRENZE, (task.text, zeile))
+            for zeilen in (task.steps, task.steps_schmal):
+                flach = " ".join(" ".join(zeile.split()) for zeile in zeilen)
+                self.assertNotIn("im Ergebnis", flach, task.text)
+                self.assertNotIn("(alle im", flach, task.text)
+            luecken = [z for z in task.steps if TR_LUECKE_PC.match(z)]
+            self.assertLessEqual(len(luecken), 1, task.text)
+            if not luecken:
+                self.assertNotIn(TR_LUECKE_NEU, " ".join(task.steps_schmal), task.text)
+                continue
+            mit_luecke += 1
+            versionen.add(":" in task.text.split()[2])
+            von, bis, rest = TR_LUECKE_PC.match(luecken[0]).groups()
+            self.assertEqual(rest, TR_LUECKE_NEU, luecken[0])
+            laengste[0] = max(laengste[0], len(luecken[0]))
+            # Handy: derselbe Satz als eigener Absatz, ab "Subnetz <von> bis <bis>:"
+            satz = "Subnetz %s bis %s: je + Schrittweite %s" % (von, bis, TR_LUECKE_NEU)
+            start = [i for i, z in enumerate(task.steps_schmal)
+                     if z.startswith("Subnetz %s bis %s:" % (von, bis))]
+            self.assertEqual(len(start), 1, task.text)
+            absatz, gelesen = [], ""
+            for zeile in task.steps_schmal[start[0]:]:
+                absatz.append(zeile)
+                gelesen = " ".join(z.strip() for z in absatz)
+                if len(gelesen) >= len(satz):
+                    break
+            self.assertEqual(gelesen, satz, task.text)
+            laengste[1] = max(laengste[1], max(len(z) for z in absatz))
+        self.assertGreaterEqual(mit_luecke, 100)
+        self.assertEqual(versionen, {False, True})          # IPv4 und IPv6
+        self.assertLessEqual(laengste[0], 75)
+        self.assertLessEqual(laengste[1], GRENZE)
+
+    def test_rechner_unveraendert(self):
+        ergebnis = fc.split_network("10.0.0.0/16", 30, 4)
+        self.assertIn("5 bis 30: je + Schrittweite " + TR_LUECKE_ALT,
+                      " ".join(fc.split_explain(ergebnis).split()))
+        self.assertIn(TR_LUECKE_ALT, " ".join(fc.split_explain(ergebnis, True).split()))
+
+
+class TrainerAnredeTest(unittest.TestCase):
+    """Antwort 8: Alle Trainer-Arten sagen "du" ("Gib an: ...")."""
+
+    def test_du_in_allen_arten(self):
+        for art, _name in fl.TRAINER_KINDS:
+            for _stufe, task in tr_aufgaben(art):
+                self.assertNotIn("Geben Sie", task.text)
+                self.assertIsNone(re.search(r"\b(Sie|Ihnen|Ihr|Ihre)\b", task.text), task.text)
+                if art == "teilen":
+                    self.assertIn(". Gib an: ", task.text)
+                if art == "bedarf":
+                    self.assertIn(" zuerst. Gib je Subnetz Netzadresse/Präfix und Subnetzmaske "
+                                  "an, dazu ", task.text)
+
+
+class TrainerOhnePraefixTest(unittest.TestCase):
+    """Antwort 9 (A-5): Feldbeschriftung "Netzadresse des %d. Subnetzes (ohne
+    Praefix)" bei "Netz aufteilen" (IPv4 und IPv6); die Eingabe mit Praefix
+    gilt weiter als falsch, ohne Ausnahme. PC und Handy lesen dieselben Felder."""
+
+    def test_feld_ohne_praefix(self):
+        gesehen = set()
+        for _stufe, task in tr_aufgaben("teilen"):
+            felder = dict(task.fields)
+            nummer = re.search(r"des (\d+)\. Subnetzes$", task.text[:-1]).group(1)
+            self.assertEqual(felder["netz"], "Netzadresse des %s. Subnetzes (ohne Präfix)"
+                             % nummer)
+            gesehen.add(":" in task.solution["netz"])
+            loesung = task.solution["netz"]
+            self.assertTrue(task.check({"netz": loesung})["netz"])
+            self.assertFalse(task.check({"netz": loesung + task.solution["praefix"]})["netz"])
+            self.assertNotIn("Präfix", " ".join(l for k, l in task.fields if k != "netz"
+                                                and k != "praefix"))
+        self.assertEqual(gesehen, {False, True})
+        for _stufe, task in tr_aufgaben("bedarf"):
+            for key, label in task.fields:
+                self.assertNotIn("(ohne Präfix)", label)
+        handy = fl.trainer_task("teilen", 3, 11, schmal=True)
+        self.assertEqual(handy.fields, fl.trainer_task("teilen", 3, 11).fields)
 
 
 if __name__ == "__main__":
