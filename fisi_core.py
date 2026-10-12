@@ -2487,6 +2487,10 @@ SUBNET_NEED_NUMBER = ("Zeile %d: Bitte die Anzahl Hosts als ganze Zahl angeben "
 SUBNET_NEED_MIN = "Zeile %d: Der Hostbedarf muss mindestens 1 sein."
 SUBNET_NEED_MAX = "Zeile %d: Mehr als %s Hosts passen in kein IPv4-Netz."
 SUBNET_NAME_LONG = "Zeile %d: Der Name ist zu lang (höchstens %d Zeichen)."
+SUBNET_NEED_COMMA = ("Zeile %d: Bitte je Zeile genau ein Subnetz angeben, ohne Komma "
+                     "(z. B. A 50).")
+SUBNET_NAME_TWICE = ("Zeile %d: Der Name „%s“ kommt schon in Zeile %d vor. "
+                     "Bitte jeden Namen nur einmal verwenden.")
 SUBNET_MISSING = "Es fehlen %s Adressen. Das Ausgangsnetz müsste mindestens /%d sein."
 SUBNET_MISSING_ALL = ("Es fehlen %s Adressen. Das passt in kein IPv4-Netz "
                       "(höchstens 2^32 Adressen).")
@@ -2758,6 +2762,9 @@ def split_report(result, page=1, schmal=False):
 def read_host_lines(text):
     """Liest die Bedarfszeilen "Name Hosts" oder nur "Hosts" (dann Name
     "Netz 1", "Netz 2" ...). Erlaubt auch "A: 50" und "A 50 Hosts".
+    Ein Subnetz je Zeile: eine Zeile mit Komma gibt eine Meldung (Komma ist
+    das Dezimalzeichen, "A 50, B 20" waere sonst ein Subnetz "A 50, B").
+    Namen eindeutig, Gross/Klein zaehlt dabei nicht (Plan 0.63, 2.3.1).
     Liefert [(Name, Bedarf)] in der Reihenfolge der Eingabe."""
     lines = str(text if text is not None else "").splitlines()
     filled = [line for line in lines if line.strip()]
@@ -2766,10 +2773,13 @@ def read_host_lines(text):
     if len(filled) > SUBNET_HOSTS_MAX:
         raise InputError(SUBNET_NEEDS_TOO_MANY % (SUBNET_HOSTS_MAX, len(filled)))
     wants = []
+    seen = {}
     for number, line in enumerate(lines, 1):
         parts = line.replace(":", " ").split()
         if not parts:
             continue
+        if "," in line:
+            raise InputError(SUBNET_NEED_COMMA % number)
         if len(parts) > 1 and parts[-1].lower() in ("hosts", "host"):
             parts = parts[:-1]
         try:
@@ -2783,6 +2793,10 @@ def read_host_lines(text):
         name = " ".join(parts[:-1]) or "Netz %d" % (len(wants) + 1)
         if len(name) > SUBNET_NAME_MAX:
             raise InputError(SUBNET_NAME_LONG % (number, SUBNET_NAME_MAX))
+        key = name.casefold()
+        if key in seen:
+            raise InputError(SUBNET_NAME_TWICE % (number, name, seen[key]))
+        seen[key] = number
         wants.append((name, need))
     return wants
 

@@ -28,6 +28,10 @@ nach Python-Patchstand anders (Plan 0.63 M-3, E-63-6).
           ueber 2^53
   T-K-12  IPv4 /0 und IPv6 /0 getrennt (Versionsklasse)
   T-UI-3  Beschriftungen als Konstanten (eine Quelle fuer PC und Handy)
+  T-K-13  Eingabeform "Nach Hostbedarf" (Plan 2.3.1, Auflage Z-3): die 22
+          Faelle aus belege/b12 mit Liste oder Meldung woertlich, dazu
+          Komma in der Zeile (N-1) und doppelte Namen (N-2)
+  T-RW-3  (Fassung 3) Beispiele E bis H aus Anhang A und A2 woertlich
 
 T-K-11 (Mutation macht T-K-5 rot) laeuft als Gegenprobe ausserhalb des
 Arbeitsbaums (Beleg im Bericht).
@@ -383,8 +387,8 @@ class FehlertextTest(unittest.TestCase):
             ("A 50\nB 0", "Zeile 2: Der Hostbedarf muss mindestens 1 sein."),
             ("A 50\n\nB -5", "Zeile 3: Der Hostbedarf muss mindestens 1 sein."),
             ("A fünfzig", "Zeile 1: Bitte die Anzahl Hosts als ganze Zahl angeben (z. B. A 50)."),
-            ("A 50\nB 2,5", "Zeile 2: Bitte die Anzahl Hosts als ganze Zahl angeben "
-                            "(z. B. A 50)."),
+            ("A 50\nB 2,5", "Zeile 2: Bitte je Zeile genau ein Subnetz angeben, ohne Komma "
+                            "(z. B. A 50)."),                  # Plan 2.3.1 M-3 (N-1)
             ("A", "Zeile 1: Bitte die Anzahl Hosts als ganze Zahl angeben (z. B. A 50)."),
             ("\n".join("N%d 5" % i for i in range(13)), "Höchstens 12 Subnetze, eingegeben sind 13."),
             ("Geschaeftsfuehrung 5", "Zeile 1: Der Name ist zu lang (höchstens 16 Zeichen)."),
@@ -846,7 +850,7 @@ class ErgebnisTextTest(unittest.TestCase):
                 for zeile in fc.split_report(r, seite).split("\n"):
                     self.assertLessEqual(len(zeile), PC_BREITE, (netz, anzahl, zeile))
         for bedarf in ("A 50\nB 20\nC 10\nD 2", "Geschaeftsleitun 4294967\nB 2",
-                       "\n".join("Vertrieb Nord %d" % i for i in range(1, 13))):
+                       "\n".join("Vertrieb Nord %d %d" % (i, i) for i in range(1, 13))):
             for netz in ("0.0.0.0/0", "192.168.10.0/24", "10.0.0.0/8"):
                 r = fc.subnet_by_hosts(netz, bedarf)
                 for zeile in fc.hosts_report(r, schmal=True).split("\n"):
@@ -1495,9 +1499,12 @@ def zufall_bedarf(rng):
     netz = rng.getrandbits(32)
     platz = 2 ** (32 - praefix)
     namen = ["A", "B", "Vertrieb", "Geschäftsleitung", "Lager Nord", ""]
-    zeilen = []
-    for _ in range(rng.randint(1, 12)):
+    zeilen, belegt = [], set()
+    for nummer in range(1, rng.randint(1, 12) + 1):
         name = rng.choice(namen)
+        if name and name in belegt:              # Namen eindeutig (Plan 2.3.1, N-2)
+            name = "%s %d" % (name[:16 - len(" %d" % nummer)], nummer)
+        belegt.add(name)
         bedarf = rng.randint(1, max(1, min(platz, 2 ** 32 - 2) // rng.choice([1, 2, 4, 12])))
         zeilen.append(("%s %d" % (name, bedarf)).strip())
     return "%s/%d" % (eigen_v4_text(netz), praefix), "\n".join(zeilen)
@@ -1529,9 +1536,10 @@ class RechenwegBreiteTest(unittest.TestCase):
             ("teilen", "1234:5678:9abc:def0:1234:5678:9abc:def1/127", 2),
             ("teilen", "255.255.255.255/32", 1),
             ("bedarf", "0.0.0.0/0", "Geschäftsleitung 4294967294"),
-            ("bedarf", "255.255.255.0/24", "\n".join("Lager Nord %d" % i for i in range(1, 13))),
-            ("bedarf", "10.0.0.0/8", "\n".join("Geschäftsleitung %d" % (10 ** 6 + i)
-                                                for i in range(12))),
+            ("bedarf", "255.255.255.0/24", "\n".join("Lager Nord %d %d" % (i, i)
+                                                      for i in range(1, 13))),
+            ("bedarf", "10.0.0.0/8", "\n".join("Geschäftsleit %02d %d" % (i, 10 ** 6 + i)
+                                                for i in range(12))),     # Namen 16 Zeichen
             ("bedarf", "192.168.10.0/24", "A 200\nB 60"),
             ("bedarf", "192.168.10.0/24", "A 126\nB 62\nC 30\nD 14\nE 6\nF 2\nG 2"),
             ("bedarf", "10.0.0.0/8", "\n".join(["4294967294"] * 12)),
@@ -1824,6 +1832,578 @@ class NetzdatenIPv6Test(unittest.TestCase):
                          "2001:db8:abcd:12::1")
         self.assertEqual(len(re.findall(r"^ +[1-5]\. ", pc, re.M)), 5)
 
+
+# ---------------------------------------------------------------------------
+#  T-K-13 Eingabeform "Nach Hostbedarf" (Plan 0.63 Fassung 3, 2.3.1, Z-3)
+#  Die 22 Faelle aus belege/b12_bedarf_eingabe.txt (werkzeuge/bedarf_eingabe.py)
+#  mit erwarteter Liste oder Meldung woertlich; M-3 (N-1) und M-8 (N-2) neu.
+# ---------------------------------------------------------------------------
+
+M_KOMMA = "Zeile %d: Bitte je Zeile genau ein Subnetz angeben, ohne Komma (z. B. A 50)."
+M_DOPPELT = ("Zeile %d: Der Name „%s“ kommt schon in Zeile %d vor. "
+             "Bitte jeden Namen nur einmal verwenden.")
+M_ZAHL = "Zeile %d: Bitte die Anzahl Hosts als ganze Zahl angeben (z. B. A 50)."
+M_LEER = "Bitte mindestens ein Subnetz eingeben, je Zeile Name und Hosts (z. B. A 50)."
+
+B12_FAELLE = [
+    ("A 50\nB 20\nC 10\nD 2", 24, [("A", 50), ("B", 20), ("C", 10), ("D", 2)]),
+    ("A: 50\nB: 20\nC: 10\nD: 2", 24, [("A", 50), ("B", 20), ("C", 10), ("D", 2)]),
+    ("A 50\nB 20\nC 10\n\nD 2\n", 24, [("A", 50), ("B", 20), ("C", 10), ("D", 2)]),
+    ("A 50\n\nB zwanzig", 24, M_ZAHL % 3),
+    ("50\n20\n10", 24, [("Netz 1", 50), ("Netz 2", 20), ("Netz 3", 10)]),
+    ("Verwaltung: 100\nGäste 25 Hosts", 24, [("Verwaltung", 100), ("Gäste", 25)]),
+    ("VLAN 10: 20\nVLAN 20 30", 24, [("VLAN 10", 20), ("VLAN 20", 30)]),
+    ("  A :  1.000  ", 20, [("A", 1000)]),
+    (": 50", 24, [("Netz 1", 50)]),
+    ("", 24, M_LEER),
+    (" \n  \n", 24, M_LEER),
+    ("\n".join("%d" % (i + 1) for i in range(13)), 24,
+     "Höchstens 12 Subnetze, eingegeben sind 13."),
+    ("A 50, B 20", 24, M_KOMMA % 1),                                    # M-3, N-1
+    ("A: 1,5", 24, M_KOMMA % 1),                                        # M-3, N-1
+    ("A 50\nB 20\nC zehn", 24, M_ZAHL % 3),
+    ("A 50\nB -5", 24, "Zeile 2: Der Hostbedarf muss mindestens 1 sein."),
+    ("A 50\nB 0", 24, "Zeile 2: Der Hostbedarf muss mindestens 1 sein."),
+    ("A 5.000.000.000", 8, "Zeile 1: Mehr als 4.294.967.294 Hosts passen in kein IPv4-Netz."),
+    ("Buchhaltung-Nord-2 30", 24, "Zeile 1: Der Name ist zu lang (höchstens 16 Zeichen)."),
+    ("A 50\nB 20\na 10", 24, M_DOPPELT % (3, "a", 1)),                  # M-8, N-2
+    ("A 120\nB 60\nC 50\nD 20", 24,
+     "Es fehlen 32 Adressen. Das Ausgangsnetz müsste mindestens /23 sein."),
+    ("A 3.000.000.000\nB 3.000.000.000", 8,
+     "Es fehlen 8.573.157.376 Adressen. Das passt in kein IPv4-Netz (höchstens 2^32 Adressen)."),
+]
+
+
+def bedarf_ergebnis(eingabe, praefix):
+    """Wie werkzeuge/bedarf_eingabe.py: Liste oder die (erste) Meldung."""
+    try:
+        r = fc.subnet_by_hosts("10.0.0.0/%d" % praefix, eingabe)
+    except fc.InputError as fehler:
+        return str(fehler)
+    return r["meldung"] or r["bedarfe"]
+
+
+class EingabeformTest(unittest.TestCase):
+    """T-K-13: Eingabeform "Nach Hostbedarf" nach Plan 0.63 Abschnitt 2.3.1."""
+
+    def test_b12_faelle(self):
+        self.assertEqual(len(B12_FAELLE), 22)
+        for eingabe, praefix, erwartet in B12_FAELLE:
+            with self.subTest(eingabe=eingabe):
+                self.assertEqual(bedarf_ergebnis(eingabe, praefix), erwartet)
+
+    def test_komma(self):                                       # N-1
+        for text, zeile in (("A 50, B 20", 1), ("A 50,B 20", 1), ("A: 1,5", 1),
+                            ("A 50\nB 20, C 10", 2), ("A 50\n\nB,C 10", 3), ("A 4,0", 1),
+                            ("A, 50", 1), ("50,", 1), (",", 1), ("A 50\nB 20 Hosts,", 2)):
+            with self.subTest(text=text):
+                self.assertEqual(meldung(lambda: fc.read_host_lines(text)), M_KOMMA % zeile)
+                self.assertEqual(meldung(lambda: fc.subnet_by_hosts("10.0.0.0/8", text)),
+                                 M_KOMMA % zeile)
+
+    def test_komma_reihenfolge(self):
+        # erste Meldung von oben; Anzahl und "leer" kommen vorher
+        self.assertEqual(meldung(lambda: fc.read_host_lines("A zehn\nB 1,5")), M_ZAHL % 1)
+        self.assertEqual(meldung(lambda: fc.read_host_lines("A 1,5\nB zehn")), M_KOMMA % 1)
+        self.assertEqual(meldung(lambda: fc.read_host_lines("Buchhaltung-Nord-2, 30")),
+                         M_KOMMA % 1)
+        self.assertEqual(meldung(lambda: fc.read_host_lines(
+            "\n".join("N%d 1,5" % i for i in range(13)))),
+            "Höchstens 12 Subnetze, eingegeben sind 13.")
+
+    def test_doppelte_namen(self):                              # N-2
+        for text, erwartet in (
+                ("A 50\nB 20\na 10", M_DOPPELT % (3, "a", 1)),
+                ("A 50\nA 20", M_DOPPELT % (2, "A", 1)),
+                ("A 50\n\nB 20\nb: 5 Hosts", M_DOPPELT % (4, "b", 3)),
+                ("VLAN 10: 20\nvlan 10 30", M_DOPPELT % (2, "vlan 10", 1)),
+                ("Gäste 5\nGÄSTE 6", M_DOPPELT % (2, "GÄSTE", 1)),
+                ("50\nNetz 1 20", M_DOPPELT % (2, "Netz 1", 1)),
+                ("Netz 2 50\n20\n30", M_DOPPELT % (2, "Netz 2", 1)),
+                ("A 50\nB 20\nA 0", "Zeile 3: Der Hostbedarf muss mindestens 1 sein.")):
+            with self.subTest(text=text):
+                self.assertEqual(meldung(lambda: fc.read_host_lines(text)), erwartet)
+                self.assertEqual(meldung(lambda: fc.subnet_by_hosts("10.0.0.0/8", text)),
+                                 erwartet)
+
+    def test_erlaubt_bleibt(self):
+        self.assertEqual(fc.read_host_lines("A 50\nAB 20\nA B 10\nB A 5\n7\n8"),
+                         [("A", 50), ("AB", 20), ("A B", 10), ("B A", 5),
+                          ("Netz 5", 7), ("Netz 6", 8)])
+        self.assertEqual(fc.read_host_lines("VLAN 10: 20\nVLAN 20 30"),
+                         [("VLAN 10", 20), ("VLAN 20", 30)])
+        self.assertEqual(fc.read_host_lines("A 1.000\nB 2.000.000"),
+                         [("A", 1000), ("B", 2000000)])
+
+    def test_laengste_meldung(self):
+        laengste = max(len(e) for _e, _p, e in B12_FAELLE if isinstance(e, str))
+        self.assertEqual(laengste, 89)                          # Plan 2.3.1
+
+
+# ---------------------------------------------------------------------------
+#  T-RW-3 (Fassung 3, Z-4): Beispiele E bis H aus Anhang A (PC) und A2 (Handy)
+# ---------------------------------------------------------------------------
+
+BEISPIELE_EH = {
+    "E": ("bedarf", "192.168.10.0/24", "A 120\nB 60\nC 50\nD 20"),
+    "F": ("bedarf", "10.0.0.0/24", "Lager 10\nVerwaltung 100\nGäste 25\nServer 5\nTransfer 2"),
+    "G": ("teilen", "192.168.10.0/30", 2),
+    "H": ("teilen", "192.168.10.0/30", 4),
+}
+
+# Anhang A und A2 (Plan 0.63, Fassung 3): Beispiele E bis H woertlich
+ANHANG_A_EH = {
+    'E_HANDY': (
+        'RECHENWEG NACH HOSTBEDARF',
+        '(VLSM, IPv4)',
+        'Ausgangsnetz',
+        ' 192.168.10.0/24',
+        'Bedarf:',
+        ' A: 120 Hosts',
+        ' B: 60 Hosts',
+        ' C: 50 Hosts',
+        ' D: 20 Hosts',
+        '',
+        'SCHRITT 1: Sortieren,',
+        'größter Bedarf zuerst',
+        ' A 120, B 60, C 50, D 20',
+        ' So liegt jedes Subnetz an',
+        ' seiner Größe ausgerichtet,',
+        ' es entstehen keine Lücken.',
+        '',
+        'SCHRITT 2: Größe je Subnetz',
+        ' kleinstes h mit',
+        ' 2^h - 2 >= Bedarf',
+        ' A: 120 Hosts',
+        '  2^6 - 2 = 62 < 120',
+        '  2^7 - 2 = 126 >= 120',
+        '  h = 7 -> /25 (32 - 7)',
+        '  Größe 128 Adressen',
+        ' B: 60 Hosts',
+        '  2^5 - 2 = 30 < 60',
+        '  2^6 - 2 = 62 >= 60',
+        '  h = 6 -> /26 (32 - 6)',
+        '  Größe 64 Adressen',
+        ' C: 50 Hosts',
+        '  2^5 - 2 = 30 < 50',
+        '  2^6 - 2 = 62 >= 50',
+        '  h = 6 -> /26 (32 - 6)',
+        '  Größe 64 Adressen',
+        ' D: 20 Hosts',
+        '  2^4 - 2 = 14 < 20',
+        '  2^5 - 2 = 30 >= 20',
+        '  h = 5 -> /27 (32 - 5)',
+        '  Größe 32 Adressen',
+        '',
+        'SCHRITT 3: Passt es?',
+        ' Summe: 128 + 64 + 64 + 32',
+        ' = 288 Adressen',
+        ' Ausgangsnetz /24: 2^8',
+        ' = 256 Adressen',
+        ' 288 > 256 -> passt nicht',
+        ' Es fehlen 32 Adressen. Das',
+        ' Ausgangsnetz müsste',
+        ' mindestens /23 sein.',
+        ' Nötige Größe: die nächste',
+        ' Zweierpotenz ab 288 ist 2^9',
+        ' = 512 Adressen, also /23',
+        ' (32 - 9).',
+    ),
+    'E_PC': (
+        'RECHENWEG NACH HOSTBEDARF (VLSM, IPv4)',
+        'Ausgangsnetz 192.168.10.0/24',
+        'Bedarf: A 120 Hosts, B 60 Hosts, C 50 Hosts, D 20 Hosts',
+        '',
+        'SCHRITT 1: Nach Hostbedarf sortieren, größter Bedarf zuerst',
+        '   A 120, B 60, C 50, D 20',
+        '   Begründung: So beginnt jedes Subnetz an einer Grenze, die zu',
+        '   seiner Größe passt, und es entstehen keine Lücken.',
+        '',
+        'SCHRITT 2: Größe je Subnetz (kleinstes h mit 2^h - 2 >= Bedarf)',
+        '   A (120 Hosts): 2^6 - 2 = 62 < 120, 2^7 - 2 = 126 >= 120',
+        '      -> h = 7, /25 (32 - 7), Maske 255.255.255.128, Größe 128',
+        '   B (60 Hosts): 2^5 - 2 = 30 < 60, 2^6 - 2 = 62 >= 60',
+        '      -> h = 6, /26 (32 - 6), Maske 255.255.255.192, Größe 64',
+        '   C (50 Hosts): 2^5 - 2 = 30 < 50, 2^6 - 2 = 62 >= 50',
+        '      -> h = 6, /26 (32 - 6), Maske 255.255.255.192, Größe 64',
+        '   D (20 Hosts): 2^4 - 2 = 14 < 20, 2^5 - 2 = 30 >= 20',
+        '      -> h = 5, /27 (32 - 5), Maske 255.255.255.224, Größe 32',
+        '',
+        'SCHRITT 3: Passt es?',
+        '   Summe der Größen: 128 + 64 + 64 + 32 = 288 Adressen',
+        '   Ausgangsnetz /24: 2^8 = 256 Adressen -> passt nicht',
+        '   Es fehlen 32 Adressen. Das Ausgangsnetz müsste mindestens /23 sein.',
+        '   Nötige Größe: die nächste Zweierpotenz ab 288 ist 2^9 = 512 Adressen,',
+        '   also /23 (32 - 9).',
+    ),
+    'F_HANDY': (
+        'RECHENWEG NACH HOSTBEDARF',
+        '(VLSM, IPv4)',
+        'Ausgangsnetz',
+        ' 10.0.0.0/24',
+        'Bedarf:',
+        ' Lager: 10 Hosts',
+        ' Verwaltung: 100 Hosts',
+        ' Gäste: 25 Hosts',
+        ' Server: 5 Hosts',
+        ' Transfer: 2 Hosts',
+        '',
+        'SCHRITT 1: Sortieren,',
+        'größter Bedarf zuerst',
+        ' Verwaltung 100, Gäste 25,',
+        ' Lager 10, Server 5,',
+        ' Transfer 2',
+        ' So liegt jedes Subnetz an',
+        ' seiner Größe ausgerichtet,',
+        ' es entstehen keine Lücken.',
+        '',
+        'SCHRITT 2: Größe je Subnetz',
+        ' kleinstes h mit',
+        ' 2^h - 2 >= Bedarf',
+        ' Verwaltung: 100 Hosts',
+        '  2^6 - 2 = 62 < 100',
+        '  2^7 - 2 = 126 >= 100',
+        '  h = 7 -> /25 (32 - 7)',
+        '  Größe 128 Adressen',
+        ' Gäste: 25 Hosts',
+        '  2^4 - 2 = 14 < 25',
+        '  2^5 - 2 = 30 >= 25',
+        '  h = 5 -> /27 (32 - 5)',
+        '  Größe 32 Adressen',
+        ' Lager: 10 Hosts',
+        '  2^3 - 2 = 6 < 10',
+        '  2^4 - 2 = 14 >= 10',
+        '  h = 4 -> /28 (32 - 4)',
+        '  Größe 16 Adressen',
+        ' Server: 5 Hosts',
+        '  2^2 - 2 = 2 < 5',
+        '  2^3 - 2 = 6 >= 5',
+        '  h = 3 -> /29 (32 - 3)',
+        '  Größe 8 Adressen',
+        ' Transfer: 2 Hosts',
+        '  2^2 - 2 = 2 >= 2',
+        '  h = 2 -> /30 (32 - 2)',
+        '  Größe 4 Adressen',
+        '',
+        'SCHRITT 3: Passt es?',
+        ' Summe: 128 + 32 + 16 + 8',
+        '  + 4',
+        ' = 188 Adressen',
+        ' Ausgangsnetz /24: 2^8',
+        ' = 256 Adressen',
+        ' 188 <= 256 -> passt',
+        '',
+        'SCHRITT 4: Vergabe',
+        'nacheinander',
+        ' Jedes Subnetz beginnt',
+        ' direkt hinter dem vorigen.',
+        '1. Verwaltung (100 Hosts)',
+        ' Netz: 10.0.0.0/25',
+        ' Maske: 255.255.255.128',
+        ' Erste: 10.0.0.1',
+        ' Letzte: 10.0.0.126',
+        ' Broadcast: 10.0.0.127',
+        '2. Gäste (25 Hosts)',
+        ' Netz: 10.0.0.128/27',
+        ' Maske: 255.255.255.224',
+        ' Erste: 10.0.0.129',
+        ' Letzte: 10.0.0.158',
+        ' Broadcast: 10.0.0.159',
+        '3. Lager (10 Hosts)',
+        ' Netz: 10.0.0.160/28',
+        ' Maske: 255.255.255.240',
+        ' Erste: 10.0.0.161',
+        ' Letzte: 10.0.0.174',
+        ' Broadcast: 10.0.0.175',
+        '4. Server (5 Hosts)',
+        ' Netz: 10.0.0.176/29',
+        ' Maske: 255.255.255.248',
+        ' Erste: 10.0.0.177',
+        ' Letzte: 10.0.0.182',
+        ' Broadcast: 10.0.0.183',
+        '5. Transfer (2 Hosts)',
+        ' Netz: 10.0.0.184/30',
+        ' Maske: 255.255.255.252',
+        ' Erste: 10.0.0.185',
+        ' Letzte: 10.0.0.186',
+        ' Broadcast: 10.0.0.187',
+        '',
+        'SCHRITT 5: Rest',
+        ' frei: 10.0.0.188',
+        ' bis 10.0.0.255',
+        ' = 68 Adressen',
+        '',
+        ' als Blöcke:',
+        '  10.0.0.188/30',
+        '  10.0.0.192/26',
+        '',
+        'Reihenfolge der Eingabe:',
+        ' Lager: 10.0.0.160/28',
+        ' Verwaltung: 10.0.0.0/25',
+        ' Gäste: 10.0.0.128/27',
+        ' Server: 10.0.0.176/29',
+        ' Transfer: 10.0.0.184/30',
+    ),
+    'F_PC': (
+        'RECHENWEG NACH HOSTBEDARF (VLSM, IPv4)',
+        'Ausgangsnetz 10.0.0.0/24',
+        'Bedarf: Lager 10 Hosts, Verwaltung 100 Hosts, Gäste 25 Hosts,',
+        '        Server 5 Hosts, Transfer 2 Hosts',
+        '',
+        'SCHRITT 1: Nach Hostbedarf sortieren, größter Bedarf zuerst',
+        '   Verwaltung 100, Gäste 25, Lager 10, Server 5, Transfer 2',
+        '   Begründung: So beginnt jedes Subnetz an einer Grenze, die zu',
+        '   seiner Größe passt, und es entstehen keine Lücken.',
+        '',
+        'SCHRITT 2: Größe je Subnetz (kleinstes h mit 2^h - 2 >= Bedarf)',
+        '   Verwaltung (100 Hosts): 2^6 - 2 = 62 < 100, 2^7 - 2 = 126 >= 100',
+        '      -> h = 7, /25 (32 - 7), Maske 255.255.255.128, Größe 128',
+        '   Gäste (25 Hosts): 2^4 - 2 = 14 < 25, 2^5 - 2 = 30 >= 25',
+        '      -> h = 5, /27 (32 - 5), Maske 255.255.255.224, Größe 32',
+        '   Lager (10 Hosts): 2^3 - 2 = 6 < 10, 2^4 - 2 = 14 >= 10',
+        '      -> h = 4, /28 (32 - 4), Maske 255.255.255.240, Größe 16',
+        '   Server (5 Hosts): 2^2 - 2 = 2 < 5, 2^3 - 2 = 6 >= 5',
+        '      -> h = 3, /29 (32 - 3), Maske 255.255.255.248, Größe 8',
+        '   Transfer (2 Hosts): 2^2 - 2 = 2 >= 2',
+        '      -> h = 2, /30 (32 - 2), Maske 255.255.255.252, Größe 4',
+        '',
+        'SCHRITT 3: Passt es?',
+        '   Summe der Größen: 128 + 32 + 16 + 8 + 4 = 188 Adressen',
+        '   Ausgangsnetz /24: 2^8 = 256 Adressen -> passt',
+        '',
+        'SCHRITT 4: Vergabe nacheinander ab der ersten Adresse',
+        '  Nr Name       Netzadresse   Erste Host Letzte Host Broadcast',
+        '  1  Verwaltung 10.0.0.0/25   10.0.0.1   10.0.0.126  10.0.0.127',
+        '  2  Gäste      10.0.0.128/27 10.0.0.129 10.0.0.158  10.0.0.159',
+        '  3  Lager      10.0.0.160/28 10.0.0.161 10.0.0.174  10.0.0.175',
+        '  4  Server     10.0.0.176/29 10.0.0.177 10.0.0.182  10.0.0.183',
+        '  5  Transfer   10.0.0.184/30 10.0.0.185 10.0.0.186  10.0.0.187',
+        '',
+        'SCHRITT 5: Freier Rest',
+        '   10.0.0.188 bis 10.0.0.255 = 68 Adressen',
+        '',
+        '   als ausgerichtete Blöcke: 10.0.0.188/30, 10.0.0.192/26',
+        '',
+        'Ergebnis in der Reihenfolge der Eingabe:',
+        '   Lager: 10.0.0.160/28',
+        '   Verwaltung: 10.0.0.0/25',
+        '   Gäste: 10.0.0.128/27',
+        '   Server: 10.0.0.176/29',
+        '   Transfer: 10.0.0.184/30',
+    ),
+    'G_HANDY': (
+        'RECHENWEG NETZ AUFTEILEN',
+        '(IPv4)',
+        'Ausgangsnetz',
+        ' 192.168.10.0/30',
+        'gesucht: 2 gleich große',
+        'Subnetze',
+        '',
+        'SCHRITT 1: Bits für die',
+        'Subnetze',
+        ' Gesucht: kleinstes k mit',
+        ' 2^k >= 2',
+        ' 2^0 = 1 < 2 (zu wenig)',
+        ' 2^1 = 2 >= 2 -> k = 1',
+        '',
+        'SCHRITT 2: Neue Präfixlänge',
+        ' alte Präfixlänge + k',
+        ' = 30 + 1 = 31 -> /31',
+        '',
+        'SCHRITT 3: Maske, Hostbits,',
+        'Schrittweite',
+        ' /31, Oktett für Oktett:',
+        ' 1. Oktett 11111111 = 255',
+        ' 2. Oktett 11111111 = 255',
+        ' 3. Oktett 11111111 = 255',
+        ' 4. Oktett 11111110 = 254',
+        ' -> Subnetzmaske:',
+        '    255.255.255.254',
+        ' Hostbits = 32 - 31 = 1',
+        ' Adressen je Subnetz',
+        ' = 2^1 = 2',
+        ' Schrittweite im 4. Oktett',
+        ' = 256 - 254 = 2',
+        ' /31: 2 Adressen, nur für',
+        ' Punkt-zu-Punkt-Verbindungen',
+        ' (RFC 3021)',
+        '',
+        'SCHRITT 4: Subnetze',
+        'auflisten',
+        ' Netzadresse + Schrittweite',
+        ' ergibt das nächste Subnetz.',
+        'Subnetz 1: verwendet',
+        ' Netz: 192.168.10.0/31',
+        ' Erste: 192.168.10.0',
+        ' Letzte: 192.168.10.1',
+        ' Broadcast: keine',
+        'Subnetz 2: verwendet',
+        ' Netz: 192.168.10.2/31',
+        ' Erste: 192.168.10.2',
+        ' Letzte: 192.168.10.3',
+        ' Broadcast: keine',
+        '',
+        'SCHRITT 5: Kontrolle',
+        ' 2 x 2',
+        ' = 4 Adressen',
+        ' = Größe von /30',
+        ' (2^2 = 4)',
+        ' Ältere Bücher ziehen 2',
+        ' Subnetze ab. Das ist',
+        ' veraltet (RFC 1878).',
+    ),
+    'G_PC': (
+        'RECHENWEG NETZ AUFTEILEN (IPv4)',
+        'Ausgangsnetz 192.168.10.0/30, gesucht: 2 gleich große Subnetze',
+        '',
+        'SCHRITT 1: Benötigte Bits für die Subnetze',
+        '   Gesucht ist das kleinste k mit 2^k >= 2.',
+        '   2^0 = 1 < 2 (zu wenig)',
+        '   2^1 = 2 >= 2 -> k = 1',
+        '',
+        'SCHRITT 2: Neue Präfixlänge',
+        '   neue Präfixlänge = alte Präfixlänge + k = 30 + 1 = 31 -> /31',
+        '',
+        'SCHRITT 3: Subnetzmaske, Hostbits und Schrittweite',
+        '   /31 = 11111111.11111111.11111111.11111110',
+        '   -> Subnetzmaske: 255.255.255.254',
+        '   Hostbits = 32 - 31 = 1',
+        '   Adressen je Subnetz = 2^1 = 2',
+        '   Schrittweite im 4. Oktett = 256 - 254 = 2',
+        '   /31: 2 Adressen, nur für Punkt-zu-Punkt-Verbindungen (RFC 3021)',
+        '',
+        'SCHRITT 4: Subnetze auflisten',
+        '   (Netzadresse + Schrittweite = nächstes Subnetz)',
+        '  Nr Netzadresse        Erste Host      Letzte Host     Broadcast',
+        '  1  192.168.10.0/31    192.168.10.0    192.168.10.1    keine',
+        '  2  192.168.10.2/31    192.168.10.2    192.168.10.3    keine',
+        '',
+        'SCHRITT 5: Kontrolle',
+        '   2 x 2 = 4 Adressen = Größe von /30 (2^2 = 4)',
+        '   Alle 2 Subnetze werden verwendet.',
+        '   Ältere Bücher ziehen 2 Subnetze ab. Das ist veraltet (RFC 1878).',
+    ),
+    'H_HANDY': (
+        'RECHENWEG NETZ AUFTEILEN',
+        '(IPv4)',
+        'Ausgangsnetz',
+        ' 192.168.10.0/30',
+        'gesucht: 4 gleich große',
+        'Subnetze',
+        '',
+        'SCHRITT 1: Bits für die',
+        'Subnetze',
+        ' Gesucht: kleinstes k mit',
+        ' 2^k >= 4',
+        ' 2^1 = 2 < 4 (zu wenig)',
+        ' 2^2 = 4 >= 4 -> k = 2',
+        '',
+        'SCHRITT 2: Neue Präfixlänge',
+        ' alte Präfixlänge + k',
+        ' = 30 + 2 = 32 -> /32',
+        '',
+        'SCHRITT 3: Maske, Hostbits,',
+        'Schrittweite',
+        ' /32, Oktett für Oktett:',
+        ' 1. Oktett 11111111 = 255',
+        ' 2. Oktett 11111111 = 255',
+        ' 3. Oktett 11111111 = 255',
+        ' 4. Oktett 11111111 = 255',
+        ' -> Subnetzmaske:',
+        '    255.255.255.255',
+        ' Hostbits = 32 - 32 = 0',
+        ' Adressen je Subnetz',
+        ' = 2^0 = 1',
+        ' Schrittweite im 4. Oktett',
+        ' = 256 - 255 = 1',
+        ' /32: eine einzelne Adresse',
+        '',
+        'SCHRITT 4: Subnetze',
+        'auflisten',
+        ' Netzadresse + Schrittweite',
+        ' ergibt das nächste Subnetz.',
+        'Subnetz 1: verwendet',
+        ' Netz: 192.168.10.0/32',
+        ' Erste: 192.168.10.0',
+        ' Letzte: 192.168.10.0',
+        ' Broadcast: keine',
+        'Subnetz 2: verwendet',
+        ' Netz: 192.168.10.1/32',
+        ' Erste: 192.168.10.1',
+        ' Letzte: 192.168.10.1',
+        ' Broadcast: keine',
+        'Subnetz 3: verwendet',
+        ' Netz: 192.168.10.2/32',
+        ' Erste: 192.168.10.2',
+        ' Letzte: 192.168.10.2',
+        ' Broadcast: keine',
+        'Subnetz 4: verwendet',
+        ' Netz: 192.168.10.3/32',
+        ' Erste: 192.168.10.3',
+        ' Letzte: 192.168.10.3',
+        ' Broadcast: keine',
+        '',
+        'SCHRITT 5: Kontrolle',
+        ' 4 x 1',
+        ' = 4 Adressen',
+        ' = Größe von /30',
+        ' (2^2 = 4)',
+        ' Ältere Bücher ziehen 2',
+        ' Subnetze ab. Das ist',
+        ' veraltet (RFC 1878).',
+    ),
+    'H_PC': (
+        'RECHENWEG NETZ AUFTEILEN (IPv4)',
+        'Ausgangsnetz 192.168.10.0/30, gesucht: 4 gleich große Subnetze',
+        '',
+        'SCHRITT 1: Benötigte Bits für die Subnetze',
+        '   Gesucht ist das kleinste k mit 2^k >= 4.',
+        '   2^1 = 2 < 4 (zu wenig)',
+        '   2^2 = 4 >= 4 -> k = 2',
+        '',
+        'SCHRITT 2: Neue Präfixlänge',
+        '   neue Präfixlänge = alte Präfixlänge + k = 30 + 2 = 32 -> /32',
+        '',
+        'SCHRITT 3: Subnetzmaske, Hostbits und Schrittweite',
+        '   /32 = 11111111.11111111.11111111.11111111',
+        '   -> Subnetzmaske: 255.255.255.255',
+        '   Hostbits = 32 - 32 = 0',
+        '   Adressen je Subnetz = 2^0 = 1',
+        '   Schrittweite im 4. Oktett = 256 - 255 = 1',
+        '   /32: eine einzelne Adresse',
+        '',
+        'SCHRITT 4: Subnetze auflisten',
+        '   (Netzadresse + Schrittweite = nächstes Subnetz)',
+        '  Nr Netzadresse        Erste Host      Letzte Host     Broadcast',
+        '  1  192.168.10.0/32    192.168.10.0    192.168.10.0    keine',
+        '  2  192.168.10.1/32    192.168.10.1    192.168.10.1    keine',
+        '  3  192.168.10.2/32    192.168.10.2    192.168.10.2    keine',
+        '  4  192.168.10.3/32    192.168.10.3    192.168.10.3    keine',
+        '',
+        'SCHRITT 5: Kontrolle',
+        '   4 x 1 = 4 Adressen = Größe von /30 (2^2 = 4)',
+        '   Alle 4 Subnetze werden verwendet.',
+        '   Ältere Bücher ziehen 2 Subnetze ab. Das ist veraltet (RFC 1878).',
+    ),
+}
+
+
+class RechenwegEbisHTest(unittest.TestCase):
+    """T-RW-3 (Fassung 3): Anhang A und A2, Beispiele E bis H woertlich."""
+
+    def test_beispiele(self):
+        for schluessel in sorted(ANHANG_A_EH):
+            art, netz, wert = BEISPIELE_EH[schluessel[0]]
+            with self.subTest(beispiel=schluessel):
+                text = rechenweg(art, netz, wert, schluessel.endswith("HANDY"))
+                self.assertEqual(text.split("\n"), list(ANHANG_A_EH[schluessel]))
+
+    def test_anhang_vollstaendig(self):
+        self.assertEqual([len(ANHANG_A_EH[k]) for k in sorted(ANHANG_A_EH)],
+                         [54, 25, 106, 45, 59, 29, 67, 31])     # Zeilenzahlen laut b13
+        for schluessel, zeilen in ANHANG_A_EH.items():
+            grenze = GRENZE if schluessel.endswith("HANDY") else PC_BREITE
+            self.assertLessEqual(max(len(z) for z in zeilen), grenze, schluessel)
 
 
 if __name__ == "__main__":
