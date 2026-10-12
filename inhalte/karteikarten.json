@@ -433,10 +433,10 @@
     "thema": "storage",
     "q": "Was ist der Unterschied zwischen RAID 5 und RAID 6?",
     "a": "RAID 6 nutzt doppelte Parität, RAID 5 einfache",
-    "a_full": "RAID 6 schreibt Parität auf zwei Platten und verkraftet 2 Ausfälle, RAID 5 nur eine Paritätsplatte und verkraftet 1 Ausfall.",
+    "a_full": "RAID 5 und RAID 6 verteilen die Parität über alle Platten, eine eigene Paritätsplatte gibt es nicht. RAID 6 speichert doppelte Parität und verkraftet 2 Ausfälle, RAID 5 speichert einfache Parität und verkraftet 1 Ausfall.",
     "options": [
       "RAID 6 nutzt doppelte Parität, RAID 5 einfache",
-      "RAID 5 ist schneller als RAID 6 bei Schreibzugriffen",
+      "RAID 6 ist bei Schreibzugriffen schneller als RAID 5",
       "RAID 6 benötigt weniger Platten als RAID 5",
       "Es gibt keinen Unterschied"
     ]
@@ -835,12 +835,12 @@
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
     "q": "Wer legt die wesentlichen Inhalte eines Ausbildungsvertrags nach dem Berufsbildungsgesetz (BBiG) fest?",
-    "a": "Ausbildender (Betrieb) und Auszubildender einigen sich schriftlich, u.a. auf Ausbildungsziel, -dauer, Vergütung und Probezeit",
-    "a_full": "Nach § 11 BBiG müssen im Ausbildungsvertrag u.a. Art, Ziel und Dauer der Ausbildung, Ausbildungsvergütung, Arbeitszeit, Probezeit und Kündigungsregeln schriftlich festgehalten werden.",
+    "a": "Ausbildender (Betrieb) und Auszubildender vereinbaren u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält den Inhalt in Textform fest",
+    "a_full": "Ausbildender und Auszubildender schließen den Ausbildungsvertrag (§ 10 BBiG). Nach § 11 BBiG fasst der Ausbildende den wesentlichen Inhalt unverzüglich nach Vertragsschluss, spätestens vor Beginn der Ausbildung, in Textform ab, u.a. Art, Ziel und Dauer der Ausbildung, Ausbildungsvergütung, Arbeitszeit, Probezeit und Kündigungsregeln.",
     "options": [
-      "Ausbildender (Betrieb) und Auszubildender einigen sich schriftlich, u.a. auf Ausbildungsziel, -dauer, Vergütung und Probezeit",
+      "Ausbildender (Betrieb) und Auszubildender vereinbaren u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält den Inhalt in Textform fest",
       "Nur die IHK legt die Vertragsinhalte einseitig fest",
-      "Der Vertrag muss nicht schriftlich abgeschlossen werden",
+      "Die Berufsschule legt die Vertragsinhalte fest",
       "Die Ausbildungsvergütung ist gesetzlich nicht geregelt"
     ]
   },

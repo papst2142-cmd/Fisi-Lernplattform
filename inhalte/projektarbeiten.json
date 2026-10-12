@@ -152,7 +152,7 @@
       "Mindestens drei WLANs/VLANs: Gäste-WLAN (isoliert, eigenes Subnetz, nur Internetzugang), Werkstatt-WLAN (Zugriff auf Diagnosesysteme/Herstellerportale) und Verkaufs-WLAN (Zugriff auf CRM/Warenwirtschaft) - jeweils eigene SSID und VLAN mit Firewall-Regeln zwischen den Netzen.",
       "Eine eigene, vom internen Netz isolierte SSID mit Client-Isolation (Gäste sehen sich nicht gegenseitig), Bandbreitenbegrenzung pro Nutzer sowie ggf. eine Splash-Page mit Nutzungsbedingungen und regelmäßigem Passwortwechsel.",
       "Zusätzliche Access Points bzw. Modelle mit höherer Sendeleistung/besserer Antenne gezielt außerhalb direkter Metallabschattung in der Werkstatt platzieren und nach der Installation eine Nachmessung der Feldstärke durchführen.",
-      "Beispielkalkulation: 6-8 Access Points (je ca. 150-250 Euro) = ca. 1.200-2.000 Euro, ein verwaltbarer PoE-Switch ca. 400-600 Euro, Verkabelung/Montage ca. 800-1.200 Euro, Rest als Puffer für Lizenzen/Controller-Software."
+      "Beispielkalkulation: 6-8 Access Points (je ca. 150-250 Euro) = ca. 900-2.000 Euro, ein verwaltbarer PoE-Switch ca. 400-600 Euro, Verkabelung/Montage ca. 800-1.200 Euro, Rest als Puffer für Lizenzen/Controller-Software."
     ]
   },
   {
@@ -307,7 +307,7 @@
       "Berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Diebstahl), abzuwägen gegen die Persönlichkeitsrechte der Beschäftigten. Die Überwachung muss geeignet, erforderlich und angemessen sein, mildere Mittel (z.B. Zutrittskontrolle) sind zu prüfen. Für Beschäftigte ist zusätzlich § 26 BDSG zu beachten.",
       "Eine Videoüberwachung ist eine technische Einrichtung zur Überwachung von Verhalten und Leistung, daher hat der Betriebsrat nach § 87 Abs. 1 Nr. 6 BetrVG ein Mitbestimmungsrecht. Die Details werden in einer Betriebsvereinbarung geregelt.",
       "Keine Aufnahme von Sozialräumen, Toiletten oder Arbeitsplätzen mit Daueraufenthalt. Kamerawinkel auf Lagerbereiche und Rampe beschränken, Privatzonen maskieren. Speicherdauer z.B. 72 Stunden mit automatischer Löschung. Zugriff nur für wenige Berechtigte im Vier-Augen-Prinzip, mit Protokollierung.",
-      "Eigenes Kamera-VLAN ohne Internetzugang, nur der NVR ist erreichbar. PoE-Budget: 8 * 12,95 W = 103,6 W, der Switch braucht also mindestens rund 104 W PoE-Leistung, sinnvoll mit Reserve z.B. 120 W oder mehr. Standardpasswörter ändern, Firmware aktualisieren, Zeit per NTP synchronisieren.",
+      "Eigenes Kamera-VLAN ohne Internetzugang, nur der NVR ist erreichbar. PoE-Budget: Die 12,95 W stehen am Gerät zur Verfügung, der Switch muss dafür je Port bis zu 15,4 W bereitstellen, weil ein Teil in der Leitung verloren geht (PoE nach IEEE 802.3af). Also 8 * 15,4 W = 123,2 W, der Switch braucht mindestens rund 124 W PoE-Leistung, sinnvoll mit Reserve z.B. 150 W oder mehr. Standardpasswörter ändern, Firmware aktualisieren, Zeit per NTP synchronisieren.",
       "Hinweisschilder vor dem überwachten Bereich mit Kamerasymbol, Verantwortlichem, Zweck, Kontakt des Datenschutzbeauftragten und Hinweis auf weitere Informationen (Art. 13 DSGVO). Beschäftigte zusätzlich schriftlich informieren.",
       "Eintrag im Verzeichnis von Verarbeitungstätigkeiten, dokumentierte Interessenabwägung, ggf. Datenschutz-Folgenabschätzung (bei systematischer Überwachung von Beschäftigten oft erforderlich), Löschkonzept und TOM."
     ]
