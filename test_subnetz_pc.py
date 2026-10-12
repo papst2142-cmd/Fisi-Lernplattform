@@ -84,6 +84,78 @@ class QuelleTest(unittest.TestCase):
         self.assertNotIn("_HANDY", _source("app_gui.py"))
 
 
+@unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
+class SchutzLeerenTest(unittest.TestCase):
+    """B-D-04 (D-4): Je PC-Rechner ein Schutztest - nach einem Fehler ist der
+    Ergebniskasten leer. Laeuft auch auf f3ba4fa (dort rot: das alte Ergebnis
+    bleibt stehen). Name mit S, damit die Klasse nach den Pc-Klassen laeuft."""
+
+    @classmethod
+    def setUpClass(cls):
+        shared = _shared_app()
+        cls.root = shared["root"]
+        cls.errors = shared["errors"]
+        cls.view = shared["app"].views["calc"]
+
+    def setUp(self):
+        self.errors.clear()
+
+    def settle(self, times=2):
+        for _ in range(times):
+            self.root.update_idletasks()
+            self.root.update()
+
+    @staticmethod
+    def text(box):
+        return box.get("1.0", "end-1c")
+
+    def check(self, entry, bad, box, calc, extra=None):
+        good = entry.get()
+        calc()
+        self.assertTrue(self.text(box).strip())
+        entry.set(bad)
+        calc()
+        self.assertEqual(len(self.errors), 1)
+        self.assertEqual(self.text(box), "")
+        if extra is not None:
+            extra()
+        entry.set(good)
+        calc()
+        self.assertTrue(self.text(box).strip())
+        self.assertEqual(len(self.errors), 1)
+
+    def test_subnetting(self):
+        view = self.view
+        sub = getattr(view, "subnet", None)
+        if sub is None:      # f3ba4fa: eine Ansicht ohne Schalter
+            entry, box, calc = view.entry_ip, view.txt_subnet, view.calc_subnet
+        else:
+            sub.mode_pills.select_value("ipv4")
+            sub.view_pills["ipv4"].select_value("netzdaten")
+            data = sub.views[("ipv4", "netzdaten")]
+            entry, box = data["net"], data["box"]
+            calc = lambda: sub.calc("ipv4", "netzdaten")  # noqa: E731
+        self.check(entry, "abc", box, calc)
+
+    def test_raid(self):
+        view = self.view
+        self.check(view.entry_disks, "abc", view.txt_raid, view.calc_raid)
+
+    def test_bildschirm(self):
+        view = self.view
+        self.check(view.entry_width, "-5", view.txt_screen, view.calc_screen)
+
+    def test_usv(self):
+        view = self.view
+
+        def picture_gone():
+            self.assertIsNone(view.ups_picture._picture)
+            self.settle()
+            self.assertEqual(view.ups_picture.find_all(), ())
+        self.check(view.ups_entries["eta"], "200", view.txt_ups,
+                   lambda: view.calc_ups("empfehlung"), picture_gone)
+        self.assertIsNotNone(view.ups_picture._picture)
+
 class UsvNullTest(unittest.TestCase):
     """B-D-04/D-5: Alterung "-0" zeigt "+0 %", nie "+-" (Schutz, schon so)."""
 
@@ -188,17 +260,20 @@ def _shared_app():
     app_gui.messagebox.showerror = lambda *args, **kwargs: errors.append(args)
     # Zaehler am Rechenkern (T-UI-5: beim Wechsel wird nicht neu gerechnet)
     calls = {"split": 0, "hosts": 0, "report": 0}
+    # (hasattr: die Datei laeuft fuer die Rot-Probe auch auf f3ba4fa)
     orig = {name: getattr(app_gui, name) for name in
-            ("split_network", "subnet_by_hosts", "subnet_report")}
+            ("split_network", "subnet_by_hosts", "subnet_report")
+            if hasattr(app_gui, name)}
 
     def counted(key, func):
         def wrapper(*args, **kwargs):
             calls[key] += 1
             return func(*args, **kwargs)
         return wrapper
-    app_gui.split_network = counted("split", orig["split_network"])
-    app_gui.subnet_by_hosts = counted("hosts", orig["subnet_by_hosts"])
-    app_gui.subnet_report = counted("report", orig["subnet_report"])
+    for name, key in (("split_network", "split"), ("subnet_by_hosts", "hosts"),
+                      ("subnet_report", "report")):
+        if name in orig:
+            setattr(app_gui, name, counted(key, orig[name]))
     root = ctk.CTk()
     root.geometry("1360x880+0+0")
     app = app_gui.FISIApp(root)
