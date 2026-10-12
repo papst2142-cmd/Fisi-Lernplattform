@@ -4161,12 +4161,36 @@ def subnet_core(name):
     return getattr(fisi_core, name, None)
 
 
+class SubnetViews(dict):
+    """(Modus, Ansicht) -> Widgets und Stand einer Ansicht der Subnetting-Karte.
+
+    Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Eine Ansicht entsteht erst beim ersten
+    Zugriff mit [] (z.B. erstes Antippen ihrer Pille). "in", get() und
+    Schleifen bauen nichts. Gibt es die Ansicht im Modus nicht (IPv6 hat keine
+    Ansicht "bedarf"), bleibt es beim KeyError."""
+
+    def __init__(self, calc):
+        super().__init__()
+        self.calc = calc
+
+    def __missing__(self, where):
+        mode, key = where
+        if key not in [k for k, _name in SUBNET_VIEWS.get(mode, ())]:
+            raise KeyError(where)
+        self.calc.build_mode(mode)
+        if not dict.__contains__(self, where):
+            self.calc._build_view(mode, key)
+        return dict.__getitem__(self, where)
+
+
 class SubnetCalc:
     """Die Subnetting-Karte des Rechners. Jeder Modus hat eigene Eingaben,
     Ergebnisse und Rechenwege; jede Ansicht merkt sich ihr Ergebnis und ihre
     Seite. Beim Wechsel wird nichts neu gerechnet, der Rechenweg klappt zu.
-    Der IPv4-Teil entsteht beim Oeffnen, der IPv6-Teil beim ersten Wechsel
-    oder vorher verdeckt beim Vorladen (CalcView.prepare)."""
+    Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Beim Oeffnen entsteht nur die Ansicht
+    "netzdaten" von IPv4, beim ersten Wechsel nur die von IPv6; die uebrigen
+    Ansichten beim ersten Antippen (SubnetViews) oder vorher verdeckt beim
+    Vorladen (CalcView.prepare, build_rest)."""
 
     def __init__(self, card):
         self.card = card
@@ -4174,7 +4198,7 @@ class SubnetCalc:
         self.view_of = {"ipv4": "netzdaten", "ipv6": "netzdaten"}
         self.mode_frames = {}
         self.view_pills = {}
-        self.views = {}              # (Modus, Ansicht) -> Widgets und Stand
+        self.views = SubnetViews(self)   # (Modus, Ansicht) -> Widgets und Stand
         self.mode_pills = PillGroup(card.body, SUBNET_MODES, on_change=self.set_mode)
         self.mode_pills.pack(anchor="w", pady=(0, 10))
         self.build_mode("ipv4")
@@ -4186,7 +4210,8 @@ class SubnetCalc:
         return mode in self.mode_frames
 
     def build_mode(self, mode):
-        """Baut alle Ansichten eines Modus (verdeckt)."""
+        """Baut Pillenzeile und Ansicht "netzdaten" eines Modus (verdeckt); die
+        uebrigen Ansichten entstehen erst bei Bedarf (ab 0.63.1)."""
         if mode in self.mode_frames:
             return False
         frame = transparent_frame(self.card.body)
@@ -4195,10 +4220,21 @@ class SubnetCalc:
                           on_change=lambda key, m=mode: self.set_view(m, key))
         pills.pack(anchor="w", pady=(0, 14))
         self.view_pills[mode] = pills
-        for key, _name in SUBNET_VIEWS[mode]:
-            self._build_view(mode, key)
+        self._build_view(mode, "netzdaten")
         self.views[(mode, "netzdaten")]["frame"].pack(fill="both", expand=True)
         return True
+
+    def build_rest(self):
+        """Baut alle noch fehlenden Teile verdeckt (Vorladen). True, wenn
+        dabei etwas gebaut wurde."""
+        worked = False
+        for mode, _name in SUBNET_MODES:
+            worked = self.build_mode(mode) or worked
+            for key, _name in SUBNET_VIEWS[mode]:
+                if (mode, key) not in self.views:
+                    self._build_view(mode, key)
+                    worked = True
+        return worked
 
     def _build_view(self, mode, key):
         frame = transparent_frame(self.mode_frames[mode])
@@ -4676,8 +4712,12 @@ class CalcView(View):
     # vorhandenen Tests stuetzen (test_vorladen.py). Ohne Vorladen
     # (FISI_VORLADEN=0) oder wenn der Rechner vorher geoeffnet wird, baut der
     # erste Wechsel.
+    # Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Im selben Schritt entstehen auch die
+    # Ansichten, die beim Oeffnen nicht mehr gebaut werden (IPv4 "aufteilen"
+    # und "bedarf", IPv6 "aufteilen"), damit sich mit Vorladen nichts
+    # verschlechtert.
     def prepare(self):
-        return self.subnet.build_mode("ipv6")
+        return self.subnet.build_rest()
 
     def calc_raid(self):
         try:
