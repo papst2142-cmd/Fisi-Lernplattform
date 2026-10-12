@@ -39,6 +39,7 @@ import base64
 import datetime
 import email.utils
 import gzip
+import http.client
 import json
 import re
 import sqlite3
@@ -92,6 +93,13 @@ MSG_FUTURE_MARKER = ("Eine Löschmarke lag in der Zukunft (falsche Uhr) und wurd
                      "Uhrzeit von GitHub gesetzt.")
 MSG_FUTURE_BACKUP = ("Die Sicherung enthält eine Löschmarke in der Zukunft. Sie wurde "
                      "nicht angewendet.")
+# Ab 0.62.5 (B-G-27): abgebrochene oder fremde Antwort (z.B. Seite eines
+# Proxys oder Virenscanners) statt "Unerwarteter Fehler: IncompleteRead ..."
+MSG_INCOMPLETE = "Die Antwort von GitHub war unvollständig. Bitte später noch einmal."
+# Ab 0.62.5 (B-G-28): GitHub lehnt das Hochladen auch nach drei Versuchen mit
+# 422 ab - nicht "gleichzeitig abgeglichen"
+MSG_UPLOAD_REJECTED = ("GitHub hat das Hochladen des Lernstands abgelehnt (HTTP 422). "
+                       "Der Lernstand auf diesem Gerät bleibt erhalten.")
 
 SETTING_DEFAULTS = {"sync_repo": "", "sync_token": "", "sync_auto": True,
                     "sync_last": ""}
@@ -103,7 +111,12 @@ class SyncError(Exception):
 
 class _Conflict(Exception):
     """Die Datei wurde zwischen Lesen und Schreiben von einem anderen Geraet
-    geaendert - dann einfach noch einmal abgleichen."""
+    geaendert - dann einfach noch einmal abgleichen. code: HTTP-Code (ab
+    0.62.5, B-G-28)."""
+
+    def __init__(self, code=409):
+        Exception.__init__(self, code)
+        self.code = code
 
 
 class SyncResult:
@@ -229,6 +242,10 @@ def _request(method, url, token, body=None, accept="application/vnd.github+json"
     except (urllib.error.URLError, OSError):
         raise SyncError("Keine Verbindung zu GitHub. Bitte die Internetverbindung "
                         "prüfen.")
+    except http.client.HTTPException:
+        # ab 0.62.5 (B-G-27): z.B. IncompleteRead - Verbindung brach mitten in
+        # der Antwort ab
+        raise SyncError(MSG_INCOMPLETE)
 
 
 # Ab 0.62.4: Uhrzeit von GitHub aus dem Date-Kopf der letzten Antwort und die
@@ -288,6 +305,9 @@ def fetch_remote(repo, token):
     url = _file_url(repo)
     try:
         meta = json.loads(_request("GET", url, token).decode("utf-8"))
+    except ValueError:
+        # ab 0.62.5 (B-G-27): kein JSON (fremde Seite, abgeschnitten)
+        raise SyncError(MSG_INCOMPLETE)
     except urllib.error.HTTPError as error:
         if error.code != 404:
             raise SyncError(_http_error(error.code, repo))
@@ -297,6 +317,8 @@ def fetch_remote(repo, token):
         except urllib.error.HTTPError as repo_error:
             raise SyncError(_http_error(repo_error.code, repo))
         return None, None
+    if not isinstance(meta, dict):
+        raise SyncError(MSG_INCOMPLETE)     # ab 0.62.5 (B-G-27): z.B. eine Liste
 
     try:
         if meta.get("encoding") == "base64" and meta.get("content"):
@@ -349,7 +371,7 @@ def upload(repo, token, data, sha, device):
         _request("PUT", _file_url(repo), token, body=body)
     except urllib.error.HTTPError as error:
         if error.code in (409, 422):
-            raise _Conflict()
+            raise _Conflict(error.code)
         raise SyncError(_http_error(error.code, repo))
 
 
@@ -572,7 +594,7 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     remote_columns = remote.get("columns") or {}
     remote_tables = remote.get("tables") or {}
 
-    received = 0
+    received = []       # ab 0.62.5 (B-G-18): (Tabelle, uid) neu uebernommen
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -616,11 +638,17 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
                         gone.add(record["uid"])
                     continue
                 cur.execute(sql, [record["uid"]] + [record[c] for c in columns])
-                received += cur.rowcount
+                if cur.rowcount > 0:
+                    received.append((table, record["uid"]))
             stats.gone.update((table, uid) for uid in gone)
         # Geloeschte Durchgaenge (ab 0.48) verschwinden, auch wenn ihre
         # Ereignisse gerade erst von einem anderen Geraet kamen
         purge_deleted_runs(cur)
+        # Ab 0.62.5 (B-G-18): netto zaehlen - was purge_deleted_runs gleich
+        # wieder entfernt hat (nur Spielereignisse), gilt nicht als "uebernommen"
+        received = sum(1 for table, uid in received if table != "spiel_ereignisse"
+                       or cur.execute("SELECT 1 FROM spiel_ereignisse WHERE uid = ?",
+                                      (uid,)).fetchone() is not None)
         # Abschlussprojekt (ab 0.51): nur die neueste Fassung je Feld behalten
         purge_superseded_project_rows(cur)
         # Ab 0.53: Antworten von Geraeten mit aelterer Version koennen noch
@@ -656,6 +684,7 @@ def sync(db, settings=None, device=""):
     received = 0
     stats = MergeStats()
     clamped = False
+    rejected = False        # ab 0.62.5 (B-G-28): letzter Versuch mit 422 abgelehnt
     for _attempt in range(3):
         _SERVER_CLOCK.update(server=None, device=None)
         sha, remote = fetch_remote(repo, token)
@@ -682,11 +711,14 @@ def sync(db, settings=None, device=""):
                    for table, uids in local_uids.items())
         try:
             upload(repo, token, local, sha, device)
-        except _Conflict:
+        except _Conflict as conflict:
+            rejected = conflict.code == 422
             continue
         result = SyncResult(received, sent)
         break
     else:
+        if rejected:
+            raise SyncError(MSG_UPLOAD_REJECTED)
         raise SyncError("Ein anderes Gerät hat gleichzeitig abgeglichen. Bitte "
                         "gleich noch einmal versuchen.")
 
