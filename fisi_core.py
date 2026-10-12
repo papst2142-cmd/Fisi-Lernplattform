@@ -2472,6 +2472,8 @@ SUBNET_NET_ERROR = ("Bitte ein gültiges Netz mit Präfix angeben.\n\n"
                     "Beispiele:\n  192.168.10.0/24\n  2001:db8:abcd::/48")
 SUBNET_COUNT_ERROR = "Die Anzahl muss mindestens 1 sein."
 SUBNET_TOO_MANY = "Zu viele Subnetze: /%d + %d Bit = /%d, mehr als /%d geht nicht."
+# Fassung 4 (Z-10 Fund 10, N-4e): dahinter die Hoechstzahl, ab 2^33 als Potenz
+SUBNET_TOO_MANY_MAX = "Höchstens %s %s."
 SUBNET_HOST_HINT = ("Hinweis: %s ist eine Host-Adresse. "
                     "Gerechnet wird mit dem Netz %s.")
 SUBNET_NO_SPLIT = "Keine Teilung nötig: Bei 1 Subnetz bleibt das Netz, wie es ist."
@@ -2487,11 +2489,20 @@ SUBNET_NEED_NUMBER = ("Zeile %d: Bitte die Anzahl Hosts als ganze Zahl angeben "
 SUBNET_NEED_MIN = "Zeile %d: Der Hostbedarf muss mindestens 1 sein."
 SUBNET_NEED_MAX = "Zeile %d: Mehr als %s Hosts passen in kein IPv4-Netz."
 SUBNET_NAME_LONG = "Zeile %d: Der Name ist zu lang (höchstens %d Zeichen)."
-SUBNET_NEED_COMMA = ("Zeile %d: Bitte je Zeile genau ein Subnetz angeben, ohne Komma "
-                     "(z. B. A 50).")
+SUBNET_NEED_COMMA = ("Zeile %d: Bitte je Zeile genau ein Subnetz angeben, ohne Komma, "
+                     "Semikolon oder Schrägstrich (z. B. A 50).")                # M-3
+SUBNET_NEED_NUMBERS = ("Zeile %d: Mehrere Zahlen in der Zeile. Je Zeile ein Subnetz; "
+                       "steht im Namen eine Zahl, bitte mit Doppelpunkt trennen "
+                       "(z. B. VLAN 10: 20).")                                  # M-12
 SUBNET_NAME_TWICE = ("Zeile %d: Der Name „%s“ kommt schon in Zeile %d vor. "
                      "Bitte jeden Namen nur einmal verwenden.")
-SUBNET_MISSING = "Es fehlen %s Adressen. Das Ausgangsnetz müsste mindestens /%d sein."
+SUBNET_NAME_AUTO_TAKEN = ("Zeile %d: Den Namen „%s“ hat schon Zeile %d automatisch "
+                          "bekommen (sie hat keinen Namen). Bitte einen anderen Namen "
+                          "wählen.")                                            # M-13a
+SUBNET_NAME_AUTO_CLASH = ("Zeile %d: Ohne Namen heißt das Subnetz automatisch „%s“, "
+                          "diesen Namen hat schon Zeile %d. Bitte einen Namen "
+                          "angeben.")                                           # M-13b
+SUBNET_MISSING = "Es fehlen %s Adressen. Nötig wäre mindestens ein /%d (%s Adressen)."
 SUBNET_MISSING_ALL = ("Es fehlen %s Adressen. Das passt in kein IPv4-Netz "
                       "(höchstens 2^32 Adressen).")
 SUBNET_HINT_P2P = ("Hinweis: Für eine Punkt-zu-Punkt-Verbindung mit 2 Hosts "
@@ -2612,7 +2623,11 @@ def split_network(net_text, count, version=None):
     bits = (wanted - 1).bit_length()        # kleinstes k mit 2^k >= N
     new = prefix + bits
     if new > width:
-        raise InputError(SUBNET_TOO_MANY % (prefix, bits, new, width))
+        room = width - prefix               # hoechstens 2^room Subnetze
+        most = SUBNET_TOO_MANY_MAX % (
+            de_int(1 << room) if room <= 32 else "2^%d" % room,
+            "Subnetz" if room == 0 else "Subnetze")
+        raise InputError(SUBNET_TOO_MANY % (prefix, bits, new, width) + " " + most)
     total = 1 << bits
     result.update({
         "gewuenscht": wanted, "k": bits, "neu": new, "anzahl": total,
@@ -2695,7 +2710,7 @@ def split_report(result, page=1, schmal=False):
     if free:
         count_text += " (%s verwendet, %s frei, Reserve)" % (de_int(used), de_int(free))
     rows = [("Ausgangsnetz", base),
-            ("Gesucht", "%s Subnetze" % de_int(used)),
+            ("Gesucht", "1 Subnetz" if used == 1 else "%s Subnetze" % de_int(used)),
             ("Benötigte Bits", "k = %d" % result["k"]),
             ("Neue Präfixlänge", "/%d" % result["neu"])]
     if version == 4:
@@ -2740,7 +2755,7 @@ def split_report(result, page=1, schmal=False):
                   ipv4_text(entry["erste"]), ipv4_text(entry["letzte"]),
                   ipv4_text(entry["broadcast"]) if entry["broadcast"] is not None
                   else "keine"] for entry in data["eintraege"]]
-        heads = ["Netzadresse", "Erste Host", "Letzte Host", "Broadcast"]
+        heads = ["Netzadresse", "Erster Host", "Letzter Host", "Broadcast"]
         sizes = [max(len(heads[c]), max(len(row[c]) for row in cells)) for c in range(4)]
         lines.append(" ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
                                                     for c in range(4)]).rstrip())
@@ -2759,12 +2774,42 @@ def split_report(result, page=1, schmal=False):
     return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH))
 
 
+_HOST_NUMBER_WORD = re.compile(r"-?[0-9.]+")     # Wort, das wie eine Zahl aussieht
+_HOST_WORDS = ("hosts", "host")
+
+
+def _host_is_number(text):
+    try:
+        _number_value(text)
+    except _NumberProblem:
+        return False
+    return True
+
+
+def subnet_hosts_text(need):
+    """ "50 Hosts", bei 1 "1 Host" (Plan 0.63 Fassung 4, Z-10 Fund 5)."""
+    return "%s %s" % (de_int(need), "Host" if need == 1 else "Hosts")
+
+
 def read_host_lines(text):
-    """Liest die Bedarfszeilen "Name Hosts" oder nur "Hosts" (dann Name
-    "Netz 1", "Netz 2" ...). Erlaubt auch "A: 50" und "A 50 Hosts".
-    Ein Subnetz je Zeile: eine Zeile mit Komma gibt eine Meldung (Komma ist
-    das Dezimalzeichen, "A 50, B 20" waere sonst ein Subnetz "A 50, B").
-    Namen eindeutig, Gross/Klein zaehlt dabei nicht (Plan 0.63, 2.3.1).
+    """Liest die Bedarfszeilen "Name Hosts", "Name: Hosts" oder nur "Hosts"
+    (dann Name "Netz 1", "Netz 2" ...; n zaehlt die Subnetze). Ein Wort
+    "Hosts" am Ende ist erlaubt. Regeln je Zeile (Plan 0.63 Fassung 4,
+    Abschnitt 2.3.1, in dieser Reihenfolge):
+      * Leere Zeilen werden uebergangen, zaehlen aber bei "Zeile n" mit.
+        Ein Tabulator zaehlt wie ein Leerzeichen, das Minus "−" wie "-".
+      * Komma, Semikolon oder Schraegstrich: Meldung (M-3); "A 50, B 20"
+        waere sonst ein Subnetz "A 50, B" (Komma = Dezimalzeichen).
+      * Mehr als ein Doppelpunkt: Meldung (M-12).
+      * Mit Doppelpunkt: links der Name, rechts der Bedarf nach der
+        Leseregel von read_number ("1.000", "1 000", "50.0" erlaubt).
+      * Ohne Doppelpunkt: Ist die ganze Zeile eine Zahl, ist das der Bedarf;
+        sonst ist das letzte Wort der Bedarf und der Rest der Name. Steht im
+        Namen noch ein Wort aus Ziffern ("A 50 B 20", "A 1 000", "VLAN 10
+        20"), ist die Zeile mehrdeutig: Meldung (M-12).
+      * Ein Strich am Ende des Namens ist ein Trenner ("A - 50" = "A").
+      * Namen eindeutig, Gross/Klein zaehlt nicht; automatische Namen zaehlen
+        mit und haben eigene Meldungen (M-13a, M-13b).
     Liefert [(Name, Bedarf)] in der Reihenfolge der Eingabe."""
     lines = str(text if text is not None else "").splitlines()
     filled = [line for line in lines if line.strip()]
@@ -2775,28 +2820,51 @@ def read_host_lines(text):
     wants = []
     seen = {}
     for number, line in enumerate(lines, 1):
-        parts = line.replace(":", " ").split()
-        if not parts:
+        line = line.replace("\t", " ").replace("\u2212", "-").strip()
+        if not line:
             continue
-        if "," in line:
+        if any(sign in line for sign in ",;/"):
             raise InputError(SUBNET_NEED_COMMA % number)
-        if len(parts) > 1 and parts[-1].lower() in ("hosts", "host"):
-            parts = parts[:-1]
+        if line.count(":") > 1:
+            raise InputError(SUBNET_NEED_NUMBERS % number)
+        if ":" in line:
+            name, _colon, rest = line.partition(":")
+            words = rest.split()
+            if len(words) > 1 and words[-1].lower() in _HOST_WORDS:
+                words = words[:-1]
+            name, need_text = " ".join(name.split()), " ".join(words)
+        else:
+            words = line.split()
+            if len(words) > 1 and words[-1].lower() in _HOST_WORDS:
+                words = words[:-1]
+            if _host_is_number(" ".join(words)):         # "50", "1 000"
+                name, need_text = "", " ".join(words)
+            else:
+                if any(_HOST_NUMBER_WORD.fullmatch(word) for word in words[:-1]):
+                    raise InputError(SUBNET_NEED_NUMBERS % number)
+                name, need_text = " ".join(words[:-1]), words[-1]
+        name = name.rstrip(" -\u2013\u2014")
         try:
-            need = read_number(parts[-1], SUBNET_FIELD_NEEDS, ganz=True)
+            need = read_number(need_text, SUBNET_FIELD_NEEDS, ganz=True)
         except InputError:
             raise InputError(SUBNET_NEED_NUMBER % number) from None
         if need < 1:
             raise InputError(SUBNET_NEED_MIN % number)
         if need > (1 << 32) - 2:
             raise InputError(SUBNET_NEED_MAX % (number, de_int((1 << 32) - 2)))
-        name = " ".join(parts[:-1]) or "Netz %d" % (len(wants) + 1)
+        auto = not name
+        name = name or "Netz %d" % (len(wants) + 1)
         if len(name) > SUBNET_NAME_MAX:
             raise InputError(SUBNET_NAME_LONG % (number, SUBNET_NAME_MAX))
         key = name.casefold()
         if key in seen:
-            raise InputError(SUBNET_NAME_TWICE % (number, name, seen[key]))
-        seen[key] = number
+            earlier, earlier_auto = seen[key]
+            if auto:
+                raise InputError(SUBNET_NAME_AUTO_CLASH % (number, name, earlier))
+            if earlier_auto:
+                raise InputError(SUBNET_NAME_AUTO_TAKEN % (number, name, earlier))
+            raise InputError(SUBNET_NAME_TWICE % (number, name, earlier))
+        seen[key] = (number, auto)
         wants.append((name, need))
     return wants
 
@@ -2858,7 +2926,8 @@ def subnet_by_hosts(net_text, needs, version=None):
             result["meldung"] = SUBNET_MISSING_ALL % de_int(result["fehlt"])
         else:
             result["noetig"] = needed
-            result["meldung"] = SUBNET_MISSING % (de_int(result["fehlt"]), needed)
+            result["meldung"] = SUBNET_MISSING % (de_int(result["fehlt"]), needed,
+                                                  de_int(1 << (32 - needed)))
     result["hinweise"] = hints
     return result
 
@@ -2887,7 +2956,7 @@ def hosts_report(result, schmal=False):
                                                  de_int(result["kapazitaet"])),
                   "Freier Rest:", " " + rest, "Vergeben in der Reihenfolge:", " " + order, ""]
         for item in result["subnetze"]:
-            lines += ["%s (%s Hosts)" % (item["name"], de_int(item["bedarf"])),
+            lines += ["%s (%s)" % (item["name"], subnet_hosts_text(item["bedarf"])),
                       " Netz: %s/%d" % (ipv4_text(item["netz"]), item["praefix"]),
                       " Maske: %s" % ipv4_text(item["maske"]),
                       " Erste: %s" % ipv4_text(item["erste"]),
@@ -2900,8 +2969,9 @@ def hosts_report(result, schmal=False):
                   "%-22s: %s" % ("Freier Rest", rest),
                   "%-22s: %s" % ("Vergabe-Reihenfolge", order), ""]
         for item in result["subnetze"]:
-            lines += ["%s (%s Hosts): %s/%d, Maske %s" % (
-                          item["name"], de_int(item["bedarf"]), ipv4_text(item["netz"]),
+            lines += ["%s (%s): %s/%d, Maske %s" % (
+                          item["name"], subnet_hosts_text(item["bedarf"]),
+                          ipv4_text(item["netz"]),
                           item["praefix"], ipv4_text(item["maske"])),
                       "   Hosts %s bis %s, Broadcast %s" % (
                           ipv4_text(item["erste"]), ipv4_text(item["letzte"]),
@@ -2988,11 +3058,13 @@ def _wrap_para(text, lead, width):
 
 
 def _join_items(first, items, glue, more, width):
-    """Aufzaehlung (z. B. "A 50, B 20") auf Zeilen verteilen; ", " bleibt am
-    Zeilenende, " + " kommt an den Anfang der Folgezeile."""
+    """Aufzaehlung (z. B. "A: 50, B: 20") auf Zeilen verteilen; ", " bleibt am
+    Zeilenende, " + " kommt an den Anfang der Folgezeile. Platz fuer das
+    Komma am Zeilenende braucht nur ein Eintrag, nach dem noch einer kommt."""
     lines, current = [], first + items[0]
-    for item in items[1:]:
-        if len(current + glue + item + glue.rstrip(" +")) <= width:
+    for number, item in enumerate(items[1:], 2):
+        tail = glue.rstrip(" +") if number < len(items) else ""
+        if len(current + glue + item + tail) <= width:
             current += glue + item
         elif glue.startswith(" "):
             lines.append(current)
@@ -4152,6 +4224,16 @@ SUBNET_EXPLAIN_ANYCAST = ("Einzelne Adressen sind reserviert, z. B. die "
                           "Schnittstellenkennung 0, RFC 4291 2.6.1).")
 SUBNET_EXPLAIN_BOOKS = ("Ältere Bücher ziehen 2 Subnetze ab. "
                         "Das ist veraltet (RFC 1878).")
+# Fassung 4 (Lehrbuch-Gegenpruefung Z-10): /64-Hinweis (Fund 7), Lage der
+# Subnetz-Bits und Uebertrag, wenn sie ueber eine Oktett- bzw. Hextett-Grenze
+# reichen (Fund 2; Wortlaut belege/b21, Beispiele I und J)
+SUBNET_EXPLAIN_HINT_64 = ("Hinweis: /%d ist länger als /64. Ein LAN bekommt in der "
+                          "Regel ein /64, sonst geht die automatische Adressvergabe "
+                          "(SLAAC) nicht.")
+SUBNET_EXPLAIN_BITS = "Die %d Subnetz-Bits (Bit %d bis %d): %s."
+SUBNET_EXPLAIN_CARRY = ("Übertrag: Wird das %d. %s %s, steht dort 0 und das %d. %s "
+                        "zählt um 1 weiter.")
+SUBNET_EXPLAIN_CARRY_EXAMPLE = "Beispiel: Nr. %s %s + %s = Nr. %s %s"
 
 
 def _explain_list_indexes(total):
@@ -4213,12 +4295,16 @@ def _explain_head(result, title, schmal):
     base = subnet_net_text(version, result["netz"], result["praefix"])
     width = CALC_EXPLAIN_HANDY_WIDTH if schmal else CALC_EXPLAIN_PC_WIDTH
     if schmal:
-        lines = [title, "(IPv%d)" % version, "Ausgangsnetz"] + _handy_address(" ", base) \
-            + ["gesucht: %s gleich große" % de_int(result["gewuenscht"]), "Subnetze"]
+        lines = [title, "(IPv%d)" % version, "Ausgangsnetz"] + _handy_address(" ", base)
+        if result["gewuenscht"] == 1:
+            lines.append("gesucht: 1 Subnetz")
+        else:
+            lines += ["gesucht: %s gleich große" % de_int(result["gewuenscht"]), "Subnetze"]
     else:
         lines = ["%s (IPv%d)" % (title, version),
-                 "Ausgangsnetz %s, gesucht: %s gleich große Subnetze"
-                 % (base, de_int(result["gewuenscht"]))]
+                 "Ausgangsnetz %s, gesucht: %s"
+                 % (base, "1 Subnetz" if result["gewuenscht"] == 1 else
+                    "%s gleich große Subnetze" % de_int(result["gewuenscht"]))]
     if result["hinweis"]:
         lines += _wrap_para(result["hinweis"], "", width)
     lines.append("")
@@ -4241,8 +4327,43 @@ def _explain_head(result, title, schmal):
                                                      de_int(result["nibble_anzahl"]),
                                                      result["neu"]),
                             " " if schmal else "   ", width)
+    if version == 6 and result["neu"] > 64:
+        lines += _wrap_para(SUBNET_EXPLAIN_HINT_64 % result["neu"],
+                            " " if schmal else "   ", width)
     lines.append("")
     return lines
+
+
+def _explain_carry(result, unit, name, step_text, schmal):
+    """Lage der Subnetz-Bits (Schritt 3) und Uebertrag mit Beispiel aus der
+    Liste (Schritt 4), nur wenn die Subnetz-Bits ueber eine Oktett- (unit 8)
+    bzw. Hextett-Grenze (unit 16) reichen; sonst zwei leere Listen."""
+    prefix, new = result["praefix"], result["neu"]
+    parts = []                                   # (Anzahl Bits, Nr. der Einheit)
+    for index in range(prefix // unit, (new - 1) // unit + 1):
+        low, high = max(prefix + 1, index * unit + 1), min(new, (index + 1) * unit)
+        if high >= low:
+            parts.append((high - low + 1, index + 1))
+    if len(parts) < 2:
+        return [], []
+    width = CALC_EXPLAIN_HANDY_WIDTH if schmal else CALC_EXPLAIN_PC_WIDTH
+    pad = " " if schmal else "   "
+    items = ["%d im %d." % part for part in parts]
+    where = "%s und %s %s" % (", ".join(items[:-1]), items[-1], name)
+    lage = _wrap_para(SUBNET_EXPLAIN_BITS % (new - prefix, prefix + 1, new, where), pad, width)
+    border = parts[-1][1]
+    carry = _wrap_para(SUBNET_EXPLAIN_CARRY % (border, name, "256" if unit == 8 else
+                                               "hex 10000", border - 1, name), pad, width)
+    number = 1 << parts[-1][0]                   # Nr. number + 1 hat den ersten Uebertrag
+    before = subnet_addr_text(result["version"], split_entry(result, number - 1)["netz"])
+    after = subnet_addr_text(result["version"], split_entry(result, number)["netz"])
+    if schmal:
+        carry += [" Beispiel:"] + _handy_address(" Nr. %s: " % de_int(number), before) \
+            + [" + %s" % step_text] + _handy_address(" = Nr. %s: " % de_int(number + 1), after)
+    else:
+        carry += _wrap_para(SUBNET_EXPLAIN_CARRY_EXAMPLE % (
+            de_int(number), before, step_text, de_int(number + 1), after), pad, width)
+    return lage, carry
 
 
 def _split_explain_v4(result, schmal):
@@ -4262,6 +4383,7 @@ def _split_explain_v4(result, schmal):
     else:
         hosts = ["   Nutzbare Hosts je Subnetz = 2^%d - 2 = %s" % (hostbits, de_int(size - 2))]
     lines = _explain_head(result, "RECHENWEG NETZ AUFTEILEN", schmal)
+    lage, carry = _explain_carry(result, 8, "Oktett", "%d" % step, schmal)
     if schmal:
         if new >= 31:
             hosts = _wrap_para(hosts[0], " ", CALC_EXPLAIN_HANDY_WIDTH)
@@ -4274,9 +4396,9 @@ def _split_explain_v4(result, schmal):
                   " Hostbits = 32 - %d = %d" % (new, hostbits),
                   " Adressen je Subnetz", " = 2^%d = %s" % (hostbits, de_int(size)),
                   " Schrittweite im %d. Oktett" % (octet + 1),
-                  " = 256 - %d = %d" % (mask_octet, step)] + hosts
+                  " = 256 - %d = %d" % (mask_octet, step)] + lage + hosts
         lines += ["", "SCHRITT 4: Subnetze", "auflisten",
-                  " Netzadresse + Schrittweite", " ergibt das nächste Subnetz."]
+                  " Netzadresse + Schrittweite", " ergibt das nächste Subnetz."] + carry
     else:
         if new >= 31:
             hosts = ["   " + hosts[0]]
@@ -4287,9 +4409,9 @@ def _split_explain_v4(result, schmal):
                   "   Hostbits = 32 - %d = %d" % (new, hostbits),
                   "   Adressen je Subnetz = 2^%d = %s" % (hostbits, de_int(size)),
                   "   Schrittweite im %d. Oktett = 256 - %d = %d"
-                  % (octet + 1, mask_octet, step)] + hosts
+                  % (octet + 1, mask_octet, step)] + lage + hosts
         lines += ["", "SCHRITT 4: Subnetze auflisten",
-                  "   (Netzadresse + Schrittweite = nächstes Subnetz)"]
+                  "   (Netzadresse + Schrittweite = nächstes Subnetz)"] + carry
     indexes, gap = _explain_list_indexes(result["anzahl"])
     entries = [split_entry(result, i) if i is not None else None for i in indexes]
     rows = []
@@ -4316,7 +4438,7 @@ def _split_explain_v4(result, schmal):
     if not schmal:
         filled = [row for row in rows if row]
         width = max(2, max(len(row[0]) for row in filled))
-        table = _pc_table(["Nr", "Netzadresse", "Erste Host", "Letzte Host", "Broadcast"],
+        table = _pc_table(["Nr", "Netzadresse", "Erster Host", "Letzter Host", "Broadcast"],
                           filled, [width, 18, 15, 15])
         if gap:
             table.insert(5, "  %s Nr. %s bis %s: je + Schrittweite (alle im Ergebnis)"
@@ -4351,12 +4473,14 @@ def _split_explain_v6(result, schmal):
     in_hextet = new - 16 * hextet
     unit = "Bit" if in_hextet == 1 else "Bits"
     lines = _explain_head(result, "RECHENWEG NETZ AUFTEILEN", schmal)
+    lage, carry = _explain_carry(result, 16, "Hextett", "hex %x" % step, schmal)
     anycast = new < 127
     if schmal:
         lines += ["SCHRITT 3: Wo liegt die", "Grenze?",
                   " /%d endet im %d. Hextett" % (new, hextet + 1),
                   " (Bits %d bis %d)." % (low, high),
-                  " Davon Netzanteil:", " %d - %d = %d %s" % (new, 16 * hextet, in_hextet, unit),
+                  " Davon Netzanteil:", " %d - %d = %d %s" % (new, 16 * hextet, in_hextet, unit)]
+        lines += lage + [
                   " Schrittweite im %d. Hextett" % (hextet + 1),
                   " = 2^(%d - %d) = 2^%d" % (high, new, high - new),
                   " = %s = hex %x" % (de_int(step), step),
@@ -4366,12 +4490,13 @@ def _split_explain_v6(result, schmal):
         if anycast:
             lines += _wrap_para(SUBNET_EXPLAIN_ANYCAST, " ", CALC_EXPLAIN_HANDY_WIDTH)
         lines += ["", "SCHRITT 4: Subnetze", "auflisten",
-                  " %d. Hextett um die" % (hextet + 1), " Schrittweite erhöhen:"]
+                  " %d. Hextett um die" % (hextet + 1), " Schrittweite erhöhen:"] + carry
     else:
         lines += ["SCHRITT 3: Wo liegt die Grenze? Schrittweite und Größe",
                   "   /%d endet im %d. Hextett (Bits %d bis %d). Davon gehören"
                   % (new, hextet + 1, low, high),
-                  "   %d - %d = %d %s zum Netzanteil." % (new, 16 * hextet, in_hextet, unit),
+                  "   %d - %d = %d %s zum Netzanteil." % (new, 16 * hextet, in_hextet, unit)]
+        lines += lage + [
                   "   Schrittweite im %d. Hextett = 2^(%d - %d) = 2^%d = %s = hex %x"
                   % (hextet + 1, high, new, high - new, de_int(step), step),
                   "   Adressen je Subnetz = 2^(128 - %d) = 2^%d" % (new, 128 - new),
@@ -4380,7 +4505,7 @@ def _split_explain_v6(result, schmal):
         if anycast:
             lines += _wrap_para(SUBNET_EXPLAIN_ANYCAST, "   ", CALC_EXPLAIN_PC_WIDTH)
         lines += ["", "SCHRITT 4: Subnetze auflisten (%d. Hextett um die Schrittweite "
-                  "erhöhen)" % (hextet + 1)]
+                  "erhöhen)" % (hextet + 1)] + carry
     bits = result["k"]
     # Subnetz-Bits nur bis 16 Stellen; "im n. Hextett" nur, wenn alle dort liegen
     show_bits = bits <= 16
@@ -4465,15 +4590,18 @@ def hosts_explain(result, schmal=False):
     if schmal:
         lines = ["RECHENWEG NACH HOSTBEDARF", "(VLSM, IPv4)", "Ausgangsnetz", " " + base,
                  "Bedarf:"]
-        lines += [" %s: %s Hosts" % (item["name"], de_int(item["bedarf"])) for item in subnets]
+        lines += [" %s: %s" % (item["name"], subnet_hosts_text(item["bedarf"]))
+                  for item in subnets]
     else:
         lines = ["RECHENWEG NACH HOSTBEDARF (VLSM, IPv4)", "Ausgangsnetz %s" % base]
-        lines += _join_items("Bedarf: ", ["%s %s Hosts" % (item["name"], de_int(item["bedarf"]))
+        lines += _join_items("Bedarf: ", ["%s: %s" % (item["name"],
+                                                      subnet_hosts_text(item["bedarf"]))
                                           for item in subnets], ", ", "        ", width)
     if result["hinweis"]:
         lines += _wrap_para(result["hinweis"], "", width)
     lines.append("")
-    sorted_items = ["%s %s" % (subnets[i]["name"], de_int(subnets[i]["bedarf"])) for i in order]
+    sorted_items = ["%s: %s" % (subnets[i]["name"], de_int(subnets[i]["bedarf"]))
+                    for i in order]
     if schmal:
         lines += ["SCHRITT 1: Sortieren,", "größter Bedarf zuerst"]
         lines += _join_items(" ", sorted_items, ", ", " ", width)
@@ -4489,20 +4617,21 @@ def hosts_explain(result, schmal=False):
     for index in order:
         item = subnets[index]
         bits, need = item["h"], de_int(item["bedarf"])
+        need_text = subnet_hosts_text(item["bedarf"])
         below = "2^%d - 2 = %s < %s" % (bits - 1, de_int((1 << (bits - 1)) - 2), need) \
             if bits > 2 else ""
         enough = "2^%d - 2 = %s >= %s" % (bits, de_int((1 << bits) - 2), need)
         if schmal:
-            lines.append(" %s: %s Hosts" % (item["name"], need))
+            lines.append(" %s: %s" % (item["name"], need_text))
             if below:
                 lines.append("  " + below)
             lines += ["  " + enough, "  h = %d -> /%d (32 - %d)" % (bits, 32 - bits, bits),
                       "  Größe %s Adressen" % de_int(item["groesse"])]
         else:
-            line = "   %s (%s Hosts): %s%s" % (item["name"], need,
-                                                below + ", " if below else "", enough)
+            line = "   %s (%s): %s%s" % (item["name"], need_text,
+                                          below + ", " if below else "", enough)
             if len(line) > width and below:
-                lines += ["   %s (%s Hosts): %s," % (item["name"], need, below),
+                lines += ["   %s (%s): %s," % (item["name"], need_text, below),
                           "      " + enough]
             else:
                 lines.append(line)
@@ -4513,16 +4642,22 @@ def hosts_explain(result, schmal=False):
     verdict = "passt" if result["passt"] else "passt nicht"
     lines += ["", "SCHRITT 3: Passt es?"]
     if schmal:
-        lines += _join_items(" Summe: ", sizes, " + ", "  ", width)
+        if len(sizes) > 1:
+            lines += _join_items(" Summe: ", sizes, " + ", "  ", width)
+        else:
+            lines.append(" Größe:")             # Fassung 4 (Z-10 Fund 10)
         lines += [" = %s Adressen" % de_int(total),
                   " Ausgangsnetz /%d: 2^%d" % (result["praefix"], host_bits),
                   " = %s Adressen" % de_int(capacity),
                   " %s %s %s -> %s" % (de_int(total), "<=" if result["passt"] else ">",
                                        de_int(capacity), verdict)]
     else:
-        summe = _join_items("   Summe der Größen: ", sizes, " + ", "      ", width)
-        summe[-1] += " = %s Adressen" % de_int(total)
-        lines += summe
+        if len(sizes) > 1:
+            summe = _join_items("   Summe der Größen: ", sizes, " + ", "      ", width)
+            summe[-1] += " = %s Adressen" % de_int(total)
+            lines += summe
+        else:                                    # Fassung 4 (Z-10 Fund 10)
+            lines.append("   Größe: %s Adressen" % de_int(total))
         lines.append("   Ausgangsnetz /%d: 2^%d = %s Adressen -> %s"
                      % (result["praefix"], host_bits, de_int(capacity), verdict))
     if not result["passt"]:
@@ -4545,7 +4680,7 @@ def hosts_explain(result, schmal=False):
         item = subnets[index]
         net = "%s/%d" % (ipv4_text(item["netz"]), item["praefix"])
         if schmal:
-            lines += ["%d. %s (%s Hosts)" % (number, item["name"], de_int(item["bedarf"])),
+            lines += ["%d. %s (%s)" % (number, item["name"], subnet_hosts_text(item["bedarf"])),
                       " Netz: %s" % net, " Maske: %s" % ipv4_text(item["maske"]),
                       " Erste: %s" % ipv4_text(item["erste"]),
                       " Letzte: %s" % ipv4_text(item["letzte"]),
@@ -4555,7 +4690,7 @@ def hosts_explain(result, schmal=False):
                          ipv4_text(item["letzte"]), ipv4_text(item["broadcast"])])
     if not schmal:
         name_width = max(4, max(len(item["name"]) for item in subnets))
-        lines += _pc_table(["Nr", "Name", "Netzadresse", "Erste Host", "Letzte Host",
+        lines += _pc_table(["Nr", "Name", "Netzadresse", "Erster Host", "Letzter Host",
                             "Broadcast"], rows, [2, name_width, 18, 15, 15])
     lines.append("")
     blocks = ["%s/%d" % (ipv4_text(start), prefix) for start, prefix in result["bloecke"]]
