@@ -38,6 +38,15 @@ nach Python-Patchstand anders (Plan 0.63 M-3, E-63-6).
           Lage der Subnetz-Bits und Uebertrag, /64-Hinweis (N-5a, N-5e)
   Fassung-4-Wortlaute: Erster/Letzter Host, Einzahl, Fehlbetrag (M-9),
           Hoechstzahl (A-M-5), Doppelpunkt, "Groesse" (N-4c/e, N-5b-g)
+  T-TR-1  (0.63.1) neue Trainer-Arten "Netz aufteilen" und "Nach
+          Hostbedarf": 3 Stufen x 200 Startwerte je Art gegen eigene
+          Rechnung, immer loesbar, Rest 0 in mehr als 20 %, jede Teilantwort
+          einzeln, Rechenweg PC (75) und Handy (28, steps_schmal)
+  T-TR-3  (0.63.1) rt.ALTE_ARTEN = Anfang von TRAINER_KINDS, dazu G-63-1
+          (trainer_task unveraendert) und F-63-18 = S1
+  A-1/A-3/A-4/A-5 (Zwischenabnahme T5): kein Loesungsbeispiel im Feldnamen,
+          Ergebnis im Rechenweg = Loesung in allen Aufgaben, Abgleich mit
+          unbekannter Art, falsche Eingabeform ohne Fehler
 
 T-K-11 (Mutation macht T-K-5 rot) laeuft als Gegenprobe ausserhalb des
 Arbeitsbaums (Beleg im Bericht).
@@ -3064,6 +3073,711 @@ class Fassung4WortlautTest(unittest.TestCase):
         r = fc.subnet_by_hosts("0.0.0.0/1", "A 4294967294")
         self.assertEqual(r["meldung"], "Es fehlen 2.147.483.648 Adressen. Nötig wäre "
                                        "mindestens ein /0 (4.294.967.296 Adressen).")
+
+
+# ---------------------------------------------------------------------------
+#  T-TR-1 bis T-TR-3 (0.63.1, Plan 0.63 Abschnitt 4.5, Auflage Z-9): die zwei
+#  neuen Trainer-Arten "Netz aufteilen" und "Nach Hostbedarf". Je Art und
+#  Stufe 200 Startwerte; die Loesung wird aus dem Aufgabentext mit der
+#  eigenen Rechnung dieser Datei nachgerechnet (dazu ipaddress bzw. die
+#  Freiliste als zweite Quelle).
+# ---------------------------------------------------------------------------
+
+import fisi_lernen as fl          # noqa: E402
+
+sys.path.insert(1, os.path.join(CODE, "pruefung"))
+import rechenweg_texte as rt      # noqa: E402
+
+TR_STARTWERTE = 200
+TR_TEILEN = re.compile(r"Das Netz (\S+)/(\d+) soll in ([0-9.]+) gleich große Subnetze "
+                       r"(an Nibble-Grenzen \(4-Bit-Grenzen\) )?aufgeteilt werden\. "
+                       r"Gib an: (.*)\.$")
+TR_BEDARF = re.compile(r"Das Netz (\S+)/(\d+) soll nach Hostbedarf aufgeteilt werden: "
+                       r"(.*)\. Vergeben wird lückenlos ab der ersten Adresse, das größte "
+                       r"Subnetz zuerst\. Gib je Subnetz Netzadresse/Präfix und "
+                       r"Subnetzmaske an, dazu die Broadcast-Adresse des (\d+)\. vergebenen "
+                       r"Subnetzes und den freien Rest in Adressen\.$")
+
+
+def tr_aufgaben(art):
+    for stufe in (1, 2, 3):
+        for wert in range(TR_STARTWERTE):
+            yield stufe, fl.trainer_task(art, stufe, "tr-%d" % wert)
+
+
+def tr_privat(wert, praefix):
+    """Netz liegt in 10/8, 172.16/12 oder 192.168/16."""
+    for netz, laenge in ((10 << 24, 8), ((172 << 24) | (16 << 16), 12),
+                         ((192 << 24) | (168 << 16), 16)):
+        if praefix >= laenge and wert >> (32 - laenge) == netz >> (32 - laenge):
+            return True
+    return False
+
+
+def tr_ohne_leer(zeilen):
+    return "".join("".join(zeilen).split())
+
+
+def tr_einzeln(test, task, falsch):
+    """Jede Teilantwort einzeln: Musterloesung passt; nur dieses Feld falsch
+    -> nur dieses Feld wird abgelehnt."""
+    test.assertTrue(task.all_correct(task.solution), task.text)
+    for key, _label in task.fields:
+        antworten = dict(task.solution)
+        antworten[key] = falsch[key]
+        ergebnis = task.check(antworten)
+        test.assertFalse(ergebnis[key], (task.text, key, falsch[key]))
+        test.assertTrue(all(ok for k, ok in ergebnis.items() if k != key), (task.text, key))
+
+
+def tr_teilen_lesen(task):
+    treffer = TR_TEILEN.match(task.text)
+    assert treffer, task.text
+    adresse, praefix, anzahl, nibble, _gefragt = treffer.groups()
+    version = 6 if ":" in adresse else 4
+    breite = 32 if version == 4 else 128
+    netz = eigen_v4(adresse) if version == 4 else eigen_v6(adresse)
+    praefix, anzahl = int(praefix), int(anzahl.replace(".", ""))
+    nr = int(re.search(r"des (\d+)\. Subnetzes\.$", task.text).group(1))
+    k = eigen_bits(anzahl)
+    neu = praefix + k
+    if nibble:
+        while neu % 4:
+            neu += 1
+    groesse = 2 ** (breite - neu)
+    start = netz + (nr - 1) * groesse
+    return {"version": version, "breite": breite, "netz": netz, "praefix": praefix,
+            "anzahl": anzahl, "nibble": bool(nibble), "nr": nr, "k": k, "neu": neu,
+            "groesse": groesse, "start": start, "ende": start + groesse - 1}
+
+
+class TrainerTeilenTest(unittest.TestCase):
+    """T-TR-1 "Netz aufteilen": 3 Stufen x 200 Startwerte."""
+
+    def test_tr1_stufen_und_loesung_gegen_eigene_rechnung(self):
+        zaehler = {"v6": 0, "nibble": 0, "stufe3": 0}
+        for stufe, task in tr_aufgaben("teilen"):
+            e = tr_teilen_lesen(task)
+            self.assertEqual(task.kind, "teilen")
+            self.assertEqual(task.level, stufe)
+            self.assertTrue(2 <= e["nr"] <= e["anzahl"], task.text)
+            self.assertEqual(e["netz"] % 2 ** (e["breite"] - e["praefix"]), 0, task.text)
+            if stufe == 1:
+                self.assertEqual((e["version"], e["praefix"]), (4, 24), task.text)
+                self.assertTrue(2 <= e["anzahl"] <= 8, task.text)
+            elif stufe == 2:
+                self.assertEqual(e["version"], 4, task.text)
+                self.assertTrue(16 <= e["praefix"] <= 23 and 2 <= e["anzahl"] <= 32, task.text)
+            else:
+                zaehler["stufe3"] += 1
+                self.assertTrue(2 <= e["anzahl"] <= 300, task.text)
+                if e["version"] == 4:
+                    self.assertTrue(8 <= e["praefix"] <= 22, task.text)
+                else:
+                    zaehler["v6"] += 1
+                    self.assertTrue(32 <= e["praefix"] <= 56, task.text)
+                    self.assertEqual(e["netz"] >> 96, 0x20010DB8, task.text)
+            if e["version"] == 4:
+                self.assertTrue(tr_privat(e["netz"], e["praefix"]), task.text)
+                self.assertLessEqual(e["neu"], 30, task.text)
+                self.assertFalse(e["nibble"], task.text)
+            else:
+                self.assertLessEqual(e["neu"], 64, task.text)
+            if e["nibble"]:
+                zaehler["nibble"] += 1
+                self.assertNotEqual((e["praefix"] + e["k"]) % 4, 0, task.text)
+            # Musterloesung = eigene Rechnung
+            erwartet = {"praefix": "/%d" % e["neu"], "netz": eigen_text(e["version"], e["start"])}
+            if e["version"] == 4:
+                maske = (2 ** 32 - 1) ^ (e["groesse"] - 1)
+                erwartet.update(maske=eigen_v4_text(maske), adressen=eigen_de(e["groesse"]),
+                                hosts=eigen_de(e["groesse"] - 2),
+                                broadcast=eigen_v4_text(e["ende"]))
+                schluessel = ["praefix", "maske", "adressen", "hosts", "netz", "broadcast"]
+            else:
+                erwartet.update(adressen="2^%d" % (128 - e["neu"]),
+                                letzte=eigen_v6_text(e["ende"]))
+                schluessel = ["praefix", "adressen", "netz", "letzte"]
+            self.assertEqual([key for key, _l in task.fields], schluessel, task.text)
+            self.assertEqual(task.solution, erwartet, task.text)
+            # zweite Quelle ipaddress: Subnetz im Ausgangsnetz, ausgerichtet
+            klasse = NETZKLASSE[e["version"]]
+            basis = klasse((e["netz"], e["praefix"]))
+            teil = klasse((e["start"], e["neu"]))          # strict: ausgerichtet
+            self.assertTrue(teil.subnet_of(basis), task.text)
+            self.assertEqual(int(teil.broadcast_address), e["ende"], task.text)
+            self.assertEqual(teil.num_addresses, e["groesse"], task.text)
+        # Stufe 3: etwa zur Haelfte IPv6, davon etwa zur Haelfte an Nibble-Grenzen
+        self.assertTrue(0.3 * zaehler["stufe3"] <= zaehler["v6"] <= 0.7 * zaehler["stufe3"],
+                        zaehler)
+        self.assertTrue(0.3 * zaehler["v6"] <= zaehler["nibble"] <= 0.7 * zaehler["v6"],
+                        zaehler)
+
+    def test_tr1_jede_teilantwort_einzeln(self):
+        for _stufe, task in tr_aufgaben("teilen"):
+            e = tr_teilen_lesen(task)
+            text = lambda wert: eigen_text(e["version"], wert)   # noqa: E731
+            falsch = {"praefix": "/%d" % (e["neu"] - 1), "netz": text(e["start"] + e["groesse"]),
+                      "adressen": eigen_de(e["groesse"] * 2)}
+            if e["version"] == 4:
+                falsch.update(maske=eigen_v4_text((2 ** 32 - 1) ^ (2 * e["groesse"] - 1)),
+                              hosts=eigen_de(e["groesse"] - 1),
+                              broadcast=text(e["ende"] - 1))
+            else:
+                falsch.update(letzte=text(e["ende"] + 1))
+            tr_einzeln(self, task, falsch)
+            # andere Schreibweisen derselben Antwort
+            self.assertTrue(task.check({"praefix": str(e["neu"])})["praefix"])
+            self.assertTrue(task.check({"adressen": str(e["groesse"])})["adressen"])
+            self.assertTrue(task.check({"adressen": "2^%d" % (e["breite"] - e["neu"])})
+                            ["adressen"])
+            self.assertFalse(task.check({"adressen": "2^%d" % (e["breite"] - e["neu"] + 1)})
+                             ["adressen"])
+            if e["version"] == 6:
+                self.assertTrue(task.check({"netz": task.solution["netz"].upper()})["netz"])
+            for unsinn in ("", "/", "2^", "²", "/²7", "1.2.3.4/33", "abc", "3.2", "1.2.3.4"):
+                self.assertFalse(any(task.check({k: unsinn for k, _l in task.fields}).values()),
+                                 (task.text, unsinn))
+
+    def test_tr1_rechenweg_pc_und_handy(self):
+        for _stufe, task in tr_aufgaben("teilen"):
+            e = tr_teilen_lesen(task)
+            self.assertTrue(all(len(z) <= PC_BREITE for z in task.steps), task.text)
+            self.assertTrue(all(len(z) <= GRENZE for z in task.steps_schmal), task.text)
+            netz = "%s/%d" % (eigen_text(e["version"], e["netz"]), e["praefix"])
+            anzahl = 2 ** (e["neu"] - e["praefix"]) if e["nibble"] else e["anzahl"]
+            kern = fc.split_network(netz, anzahl, e["version"])
+            for schmal, zeilen in ((False, task.steps), (True, task.steps_schmal)):
+                pc = fc.split_explain(kern, schmal).split("\n")
+                vorne = zeilen.index(pc[0])
+                # 0.63.1 (Antwort 7): Lueckenzeile im Trainer "(nicht einzeln
+                # aufgelistet)"; Handy-Absatz neu umbrochen, darum dort flach verglichen
+                ende = next(i for i, z in enumerate(zeilen)
+                            if z.startswith("SCHRITT 6: Gefragt ist")) - 1
+                if not schmal:
+                    pc = [z.replace(TR_LUECKE_ALT, TR_LUECKE_NEU) for z in pc]
+                    self.assertEqual(zeilen[vorne:ende], pc, task.text)
+                elif TR_LUECKE_ALT in " ".join(" ".join(pc).split()):
+                    self.assertEqual(" ".join(" ".join(zeilen[vorne:ende]).split()),
+                                     " ".join(" ".join(pc).split()).replace(TR_LUECKE_ALT,
+                                                                           TR_LUECKE_NEU))
+                else:
+                    self.assertEqual(zeilen[vorne:ende], pc, task.text)
+                self.assertEqual(vorne > 0, e["nibble"], task.text)
+                schluss = zeilen[ende:]
+                self.assertEqual(schluss[0], "", task.text)
+                self.assertTrue(schluss[1].startswith("SCHRITT 6: Gefragt ist"), task.text)
+                kurz = tr_ohne_leer(schluss)
+                self.assertIn("Nr.%d" % e["nr"], kurz)
+                self.assertIn("(%d-1)x" % e["nr"], kurz)
+                self.assertIn("=" + eigen_text(e["version"], e["start"]), kurz)
+                self.assertIn("=" + eigen_text(e["version"], e["ende"]), kurz)
+                if e["version"] == 6:
+                    self.assertIn("=binär" + format(e["nr"] - 1, "0%db" % kern["k"]), kurz)
+                if e["nibble"]:
+                    vor = tr_ohne_leer(zeilen[:vorne])
+                    self.assertIn("/%d+%d=/%d" % (e["praefix"], e["k"], e["praefix"] + e["k"]),
+                                  vor)
+                    self.assertIn("ist/%d." % e["neu"], vor)
+                    self.assertIn("2^%d" % (e["neu"] - e["praefix"]), vor)
+
+    def test_tr1_feste_beispiele(self):
+        """Zwei Aufgaben woertlich (Startwert fest), damit Text und
+        Teilantworten nicht unbemerkt wandern."""
+        task = fl.trainer_task("teilen", 1, 7)
+        self.assertEqual(task.text, "Das Netz 192.168.39.0/24 soll in 6 gleich große Subnetze "
+                         "aufgeteilt werden. Gib an: neue Präfixlänge, Subnetzmaske, "
+                         "Adressen und nutzbare Hosts je Subnetz sowie Netzadresse und "
+                         "Broadcast-Adresse des 6. Subnetzes.")
+        self.assertEqual(task.fields, [
+            ("praefix", "Neue Präfixlänge"), ("maske", "Subnetzmaske"),
+            ("adressen", "Adressen je Subnetz"), ("hosts", "Nutzbare Hosts je Subnetz"),
+            ("netz", "Netzadresse des 6. Subnetzes (ohne Präfix)"),
+            ("broadcast", "Broadcast-Adresse des 6. Subnetzes")])
+        self.assertEqual(task.solution, {
+            "praefix": "/27", "maske": "255.255.255.224", "adressen": "32", "hosts": "30",
+            "netz": "192.168.39.160", "broadcast": "192.168.39.191"})
+        self.assertEqual(task.steps[-4:], [
+            "SCHRITT 6: Gefragt ist Subnetz Nr. 6",
+            "   Netzadresse = Nr. 1 + (6 - 1) x 32 Adressen",
+            "   = 192.168.39.0 + 160 = 192.168.39.160",
+            "   Broadcast-Adresse = nächste Netzadresse - 1 = 192.168.39.191"])
+        self.assertEqual(task.steps_schmal[-11:], [
+            "", "SCHRITT 6: Gefragt ist", "Subnetz Nr. 6", " Netzadresse = Nr. 1",
+            " + (6 - 1) x 32", " = 192.168.39.0", " + 160", " = 192.168.39.160",
+            " Broadcast-Adresse", " = nächste Netzadresse - 1", " = 192.168.39.191"])
+
+
+def tr_bedarf_lesen(task):
+    treffer = TR_BEDARF.match(task.text)
+    assert treffer, task.text
+    adresse, praefix, liste, nr = treffer.groups()
+    namen, bedarfe = [], []
+    for teil in liste.split(", "):
+        name, zahl = teil.rsplit(": ", 1)
+        menge, einheit = zahl.split(" ")
+        assert einheit == ("Host" if menge == "1" else "Hosts"), teil
+        namen.append(name)
+        bedarfe.append(int(menge.replace(".", "")))
+    netz, praefix = eigen_v4(adresse), int(praefix)
+    vergabe = eigen_vergabe(netz, praefix, bedarfe)
+    return {"netz": netz, "praefix": praefix, "namen": namen, "bedarfe": bedarfe,
+            "nr": int(nr), "vergabe": vergabe}
+
+
+class TrainerBedarfTest(unittest.TestCase):
+    """T-TR-1 "Nach Hostbedarf": 3 Stufen x 200 Startwerte, immer loesbar,
+    Rest 0 in mehr als 20 % je Stufe."""
+
+    def test_tr1_stufen_loesbar_und_loesung_gegen_eigene_rechnung(self):
+        rest_null = {1: 0, 2: 0, 3: 0}
+        rest_da = {1: 0, 2: 0, 3: 0}
+        for stufe, task in tr_aufgaben("bedarf"):
+            e = tr_bedarf_lesen(task)
+            self.assertEqual((task.kind, task.level), ("bedarf", stufe))
+            anzahl = len(e["bedarfe"])
+            erlaubt = {1: ((2, 3), (24,)), 2: ((3, 4), (23, 24)), 3: ((4, 6), (22, 23))}[stufe]
+            self.assertTrue(erlaubt[0][0] <= anzahl <= erlaubt[0][1], task.text)
+            self.assertIn(e["praefix"], erlaubt[1], task.text)
+            self.assertTrue(tr_privat(e["netz"], e["praefix"]), task.text)
+            self.assertEqual(e["netz"] % 2 ** (32 - e["praefix"]), 0, task.text)
+            self.assertEqual(len(set(n.lower() for n in e["namen"])), anzahl, task.text)
+            self.assertTrue(all(len(n) <= fc.SUBNET_NAME_MAX for n in e["namen"]))
+            # immer loesbar, zweites Verfahren (Freiliste) kommt aufs Gleiche
+            self.assertIsInstance(e["vergabe"], dict, task.text)
+            netz = ipaddress.IPv4Network((e["netz"], e["praefix"]))
+            self.assertEqual(freiliste(netz, e["bedarfe"]), e["vergabe"], task.text)
+            belegt = sum(2 ** (32 - p) for _s, p in e["vergabe"].values())
+            rest = 2 ** (32 - e["praefix"]) - belegt
+            (rest_null if rest == 0 else rest_da)[stufe] += 1
+            reihenfolge = sorted(range(anzahl), key=lambda i: (-e["bedarfe"][i], i))
+            self.assertTrue(1 <= e["nr"] <= anzahl, task.text)
+            start, p = e["vergabe"][reihenfolge[e["nr"] - 1]]
+            erwartet = {"broadcast": eigen_v4_text(start + 2 ** (32 - p) - 1),
+                        "rest": eigen_de(rest)}
+            schluessel = []
+            for i in range(anzahl):
+                start_i, p_i = e["vergabe"][i]
+                erwartet["netz%d" % i] = "%s/%d" % (eigen_v4_text(start_i), p_i)
+                erwartet["maske%d" % i] = eigen_v4_text((2 ** 32 - 1) ^ (2 ** (32 - p_i) - 1))
+                schluessel += ["netz%d" % i, "maske%d" % i]
+            self.assertEqual([k for k, _l in task.fields], schluessel + ["broadcast", "rest"])
+            self.assertEqual(task.solution, erwartet, task.text)
+            for i, (key, label) in enumerate(task.fields[:2 * anzahl]):
+                name = e["namen"][i // 2]
+                menge = fc.subnet_hosts_text(e["bedarfe"][i // 2])
+                self.assertEqual(label, "%s (%s): Netzadresse/Präfix" % (name, menge)
+                                 if key.startswith("netz") else "%s: Subnetzmaske" % name)
+        for stufe in (1, 2, 3):
+            self.assertGreater(rest_null[stufe], 0.2 * TR_STARTWERTE, rest_null)
+            self.assertGreater(rest_da[stufe], 0.2 * TR_STARTWERTE, rest_da)
+
+    def test_tr1_jede_teilantwort_einzeln(self):
+        for _stufe, task in tr_aufgaben("bedarf"):
+            e = tr_bedarf_lesen(task)
+            falsch = {}
+            for i, (start, p) in e["vergabe"].items():
+                falsch["netz%d" % i] = "%s/%d" % (eigen_v4_text(start), p - 1 if start % 2 ** (33 - p)
+                                                  == 0 else p + 1)
+                falsch["maske%d" % i] = eigen_v4_text((2 ** 32 - 1) ^ (2 ** (33 - p) - 1))
+            sol = task.solution
+            falsch["broadcast"] = eigen_v4_text(eigen_v4(sol["broadcast"]) - 1)
+            falsch["rest"] = str(int(sol["rest"].replace(".", "")) + 1)
+            tr_einzeln(self, task, falsch)
+            self.assertTrue(task.check({"rest": sol["rest"].replace(".", "")})["rest"])
+            for unsinn in ("", "/", "1.2.3.4/33", "abc", "²", "6.4", "2^6"):
+                self.assertFalse(any(task.check({k: unsinn for k, _l in task.fields}).values()),
+                                 (task.text, unsinn))
+
+    def test_tr1_rechenweg_pc_und_handy(self):
+        for _stufe, task in tr_aufgaben("bedarf"):
+            e = tr_bedarf_lesen(task)
+            kern = fc.subnet_by_hosts("%s/%d" % (eigen_v4_text(e["netz"]), e["praefix"]),
+                                      list(zip(e["namen"], e["bedarfe"])), 4)
+            self.assertEqual(task.steps, fc.hosts_explain(kern).split("\n"))
+            self.assertEqual(task.steps_schmal, fc.hosts_explain(kern, True).split("\n"))
+            self.assertTrue(all(len(z) <= PC_BREITE for z in task.steps), task.text)
+            self.assertTrue(all(len(z) <= GRENZE for z in task.steps_schmal), task.text)
+            # die Antworten stehen im Rechenweg (PC und Handy)
+            for zeilen in (task.steps, task.steps_schmal):
+                kurz = tr_ohne_leer(zeilen)
+                for key, wert in task.solution.items():
+                    if key != "rest" or wert != "0":
+                        self.assertIn(wert, kurz, (task.text, key))
+
+    def test_tr1_festes_beispiel(self):
+        task = fl.trainer_task("bedarf", 1, 7)
+        self.assertEqual(task.text, (
+            "Das Netz 172.16.49.0/24 soll nach Hostbedarf aufgeteilt werden: Produktion: "
+            "67 Hosts, Lager: 27 Hosts, Server: 23 Hosts. Vergeben wird lückenlos ab der "
+            "ersten Adresse, das größte Subnetz zuerst. Gib je Subnetz "
+            "Netzadresse/Präfix und Subnetzmaske an, dazu die Broadcast-Adresse des 2. "
+            "vergebenen Subnetzes und den freien Rest in Adressen."))
+        self.assertEqual(task.fields, [
+            ("netz0", "Produktion (67 Hosts): Netzadresse/Präfix"),
+            ("maske0", "Produktion: Subnetzmaske"),
+            ("netz1", "Lager (27 Hosts): Netzadresse/Präfix"), ("maske1", "Lager: Subnetzmaske"),
+            ("netz2", "Server (23 Hosts): Netzadresse/Präfix"), ("maske2", "Server: Subnetzmaske"),
+            ("broadcast", "Broadcast-Adresse des 2. vergebenen Subnetzes"),
+            ("rest", "Freier Rest (Anzahl Adressen)")])
+        self.assertEqual(task.solution, {
+            "netz0": "172.16.49.0/25", "maske0": "255.255.255.128",
+            "netz1": "172.16.49.128/27", "maske1": "255.255.255.224",
+            "netz2": "172.16.49.160/27", "maske2": "255.255.255.224",
+            "broadcast": "172.16.49.159", "rest": "64"})
+
+
+class TrainerSchutzTest(unittest.TestCase):
+    """T-TR-2/T-TR-3 und G-63-1: alte Arten unveraendert, neue angehaengt,
+    trainer_task unveraendert, Handy nimmt steps_schmal (F-63-18 = S1)."""
+
+    def test_tr3_alte_arten_sind_der_anfang(self):
+        arten = [k for k, _n in fl.TRAINER_KINDS]
+        self.assertEqual(tuple(arten[:4]), rt.ALTE_ARTEN)
+        self.assertEqual(rt.ALTE_ARTEN, ("ipv4", "vlsm", "zahlen", "ipv6"))
+        self.assertEqual(fl.TRAINER_KINDS[4:], [("teilen", "Netz aufteilen"),
+                                                ("bedarf", "Nach Hostbedarf")])
+        self.assertEqual(sorted(fl.TRAINER_BUILDERS), sorted(arten))
+
+    def test_g631_trainer_task_unveraendert(self):
+        self.assertEqual(inspect.getsource(fl.trainer_task), (
+            'def trainer_task(kind, level, seed, schmal=False):\n'
+            '    """Eine Aufgabe, durch kind, level und seed eindeutig festgelegt.\n'
+            '    schmal=True (ab 0.62.3, nur das Handy): Schritt 3 der IPv4-Aufgaben\n'
+            '    Oktett fuer Oktett; Aufgabe, Loesung und alle anderen Schritte gleich."""\n'
+            '    rng = random.Random("%s-%d-%s" % (kind, level, seed))\n'
+            '    if kind == "ipv4":\n'
+            '        return _ipv4_task(rng, level, schmal)\n'
+            '    return TRAINER_BUILDERS[kind](rng, level)\n'))
+
+    def test_s1_steps_schmal_nur_an_neuen_arten(self):
+        for kind in rt.ALTE_ARTEN:
+            for schmal in (False, True):
+                self.assertFalse(hasattr(fl.trainer_task(kind, 2, 5, schmal), "steps_schmal"))
+        for kind in ("teilen", "bedarf"):
+            for stufe in (1, 2, 3):
+                pc = fl.trainer_task(kind, stufe, 11)
+                handy = fl.trainer_task(kind, stufe, 11, schmal=True)
+                self.assertEqual((handy.text, handy.fields, handy.solution, handy.steps,
+                                  handy.steps_schmal),
+                                 (pc.text, pc.fields, pc.solution, pc.steps, pc.steps_schmal))
+                self.assertTrue(pc.steps_schmal)
+
+    def test_handy_anzeige_und_tastatur(self):
+        with open(os.path.join(CODE, "mobile", "src", "main.py"), encoding="utf-8") as datei:
+            quelle = datei.read()
+        self.assertIn('"\\n".join(getattr(task, "steps_schmal", None) or task.steps)', quelle)
+        self.assertIn('if task.kind in ("ipv6", "zahlen", "teilen", "bedarf")', quelle)
+
+
+# ---------------------------------------------------------------------------
+#  Nachlieferung T5 (Zwischenabnahme 0.63.1, Auflagen A-1, A-3, A-4, A-5)
+# ---------------------------------------------------------------------------
+
+def tr_abschnitt(zeilen, anfang, ende=None):
+    """Zeilen ab der ersten, die mit anfang beginnt, bis vor die erste, die
+    mit ende beginnt (ende None: bis zum Schluss)."""
+    start = next(i for i, z in enumerate(zeilen) if z.startswith(anfang))
+    stop = next((i for i, z in enumerate(zeilen) if i > start and ende
+                 and z.startswith(ende)), len(zeilen))
+    return zeilen[start:stop]
+
+
+def tr_handy_adresse(zeilen, kopf, adresse):
+    """Handy: lange Adressen stehen auf zwei Zeilen (zweite mit 3 Leerzeichen)."""
+    if len(kopf + adresse) <= GRENZE:
+        return zeilen + [kopf + adresse]
+    schnitt = adresse.find(":", len(adresse) // 2 - 3) + 1
+    return zeilen + [kopf + adresse[:schnitt], "   " + adresse[schnitt:]]
+
+
+class TrainerFeldbeispielTest(unittest.TestCase):
+    """A-1: Kein Feldname enthaelt ein Zahlenbeispiel, das Loesung sein kann."""
+
+    def test_a1_kein_loesungsbeispiel_im_feld(self):
+        gesehen = set()
+        for art in ("teilen", "bedarf"):
+            for _stufe, task in tr_aufgaben(art):
+                for key, label in task.fields:
+                    self.assertIsNone(re.search(r"2\^[0-9]", label), (task.text, label))
+                    if key == "adressen":
+                        gesehen.add(label)
+        self.assertEqual(gesehen, {"Adressen je Subnetz", "Adressen je Subnetz (als 2^n)"})
+
+
+class TrainerRechenwegErgebnisTest(unittest.TestCase):
+    """A-3: In ALLEN erzeugten Aufgaben (3 Stufen x 200 Startwerte, beide
+    Arten) steht im Rechenweg (PC und Handy) dasselbe Ergebnis wie in der
+    Loesung. Erwartete Zeilen aus der eigenen Rechnung dieser Datei."""
+
+    def test_a3_teilen_schritt6_und_liste(self):
+        for _stufe, task in tr_aufgaben("teilen"):
+            e = tr_teilen_lesen(task)
+            v4 = e["version"] == 4
+            text = lambda wert: eigen_text(e["version"], wert)   # noqa: E731
+            netz, ende, basis = text(e["start"]), text(e["ende"]), text(e["netz"])
+            self.assertEqual(task.solution["netz"], netz, task.text)
+            self.assertEqual(task.solution["broadcast" if v4 else "letzte"], ende, task.text)
+            nr, k = e["nr"], e["neu"] - e["praefix"]
+            groesse = eigen_de(e["groesse"]) if v4 else "2^%d" % (128 - e["neu"])
+            bits = format(nr - 1, "0%db" % k)
+            # PC, Schritt 6 woertlich aus eigener Rechnung
+            pc = ["SCHRITT 6: Gefragt ist Subnetz Nr. %d" % nr]
+            if not v4:
+                pc.append("   Subnetz-Bits: %d - 1 = %d = binär %s" % (nr, nr - 1, bits))
+            pc.append("   Netzadresse = Nr. 1 + (%d - 1) x %s Adressen" % (nr, groesse))
+            if v4:
+                pc += ["   = %s + %s = %s" % (basis, eigen_de((nr - 1) * e["groesse"]), netz),
+                       "   Broadcast-Adresse = nächste Netzadresse - 1 = %s" % ende]
+            else:
+                pc += ["   = %s" % netz, "   Letzte Adresse = nächste Netzadresse - 1",
+                       "   = %s" % ende]
+            self.assertEqual(tr_abschnitt(task.steps, "SCHRITT 6"), pc, task.text)
+            # Handy, Schritt 6
+            handy = ["SCHRITT 6: Gefragt ist", "Subnetz Nr. %d" % nr]
+            if not v4:
+                handy += [" Subnetz-Bits: %d - 1 = %d" % (nr, nr - 1), " = binär %s" % bits]
+            handy += [" Netzadresse = Nr. 1", " + (%d - 1) x %s" % (nr, groesse)]
+            if v4:
+                handy += [" = %s" % basis, " + %s" % eigen_de((nr - 1) * e["groesse"])]
+            handy = tr_handy_adresse(handy, " = ", netz)
+            handy += [" Broadcast-Adresse" if v4 else " Letzte Adresse",
+                      " = nächste Netzadresse - 1"]
+            handy = tr_handy_adresse(handy, " = ", ende)
+            self.assertEqual(tr_abschnitt(task.steps_schmal, "SCHRITT 6"), handy, task.text)
+            # Steht das Subnetz auch in der Liste (Schritt 4), dann gleich
+            liste = tr_abschnitt(task.steps, "SCHRITT 4", "SCHRITT 5")
+            for zeile in liste:
+                teile = zeile.split()
+                if re.match(r"  [0-9]+ ", zeile) and teile[0] == str(nr):
+                    if v4:
+                        self.assertEqual(teile[1], "%s/%d" % (netz, e["neu"]), task.text)
+                        self.assertEqual(teile[-1], ende, task.text)
+                    else:
+                        self.assertEqual(teile[-1], "%s/%d" % (netz, e["neu"]), task.text)
+            kurz = tr_ohne_leer(tr_abschnitt(task.steps_schmal, "SCHRITT 4", "SCHRITT 5"))
+            marke = "Subnetz%d:" % nr
+            if marke in kurz:
+                block = re.split(r"Subnetz[0-9]", kurz.split(marke, 1)[1], maxsplit=1)[0]
+                self.assertIn("Netz:%s/%d" % (netz, e["neu"]), block, task.text)
+
+    def test_a3_bedarf_vergabe_und_rest(self):
+        for _stufe, task in tr_aufgaben("bedarf"):
+            e = tr_bedarf_lesen(task)
+            anzahl = len(e["bedarfe"])
+            reihenfolge = sorted(range(anzahl), key=lambda i: (-e["bedarfe"][i], i))
+            pc = tr_ohne_leer(tr_abschnitt(task.steps, "SCHRITT 4", "SCHRITT 5"))
+            handy = tr_ohne_leer(tr_abschnitt(task.steps_schmal, "SCHRITT 4", "SCHRITT 5"))
+            for nr, i in enumerate(reihenfolge, 1):
+                start, p = e["vergabe"][i]
+                groesse = 2 ** (32 - p)
+                netz = "%s/%d" % (eigen_v4_text(start), p)
+                erste, letzte = eigen_v4_text(start + 1), eigen_v4_text(start + groesse - 2)
+                bc = eigen_v4_text(start + groesse - 1)
+                maske = eigen_v4_text((2 ** 32 - 1) ^ (groesse - 1))
+                self.assertEqual(task.solution["netz%d" % i], netz, task.text)
+                self.assertEqual(task.solution["maske%d" % i], maske, task.text)
+                if nr == e["nr"]:
+                    self.assertEqual(task.solution["broadcast"], bc, task.text)
+                name = e["namen"][i]
+                self.assertIn("%d%s%s%s%s%s" % (nr, name, netz, erste, letzte, bc), pc,
+                              (task.text, nr))
+                menge = "".join(fc.subnet_hosts_text(e["bedarfe"][i]).split())
+                self.assertIn("%d.%s(%s)Netz:%sMaske:%sErste:%sLetzte:%sBroadcast:%s"
+                              % (nr, name, menge, netz, maske, erste, letzte, bc), handy,
+                              (task.text, nr))
+                self.assertIn("Maske%s," % maske, tr_ohne_leer(
+                    tr_abschnitt(task.steps, "SCHRITT 2", "SCHRITT 3")), (task.text, nr))
+            rest = 2 ** (32 - e["praefix"]) - sum(2 ** (32 - p) for _s, p in
+                                                   e["vergabe"].values())
+            self.assertEqual(task.solution["rest"], eigen_de(rest), task.text)
+            for zeilen in (task.steps, task.steps_schmal):
+                kurz = tr_ohne_leer(tr_abschnitt(zeilen, "SCHRITT 5"))
+                if rest:
+                    self.assertIn("=%sAdressen" % eigen_de(rest), kurz, task.text)
+                else:
+                    self.assertIn("KeinRest", kurz, task.text)
+
+
+class TrainerAbgleichTest(unittest.TestCase):
+    """A-4 (Plan 0.63 Abschnitt 7): Ein Geraet mit den neuen Arten gleicht mit
+    einem Geraet ab, das sie nicht kennt. Die Eintraege kommen ueber
+    export_local/merge_into_local (Kern des Abgleichs) an, zaehlen in der
+    Statistik und im Tagesziel mit, und auch eine noch unbekannte Art
+    ("zukunft") stoert nicht. Die Anzeige (PC und Handy) summiert nur ueber
+    trainer_stats und schlaegt keine Art im Namensverzeichnis nach."""
+
+    def test_a4_unbekannte_art_im_abgleich(self):
+        import datetime
+        import shutil
+        import tempfile
+        import fisi_sync
+        ordner = tempfile.mkdtemp(prefix="fisi_t5_abgleich_")
+        try:
+            neu = fc.DBManager(db_path=os.path.join(ordner, "neu.db"))
+            alt = fc.DBManager(db_path=os.path.join(ordner, "alt.db"))
+            for art, stufe, richtig in (("teilen", 1, True), ("bedarf", 3, False),
+                                        ("zukunft", 2, True), ("ipv4", 1, True)):
+                self.assertTrue(neu.log_trainer(art, stufe, richtig) is not False)
+            alt.log_trainer("vlsm", 2, True)
+            self.assertEqual(fisi_sync.merge_into_local(alt, fisi_sync.export_local(neu),
+                                                        check_future=False, mixed=False), 4)
+            self.assertEqual(fisi_sync.merge_into_local(neu, fisi_sync.export_local(alt),
+                                                        check_future=False, mixed=False), 1)
+            erwartet = {"teilen": (1, 1), "bedarf": (1, 0), "zukunft": (1, 1),
+                        "ipv4": (1, 1), "vlsm": (1, 1)}
+            self.assertEqual(alt.trainer_stats(), erwartet)
+            self.assertEqual(neu.trainer_stats(), erwartet)
+            heute = datetime.date.today().isoformat()
+            self.assertEqual(alt.activity_days()[heute], 5)
+            self.assertEqual(neu.activity_days()[heute], 5)
+            # nochmal abgleichen: nichts doppelt
+            self.assertEqual(fisi_sync.merge_into_local(alt, fisi_sync.export_local(neu),
+                                                        check_future=False, mixed=False), 0)
+        finally:
+            shutil.rmtree(ordner, ignore_errors=True)
+        self.assertNotIn("zukunft", fl.TRAINER_KIND_NAME)
+        for datei in ("app_gui.py", os.path.join("mobile", "src", "main.py")):
+            with open(os.path.join(CODE, datei), encoding="utf-8") as h:
+                quelle = h.read()
+            stelle = quelle.index("    def show_stats(self):\n        stats = self.db.trainer_stats()")
+            rumpf = quelle[stelle:quelle.index("\n    def ", stelle + 10)]
+            self.assertIn("sum(total for total, _right in stats.values())", rumpf, datei)
+            self.assertNotIn("TRAINER_KIND_NAME", rumpf, datei)
+
+
+class TrainerEingabeformTest(unittest.TestCase):
+    """A-5: falsche Form in den neuen Feldern (Praefix an der Netzadresse,
+    Netzadresse ohne Praefix bei "Nach Hostbedarf", Buchstaben, Hochzahl,
+    Ziffern aus anderen Schriften): check() wirft nie, das Feld gilt als
+    falsch, die Rueckmeldung zeigt die erwartete Form ("richtig wäre: ..."
+    wie PC und Handy sie bauen) und enthaelt kein englisches Wort."""
+
+    UNSINN = ("abc", "zehn", "²", "2²", "/²7", "１０", "٣٢", "10,5", "2^", "2^x", "0x20",
+              "fe80::1%eth0", "-1", "1e3", "∞")
+
+    def test_a5_falsche_form_kein_fehler(self):
+        for art in ("teilen", "bedarf"):
+            for _stufe, task in tr_aufgaben(art):
+                for key, _label in task.fields:
+                    loesung = task.solution[key]
+                    proben = list(self.UNSINN)
+                    if key == "netz":                    # mit Praefix statt ohne
+                        proben.append("%s%s" % (loesung, task.solution["praefix"]))
+                    if key.startswith("netz") and art == "bedarf":   # ohne Praefix
+                        proben.append(loesung.split("/")[0])
+                    for probe in proben:
+                        ergebnis = task.check({key: probe})
+                        self.assertFalse(ergebnis[key], (task.text, key, probe))
+                    rueckmeldung = "richtig wäre: %s" % loesung
+                    self.assertRegex(loesung, r"^[0-9a-f.:/^]+$", (task.text, key))
+                    if key.startswith("netz"):
+                        self.assertEqual("/" in loesung, art == "bedarf", rueckmeldung)
+
+
+# ---------------------------------------------------------------------------
+#  0.63.1 (Plan 0.63.1 Abschnitt 3.4/3.5/3.8, Antworten 7, 8, 9 auf Meldung 10)
+#  Lueckenzeile im Trainer-Rechenweg, Anrede "du", Feldbeschriftung
+#  "(ohne Praefix)". Gegen den Cherry-Pick-Stand (Baum 792a37f) rot.
+# ---------------------------------------------------------------------------
+
+TR_LUECKE_NEU = "(nicht einzeln aufgelistet)"
+TR_LUECKE_ALT = "(alle im Ergebnis)"
+TR_LUECKE_PC = re.compile(r"^  \.\.\s+Nr\. ([0-9.]+) bis ([0-9.]+): je \+ Schrittweite (.*)$")
+
+
+class TrainerLueckenzeileTest(unittest.TestCase):
+    """Antwort 7 (Variante T): Im Trainer gibt es kein Ergebnis mit allen
+    Subnetzen. Die Lueckenzeile im Rechenweg sagt darum "(nicht einzeln
+    aufgelistet)", PC und Handy, IPv4 und IPv6, alle 3 x 200 Aufgaben; PC-Zeilen
+    hoechstens 75, Handy-Zeilen hoechstens 28 Zeichen (echter Erzeuger). Der
+    Rechner (split_explain) bleibt beim alten Satz (fisi_core unberuehrt)."""
+
+    def test_luecke_nicht_einzeln_aufgelistet(self):
+        mit_luecke, versionen, laengste = 0, set(), [0, 0]
+        for _stufe, task in tr_aufgaben("teilen"):
+            for zeile in task.steps:
+                self.assertLessEqual(len(zeile), 75, (task.text, zeile))
+            for zeile in task.steps_schmal:
+                self.assertLessEqual(len(zeile), GRENZE, (task.text, zeile))
+            for zeilen in (task.steps, task.steps_schmal):
+                flach = " ".join(" ".join(zeile.split()) for zeile in zeilen)
+                self.assertNotIn("im Ergebnis", flach, task.text)
+                self.assertNotIn("(alle im", flach, task.text)
+            luecken = [z for z in task.steps if TR_LUECKE_PC.match(z)]
+            self.assertLessEqual(len(luecken), 1, task.text)
+            if not luecken:
+                self.assertNotIn(TR_LUECKE_NEU, " ".join(task.steps_schmal), task.text)
+                continue
+            mit_luecke += 1
+            versionen.add(":" in task.text.split()[2])
+            von, bis, rest = TR_LUECKE_PC.match(luecken[0]).groups()
+            self.assertEqual(rest, TR_LUECKE_NEU, luecken[0])
+            laengste[0] = max(laengste[0], len(luecken[0]))
+            # Handy: derselbe Satz als eigener Absatz, ab "Subnetz <von> bis <bis>:"
+            satz = "Subnetz %s bis %s: je + Schrittweite %s" % (von, bis, TR_LUECKE_NEU)
+            start = [i for i, z in enumerate(task.steps_schmal)
+                     if z.startswith("Subnetz %s bis %s:" % (von, bis))]
+            self.assertEqual(len(start), 1, task.text)
+            absatz, gelesen = [], ""
+            for zeile in task.steps_schmal[start[0]:]:
+                absatz.append(zeile)
+                gelesen = " ".join(z.strip() for z in absatz)
+                if len(gelesen) >= len(satz):
+                    break
+            self.assertEqual(gelesen, satz, task.text)
+            laengste[1] = max(laengste[1], max(len(z) for z in absatz))
+        self.assertGreaterEqual(mit_luecke, 100)
+        self.assertEqual(versionen, {False, True})          # IPv4 und IPv6
+        self.assertLessEqual(laengste[0], 75)
+        self.assertLessEqual(laengste[1], GRENZE)
+
+    def test_rechner_unveraendert(self):
+        ergebnis = fc.split_network("10.0.0.0/16", 30, 4)
+        self.assertIn("5 bis 30: je + Schrittweite " + TR_LUECKE_ALT,
+                      " ".join(fc.split_explain(ergebnis).split()))
+        self.assertIn(TR_LUECKE_ALT, " ".join(fc.split_explain(ergebnis, True).split()))
+
+
+class TrainerAnredeTest(unittest.TestCase):
+    """Antwort 8: Alle Trainer-Arten sagen "du" ("Gib an: ...")."""
+
+    def test_du_in_allen_arten(self):
+        for art, _name in fl.TRAINER_KINDS:
+            for _stufe, task in tr_aufgaben(art):
+                self.assertNotIn("Geben Sie", task.text)
+                self.assertIsNone(re.search(r"\b(Sie|Ihnen|Ihr|Ihre)\b", task.text), task.text)
+                if art == "teilen":
+                    self.assertIn(". Gib an: ", task.text)
+                if art == "bedarf":
+                    self.assertIn(" zuerst. Gib je Subnetz Netzadresse/Präfix und Subnetzmaske "
+                                  "an, dazu ", task.text)
+
+
+class TrainerOhnePraefixTest(unittest.TestCase):
+    """Antwort 9 (A-5): Feldbeschriftung "Netzadresse des %d. Subnetzes (ohne
+    Praefix)" bei "Netz aufteilen" (IPv4 und IPv6); die Eingabe mit Praefix
+    gilt weiter als falsch, ohne Ausnahme. PC und Handy lesen dieselben Felder."""
+
+    def test_feld_ohne_praefix(self):
+        gesehen = set()
+        for _stufe, task in tr_aufgaben("teilen"):
+            felder = dict(task.fields)
+            nummer = re.search(r"des (\d+)\. Subnetzes$", task.text[:-1]).group(1)
+            self.assertEqual(felder["netz"], "Netzadresse des %s. Subnetzes (ohne Präfix)"
+                             % nummer)
+            gesehen.add(":" in task.solution["netz"])
+            loesung = task.solution["netz"]
+            self.assertTrue(task.check({"netz": loesung})["netz"])
+            self.assertFalse(task.check({"netz": loesung + task.solution["praefix"]})["netz"])
+            self.assertNotIn("Präfix", " ".join(l for k, l in task.fields if k != "netz"
+                                                and k != "praefix"))
+        self.assertEqual(gesehen, {False, True})
+        for _stufe, task in tr_aufgaben("bedarf"):
+            for key, label in task.fields:
+                self.assertNotIn("(ohne Präfix)", label)
+        handy = fl.trainer_task("teilen", 3, 11, schmal=True)
+        self.assertEqual(handy.fields, fl.trainer_task("teilen", 3, 11).fields)
 
 
 if __name__ == "__main__":
