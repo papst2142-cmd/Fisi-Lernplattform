@@ -5562,14 +5562,25 @@ class SettingsView(View):
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(self.var_auto.get())
-        fisi_update.save_settings(settings)
+        if not fisi_update.save_settings(settings):
+            self._save_failed(self.var_auto)
 
     def _toggle_sync_auto(self):
-        fisi_sync.save_sync_settings(sync_auto=bool(self.var_sync_auto.get()))
+        if not fisi_sync.save_sync_settings(sync_auto=bool(self.var_sync_auto.get())):
+            self._save_failed(self.var_sync_auto)
+
+    def _save_failed(self, var):
+        """Ab 0.62.5 (B-G-04): Einstellung nicht gespeichert - Schalter
+        zurueck auf den gespeicherten Stand, Meldung (wie am Handy)."""
+        var.set(not var.get())
+        messagebox.showerror(fo.SAVE_FAILED_TITLE, fo.SAVE_FAILED)
 
     def sync_now(self):
-        fisi_sync.save_sync_settings(sync_repo=self.entry_repo.get().strip(),
-                                     sync_token=self.entry_token.get().strip())
+        if not fisi_sync.save_sync_settings(sync_repo=self.entry_repo.get().strip(),
+                                            sync_token=self.entry_token.get().strip()):
+            # Ab 0.62.5 (B-G-04): nicht mit dem alten Repository abgleichen
+            self.lbl_sync.configure(text=fo.SAVE_FAILED, text_color=C["red"])
+            return
         if not fisi_sync.is_configured():
             self.lbl_sync.configure(text="Bitte Repository und Zugangsschlüssel "
                                          "eintragen.", text_color=C["yellow"])
@@ -5799,8 +5810,9 @@ class SettingsView(View):
             return
         try:
             data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
-            with open(path, "wb") as handle:
-                handle.write(data)
+            # Ab 0.62.5 (B-G-02): ueber eine Hilfsdatei - bei voller Platte
+            # bleibt eine vorhandene alte Sicherung heil
+            fsi.save_file(path, data)
         except OSError as error:
             messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
             return
@@ -5829,8 +5841,8 @@ class SettingsView(View):
         try:
             count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
                                      SyncController.device())
-        except fsi.BackupError as error:
-            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE,
@@ -5846,8 +5858,8 @@ class SettingsView(View):
         try:
             path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
                                    APP_VERSION, SyncController.device())
-        except fsi.BackupError as error:
-            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
@@ -6423,9 +6435,20 @@ class BackupDialog(ctk.CTkToplevel):
         make_label(card.body, fsi.PREVIEW_HINT, font=F["small"], fg=C["text_dim"],
                    justify="left", anchor="w", wraplength=480).pack(anchor="w", pady=(14, 0))
 
+        busy = []
+
         def choose(action):
-            self.destroy()
-            action(backup)
+            # Ab 0.62.5 (B-G-05): das Fenster schliesst erst nach der Aktion
+            # (waehrenddessen zaehlt kein weiterer Klick darin)
+            if busy:
+                return
+            busy.append(True)
+            try:
+                if action:
+                    action(backup)
+            finally:
+                if self.winfo_exists():
+                    self.destroy()
 
         buttons = transparent_frame(card.body)
         buttons.pack(fill="x", side="bottom", pady=(12, 0))
@@ -6433,7 +6456,8 @@ class BackupDialog(ctk.CTkToplevel):
                   kind="primary").pack(side="left")
         NeoButton(buttons, fsi.BTN_REPLACE, lambda: choose(on_replace),
                   kind="danger").pack(side="left", padx=10)
-        NeoButton(buttons, fsi.BTN_CANCEL, self.destroy, kind="ghost").pack(side="left")
+        NeoButton(buttons, fsi.BTN_CANCEL, lambda: choose(None),
+                  kind="ghost").pack(side="left")
         self.after(100, self._focus)
 
     def _focus(self):
