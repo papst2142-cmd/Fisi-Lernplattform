@@ -578,6 +578,8 @@ TRAINER_KINDS = [
     ("vlsm", "VLSM"),
     ("zahlen", "Binär/Hex/Dezimal"),
     ("ipv6", "IPv6 kürzen"),
+    ("teilen", "Netz aufteilen"),
+    ("bedarf", "Nach Hostbedarf"),
 ]
 TRAINER_KIND_NAME = dict(TRAINER_KINDS)
 TRAINER_LEVELS = [(1, "Leicht"), (2, "Mittel"), (3, "Schwer")]
@@ -868,8 +870,268 @@ def _ipv6_task(rng, level):
     return TrainerTask("ipv6", level, text, fields, solution, steps, matchers)
 
 
+# ============================================================================
+#  Ab 0.63.1 (Plan 0.63 Abschnitt 4.5, Freigabe G-63-1): zwei neue Arten
+#  "Netz aufteilen" und "Nach Hostbedarf". Gerechnet und erklaert wird mit
+#  dem Rechenkern des Rechners (split_network, subnet_by_hosts und deren
+#  Rechenwege). Die Handy-Fassung des Rechenwegs (hoechstens
+#  CALC_EXPLAIN_HANDY_WIDTH Zeichen je Zeile) liegt als task.steps_schmal an
+#  der Aufgabe (F-63-18 = S1); trainer_task bleibt unveraendert.
+# ============================================================================
+
+from fisi_core import (CALC_EXPLAIN_HANDY_WIDTH, de_int, hosts_explain,  # noqa: E402
+                       ipv4_text, split_entry, split_explain, split_network,
+                       subnet_addr_text, subnet_by_hosts, subnet_hosts_text,
+                       subnet_net_text)
+
+TRAINER_NAMES = ["Verwaltung", "Produktion", "Vertrieb", "Lager", "Technik", "Gäste-WLAN",
+                 "Server", "Entwicklung", "Einkauf", "Buchhaltung"]
+
+
+def _digits(text):
+    return text != "" and all(char in "0123456789" for char in text)
+
+
+def _prefix_matcher(expected):
+    """Praefixlaenge als "/27" oder "27"."""
+    def match(text):
+        value = _clean(text)
+        value = value[1:] if value.startswith("/") else value
+        return _digits(value) and int(value) == expected
+    return match
+
+
+def _count_matcher(expected, power=False):
+    """Ganze Zahl mit oder ohne Tausenderpunkte, mit power=True auch als
+    Zweierpotenz "2^64". Nur die Ziffern 0 bis 9 (anders als _int_matcher)."""
+    def match(text):
+        value = _clean(text)
+        if power and value.startswith("2^"):
+            return _digits(value[2:]) and len(value) <= 6 and 2 ** int(value[2:]) == expected
+        groups = value.split(".")
+        if len(groups) > 1 and not (1 <= len(groups[0]) <= 3
+                                    and all(len(group) == 3 for group in groups[1:])):
+            return False                    # Punkte nur als Tausenderpunkte
+        value = "".join(groups)
+        return _digits(value) and int(value) == expected
+    return match
+
+
+def _trainer_v4_net(rng, prefix):
+    """Zufaelliges privates IPv4-Netz mit diesem Praefix (als ganze Zahl)."""
+    first = rng.choice([10] + [172] * (prefix >= 12) + [192] * (prefix >= 16))
+    if first == 10:
+        value = (10 << 24) | rng.getrandbits(24)
+    elif first == 172:
+        value = (172 << 24) | ((16 + rng.randint(0, 15)) << 16) | rng.getrandbits(16)
+    else:
+        value = (192 << 24) | (168 << 16) | rng.getrandbits(16)
+    return value >> (32 - prefix) << (32 - prefix)
+
+
+def _trainer_v6_net(rng, prefix):
+    """Zufaelliges Netz im Dokumentationsbereich 2001:db8::/32."""
+    value = 0x20010DB8 << 96
+    if prefix > 32:
+        value |= rng.getrandbits(prefix - 32) << (128 - prefix)
+    return value
+
+
+def _narrow_address(caption, address):
+    """Handy: Adresse hinter caption, sonst an einem Doppelpunkt geteilt."""
+    if len(caption + address) <= CALC_EXPLAIN_HANDY_WIDTH:
+        return [caption + address]
+    cut = address.find(":", len(address) // 2 - 3) + 1
+    return [caption + address[:cut], "   " + address[cut:]]
+
+
+def _split_nibble_lines(wanted, prefix, bits, nibble, schmal):
+    """Vorueberlegung "an Nibble-Grenzen": von /neu auf die naechste 4-Bit-Grenze."""
+    new, total, used = prefix + bits, de_int(1 << (nibble - prefix)), de_int(wanted)
+    if schmal:
+        return ["VORÜBERLEGUNG:", "NIBBLE-GRENZE",
+                " %s Subnetze brauchen" % used,
+                " k = %d Bit: /%d + %d = /%d" % (bits, prefix, bits, new),
+                " /%d liegt nicht an einer" % new, " 4-Bit-Grenze (Nibble).",
+                " Die nächste ist /%d." % nibble,
+                " Dort entstehen 2^%d" % (nibble - prefix),
+                " = %s Subnetze. Damit" % total, " geht es weiter; verwendet",
+                " werden die ersten %s." % used, ""]
+    return ["VORÜBERLEGUNG: NIBBLE-GRENZE",
+            "   %s Subnetze brauchen k = %d Bit: /%d + %d = /%d."
+            % (used, bits, prefix, bits, new),
+            "   /%d liegt nicht an einer 4-Bit-Grenze (Nibble). Die nächste ist /%d."
+            % (new, nibble),
+            "   Dort entstehen 2^%d = %s Subnetze. Damit geht es weiter;"
+            % (nibble - prefix, total),
+            "   verwendet werden die ersten %s." % used, ""]
+
+
+def _split_pick_lines(result, number, schmal):
+    """Letzter Schritt: das gefragte Subnetz Nr. number aus Netz + (Nr. - 1) x Groesse."""
+    version, size = result["version"], result["groesse"]
+    entry = split_entry(result, number - 1)
+    base = subnet_addr_text(version, result["netz"])
+    net = subnet_addr_text(version, entry["netz"])
+    end = subnet_addr_text(version, entry["ende"])
+    size_text = de_int(size) if version == 4 else "2^%d" % (result["breite"] - result["neu"])
+    end_caption = "Broadcast-Adresse" if version == 4 else "Letzte Adresse"
+    bits = format(number - 1, "0%db" % result["k"]) if result["k"] else "0"
+    if schmal:
+        lines = ["", "SCHRITT 6: Gefragt ist", "Subnetz Nr. %d" % number]
+        if version == 6:
+            lines += [" Subnetz-Bits: %d - 1 = %d" % (number, number - 1),
+                      " = binär %s" % bits]
+        lines += [" Netzadresse = Nr. 1", " + (%d - 1) x %s" % (number, size_text)]
+        if version == 4:
+            lines += [" = %s" % base, " + %s" % de_int((number - 1) * size)]
+        lines += _narrow_address(" = ", net)
+        lines += [" %s" % end_caption, " = nächste Netzadresse - 1"]
+        return lines + _narrow_address(" = ", end)
+    lines = ["", "SCHRITT 6: Gefragt ist Subnetz Nr. %d" % number]
+    if version == 6:
+        lines.append("   Subnetz-Bits: %d - 1 = %d = binär %s" % (number, number - 1, bits))
+    lines.append("   Netzadresse = Nr. 1 + (%d - 1) x %s Adressen" % (number, size_text))
+    if version == 4:
+        lines.append("   = %s + %s = %s" % (base, de_int((number - 1) * size), net))
+        lines.append("   %s = nächste Netzadresse - 1 = %s" % (end_caption, end))
+    else:
+        lines += ["   = %s" % net, "   %s = nächste Netzadresse - 1" % end_caption,
+                  "   = %s" % end]
+    return lines
+
+
+def _split_task(rng, level):
+    """Netz aufteilen: N gleich grosse Subnetze (Stufe 3 auch IPv6, zur Haelfte
+    an Nibble-Grenzen)."""
+    version = 6 if level == 3 and rng.random() < 0.5 else 4
+    nibble = version == 6 and rng.random() < 0.5
+    while True:
+        if version == 4:
+            prefix = 24 if level == 1 else rng.randint(*{2: (16, 23), 3: (8, 22)}[level])
+            wanted = rng.randint(2, {1: 8, 2: 32, 3: 300}[level])
+        else:
+            prefix, wanted = rng.randint(32, 56), rng.randint(2, 300)
+        bits = (wanted - 1).bit_length()
+        new = prefix + bits
+        if version == 4 and new <= 30:
+            break
+        if version == 6 and (not nibble or new % 4) and (new + 3) // 4 * 4 <= 64:
+            break
+    width = 32 if version == 4 else 128
+    value = _trainer_v4_net(rng, prefix) if version == 4 else _trainer_v6_net(rng, prefix)
+    net_text = subnet_net_text(version, value, prefix)
+    number = rng.randint(2, wanted)
+    if nibble:
+        target = (new + 3) // 4 * 4
+        result = split_network(net_text, 1 << (target - prefix), version)
+        steps = _split_nibble_lines(wanted, prefix, bits, target, False)
+        narrow = _split_nibble_lines(wanted, prefix, bits, target, True)
+    else:
+        result = split_network(net_text, wanted, version)
+        steps, narrow = [], []
+    steps += split_explain(result).split("\n") + _split_pick_lines(result, number, False)
+    narrow += split_explain(result, True).split("\n") + _split_pick_lines(result, number, True)
+    entry = split_entry(result, number - 1)
+    size = result["groesse"]
+    if version == 4:
+        fields = [("praefix", "Neue Präfixlänge"), ("maske", "Subnetzmaske"),
+                  ("adressen", "Adressen je Subnetz"), ("hosts", "Nutzbare Hosts je Subnetz"),
+                  ("netz", "Netzadresse des %d. Subnetzes" % number),
+                  ("broadcast", "Broadcast-Adresse des %d. Subnetzes" % number)]
+        solution = {"maske": ipv4_text(result["maske"]), "adressen": de_int(size),
+                    "hosts": de_int(result["hosts"]), "broadcast": ipv4_text(entry["ende"])}
+        matchers = {"maske": _ip_matcher(ipaddress.IPv4Address(result["maske"])),
+                    "adressen": _count_matcher(size, power=True),
+                    "hosts": _count_matcher(result["hosts"]),
+                    "broadcast": _ip_matcher(ipaddress.IPv4Address(entry["ende"]))}
+        asked = ("neue Präfixlänge, Subnetzmaske, Adressen und nutzbare Hosts je Subnetz "
+                 "sowie Netzadresse und Broadcast-Adresse des %d. Subnetzes" % number)
+    else:
+        fields = [("praefix", "Neue Präfixlänge"),
+                  ("adressen", "Adressen je Subnetz (z. B. 2^64)"),
+                  ("netz", "Netzadresse des %d. Subnetzes" % number),
+                  ("letzte", "Letzte Adresse des %d. Subnetzes" % number)]
+        solution = {"adressen": "2^%d" % (width - result["neu"]),
+                    "letzte": subnet_addr_text(6, entry["ende"])}
+        matchers = {"adressen": _count_matcher(size, power=True),
+                    "letzte": _ip_matcher(ipaddress.IPv6Address(entry["ende"]))}
+        asked = ("neue Präfixlänge, Adressen je Subnetz sowie Netzadresse und letzte "
+                 "Adresse des %d. Subnetzes" % number)
+    solution.update(praefix="/%d" % result["neu"],
+                    netz=subnet_addr_text(version, entry["netz"]))
+    matchers.update(praefix=_prefix_matcher(result["neu"]),
+                    netz=_ip_matcher(ipaddress.ip_address(entry["netz"]) if version == 4
+                                     else ipaddress.IPv6Address(entry["netz"])))
+    text = ("Das Netz %s soll in %s gleich große Subnetze %saufgeteilt werden. "
+            "Geben Sie an: %s." % (net_text, de_int(wanted),
+                                   "an Nibble-Grenzen (4-Bit-Grenzen) " if nibble else "",
+                                   asked))
+    task = TrainerTask("teilen", level, text, fields, solution, steps, matchers)
+    task.steps_schmal = narrow
+    return task
+
+
+def _hosts_sizes(rng, capacity, count, full):
+    """Blockgroessen (Zweierpotenzen ab 4), die ins Netz passen: das Netz so
+    lange an einem zufaelligen Block halbieren, bis count (full: Summe genau
+    die Netzgroesse, Rest 0) bzw. count + 1 Bloecke da sind; ohne full
+    bleibt ein Block frei."""
+    blocks = [capacity]
+    while len(blocks) < count + (0 if full else 1):
+        index = rng.choice([i for i, size in enumerate(blocks) if size >= 8])
+        half = blocks.pop(index) // 2
+        blocks += [half, half]
+    if not full:
+        blocks.pop(rng.randrange(len(blocks)))
+    rng.shuffle(blocks)
+    return blocks
+
+
+def _hosts_task(rng, level):
+    """Nach Hostbedarf: erst die Groessen, dann je Groesse ein Bedarf, fuer den
+    genau diese Groesse die kleinste passende ist. Darum immer loesbar; etwa
+    jede dritte Aufgabe fuellt das Netz genau (Rest 0)."""
+    count = rng.randint(*{1: (2, 3), 2: (3, 4), 3: (4, 6)}[level])
+    prefix = 24 if level == 1 else rng.choice({2: [23, 24], 3: [22, 23]}[level])
+    sizes = _hosts_sizes(rng, 1 << (32 - prefix), count, rng.random() < 1 / 3)
+    needs = [rng.randint(max(1, size // 2 - 1), size - 2) for size in sizes]
+    names = rng.sample(TRAINER_NAMES, count)
+    net_text = subnet_net_text(4, _trainer_v4_net(rng, prefix), prefix)
+    result = subnet_by_hosts(net_text, list(zip(names, needs)), 4)
+    subnets, order = result["subnetze"], result["reihenfolge"]
+    number = rng.randint(1, count)
+    fields, solution, matchers = [], {}, {}
+    for index, item in enumerate(subnets):
+        net = ipaddress.IPv4Network((item["netz"], item["praefix"]))
+        fields += [("netz%d" % index, "%s (%s): Netzadresse/Präfix"
+                    % (item["name"], subnet_hosts_text(item["bedarf"]))),
+                   ("maske%d" % index, "%s: Subnetzmaske" % item["name"])]
+        solution["netz%d" % index] = str(net)
+        solution["maske%d" % index] = ipv4_text(item["maske"])
+        matchers["netz%d" % index] = _network_matcher(net)
+        matchers["maske%d" % index] = _ip_matcher(net.netmask)
+    asked = subnets[order[number - 1]]["broadcast"]
+    fields += [("broadcast", "Broadcast-Adresse des %d. vergebenen Subnetzes" % number),
+               ("rest", "Freier Rest (Anzahl Adressen)")]
+    solution.update(broadcast=ipv4_text(asked), rest=de_int(result["rest"]))
+    matchers.update(broadcast=_ip_matcher(ipaddress.IPv4Address(asked)),
+                    rest=_count_matcher(result["rest"]))
+    wants = ", ".join("%s: %s" % (item["name"], subnet_hosts_text(item["bedarf"]))
+                      for item in subnets)
+    text = ("Das Netz %s soll nach Hostbedarf aufgeteilt werden: %s. Vergeben wird "
+            "lückenlos ab der ersten Adresse, das größte Subnetz zuerst. Geben Sie je "
+            "Subnetz Netzadresse/Präfix und Subnetzmaske an, dazu die Broadcast-Adresse "
+            "des %d. vergebenen Subnetzes und den freien Rest in Adressen."
+            % (net_text, wants, number))
+    task = TrainerTask("bedarf", level, text, fields, solution,
+                       hosts_explain(result).split("\n"), matchers)
+    task.steps_schmal = hosts_explain(result, True).split("\n")
+    return task
+
+
 TRAINER_BUILDERS = {"ipv4": _ipv4_task, "vlsm": _vlsm_task, "zahlen": _number_task,
-                    "ipv6": _ipv6_task}
+                    "ipv6": _ipv6_task, "teilen": _split_task, "bedarf": _hosts_task}
 
 
 def trainer_task(kind, level, seed, schmal=False):

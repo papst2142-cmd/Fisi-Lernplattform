@@ -2768,7 +2768,8 @@ class TrainerPanel(ft.Column):
         self.entries, self.marks, rows = {}, {}, []
         for key, label in task.fields:
             field = ui.entry("", hint=label,
-                             keyboard=ft.KeyboardType.TEXT if task.kind in ("ipv6", "zahlen")
+                             keyboard=ft.KeyboardType.TEXT
+                             if task.kind in ("ipv6", "zahlen", "teilen", "bedarf")
                              else ft.KeyboardType.NUMBER if key == "hosts"
                              else ft.KeyboardType.TEXT)
             mark = ui.text("", size=12)
@@ -2803,7 +2804,9 @@ class TrainerPanel(ft.Column):
         self.lbl_feedback.value = ("Alles richtig." if correct else
                                    "Noch nicht ganz - hier der Rechenweg:")
         self.lbl_feedback.color = C["green"] if correct else C["yellow"]
-        self.steps.content.value = "\n".join(task.steps)
+        # Ab 0.63.1 (F-63-18 = S1): die neuen Arten bringen die Handy-Fassung
+        # des Rechenwegs als steps_schmal mit, alle anderen nur steps
+        self.steps.content.value = "\n".join(getattr(task, "steps_schmal", None) or task.steps)
         self.steps.visible = True
         self.checked = True
         last = self.index >= len(self.tasks) - 1
