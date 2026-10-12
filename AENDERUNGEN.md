@@ -4,6 +4,14 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.63
+
+- **Subnetting-Rechner neu:** Schalter IPv4/IPv6. Ein Netz lässt sich in gleich große Teilnetze aufteilen (IPv4 und IPv6) oder nach Hostbedarf (IPv4). Jede Rechnung hat einen Rechenweg Schritt für Schritt. Bei IPv6 zeigt „Netzdaten“ zusätzlich die ausgeschriebene Adresse und den Adresstyp. Am PC geht die Karte über die ganze Breite, RAID steht darunter.
+- **Fehler bei der Eingabe:** Der Ergebniskasten wird jetzt geleert, damit kein altes Ergebnis zur falschen Eingabe stehen bleibt (alle Rechner, PC und Handy).
+- **Handy:** Lange Ergebniszeilen brechen um, Auswahl-Knöpfe laufen in eine zweite Reihe.
+- **Rechner öffnen:** Wird der Rechner direkt nach dem Programmstart geöffnet, dauert das erste Öffnen etwa 0,2 Sekunden länger als vorher. Im normalen Betrieb ist er schneller.
+- **Bekannte Einschränkung:** Bei der Schriftgröße „Groß“ oder „Sehr groß“ und kleinem Fenster muss man im Subnetting-Rechner die Seite seitlich schieben, um lange Zeilen (Ergebnis und Rechenweg) und den Hinweis „IPv4“/„IPv6“ oben rechts ganz zu sehen. Das ist bekannt und wird in einer Folgeversion behoben.
+
 ## 0.62.5
 
 Diese Version geht besser mit Fehlern um: bei einer beschädigten oder
