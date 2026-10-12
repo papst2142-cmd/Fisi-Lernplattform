@@ -3269,6 +3269,7 @@ class FinalProjectView(View):
         self.project = None
         self._load_project()
         self.app.notify_progress(refresh_view=False)
+        self.app.sync.schedule()      # ab 0.62.5 (B-G-20): wie am Handy
 
     def _export(self, extension):
         self._flush()
@@ -6322,6 +6323,10 @@ class SyncController:
         self._again = False
         self._job = None
         self.dirty = False
+        # Ab 0.62.5 (B-B-02): gesetzt, solange kein Abgleich im Hintergrund
+        # laeuft - run_before_exit wartet darauf
+        self._idle = threading.Event()
+        self._idle.set()
 
     @staticmethod
     def device():
@@ -6338,6 +6343,7 @@ class SyncController:
             return
         self._busy = True
         self.dirty = False
+        self._idle.clear()
 
         def done(result, error):
             self._busy = False
@@ -6348,8 +6354,13 @@ class SyncController:
                 self._again = False
                 self.run()
 
-        self.app.updater.run_in_background(
-            lambda: fisi_sync.sync(self.app.db, device=self.device()), done)
+        self.app.updater.run_in_background(self._sync_in_thread, done)
+
+    def _sync_in_thread(self):
+        try:
+            return fisi_sync.sync(self.app.db, device=self.device())
+        finally:
+            self._idle.set()
 
     def auto_start(self):
         if self.auto_enabled():
@@ -6373,11 +6384,16 @@ class SyncController:
         if not (self.dirty and self.auto_enabled()):
             return
         task = fhg.vorgang("abgleich")   # ab 0.59.2: Haenger-Diagnose
-        worker = threading.Thread(
-            target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
-            daemon=True)
-        worker.start()
-        worker.join(timeout)
+        # Ab 0.62.5 (B-B-02): Laeuft noch ein Abgleich (z. B. der vom Start),
+        # erst auf ihn warten statt einen zweiten daneben zu starten. Ist er
+        # rechtzeitig fertig, folgt der letzte Abgleich in der restlichen Zeit.
+        deadline = time.monotonic() + timeout
+        if self._idle.wait(timeout):
+            worker = threading.Thread(
+                target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
+                daemon=True)
+            worker.start()
+            worker.join(max(0.0, deadline - time.monotonic()))
         fhg.vorgang(task)
 
 
