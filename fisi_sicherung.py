@@ -39,6 +39,7 @@ import zlib
 from fisi_core import (EVENT_TABLES, LEGACY_RUN, OPTIONAL_COLUMNS, SYNC_TABLES,
                        plural, purge_deleted_runs)
 from fisi_lernen import GOAL_SETTINGS, goal_settings
+import fisi_sync
 from fisi_sync import FORMAT as SYNC_FORMAT, MARKERS, export_local, merge_into_local
 from fisi_update import load_settings, save_settings
 
@@ -433,6 +434,13 @@ def merge_message(count, restored=()):
         text = "Sicherung eingespielt: Es fehlte nichts, alles war schon da."
     for name in restored:
         text += " Der Spielstand „%s“ liegt wieder auf einem freien Platz." % name
+    # Ab 0.62.4: was die Loeschmarken der Sicherung bewirkt haben
+    stats = fisi_sync.LAST_MERGE
+    if stats.backup:
+        if stats.removed:
+            text += " %s." % fisi_sync.removed_text(stats.removed)
+        for note in stats.notes(backup=True):
+            text += " " + note
     return text
 
 

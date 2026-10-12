@@ -22,21 +22,34 @@ Tabelle spiel_plaetze und werden auf allen Geraeten entfernt, egal wann. Die
 Bestenliste (ab 0.46) uebersteht alle drei, sie hat ihren eigenen Zeitpunkt
 (bestenliste_reset_at).
 
+Ab 0.62.4 tragen Loeschzeitpunkte und Eintraege ihren Abstand zu UTC (Marke
+"2026-10-25 02:30:00+02:00", Spalte utc_offset). Dann wird ueber Zeitzonen und
+die Zeitumstellung hinweg in UTC verglichen; ohne Abstand (aeltere Versionen)
+bleibt es beim Textvergleich wie bisher. Eine Marke, die nach der Uhrzeit von
+GitHub in der Zukunft liegt (falsche Geraeteuhr), wird einmal auf diese
+Uhrzeit gesetzt - aber nur, wenn zuletzt ein Geraet ab 0.62.4 die Datei
+geschrieben hat (Feld "schreiber"), sonst wuerde ein aelteres Geraet die
+alte Marke immer wieder hochladen. Ungueltige Marken gelten nicht.
+
 Ablauf:
   ergebnis = sync(db, einstellungen, geraet="PC")   -> SyncResult
 """
 
 import base64
 import datetime
+import email.utils
 import gzip
 import json
+import re
 import sqlite3
 import urllib.error
 import urllib.request
 
-from fisi_core import (GAME_TABLES, HISTORY_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
-                       RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, purge_deleted_runs,
-                       apply_question_renames, plural, purge_superseded_project_rows)
+from fisi_core import (CLOCK_KEY, CLOCK_TOLERANCE, CLOCK_VALID, GAME_TABLES,
+                       HISTORY_TABLES, MARKED_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES, RECORD_TABLES, SLOT_TABLES,
+                       SYNC_TABLES, UTC_OFFSET, purge_deleted_runs, apply_question_renames,
+                       clock_deviation, device_now, format_with_zone, plural,
+                       purge_superseded_project_rows, write_error_log)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
@@ -51,6 +64,25 @@ REMOTE_FILE = "lernstand.json.gz"
 FORMAT = 2
 MARKERS = ("reset_at", "history_cleared_at", "spiel_reset_at", "bestenliste_reset_at")
 TIMEOUT = 15
+# Ab 0.62.4: Feld in der Datei - zuletzt hat ein Geraet geschrieben, das
+# Marken mit Zone versteht. Aeltere Versionen lassen es beim Hochladen weg.
+WRITER_KEY = "schreiber"
+WRITER = "0.62.4"
+# Ab 0.62.4: Feld in der Datei - welche Zukunftsmarke auf welche Uhrzeit von
+# GitHub gesetzt wurde ({"reset_at": [alt, neu]}). Ein Geraet, das die alte
+# Marke noch hat, nimmt dann dasselbe neu, statt selbst eine Uhrzeit zu
+# waehlen. Lokal steht es in sync_meta unter CLAMP_PREFIX + Schluessel.
+CLAMP_KEY = "gekappt"
+CLAMP_PREFIX = "gekappt:"
+# Gueltige Marke: Ortszeit, optional Mikrosekunden und Abstand zu UTC
+_MARKER_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(\.\d{1,6})?"
+                        r"(?:([+-])(\d{2}):(\d{2}))?$")
+MSG_INVALID_MARKER = ("Die Abgleich-Datei enthält eine ungültige Löschmarke. Sie wurde "
+                      "nicht angewendet.")
+MSG_FUTURE_MARKER = ("Eine Löschmarke lag in der Zukunft (falsche Uhr) und wurde auf die "
+                     "Uhrzeit von GitHub gesetzt.")
+MSG_FUTURE_BACKUP = ("Die Sicherung enthält eine Löschmarke in der Zukunft. Sie wurde "
+                     "nicht angewendet.")
 
 SETTING_DEFAULTS = {"sync_repo": "", "sync_token": "", "sync_auto": True,
                     "sync_last": ""}
@@ -66,21 +98,76 @@ class _Conflict(Exception):
 
 
 class SyncResult:
-    def __init__(self, received, sent):
+    def __init__(self, received, sent, removed=0, notes=()):
         self.received = received
         self.sent = sent
+        self.removed = removed          # ab 0.62.4: wegen einer Loeschung entfernt
+        self.notes = list(notes)        # ab 0.62.4: Hinweise zu Marken
 
     @property
     def message(self):
-        if not self.received and not self.sent:
-            return "Alles auf dem neuesten Stand."
-        parts = []
-        if self.received:
-            parts.append("%s von anderen Geräten übernommen"
-                         % plural(self.received, "Eintrag", "Einträge"))
-        if self.sent:
-            parts.append("%s hochgeladen" % plural(self.sent, "Eintrag", "Einträge"))
-        return ", ".join(parts) + "."
+        if not self.received and not self.sent and not self.removed:
+            text = "Alles auf dem neuesten Stand."
+        else:
+            parts = []
+            if self.received:
+                parts.append("%s von anderen Geräten übernommen"
+                             % plural(self.received, "Eintrag", "Einträge"))
+            if self.sent:
+                parts.append("%s hochgeladen" % plural(self.sent, "Eintrag", "Einträge"))
+            if self.removed:
+                parts.append(removed_text(self.removed))
+            text = ", ".join(parts) + "."
+        return " ".join([text] + self.notes)
+
+
+def removed_text(count):
+    """'3 Einträge wegen einer Löschung entfernt' (PC, Handy, Sicherung)."""
+    return "%s wegen einer Löschung entfernt" % plural(count, "Eintrag", "Einträge")
+
+
+def clock_fix_text(seconds):
+    """Hinweis nach einer Loeschung, wenn die Marke mit der Uhrzeit von GitHub
+    statt der falschen Geraeteuhr gespeichert wurde (ab 0.62.4, PC und Handy
+    gleich). seconds = Geraeteuhr minus GitHub; 0 = kein Hinweis."""
+    if not seconds:
+        return ""
+    size = abs(seconds)
+    if size >= 86400:
+        amount = plural(int(round(size / 86400.0)), "Tag", "Tage")
+    elif size >= 3600:
+        amount = plural(int(round(size / 3600.0)), "Stunde", "Stunden")
+    else:
+        amount = plural(max(1, int(round(size / 60.0))), "Minute", "Minuten")
+    return ("Die Uhr dieses Geräts geht um %s %s. Die Löschung wurde mit der "
+            "Uhrzeit von GitHub gespeichert." % (amount, "vor" if seconds > 0 else "nach"))
+
+
+class MergeStats:
+    """Was beim Zusammenfuehren wegen Loeschmarken passiert ist (ab 0.62.4)."""
+
+    def __init__(self):
+        self.gone = set()       # (Tabelle, uid): lokal geloescht oder nicht uebernommen
+        self.invalid = 0        # ungueltige Marken (nicht angewendet)
+        self.future = 0         # Zukunftsmarken (Sicherung: nicht angewendet)
+        self.backup = False     # Zusammenfuehren einer Sicherung (ohne GitHub-Uhr)
+
+    @property
+    def removed(self):
+        return len(self.gone)
+
+    def notes(self, backup=False):
+        notes = []
+        if self.invalid:
+            notes.append(MSG_INVALID_MARKER)
+        if self.future and backup:
+            notes.append(MSG_FUTURE_BACKUP)
+        return notes
+
+
+# Ergebnis des letzten Zusammenfuehrens - fuer die Meldung nach "Sicherung
+# zusammenfuehren" (fisi_sicherung.merge_message)
+LAST_MERGE = MergeStats()
 
 
 # ============================================================================
@@ -125,12 +212,49 @@ def _request(method, url, token, body=None, accept="application/vnd.github+json"
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT,
                                     context=_ssl_context()) as response:
-            return response.read()
+            body = response.read()
+            _note_server_time(response.headers.get("Date"))
+            return body
     except urllib.error.HTTPError:
         raise
     except (urllib.error.URLError, OSError):
         raise SyncError("Keine Verbindung zu GitHub. Bitte die Internetverbindung "
                         "prüfen.")
+
+
+# Ab 0.62.4: Uhrzeit von GitHub aus dem Date-Kopf der letzten Antwort und die
+# Geraeteuhr in diesem Moment (beides UTC) - None, solange keine da ist
+_SERVER_CLOCK = {"server": None, "device": None}
+
+
+def _note_server_time(value):
+    try:
+        server = email.utils.parsedate_to_datetime(value)
+    except (TypeError, ValueError, IndexError):
+        return
+    if server is None or server.tzinfo is None:
+        return
+    _SERVER_CLOCK["server"] = server.astimezone(datetime.timezone.utc)
+    _SERVER_CLOCK["device"] = device_now().astimezone(datetime.timezone.utc)
+
+
+_NO_DATE_LOGGED = []
+
+
+def _log_missing_date():
+    """Ohne Date-Kopf gibt es keine Uhrzeit von GitHub: Der Abgleich laeuft
+    wie bis 0.62.3. Einmal je Programmstart eine Zeile in fehler.log."""
+    if not _NO_DATE_LOGGED:
+        _NO_DATE_LOGGED.append(True)
+        write_error_log("Abgleich: GitHub-Antwort ohne Date-Kopf, Uhrzeit-Prüfung "
+                        "entfällt (wie bis 0.62.3).")
+
+
+def _clock_deviation():
+    """Geraeteuhr minus Uhrzeit von GitHub in Sekunden, oder None."""
+    if _SERVER_CLOCK["server"] is None:
+        return None
+    return (_SERVER_CLOCK["device"] - _SERVER_CLOCK["server"]).total_seconds()
 
 
 def _http_error(code, repo):
@@ -233,40 +357,153 @@ def export_local(db):
             rows = conn.execute("SELECT uid, %s FROM %s ORDER BY timestamp, id"
                                 % (", ".join(columns), table)).fetchall()
             tables[table] = [list(row) for row in rows]
-        markers = {key: value for key, value in
-                   conn.execute("SELECT key, value FROM sync_meta")
-                   if key in MARKERS and value}
+        meta = dict(conn.execute("SELECT key, value FROM sync_meta"))
     finally:
         conn.close()
+    markers = {key: value for key, value in meta.items() if key in MARKERS and value}
+    clamps = {}
+    for key in MARKERS:
+        pair = _clamp_pair(meta.get(CLAMP_PREFIX + key))
+        if pair:
+            clamps[key] = pair
     return {
         "format": FORMAT,
+        WRITER_KEY: WRITER,
+        CLAMP_KEY: clamps,
         "columns": {table: list(columns) for table, columns in SYNC_TABLES.items()},
         "markers": markers,
         "tables": tables,
     }
 
 
-def _later(first, second):
-    values = [value for value in (first, second) if value]
-    return max(values) if values else None
+def parse_marker(value):
+    """Zerlegt eine Marke: (Ortszeit-Text ohne Zone, Zeitpunkt in UTC ohne
+    tzinfo oder None bei einer Marke ohne Zone). None bei einer ungueltigen
+    Marke (falsches Muster, kein gueltiges Datum, kein Text)."""
+    if not isinstance(value, str):
+        return None
+    match = _MARKER_RE.match(value)
+    if not match:
+        return None
+    text = match.group(1) + (match.group(2) or "")
+    try:
+        local = datetime.datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    if match.group(2):
+        local = local.replace(microsecond=int(match.group(2)[1:].ljust(6, "0")))
+    if not match.group(3):
+        return text, None
+    hours, minutes = int(match.group(4)), int(match.group(5))
+    if hours > 23 or minutes > 59:
+        return None
+    delta = datetime.timedelta(hours=hours, minutes=minutes)
+    return text, (local - delta if match.group(3) == "+" else local + delta)
 
 
-def _merged_markers(local, remote):
+def _later(first, second, zone=True):
+    """Die spaetere von zwei Marken. Haben beide eine Zone (und zone ist an),
+    zaehlt UTC, sonst der Text wie bisher. Ungueltige Marken zaehlen nicht
+    (ohne zone nur solche, die kein Text sind - wie bis 0.62.3)."""
+    values = [value for value in (first, second)
+              if value and (parse_marker(value) if zone else isinstance(value, str))]
+    if not values:
+        return None
+    if zone and len(values) == 2:
+        parsed = [parse_marker(value)[1] for value in values]
+        if parsed[0] is not None and parsed[1] is not None:
+            return values[0] if parsed[0] >= parsed[1] else values[1]
+    return max(values)
+
+
+def _merged_markers(local, remote, zone=True):
     markers = {}
     for key in MARKERS:
-        value = _later(local.get(key), remote.get(key))
+        value = _later(local.get(key), remote.get(key), zone)
         if value:
             markers[key] = value
     return markers
 
 
-def merge_into_local(db, remote):
+def _invalid_markers(markers, zone=True):
+    """Schluessel mit einem Wert, der keine gueltige Marke ist. Ohne zone
+    (Mischbetrieb) nur Werte, die kein Text sind: Einen Text wendet ein Geraet
+    vor 0.62.4 als Text an, und neue Geraete tun dasselbe."""
+    return [key for key in MARKERS if markers.get(key) and not (
+        parse_marker(markers[key]) if zone else isinstance(markers[key], str))]
+
+
+def _falls_under(record, marker):
+    """True, wenn ein Eintrag zeitlich nicht nach der Marke liegt (geloescht
+    bzw. nicht uebernommen wird). marker ist parse_marker(...); utc None =
+    Textvergleich wie bisher."""
+    text, utc = marker
+    offset = record.get(UTC_OFFSET)
+    if utc is not None and offset is not None:
+        try:
+            moment = datetime.datetime.strptime(str(record["timestamp"])[:19],
+                                                "%Y-%m-%d %H:%M:%S")
+            return moment - datetime.timedelta(minutes=int(offset)) <= utc
+        except (TypeError, ValueError):
+            pass
+    return str(record["timestamp"]) <= text
+
+
+def _delete_before(cur, table, marker):
+    """Loescht lokal alles, was nicht nach der Marke liegt. Mit Zone: Eintraege
+    mit utc_offset in UTC, die uebrigen als Text wie bisher. Liefert die uids
+    der geloeschten Eintraege."""
+    text, utc = marker
+    if utc is None or UTC_OFFSET not in SYNC_TABLES[table]:
+        where, params = "timestamp <= ?", (text,)
+    else:
+        where = ("(utc_offset IS NULL AND timestamp <= ?) OR (utc_offset IS NOT NULL AND "
+                 "datetime(substr(timestamp, 1, 19), printf('%d minutes', -utc_offset))"
+                 " <= ?)")
+        params = (text, utc.strftime("%Y-%m-%d %H:%M:%S.%f"))
+    gone = {row[0] for row in cur.execute("SELECT uid FROM %s WHERE %s" % (table, where),
+                                          params)}
+    cur.execute("DELETE FROM %s WHERE %s" % (table, where), params)
+    return gone
+
+
+def merge_into_local(db, remote, check_future=True, stats=None):
     """Uebernimmt fehlende Eintraege und Loeschzeitpunkte aus remote in die
-    lokale Datenbank. Liefert die Zahl der neu uebernommenen Eintraege."""
+    lokale Datenbank. Liefert die Zahl der neu uebernommenen Eintraege.
+
+    Ab 0.62.4: Ungueltige Marken gelten nicht. check_future (Sicherung
+    zusammenfuehren, keine Uhrzeit von GitHub): Marken mit Zone, die mehr als
+    CLOCK_TOLERANCE nach der Geraeteuhr liegen, gelten nicht. Der Abgleich
+    prueft das vorher selbst mit der Uhrzeit von GitHub. stats (MergeStats)
+    zaehlt mit, was die Marken entfernt haben; zusaetzlich in LAST_MERGE."""
+    global LAST_MERGE
+    stats = stats if stats is not None else MergeStats()
+    stats.backup = check_future
+    LAST_MERGE = stats
     local_markers = export_local(db)["markers"]
-    markers = _merged_markers(local_markers, remote.get("markers") or {})
+    remote_markers = dict(remote.get("markers") or {}) if isinstance(
+        remote.get("markers"), dict) else {}
+    # Mischbetrieb: Hat zuletzt ein Geraet vor 0.62.4 die Datei (bzw. die
+    # Sicherung) geschrieben, wird wie dort als Text verglichen - auch eine
+    # ungueltige Marke wie "x" gilt dann wie dort. Sonst verwuerfe das aeltere
+    # Geraet Eintraege, die ein neues behaelt, und beide luden sie abwechselnd
+    # hoch (ueber Zeitzonen, die Zeitumstellung und ungueltige Marken).
+    zone = remote.get(WRITER_KEY) is not None
+    for source in (local_markers, remote_markers):
+        for key in _invalid_markers(source, zone):
+            del source[key]
+            stats.invalid += 1
+    if check_future:
+        limit = (device_now().astimezone(datetime.timezone.utc).replace(tzinfo=None)
+                 + datetime.timedelta(seconds=CLOCK_TOLERANCE))
+        for key in MARKERS:
+            parsed = parse_marker(remote_markers.get(key))
+            if parsed and parsed[1] is not None and parsed[1] > limit:
+                del remote_markers[key]
+                stats.future += 1
+    markers = _merged_markers(local_markers, remote_markers, zone)
     reset = markers.get("reset_at")
-    cleared = _later(reset, markers.get("history_cleared_at"))
+    cleared = _later(reset, markers.get("history_cleared_at"), zone)
     game_reset = markers.get("spiel_reset_at")
     remote_columns = remote.get("columns") or {}
     remote_tables = remote.get("tables") or {}
@@ -275,6 +512,9 @@ def merge_into_local(db, remote):
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
+        # Ab 0.62.4: ungueltige lokale Marken fallen dabei weg
+        cur.execute("DELETE FROM sync_meta WHERE key IN (%s)" % ", ".join("?" * len(MARKERS)),
+                    MARKERS)
         for key, value in markers.items():
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         (key, value))
@@ -289,8 +529,11 @@ def merge_into_local(db, remote):
                 cutoff = cleared
             else:
                 cutoff = reset
-            if cutoff:
-                cur.execute("DELETE FROM %s WHERE timestamp <= ?" % table, (cutoff,))
+            if cutoff and zone:
+                cutoff = parse_marker(cutoff)
+            elif cutoff:
+                cutoff = (cutoff, None)         # Text wie bis 0.62.3
+            gone = _delete_before(cur, table, cutoff) if cutoff else set()
             names = ["uid"] + list(remote_columns.get(table) or columns)
             sql = "INSERT OR IGNORE INTO %s (uid, %s) VALUES (%s)" % (
                 table, ", ".join(columns), ", ".join("?" * (len(columns) + 1)))
@@ -303,10 +546,14 @@ def merge_into_local(db, remote):
                     record.setdefault(column, None)
                 if not record.get("uid") or any(c not in record for c in columns):
                     continue
-                if cutoff and str(record["timestamp"]) <= cutoff:
+                if cutoff and _falls_under(record, cutoff):
+                    if cur.execute("SELECT 1 FROM %s WHERE uid = ?" % table,
+                                   (record["uid"],)).fetchone() is None:
+                        gone.add(record["uid"])
                     continue
                 cur.execute(sql, [record["uid"]] + [record[c] for c in columns])
                 received += cur.rowcount
+            stats.gone.update((table, uid) for uid in gone)
         # Geloeschte Durchgaenge (ab 0.48) verschwinden, auch wenn ihre
         # Ereignisse gerade erst von einem anderen Geraet kamen
         purge_deleted_runs(cur)
@@ -343,15 +590,27 @@ def sync(db, settings=None, device=""):
                         "z.B. papst2142-cmd/fisi-lernstand.")
 
     received = 0
+    stats = MergeStats()
+    clamped = False
     for _attempt in range(3):
+        _SERVER_CLOCK.update(server=None, device=None)
         sha, remote = fetch_remote(repo, token)
+        raw_markers = dict((remote or {}).get("markers") or {}) if remote else {}
+        deviation = _clock_deviation()
+        if deviation is None:
+            _log_missing_date()
+        else:
+            _correct_own_entries(db, remote, deviation,
+                                 clock_deviation(db.get_meta(CLOCK_KEY)))
+            db.set_meta(CLOCK_KEY, json.dumps({"s": round(deviation, 1),
+                                               "gemessen": device_now().isoformat()}))
+            clamped = _clamp_future_markers(db, remote, deviation) or clamped
         if remote:
-            received += merge_into_local(db, remote)
+            received += merge_into_local(db, remote, check_future=False, stats=stats)
         local = export_local(db)
         remote_uids = _uids(remote) if remote else {}
         local_uids = _uids(local)
-        if remote and local_uids == remote_uids and \
-                local["markers"] == (remote.get("markers") or {}):
+        if remote and local_uids == remote_uids and local["markers"] == raw_markers:
             result = SyncResult(received, 0)
             break
         sent = sum(len(uids - remote_uids.get(table, set()))
@@ -366,5 +625,113 @@ def sync(db, settings=None, device=""):
         raise SyncError("Ein anderes Gerät hat gleichzeitig abgeglichen. Bitte "
                         "gleich noch einmal versuchen.")
 
+    result.removed = stats.removed
+    result.notes = stats.notes() + ([MSG_FUTURE_MARKER] if clamped else [])
     save_sync_settings(sync_last=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     return result
+
+
+def _correct_own_entries(db, remote, deviation, previous):
+    """Traegt eine neu gemessene Abweichung der Geraeteuhr in utc_offset der
+    eigenen, noch nicht hochgeladenen Eintraege nach (ab 0.62.4). Sie
+    entstanden mit derselben falschen Uhr, bevor die Abweichung bekannt war;
+    ohne Nachtrag laegen sie nach einer Loeschung mit der Uhrzeit von GitHub
+    scheinbar spaeter und kaemen zurueck. Eigene Eintraege sind die, die die
+    Datei noch nicht kennt. Nur die letzten CLOCK_VALID Sekunden (nach der
+    Geraeteuhr): Was aelter ist, kann vor dem Verstellen der Uhr entstanden
+    sein. War schon eine Abweichung bekannt, ist sie bereits enthalten; dann
+    zaehlt nur der Unterschied."""
+    if abs(deviation) <= CLOCK_TOLERANCE:
+        return
+    applied = previous if previous is not None and abs(previous) > CLOCK_TOLERANCE else 0
+    delta = int(round(deviation / 60.0)) - int(round(applied / 60.0))
+    if not delta:
+        return
+    known = _uids(remote) if remote else {}
+    since = (device_now() - datetime.timedelta(seconds=CLOCK_VALID)).strftime(
+        "%Y-%m-%d %H:%M:%S")
+    conn = sqlite3.connect(db.db_path)
+    try:
+        with conn:
+            for table in MARKED_TABLES:
+                if UTC_OFFSET not in SYNC_TABLES.get(table, ()):
+                    continue
+                skip = known.get(table, set())
+                rows = conn.execute("SELECT rowid, uid FROM %s WHERE utc_offset IS NOT NULL "
+                                    "AND timestamp >= ?" % table, (since,)).fetchall()
+                ids = [(row[0],) for row in rows if row[1] not in skip]
+                conn.executemany("UPDATE %s SET utc_offset = utc_offset + %d WHERE rowid = ?"
+                                 % (table, delta), ids)
+    finally:
+        conn.close()
+
+
+def _clamp_pair(value):
+    """[alt, neu] aus sync_meta (JSON-Text) oder aus der Datei, sonst None."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return None
+    if isinstance(value, list) and len(value) == 2 and all(
+            isinstance(item, str) and parse_marker(item) for item in value):
+        return value
+    return None
+
+
+def _clamp_future_markers(db, remote, deviation):
+    """Setzt Marken mit Zone, die mehr als CLOCK_TOLERANCE nach der Uhrzeit von
+    GitHub liegen, einmal auf diese Uhrzeit S (ab 0.62.4) - lokal und in der
+    gelesenen Datei, die danach mit S hochgeladen wird. So nehmen alle Geraete
+    dasselbe S. Eine Zukunftsmarke aus der Datei bleibt, wenn zuletzt ein
+    aelteres Geraet geschrieben hat (Feld "schreiber" fehlt): Es wuerde sie
+    sonst beim naechsten Abgleich wieder hochladen. Marken ohne Zone bleiben
+    (ihre Zone ist unbekannt). Liefert True, wenn eine Marke gesetzt wurde."""
+    server = (device_now() - datetime.timedelta(seconds=deviation)).astimezone()
+    server_utc = server.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    limit = server_utc + datetime.timedelta(seconds=CLOCK_TOLERANCE)
+    value_s = format_with_zone(server)
+    remote_markers = (remote or {}).get("markers")
+    remote_markers = remote_markers if isinstance(remote_markers, dict) else {}
+    writer_new = remote is None or remote.get(WRITER_KEY) is not None
+
+    def future(value):
+        parsed = parse_marker(value)
+        return bool(parsed and parsed[1] is not None and parsed[1] > limit)
+
+    remote_clamps = (remote or {}).get(CLAMP_KEY) if writer_new else None
+    remote_clamps = remote_clamps if isinstance(remote_clamps, dict) else {}
+    changed = False
+    for key in MARKERS:
+        remote_value = remote_markers.get(key)
+        local_value = db.get_meta(key)
+        if future(remote_value) and not writer_new:
+            continue            # wie bisher, siehe oben
+        known = _clamp_pair(remote_clamps.get(key))
+        own = _clamp_pair(db.get_meta(CLAMP_PREFIX + key))
+        # Zwei Geraete haben dieselbe Marke gleichzeitig gesetzt: die fruehere
+        # Uhrzeit gilt fuer alle
+        if known and own and known[0] == own[0] and known[1] != own[1]:
+            first = known if _later(known[1], own[1]) == own[1] else own
+            if local_value in (known[1], own[1]):
+                db.set_meta(key, first[1])
+                local_value = first[1]
+            db.set_meta(CLAMP_PREFIX + key, json.dumps(first))
+            own = first
+        elif known and not own:
+            db.set_meta(CLAMP_PREFIX + key, json.dumps(known))
+            own = known
+        for value in (remote_value, local_value):
+            if not future(value):
+                continue
+            target = own[1] if own and own[0] == value else value_s
+            if own is None or own[0] != value:
+                own = [value, target]
+                db.set_meta(CLAMP_PREFIX + key, json.dumps(own))
+            if value == remote_value:
+                remote_markers[key] = target
+            if value == local_value:
+                db.set_meta(key, target)
+                local_value = target
+            changed = True
+    return changed

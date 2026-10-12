@@ -5775,8 +5775,15 @@ class SettingsView(View):
         if not messagebox.askyesno("Bestenliste löschen", fisi_game.RECORDS_ASK):
             return
         if self.app.views["game"].game.reset_records():
-            messagebox.showinfo("Gelöscht", "Die Bestenliste wurde gelöscht.")
+            messagebox.showinfo("Gelöscht", self._with_clock_fix(
+                "Die Bestenliste wurde gelöscht."))
             self.app.notify_progress()
+
+    def _with_clock_fix(self, text):
+        """Ab 0.62.4: Hinweis, wenn die Loeschung mit der Uhrzeit von GitHub
+        gespeichert wurde (falsche Geraeteuhr). Text wie auf dem Handy."""
+        hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
+        return text + "\n\n" + hint if hint else text
 
     # -- Sicherung ------------------------------------------------------------
 
@@ -5871,6 +5878,9 @@ class SettingsView(View):
                                "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
                                "Dashboard bleiben erhalten."):
             if self.db.clear_history():
+                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
+                if hint:
+                    messagebox.showinfo("Historie löschen", hint)
                 self.app.notify_progress()
 
     def reset_all(self):
@@ -5879,8 +5889,8 @@ class SettingsView(View):
                                    "löschen?"):
             return
         if self.db.reset_all():
-            messagebox.showinfo("Zurückgesetzt",
-                                "Alle Lerndaten wurden gelöscht.")
+            messagebox.showinfo("Zurückgesetzt", self._with_clock_fix(
+                "Alle Lerndaten wurden gelöscht."))
             self.app.notify_progress()
 
 

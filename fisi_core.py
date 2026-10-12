@@ -416,6 +416,21 @@ RECORD_TABLES = {
     "spiel_bestenliste": ("timestamp", "durchgang", "art", "schluessel", "wert", "daten"),
 }
 
+# Ab 0.62.4: Abstand der Ortszeit zu UTC in Minuten (z.B. 120 im Sommer in
+# Deutschland). timestamp bleibt Ortszeit, weil Statistik, Lernserie und
+# "Heute" daran haengen. Mit dem Abstand vergleicht der Abgleich Eintraege und
+# Loeschzeitpunkte ueber Zeitzonen und die Zeitumstellung hinweg richtig.
+# Nur in den Tabellen, die ein Loeschzeitpunkt betrifft; Eintraege aelterer
+# Versionen haben ihn nicht (NULL = wie bisher als Text vergleichen).
+UTC_OFFSET = "utc_offset"
+MARKED_TABLES = list(EVENT_TABLES) + list(GAME_TABLES) + list(RECORD_TABLES)
+for _table in MARKED_TABLES:
+    for _tables in (EVENT_TABLES, GAME_TABLES, RECORD_TABLES):
+        if _table in _tables:       # direkt hinter timestamp
+            _tables[_table] = _tables[_table][:1] + (UTC_OFFSET,) + _tables[_table][1:]
+    OPTIONAL_COLUMNS[_table] = OPTIONAL_COLUMNS.get(_table, ()) + (UTC_OFFSET,)
+del _table, _tables
+
 # Alles, was zwischen den Geraeten abgeglichen wird
 SYNC_TABLES = dict(EVENT_TABLES)
 SYNC_TABLES.update(GAME_TABLES)
@@ -460,6 +475,58 @@ def purge_superseded_project_rows(cur):
         "      AND neu.uid > abschlussprojekt.uid)))")
 
 
+# ============================================================================
+#  ZEIT MIT ZONE (ab 0.62.4)
+# ============================================================================
+
+# sync_meta-Schluessel (nur lokal, wird nicht abgeglichen): wie weit die Uhr
+# dieses Geraets beim letzten Abgleich von der Uhrzeit von GitHub abwich
+CLOCK_KEY = "uhr_abweichung"
+# Ab dieser Abweichung gilt die Geraeteuhr als falsch (Sekunden)
+CLOCK_TOLERANCE = 300
+# So lange gilt eine gemessene Abweichung (Sekunden, nach der Geraeteuhr)
+CLOCK_VALID = 24 * 3600
+
+
+def device_now():
+    """Jetzt als Ortszeit mit Zone. Ueber UTC ermittelt, damit auch die
+    doppelte Stunde der Zeitumstellung den richtigen Abstand bekommt."""
+    return datetime.datetime.now(datetime.timezone.utc).astimezone()
+
+
+def offset_minutes(moment):
+    """Abstand eines Zeitpunkts mit Zone zu UTC in ganzen Minuten."""
+    return int(moment.utcoffset().total_seconds() // 60)
+
+
+def format_with_zone(moment):
+    """Zeitpunkt als Text mit Abstand zu UTC, z.B. 2026-10-25 02:30:00+02:00.
+    Immer +HH:MM oder -HH:MM, nie "Z": Die ersten 19 Zeichen sind wie bisher,
+    aeltere Versionen vergleichen so weiter richtig als Text."""
+    minutes = offset_minutes(moment)
+    return "%s%s%02d:%02d" % (moment.strftime("%Y-%m-%d %H:%M:%S"),
+                              "-" if minutes < 0 else "+",
+                              abs(minutes) // 60, abs(minutes) % 60)
+
+
+def clock_deviation(value, now=None):
+    """Gemessene Abweichung der Geraeteuhr in Sekunden aus dem gespeicherten
+    Wert, oder None, wenn sie fehlt, unlesbar oder zu alt ist (die Uhr
+    koennte inzwischen gestellt worden sein)."""
+    try:
+        data = json.loads(value)
+        seconds = float(data["s"])
+        measured = datetime.datetime.fromisoformat(data["gemessen"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    if measured.tzinfo is None:
+        return None
+    age = ((now or device_now()) - measured).total_seconds()
+    if age < 0 or age > CLOCK_VALID:
+        return None
+    return seconds
+
+
 class DBManager:
     """SQLite-Anbindung fuer Testergebnisse und einzelne Lern-Ereignisse.
 
@@ -471,6 +538,9 @@ class DBManager:
     def __init__(self, db_path=None, error_handler=None):
         self.db_path = db_path or resolve_db_path()
         self.error_handler = error_handler
+        # Ab 0.62.4: Um wie viele Sekunden die letzte Loeschmarke wegen einer
+        # falschen Geraeteuhr korrigiert wurde (0 = nicht), fuer den Hinweis
+        self.last_clock_fix = 0
         self.init_db()
 
     # -- Infrastruktur ------------------------------------------------------
@@ -682,7 +752,36 @@ class DBManager:
 
     @staticmethod
     def _now():
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return device_now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def _stamp(self):
+        """Ortszeit als Text und ihr Abstand zu UTC in Minuten (ab 0.62.4),
+        aus demselben Augenblick. Wich die Uhr beim letzten Abgleich um mehr
+        als CLOCK_TOLERANCE von GitHub ab, enthaelt der Abstand diese
+        Abweichung: Dann ist "Ortszeit minus Abstand" die echte UTC-Zeit, und
+        eine Loeschung erfasst auch Eintraege, die mit der falschen Uhr
+        entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher."""
+        moment = device_now()
+        offset = offset_minutes(moment)
+        deviation = clock_deviation(self.get_meta(CLOCK_KEY), moment)
+        if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
+            offset += int(round(deviation / 60.0))
+        return moment.strftime("%Y-%m-%d %H:%M:%S"), offset
+
+    @staticmethod
+    def _marker_now(cur):
+        """Zeitpunkt fuer eine Loeschmarke (ab 0.62.4): Ortszeit mit Zone.
+        Wich die Uhr beim letzten Abgleich um mehr als CLOCK_TOLERANCE von
+        GitHub ab, gilt stattdessen die Uhrzeit von GitHub. Liefert (Text,
+        korrigierte Sekunden oder 0)."""
+        moment = device_now()
+        row = cur.execute("SELECT value FROM sync_meta WHERE key = ?",
+                          (CLOCK_KEY,)).fetchone()
+        deviation = clock_deviation(row[0], moment) if row else None
+        if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
+            moment = (moment - datetime.timedelta(seconds=deviation)).astimezone()
+            return format_with_zone(moment), deviation
+        return format_with_zone(moment), 0
 
     @staticmethod
     def _now_fine():
@@ -709,24 +808,26 @@ class DBManager:
 
     def save_test_result(self, score, total, percentage, note, duration_seconds):
         return bool(self._execute(
-            "INSERT INTO test_results (timestamp, score, total, percentage, note,"
-            " duration_seconds, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), score, total, percentage, note, duration_seconds, self._uid()),
+            "INSERT INTO test_results (timestamp, utc_offset, score, total, percentage, note,"
+            " duration_seconds, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), score, total, percentage, note, duration_seconds, self._uid()),
             commit=True, default=False))
 
     def log_card(self, category, question, mode, correct):
         correct_value = None if correct is None else (1 if correct else 0)
         self._execute(
-            "INSERT INTO card_events (timestamp, category, question, mode, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), category, question, mode, correct_value, self._uid()),
+            "INSERT INTO card_events (timestamp, utc_offset,"
+            " category, question, mode, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), category, question, mode, correct_value, self._uid()),
             commit=True, default=False)
 
     def log_quiz_answer(self, category, question, correct):
         self._execute(
-            "INSERT INTO quiz_answers (timestamp, category, question, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), category, question, 1 if correct else 0, self._uid()),
+            "INSERT INTO quiz_answers (timestamp, utc_offset,"
+            " category, question, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), category, question, 1 if correct else 0, self._uid()),
             commit=True, default=False)
 
     @staticmethod
@@ -737,23 +838,26 @@ class DBManager:
         """correct: Selbsteinschaetzung nach dem Aufdecken (ab 0.39), None =
         nur angesehen."""
         self._execute(
-            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme, correct,"
-            " uid) VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._flag(correct), self._uid()),
+            "INSERT INTO scenario_events (timestamp, utc_offset,"
+            " scenario_index, title, theme, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     def log_project(self, index, title, category, correct=None):
         self._execute(
-            "INSERT INTO project_events (timestamp, project_index, title, category, correct,"
-            " uid) VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, category, self._flag(correct), self._uid()),
+            "INSERT INTO project_events (timestamp, utc_offset,"
+            " project_index, title, category, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, category, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     def log_ap1(self, index, title, theme, correct=None):
         self._execute(
-            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._flag(correct), self._uid()),
+            "INSERT INTO ap1_events (timestamp, utc_offset,"
+            " scenario_index, title, theme, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     # -- Ab 0.51: Trainer, Pruefungen, Abschlussprojekt ----------------------
@@ -761,9 +865,9 @@ class DBManager:
     def log_trainer(self, kind, level, correct):
         """Eine geloeste Aufgabe des Subnetting-Trainers."""
         return bool(self._execute(
-            "INSERT INTO trainer_aufgaben (timestamp, art, stufe, correct, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), kind, int(level), 1 if correct else 0, self._uid()),
+            "INSERT INTO trainer_aufgaben (timestamp, utc_offset, art, stufe, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, int(level), 1 if correct else 0, self._uid()),
             commit=True, default=False))
 
     def trainer_stats(self):
@@ -775,9 +879,10 @@ class DBManager:
     def save_exam(self, kind, points, note, duration, data):
         """Ergebnis einer Klausursimulation (data: dict, als JSON gespeichert)."""
         return bool(self._execute(
-            "INSERT INTO pruefungen (timestamp, art, punkte, note, dauer, daten, uid)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), kind, float(points), note, int(duration),
+            "INSERT INTO pruefungen (timestamp, utc_offset,"
+            " art, punkte, note, dauer, daten, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, float(points), note, int(duration),
              json.dumps(data, ensure_ascii=False), self._uid()),
             commit=True, default=False))
 
@@ -867,9 +972,10 @@ class DBManager:
         """Ein Ereignis des Lernspiels (data ist JSON-Text). run: Durchgang
         (ab 0.48), ohne Angabe der aktive Durchgang dieses Geraets."""
         return bool(self._execute(
-            "INSERT INTO spiel_ereignisse (timestamp, typ, daten, geraet, uid, lauf)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), kind, data, device or "", self._uid(), self._run(run)),
+            "INSERT INTO spiel_ereignisse (timestamp, utc_offset,"
+            " typ, daten, geraet, uid, lauf)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), kind, data, device or "", self._uid(), self._run(run)),
             commit=True, default=False))
 
     def game_events(self, run=_ACTIVE):
@@ -1004,9 +1110,10 @@ class DBManager:
     def log_record(self, run, kind, key, value, data=""):
         """Eine Zeile der Bestenliste (data ist JSON-Text)."""
         return bool(self._execute(
-            "INSERT INTO spiel_bestenliste (timestamp, durchgang, art, schluessel, wert,"
-            " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (self._now(), run or "", kind, key, value, data or "{}", self._uid()),
+            "INSERT INTO spiel_bestenliste (timestamp, utc_offset,"
+            " durchgang, art, schluessel, wert,"
+            " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (*self._stamp(), run or "", kind, key, value, data or "{}", self._uid()),
             commit=True, default=False))
 
     def records(self):
@@ -1033,8 +1140,9 @@ class DBManager:
             cur = conn.cursor()
             for table in RECORD_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("bestenliste_reset_at", self._now()))
+                        ("bestenliste_reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1056,8 +1164,9 @@ class DBManager:
             cur = conn.cursor()
             for table in HISTORY_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("history_cleared_at", self._now()))
+                        ("history_cleared_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1074,8 +1183,9 @@ class DBManager:
             cur = conn.cursor()
             for table in EVENT_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("reset_at", self._now()))
+                        ("reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
@@ -1094,8 +1204,9 @@ class DBManager:
             cur = conn.cursor()
             for table in GAME_TABLES:
                 cur.execute("DELETE FROM " + table)
+            marker, self.last_clock_fix = self._marker_now(cur)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                        ("spiel_reset_at", self._now()))
+                        ("spiel_reset_at", marker))
             conn.commit()
             return True
         except sqlite3.Error as exc:
