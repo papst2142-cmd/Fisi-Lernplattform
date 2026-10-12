@@ -14,6 +14,8 @@ Start zum Testen am PC:  python mobile/src/main.py
 """
 
 import asyncio
+import inspect
+import ipaddress
 import os
 import random
 import sys
@@ -25,6 +27,7 @@ if not os.path.exists(os.path.join(HERE, "fisi_core.py")):
     sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_FILE_NAME  # noqa: E402
+import fisi_core as fc  # noqa: E402
 
 # Auf dem Handy liegt die Datenbank im privaten Datenordner der App
 # (Dateiname ab 0.61 aus fisi_core, NIE AENDERN)
@@ -2826,27 +2829,72 @@ class TrainerPanel(ft.Column):
 CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 
+def _accepts(func, name):
+    try:
+        return name in inspect.signature(func).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+# Ab 0.63 (Schnittstelle "Anzeige Handy", 0.62.6 B-E-01/B-E-02): Ergebniskaesten
+# passen den Text an die Breite an, Pillenzeilen brechen um. Aktiv, sobald
+# ui.py die Schluesselwoerter kennt (paralleler Arbeitsbaum "Anzeige Handy").
+UI_FIT = _accepts(ui.read_box, "fit")
+UI_UMBRECHEN = _accepts(ui.PillGroup.__init__, "umbrechen")
+
+# Vorgaben der Ansicht "Netzdaten" (passen zu den festen Rechenwegen)
+SUBNET_NETZDATEN_VORGABE = {"ipv4": "192.168.1.50/24", "ipv6": "2001:db8:abcd:12::1/64"}
+
+
+def _result_box(value=""):
+    """Ergebniskasten der Rechner: wischbar, ab 0.63 an die Breite angepasst."""
+    if UI_FIT:
+        return ui.read_box(value, mono=True, scroll=True, fit=True)
+    return ui.read_box(value, mono=True, scroll=True)
+
+
+def _pills(options, **kwargs):
+    """Pillen der Rechner; ab 0.63 umbrechend."""
+    if UI_UMBRECHEN:
+        kwargs["umbrechen"] = True
+    return ui.PillGroup(options, **kwargs)
+
+
+def _redraw(*controls):
+    """Geaenderte Steuerelemente sofort zeichnen. Noetig, wenn im selben
+    Ereignis ein Hinweis (toast -> page.show_dialog) kommt: Danach uebernimmt
+    Flet die uebrigen Aenderungen nicht mehr von selbst (ui.PillGroup).
+    Ohne Seite (Tests, Aufbau) passiert nichts."""
+    for control in controls:
+        try:
+            control.update()
+        except (RuntimeError, AssertionError, AttributeError):
+            pass
+
+
+def _clear_picture(picture):
+    """USV-Bild leeren (0.62.6 B-D-04). ui.UpsPicture.set_picture(None) zeigt
+    den Leer-Zustand; aeltere ui.py ohne Leer-Zustand: Bild einfach leeren."""
+    try:
+        picture.set_picture(None)
+    except (TypeError, KeyError):
+        picture.label = ""
+        picture.column.controls = []
+
+
 class CalcScreen(Screen):
     crumbs = ("WERKZEUGE", "RECHNER")
 
     def build(self):
-        self.entry_ip = ui.entry("192.168.1.50/24", on_change=None)
-        # Ab 0.62.3: Anzeigen und Rechenwege ohne Umbruch, seitlich wischbar (Box A)
-        self.out_subnet = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
-                                      scroll=True)
-        subnet = ui.Card("Subnetting / VLSM", [
-            ui.text("IP-Adresse mit Präfix (z.B. 192.168.1.50/24)", size=13,
-                    color=C["text_dim"]),
-            self.entry_ip,
-            ft.Row([ui.GradientButton("Berechnen", self.calc_subnet, kind="accent")]),
-            self.out_subnet, *self._explain(CALC_EXPLAIN_SUBNET_HANDY),
-        ], accent=C["accent"], subtitle="IPv4 und IPv6")
+        # Ab 0.63 (Plan 0.63, T4): Karte "Subnetting" mit Schalter IPv4/IPv6 und
+        # den Ansichten Netzdaten, Netz aufteilen und Nach Hostbedarf (nur IPv4)
+        subnet = self._build_subnet()
 
-        self.raid_pills = ui.PillGroup([(level, level) for level in RAID_LEVELS], initial=2)
+        # Ab 0.63 (0.62.6 B-E-02): Pillenzeile bricht um statt seitlich zu laufen
+        self.raid_pills = _pills([(level, level) for level in RAID_LEVELS], initial=2)
         self.entry_disks = ui.entry("4", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_size = ui.entry("1000", keyboard=ft.KeyboardType.NUMBER, expand=True)
-        self.out_raid = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
-                                    scroll=True)
+        self.out_raid = _result_box("Noch keine Berechnung durchgeführt.")
         raid = ui.Card("RAID-Kapazität", [
             ui.text("RAID-Level", size=13, color=C["text_dim"]), self.raid_pills,
             self._field("Anzahl Festplatten", self.entry_disks),
@@ -2858,9 +2906,8 @@ class CalcScreen(Screen):
         self.entry_width = ui.entry("1920", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_height = ui.entry("1080", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_fps = ui.entry("30", keyboard=ft.KeyboardType.NUMBER, expand=True)
-        self.depth_pills = ui.PillGroup(COLOR_DEPTHS, initial=2)
-        self.out_screen = ui.read_box("Noch keine Berechnung durchgeführt.", mono=True,
-                                      scroll=True)
+        self.depth_pills = _pills(COLOR_DEPTHS, initial=2)
+        self.out_screen = _result_box("Noch keine Berechnung durchgeführt.")
         screen = ui.Card("Bildschirm-Datenvolumen", [
             self._field("Breite (Pixel)", self.entry_width),
             self._field("Höhe (Pixel)", self.entry_height),
@@ -2902,7 +2949,7 @@ class CalcScreen(Screen):
                           for mode, caption in UPS_MODES], wrap=True, spacing=10,
                          run_spacing=10)
         self.ups_picture = ui.UpsPicture()
-        self.out_ups = ui.read_box("", mono=True, scroll=True)
+        self.out_ups = _result_box("")
         # Ab 0.62.3: der Hinweis "Vereinfacht: ..." steht unter der Tabelle als
         # normaler Text, damit er umbrechen darf (die Tabelle wischt seitlich)
         self.out_ups_hint = ui.text("", size=12, color=C["text_dim"])
@@ -2945,6 +2992,11 @@ class CalcScreen(Screen):
         try:
             result = ups_calculate(mode, fields, self.ups_unit.get())
         except InputError as error:
+            # Ab 0.63 (0.62.6 B-D-04): altes Ergebnis nicht stehen lassen
+            ui.set_box(self.out_ups, "")
+            self.out_ups_hint.value = ""
+            _clear_picture(self.ups_picture)
+            _redraw(self.out_ups, self.out_ups_hint, self.ups_picture)
             if not quiet:
                 self.toast(str(error), C["red"])
             return
@@ -2983,10 +3035,271 @@ class CalcScreen(Screen):
         try:
             ui.set_box(output, calculation())
         except InputError as error:
+            # Ab 0.63 (0.62.6 B-D-04): Kasten leeren, die Meldung kommt als Hinweis
+            ui.set_box(output, "")
+            _redraw(output)
             self.toast(str(error), C["red"])
+            return False
+        return True
 
-    def calc_subnet(self, _event=None):
-        self._run(self.out_subnet, lambda: subnet_report(self.entry_ip.value or ""))
+    # -- Ab 0.63 (Plan 0.63, T4): Subnetting mit Schalter und drei Ansichten ----
+
+    def _build_subnet(self):
+        """Karte "Subnetting": Schalter IPv4/IPv6, darunter die Ansichten des
+        Modus. Jeder Modus und jede Ansicht hat eigene Eingaben, eigenes
+        Ergebnis und eigenen Rechenweg (Plan 0.63 4.6). Start immer IPv4,
+        "Netzdaten" (F-63-13); nichts wird gespeichert."""
+        self.subnet_mode = "ipv4"
+        self.subnet_view = {mode: "netzdaten" for mode, _caption in fc.SUBNET_MODES}
+        self.subnet_panels = {}
+        self.mode_pills = _pills(fc.SUBNET_MODES, on_change=self._on_subnet_mode)
+        self.view_pills = {}
+        rows = [self.mode_pills]
+        for mode, _caption in fc.SUBNET_MODES:
+            pills = _pills(fc.SUBNET_VIEWS[mode], on_change=self._on_subnet_view)
+            pills.visible = mode == self.subnet_mode
+            self.view_pills[mode] = pills
+            rows.append(pills)
+        for mode, _caption in fc.SUBNET_MODES:
+            for view, _view_caption in fc.SUBNET_VIEWS[mode]:
+                panel = self._subnet_panel(mode, view)
+                panel["box"].visible = (mode, view) == ("ipv4", "netzdaten")
+                self.subnet_panels[(mode, view)] = panel
+                rows.append(panel["box"])
+        first = self.subnet_panels[("ipv4", "netzdaten")]
+        self.entry_ip, self.out_subnet = first["net"], first["out"]
+        self.subnet_card = ui.Card(fc.SUBNET_TITLE, rows, accent=C["accent"],
+                                   subtitle=fc.SUBNET_SUBTITLE[self.subnet_mode])
+        return self.subnet_card
+
+    def _subnet_panel(self, mode, view):
+        """Eine Ansicht: Eingaben, Berechnen, Ergebnis (leer bis zum ersten
+        Berechnen), beim Aufteilen Blaettern, Rechenweg."""
+        panel = {"mode": mode, "view": view, "result": None, "page": 1}
+        other = None
+        if view == "netzdaten":
+            net = SUBNET_NETZDATEN_VORGABE[mode]
+        else:
+            net, other = fc.SUBNET_DEFAULTS[(mode, view)]
+        panel["net"] = ui.entry(net)
+        controls = [ui.text(fc.SUBNET_FIELD_NET[mode], size=13, color=C["text_dim"]),
+                    panel["net"]]
+        if view == "aufteilen":
+            panel["count"] = ui.entry(other, keyboard=ft.KeyboardType.NUMBER, expand=True)
+            controls.append(self._field(fc.SUBNET_FIELD_COUNT, panel["count"]))
+        elif view == "bedarf":
+            # Ein Subnetz je Zeile, Text-Tastatur (Namen), Eingabetaste = neue Zeile
+            panel["needs"] = ui.entry(other, multiline=True, min_lines=4, max_lines=12,
+                                      keyboard=ft.KeyboardType.MULTILINE)
+            controls += [ui.text(fc.SUBNET_FIELD_NEEDS, size=13, color=C["text_dim"]),
+                         panel["needs"]]
+        controls.append(ft.Row([ui.GradientButton(
+            "Berechnen", lambda _e, m=mode, v=view: self.calc_subnet_view(m, v),
+            kind="accent")]))
+        panel["out"] = _result_box("")
+        controls.append(panel["out"])
+        if view == "aufteilen":
+            controls.append(self._subnet_pager(panel))
+        if view != "netzdaten":
+            # Vor dem ersten Berechnen: Rechenweg zur Vorgabe (Beispiel B, C, D)
+            panel["explain"] = self._explain(self._subnet_explain(mode, view, net, other))
+        elif mode == "ipv4":
+            # Fester Rechenweg aus 0.62.3, unveraendert (Plan 0.63 Abschnitt 5)
+            panel["explain"] = self._explain(CALC_EXPLAIN_SUBNET_HANDY)
+        else:
+            panel["explain"] = self._explain(fc.CALC_EXPLAIN_SUBNET_V6_HANDY)
+        controls += panel["explain"]
+        panel["box"] = ft.Column(controls, spacing=10, tight=True,
+                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        return panel
+
+    @staticmethod
+    def _subnet_explain(mode, view, net, other):
+        version = 4 if mode == "ipv4" else 6
+        if view == "aufteilen":
+            return fc.split_explain(fc.split_network(net, other, version=version),
+                                    schmal=True)
+        return fc.hosts_explain(fc.subnet_by_hosts(net, other, version=4), schmal=True)
+
+    def _subnet_pager(self, panel):
+        """Blaettern: vier Symbolknoepfe mit Namen fuer Bildschirmleser, darunter
+        "Seite 1 von 8.192" und der Sprung auf eine Seite. Nur sichtbar, wenn
+        das Ergebnis mehr als eine Seite hat."""
+        mode = panel["mode"]
+        panel["page_buttons"] = {}
+        buttons = []
+        for where, icon, caption in (("first", ft.Icons.FIRST_PAGE, fc.SUBNET_PAGE_FIRST),
+                                     ("back", ft.Icons.CHEVRON_LEFT, fc.SUBNET_PAGE_BACK),
+                                     ("next", ft.Icons.CHEVRON_RIGHT, fc.SUBNET_PAGE_NEXT),
+                                     ("last", ft.Icons.LAST_PAGE, fc.SUBNET_PAGE_LAST)):
+            button = ft.IconButton(icon, icon_color=C["accent"], tooltip=caption,
+                                   on_click=lambda _e, w=where: self.subnet_page(mode, w))
+            panel["page_buttons"][where] = button
+            buttons.append(named(caption, button))
+        panel["page_text"] = ui.text("", size=13, color=C["text_dim"])
+        line = [panel["page_text"]]
+        jump_field = getattr(fc, "SUBNET_PAGE_JUMP_FIELD", None)
+        jump_caption = getattr(fc, "SUBNET_PAGE_JUMP", None)
+        panel["jump"] = None
+        if jump_field and jump_caption:
+            # Sprung auf eine Seitennummer neben "Seite x von y" (Plan 0.63 2.2
+            # Nr. 8); Beschriftungen aus fisi_core (Zweig version-063-kern)
+            panel["jump"] = ui.entry("", hint=jump_field, keyboard=ft.KeyboardType.NUMBER)
+            panel["jump"].width = ui.grow(110)
+            line += [ft.Semantics(label=jump_field, content=panel["jump"]),
+                     ui.GradientButton(jump_caption, lambda _e: self.subnet_jump(mode),
+                                       kind="ghost", height=40)]
+        rows = [ft.Row(buttons, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Row(line, wrap=True, spacing=10, run_spacing=8,
+                       vertical_alignment=ft.CrossAxisAlignment.CENTER)]
+        panel["pager"] = ft.Column(rows, spacing=6, tight=True)
+        panel["pager"].visible = False
+        return panel["pager"]
+
+    def _paint_pager(self, panel):
+        result = panel["result"]
+        pages = result["seiten"] if result else 0
+        panel["pager"].visible = pages > 1
+        if pages > 1:
+            page = panel["page"]
+            panel["page_text"].value = fc.SUBNET_PAGE_OF % (fc.de_int(page), fc.de_int(pages))
+            for where, button in panel["page_buttons"].items():
+                button.disabled = page == 1 if where in ("first", "back") else page == pages
+
+    @staticmethod
+    def _fold(parts):
+        """Rechenweg zuklappen (Plan 0.63 4.6: bei jedem Wechsel)."""
+        row, box = parts
+        box.visible = False
+        row.controls[0].set_text("Rechenweg anzeigen")
+
+    def _show_subnet_panel(self):
+        current = (self.subnet_mode, self.subnet_view[self.subnet_mode])
+        for key, panel in self.subnet_panels.items():
+            panel["box"].visible = key == current
+            self._fold(panel["explain"])
+
+    def _on_subnet_mode(self, mode):
+        """Moduswechsel (Plan 0.63 4.6): Eingaben und Ergebnisse bleiben je
+        Modus stehen, es wird nicht neu gerechnet, der Rechenweg klappt zu,
+        jeder Modus zeigt seine eigene letzte Ansicht. Danach an den Anfang."""
+        if mode == self.subnet_mode:
+            return
+        self.subnet_mode = mode
+        for key, pills in self.view_pills.items():
+            pills.visible = key == mode
+        self.subnet_card.set_subtitle(fc.SUBNET_SUBTITLE[mode])
+        self._show_subnet_panel()
+        scroll = getattr(self.app, "scroll_top", None)
+        if scroll is not None:
+            try:
+                scroll()
+            except (RuntimeError, AttributeError, IndexError):   # ohne Seite (Test)
+                pass
+
+    def _on_subnet_view(self, view):
+        self.subnet_view[self.subnet_mode] = view
+        self._show_subnet_panel()
+
+    def _subnet_failed(self, panel, error):
+        """Fehler (0.62.6 B-D-04): Kasten leer, Blaettern weg, Rechenweg zu
+        (sein Text bleibt der der letzten gueltigen Rechnung bzw. der Vorgabe)."""
+        ui.set_box(panel["out"], "")
+        panel["result"] = None
+        if "pager" in panel:
+            self._paint_pager(panel)
+        self._fold(panel["explain"])
+        _redraw(panel["box"])
+        self.toast(str(error), C["red"])
+
+    def calc_subnet_view(self, mode, view):
+        if view == "aufteilen":
+            self.calc_split(mode)
+        elif view == "bedarf":
+            self.calc_hosts()
+        else:
+            self.calc_subnet(mode=mode)
+
+    def calc_subnet(self, _event=None, mode=None):
+        """Netzdaten (subnet_report wie bisher); im Modus IPv6 dazu
+        Ausgeschrieben und Adresstyp (F-63-4, fisi_core.ipv6_details)."""
+        mode = mode or self.subnet_mode
+        panel = self.subnet_panels[(mode, "netzdaten")]
+        value = panel["net"].value or ""
+
+        def report():
+            # Version des Schalters (Plan 0.63 2.3.2, N-M-2/N-M-3): ein Netz der
+            # anderen Version meldet der Rechenkern mit seinem Wortlaut
+            wanted = 4 if mode == "ipv4" else 6
+            try:
+                network = ipaddress.ip_network(value.strip(), strict=False)
+            except ValueError:
+                network = None              # Meldung kommt von subnet_report
+            if network is not None and network.version != wanted:
+                fc.subnet_parse(network.with_prefixlen, version=wanted)
+            text = subnet_report(value)
+            details = getattr(fc, "ipv6_details", None)
+            if mode == "ipv6" and details is not None:
+                text += "".join("\n%-22s: %s" % pair for pair in details(value))
+            return text
+        if not self._run(panel["out"], report):
+            self._fold(panel["explain"])
+            _redraw(panel["box"])
+
+    def calc_split(self, mode=None):
+        """Netz aufteilen; der Rechenkern bekommt die Version des Schalters."""
+        mode = mode or self.subnet_mode
+        panel = self.subnet_panels[(mode, "aufteilen")]
+        try:
+            result = fc.split_network(panel["net"].value or "", panel["count"].value or "",
+                                      version=4 if mode == "ipv4" else 6)
+        except InputError as error:
+            self._subnet_failed(panel, error)
+            return
+        panel["result"], panel["page"] = result, 1
+        ui.set_box(panel["out"], fc.split_report(result, 1, schmal=True))
+        ui.set_box(panel["explain"][1], fc.split_explain(result, schmal=True))
+        self._paint_pager(panel)
+
+    def subnet_page(self, mode, where):
+        """Blaettern ohne neue Rechnung: erste, zurueck, weiter, letzte oder
+        eine Seitennummer (ausserhalb wird begrenzt, wie split_page)."""
+        panel = self.subnet_panels[(mode, "aufteilen")]
+        result = panel["result"]
+        if result is None:
+            return
+        pages = result["seiten"]
+        target = {"first": 1, "back": panel["page"] - 1, "next": panel["page"] + 1,
+                  "last": pages}.get(where, where)
+        panel["page"] = min(max(int(target), 1), pages)
+        ui.set_box(panel["out"], fc.split_report(result, panel["page"], schmal=True))
+        self._paint_pager(panel)
+
+    def subnet_jump(self, mode):
+        """Sprung auf eine Seite. Fehler: Meldung, die Seite bleibt stehen."""
+        panel = self.subnet_panels[(mode, "aufteilen")]
+        if panel["result"] is None or panel["jump"] is None:
+            return
+        try:
+            number = fc.read_number(panel["jump"].value or "", fc.SUBNET_PAGE_JUMP_FIELD,
+                                    ganz=True)
+        except InputError as error:
+            self.toast(str(error), C["red"])
+            return
+        self.subnet_page(mode, number)
+
+    def calc_hosts(self):
+        """Nach Hostbedarf (nur IPv4). "Passt nicht" ist ein Ergebnistext."""
+        panel = self.subnet_panels[("ipv4", "bedarf")]
+        try:
+            result = fc.subnet_by_hosts(panel["net"].value or "", panel["needs"].value or "",
+                                        version=4)
+        except InputError as error:
+            self._subnet_failed(panel, error)
+            return
+        panel["result"] = result
+        ui.set_box(panel["out"], fc.hosts_report(result, schmal=True))
+        ui.set_box(panel["explain"][1], fc.hosts_explain(result, schmal=True))
 
     def calc_raid(self, _event=None):
         self._run(self.out_raid, lambda: raid_report(
@@ -5750,6 +6063,21 @@ def selftest():
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
         app.screens["calc"].calc_screen()
+        # Ab 0.63: Subnetting mit Schalter, Aufteilen mit Blaettern, Hostbedarf
+        calc = app.screens["calc"]
+        calc.mode_pills.select_value("ipv6")
+        calc.view_pills["ipv6"].select_value("aufteilen")
+        calc.subnet_panels[("ipv6", "aufteilen")]["count"].value = "65536"
+        calc.calc_split()
+        calc.subnet_page("ipv6", "last")
+        if calc.subnet_panels[("ipv6", "aufteilen")]["page"] != 8192:
+            failures.append("Subnetting: Blaettern IPv6 geht nicht")
+        calc.mode_pills.select_value("ipv4")
+        calc.view_pills["ipv4"].select_value("bedarf")
+        calc.calc_hosts()
+        if "Broadcast" not in calc.subnet_panels[("ipv4", "bedarf")]["out"].data.value:
+            failures.append("Subnetting: Nach Hostbedarf ohne Ergebnis")
+        calc.view_pills["ipv4"].select_value("netzdaten")
     except Exception:
         failures.append(traceback.format_exc())
     return failures
