@@ -56,7 +56,7 @@ from fisi_core import (  # noqa: E402
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
 )
-from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT  # noqa: E402
+from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
 import fisi_game  # noqa: E402
@@ -700,12 +700,14 @@ class Sidebar(ctk.CTkFrame):
                                  font=F["tiny"], fg=C["muted"])
         self.footer.pack(side="bottom", pady=(8, 14))
         self._build_status()
+        self.db_hint = None       # rote Zeile "wird nicht gespeichert" (ab 0.62.5)
 
         # Ab 0.48: Das Menue scrollt, wenn ausgeklappte Reiter nicht mehr in
         # das Fenster passen. Der Schieberegler erscheint nur bei Bedarf.
         self.menu_area = ScrollArea(self, bg=C["sidebar"], hide_vbar=True)
         self.menu_area.pack(fill="both", expand=True, pady=(0, 8))
         menu = self.menu_area.inner
+        self.update_db_hint()
 
         make_label(menu, "MENÜ", font=F["label"], fg=C["muted"],
                    anchor="w").pack(fill="x", padx=24, pady=(0, 6))
@@ -774,6 +776,17 @@ class Sidebar(ctk.CTkFrame):
     def update_status(self, learned, total):
         self.status_bar.set(learned / max(1, total) * 100,
                             "%d / %d" % (learned, total))
+
+    def update_db_hint(self):
+        """Ab 0.62.5 (B-G-03): bleibende rote Zeile, solange die Datenbank
+        nichts speichert (Schreibschutz, Schaden, nicht erreichbar)."""
+        line = DB_READ_ONLY_LINES.get(getattr(self.app.db, "read_only_reason", None))
+        if not line or self.db_hint is not None:
+            return
+        self.db_hint = make_label(self, line, font=F["tiny"], fg=C["red"], wraplength=200,
+                                  justify="left", anchor="w")
+        self.db_hint.pack(side="bottom", fill="x", padx=20, pady=(0, 10),
+                          before=self.menu_area)
 
 
 # ============================================================================
@@ -7861,6 +7874,11 @@ class FISIApp:
     # -- Infrastruktur ------------------------------------------------------
 
     def _db_error(self, message):
+        # Ab 0.62.5: fisi_core meldet je Fehlerart nur einmal, auf Deutsch;
+        # die rote Zeile in der Seitenleiste bleibt stehen
+        sidebar = getattr(self, "sidebar", None)
+        if sidebar is not None:
+            sidebar.update_db_hint()
         messagebox.showerror("Datenbankfehler", message)
 
     def _setup_ttk_style(self):
