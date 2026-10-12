@@ -4226,9 +4226,11 @@ class SubnetCalc:
             view["needs"].pack(anchor="w", fill="x", pady=(8, 12))
         NeoButton(frame, "Berechnen", lambda: self.calc(mode, key),
                   kind="accent").pack(anchor="w")
-        if key == "netzdaten":
+        if key == "netzdaten" and mode == "ipv4":
             box = make_text(frame, height=9, readonly=True, font=F["mono_small"])
         else:
+            # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
+            # um; der Kasten waechst mit, statt Zeilen zu verstecken
             box = make_autogrow_text(frame, min_height=9, max_height=40,
                                      font=F["mono_small"])
             box.configure(state="disabled")

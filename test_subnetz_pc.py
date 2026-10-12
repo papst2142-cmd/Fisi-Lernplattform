@@ -328,6 +328,12 @@ class PcAufbauTest(PcCase):
         self.go("ipv6", "netzdaten")
         self.sub.calc("ipv6", "netzdaten")
         text = self.box("ipv6", "netzdaten")
+        # zwei Zeilen mehr und lange Adressen: Kasten waechst mit (keine
+        # versteckten Zeilen), IPv4-Netzdaten bleiben wie bisher (height=9)
+        self.assertTrue(hasattr(self.sub.views[("ipv6", "netzdaten")]["box"],
+                                "autogrow_resize"))
+        self.assertFalse(hasattr(self.sub.views[("ipv4", "netzdaten")]["box"],
+                                 "autogrow_resize"))
         self.assertTrue(text.startswith(fc.subnet_report("2001:db8:abcd:12::1/64")))
         if KERN_DETAILS:
             extra = text[len(fc.subnet_report("2001:db8:abcd:12::1/64")):].split("\n")[1:]
