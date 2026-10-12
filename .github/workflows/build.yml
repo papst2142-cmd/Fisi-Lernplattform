@@ -74,7 +74,9 @@ jobs:
           # Aelteres Ubuntu = aeltere glibc = laeuft auf mehr Linux-Systemen
           - os: ubuntu-22.04
             label: linux
-          - os: macos-14
+          # Ab 0.62.4: macos-15 statt macos-14 (GitHub schaltet macos-14 am
+          # 02.11.2026 ab). Weiter Apple Silicon (arm64), Label bleibt.
+          - os: macos-15
             label: macos-arm64
           - os: macos-15-intel
             label: macos-intel
