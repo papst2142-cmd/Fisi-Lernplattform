@@ -3366,6 +3366,182 @@ def _handy_fit(lines):
     return _fit_lines(lines, CALC_EXPLAIN_HANDY_WIDTH)
 
 
+# ============================================================================
+#  Ab 0.63.1 (Plan 0.63.1 Teil 1.3, Antwort 12 (A)): fit_lines - Umbruch eines
+#  Ergebnis- bzw. Rechenweg-Textes auf die Breite eines Kastens in Zeichen.
+#  Eine Quelle fuer PC (app_gui, Subnetting-Karte) und Handy (mobile/src/ui.py
+#  FitBox, importiert von hier). Die Funktionen stammen unveraendert aus
+#  mobile/src/ui.py (0.63, a74712d Z. 687-845); einzig _fit_pieces heisst hier
+#  _fit_value_pieces (Namensgleichheit mit _fit_pieces oben). Reine
+#  Textfunktionen ohne Oberflaeche.
+# ============================================================================
+
+import itertools  # noqa: E402  (nur fuer _fit_balanced)
+
+
+def _fit_parts(line):
+    """Zeile "Beschriftung : Wert" zerlegen -> (Einzug, Beschriftung, Wert).
+    Ohne ": " oder ohne Wert: None. Folgezeilen ("        : Wert") haben
+    eine leere Beschriftung."""
+    pos = line.find(": ")
+    if pos < 0:
+        return None
+    value = line[pos + 2:].strip()
+    if not value:
+        return None
+    head = line[:pos]
+    label = head.strip()
+    indent = head[:len(head) - len(head.lstrip(" "))] if label else ""
+    return indent, label, value
+
+
+def _fit_sentence(line, zeichen):
+    """Satz an Leerzeichen auf hoechstens `zeichen` Zeichen umbrechen; ein
+    Wort, das allein zu lang ist, bleibt ganz. Zeilen mit Spalten (doppelte
+    Leerzeichen) und ohne Leerzeichen bleiben unveraendert."""
+    body = line.lstrip(" ")
+    indent = line[:len(line) - len(body)]
+    if "  " in body.rstrip() or " " not in body.strip():
+        return [line]
+    rows = []
+    current = ""
+    for word in body.split():
+        if current and len(indent) + len(current) + 1 + len(word) > zeichen:
+            rows.append(indent + current)
+            current = word
+        else:
+            current = "%s %s" % (current, word) if current else word
+    rows.append(indent + current)
+    return rows
+
+
+# Ab 0.63 (Plan 4.3, G-12): grosse Zahl mit Tausenderpunkten
+_FIT_NUMBER = re.compile(r"^\d{1,3}(?:\.\d{3})+(?:,\d+)?$")
+
+
+_FIT_UNIT = re.compile(r"^(?:%|[A-Za-zÄÖÜäöü/]{1,4})[,;)]?$")
+
+
+# (in mobile/src/ui.py bis 0.63 hiess sie _fit_pieces; hier umbenannt, weil
+# fisi_core schon ein anderes _fit_pieces fuer _fit_lines hat)
+def _fit_value_pieces(word):
+    """Bruchstellen eines Wortes, das allein nicht passt (Plan 4.3):
+    IPv6 (enthaelt ':') nach einem Doppelpunkt ("::" bleibt zusammen),
+    grosse Zahl VOR einem Tausenderpunkt (Punkt beginnt die neue Zeile).
+    Sonst keine Bruchstelle."""
+    if ":" in word:
+        return [piece for piece in re.split(r"(?<=:)(?=[^:])", word) if piece]
+    groups = word.split(".")
+    if _FIT_NUMBER.match(word) and not (len(groups) == 4 and
+                                        all(int(group) <= 255 for group in groups)):
+        # (vier Gruppen bis 255 sehen aus wie eine IPv4-Adresse: nie teilen)
+        return [piece for piece in re.split(r"(?=\.)", word) if piece]
+    return [word]
+
+
+def _fit_balanced(pieces, room):
+    """Stuecke (ohne Trenner) auf moeglichst wenige Zeilen <= room verteilen,
+    bei gleicher Zeilenzahl moeglichst gleich lang ("etwa in der Mitte")."""
+    for count in range(1, len(pieces) + 1):
+        best = None
+        for cuts in itertools.combinations(range(1, len(pieces)), count - 1):
+            bounds = (0,) + cuts + (len(pieces),)
+            rows = ["".join(pieces[a:b]) for a, b in zip(bounds, bounds[1:])]
+            longest = max(len(row) for row in rows)
+            if longest <= room and (best is None or longest < best[0]):
+                best = (longest, rows)
+        if best:
+            return best[1]
+    return None
+
+
+def _fit_value(value, room):
+    """Wert auf Zeilen zu hoechstens `room` Zeichen verteilen (Plan 4.3):
+    an Leerzeichen, ein zu langes Wort an seinen Bruchstellen (_fit_pieces).
+    Eine allein stehende IPv6-Adresse bricht etwa in der Mitte. Was sich so
+    nicht teilen laesst, bleibt ganz (dann "→ wischen"); Werte mit Spalten
+    (doppelte Leerzeichen) bleiben unveraendert."""
+    if room <= 0 or len(value) <= room or "  " in value:
+        return [value]
+    words = []
+    for word in value.split(" "):
+        # Zahl und Einheit bleiben zusammen ("288,00 Wh", "45 min", "925,9 %")
+        if words and words[-1][-1:].isdigit() and _FIT_UNIT.match(word):
+            words[-1] += " " + word
+        else:
+            words.append(word)
+    if len(words) == 1 and ":" in value and " " not in value:
+        rows = _fit_balanced(_fit_value_pieces(value), room)
+        if rows:
+            return rows
+    rows = []
+    current = ""
+    for word in words:
+        pieces = _fit_value_pieces(word) if len(word) > room else [word]
+        for number, piece in enumerate(pieces):
+            glue = " " if number == 0 and current else ""
+            if current and len(current) + len(glue) + len(piece) > room:
+                rows.append(current)
+                current = piece
+            else:
+                current += glue + piece
+    rows.append(current)
+    return rows
+
+
+def fit_lines(text, zeichen):
+    """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
+    Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
+    "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
+    z.B. Datenmenge in Byte/KiB/MiB) ruecken mit. Passt der Wert auch dann
+    nicht (Plan 4.3): IPv6 bricht nach einem Doppelpunkt etwa in der Mitte,
+    eine grosse Zahl vor einem Tausenderpunkt, Text an Leerzeichen; die
+    Fortsetzung steht wieder mit 2 Leerzeichen Einzug. Sonst wird nie mitten
+    im Wort geteilt; was dann noch zu lang ist, bleibt ganz (der Kasten
+    wischt, "→ wischen").
+    Ein reiner Satz ohne "Beschriftung : Wert" (z.B. "Noch keine Berechnung
+    durchgeführt.") bricht an Leerzeichen um, wenn er nicht passt; einzelne
+    Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
+    Spalten (zwei Leerzeichen hintereinander, z.B. Tabellen) bleiben, wie
+    sie sind. zeichen None/0: Text unveraendert. Reine Textfunktion ohne
+    Flet."""
+    if not text or not zeichen or zeichen <= 0:
+        return text
+    lines = text.split("\n")
+    out = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        parts = _fit_parts(line)
+        if parts is None or not parts[1]:
+            # keine Beschriftung (oder Folgezeile ohne Kopf)
+            if parts is not None and len(line) > zeichen:
+                out.extend("  " + row for row in _fit_value(parts[2], zeichen - 2))
+            elif parts is None and len(line) > zeichen:
+                out.extend(_fit_sentence(line, zeichen))
+            else:
+                out.append(line)
+            index += 1
+            continue
+        block = [(line, parts)]
+        index += 1
+        while index < len(lines):
+            follow = _fit_parts(lines[index])
+            if follow is None or follow[1]:
+                break
+            block.append((lines[index], follow))
+            index += 1
+        if all(len(item) <= zeichen for item, _parts in block):
+            out.extend(item for item, _parts in block)
+            continue
+        indent, label, _value = parts
+        out.append("%s%s:" % (indent, label))
+        for _item, item_parts in block:
+            out.extend("%s  %s" % (indent, row)
+                       for row in _fit_value(item_parts[2], zeichen - len(indent) - 2))
+    return "\n".join(out)
+
+
 def _wrap_para(text, lead, width):
     """Fliesstext mit gleichem Einzug in jeder Zeile."""
     return _fit_line(lead + text, width, lead) if len(lead + text) > width \
