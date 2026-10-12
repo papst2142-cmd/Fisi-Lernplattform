@@ -7634,6 +7634,8 @@ class FISIApp:
         set_focus_filter(self._focus_allowed)
 
         self.db = DBManager(error_handler=self._db_error)
+        # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
+        fsi.remove_stale_temp()
         self.container = None
         self._recoloring = False
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)

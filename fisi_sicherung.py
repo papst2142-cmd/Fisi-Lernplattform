@@ -622,16 +622,33 @@ def save_file(path, data):
         raise
 
 
+SETTINGS_TEMP_SUFFIX = ".sicherung.tmp"
+
+
+def remove_stale_temp():
+    """Ab 0.62.5 (Gegenpruefung G-2): Hilfsdatei eines abgebrochenen "Alles
+    ersetzen" loeschen (beim Start von PC und Handy und vor dem naechsten
+    Schreiben). Sie enthaelt den Zugangsschluessel; ob sie zum Lernstand
+    passt, ist nicht sicher - nachgeholt wird sie deshalb nicht."""
+    _remove(_settings_path() + SETTINGS_TEMP_SUFFIX)
+
+
 def _settings_temp(settings):
     """Ab 0.62.5 (B-G-15): Einstellungen in eine Hilfsdatei neben
     einstellungen.json schreiben (nur fuer den Besitzer lesbar, sie enthaelt
-    den Zugangsschluessel). Zurueck: (Hilfsdatei, Ziel). Wirft OSError."""
+    den Zugangsschluessel). Zurueck: (Hilfsdatei, Ziel). Wirft OSError.
+    Ab 0.62.5 (Gegenpruefung G-1): Eine alte Hilfsdatei wird vorher geloescht
+    und die Rechte zusaetzlich mit fchmod gesetzt (wie save_settings) - sonst
+    behielte sie z.B. 0644, und einstellungen.json bekaeme sie mit."""
     path = _settings_path()
-    temp = path + ".sicherung.tmp"
+    temp = path + SETTINGS_TEMP_SUFFIX
+    remove_stale_temp()
     try:
         handle = os.fdopen(os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
                            "w", encoding="utf-8")
         with handle:
+            if hasattr(os, "fchmod") and os.name != "nt":
+                os.fchmod(handle.fileno(), 0o600)   # unter Windows ohne Wirkung
             json.dump(settings, handle, indent=2)
             handle.flush()
             os.fsync(handle.fileno())

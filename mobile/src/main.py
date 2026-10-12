@@ -4702,6 +4702,8 @@ class FISIMobileApp:
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
         page.padding = 0
         self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
+        # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
+        fsi.remove_stale_temp()
         self.sync = SyncController(self)
         self.update_dialog_open = False
         self.last_auto_check = 0
