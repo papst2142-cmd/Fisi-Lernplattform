@@ -2688,7 +2688,7 @@ IPV6_TYPES = [
     (0x2000 << 112, 3, "Global Unicast (2000::/3)"),
 ]
 IPV6_TYPE_REST = "nicht zugeordnet (laut RFC 4291 als Global Unicast zu behandeln)"
-IPV6_TYPE_MIXED = "mehrere Adresstypen (Präfix kürzer als der Typbereich)"
+IPV6_TYPE_MIXED = "mehrere Adresstypen (Präfix kürzer als Typbereich)"
 
 
 def _ipv6_in(value, prefix, base, length):
