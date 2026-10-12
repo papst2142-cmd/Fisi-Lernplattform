@@ -11,6 +11,8 @@ Tests ab 0.62.5 (Gruppe 5.10 Haertung Bau):
           in v0.62.3 (auch auf v0.62.3 gruen).
   B-B-08  Sperrdatei gegen Mehrfachstart (fisi_einzelstart._try_lock) mit
           encoding="utf-8" geoeffnet.
+  B-B-05  pillow, certifi, PyInstaller fest auf die Versionen aus dem
+          Release-Bau v0.62.3 (CI-Lauf 38039489984).
 
 Fuer die Rot-Probe kann der Code-Ordner umgestellt werden:
     HAERTUNG_CODE=<ordner mit dem Code> python test_haertung_bau.py
@@ -165,6 +167,27 @@ class SperrdateiTest(unittest.TestCase):
         keywords = {kw.arg: kw.value for kw in opens[0].keywords}
         self.assertIn("encoding", keywords, "fisi_einzelstart.py:%d" % opens[0].lineno)
         self.assertEqual(keywords["encoding"].value, "utf-8")
+
+
+class PaketeTest(unittest.TestCase):
+    """B-B-05: Fremdpakete fuer den Bau fest auf die Versionen aus dem
+    Release-Bau v0.62.3 (CI-Lauf 38039489984, Windows und Linux)."""
+
+    SOLL = {"requirements.txt": {"customtkinter": "6.0.0", "pillow": "12.3.0",
+                                 "certifi": "2026.7.22"},
+            "requirements-build.txt": {"pyinstaller": "6.22.3"}}
+
+    def test_versionen_fest(self):
+        for name, soll in self.SOLL.items():
+            with open(os.path.join(CODE, name), encoding="utf-8") as handle:
+                lines = [line.split("#")[0].strip() for line in handle]
+            pins = {}
+            for line in lines:
+                if line and not line.startswith("-"):
+                    self.assertIn("==", line, "%s: %s ohne feste Version" % (name, line))
+                    package, version = line.split("==")
+                    pins[package.strip().lower()] = version.strip()
+            self.assertEqual(pins, soll, name)
 
 
 if __name__ == "__main__":
