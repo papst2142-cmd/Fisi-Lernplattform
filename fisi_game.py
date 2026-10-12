@@ -3529,7 +3529,7 @@ class GameState:
                 # diesem Feierabend zurueck zum Mitbewerber
                 for staff_id, until in list(self.leaving.items()):
                     if until <= today and staff_id in self.staff:
-                        data = self.staff.pop(staff_id)
+                        data = self._staff_leaves(staff_id)
                         self.returned_staff[staff_id] = (today, self.answers.get(
                             "leaving:" + staff_id, {}).get("firma", ""), data.get("name", ""))
                         self.leaving.pop(staff_id, None)
@@ -3589,8 +3589,7 @@ class GameState:
             if data.get("standort") == SITE_BRANCH:
                 self.staff_site[data["id"]] = SITE_BRANCH
         elif kind == EV_FIRED:
-            self.staff.pop(data.get("id"), None)
-            self.staff_site.pop(data.get("id"), None)
+            self._staff_leaves(data.get("id"))
         elif kind == EV_BRANCH:
             number = int(data.get("stufe", 0))
             current = self.branch["stufe"] if self.branch else 0
@@ -4437,8 +4436,27 @@ class GameState:
                 self.absences.append({"id": item["id"], "art": ABSENT_SICK,
                                       "von": int(item["von"]), "bis": int(item["bis"])})
             elif art == PERSONAL_QUIT and item.get("id") in self.staff:
-                self.staff.pop(item["id"], None)
+                self._staff_leaves(item["id"])
                 self.quit_staff[item["id"]] = day
+
+    def _staff_leaves(self, staff_id):
+        """Ab 0.62.4 (B-F-01): Eine Person verlaesst die Firma (entlassen,
+        selbst gekuendigt oder zum Mitbewerber zurueck). Sie verschwindet aus
+        dem Personal, vom Standort, aus jedem Projektteam und aus dem
+        Serverfarm-Team - sonst blieb ein Projekt mit ihr fuer immer stehen.
+        Liefert ihre Daten (oder None)."""
+        data = self.staff.pop(staff_id, None)
+        self.staff_site.pop(staff_id, None)
+        for project in self.projects.values():
+            if staff_id in project["team"]:
+                project["team"] = [person for person in project["team"] if person != staff_id]
+        if self.farm is not None and staff_id in self.farm["team"]:
+            self.farm["team"] = [person for person in self.farm["team"] if person != staff_id]
+        return data
+
+    def left_firm(self, staff_id):
+        """Ab 0.62.4 (B-F-01): War die Person hier angestellt und ist es nicht mehr?"""
+        return staff_id in self.ever_hired and staff_id not in self.staff
 
     def open_decisions(self):
         """Offene Entscheidungen zum Personal (Urlaubsanfragen, Konflikte),
@@ -5644,6 +5662,8 @@ class Game:
         if not self.state.farm_running():
             raise ValueError("Die Serverfarm läuft nicht (mehr).")
         team = [person for index, person in enumerate(team or []) if person not in team[:index]]
+        # Ab 0.62.4 (B-F-01): Wer nicht mehr hier arbeitet, faellt still heraus
+        team = [person for person in team if not self.state.left_firm(person)]
         options = {item["an"]: item for item in farm_candidates(
             self.state, self.topic_knowledge(), self.content)}
         current = self.state.farm["team"]
@@ -5702,6 +5722,8 @@ class Game:
         if project is None or project["fertig"]:
             raise ValueError("Dieses Projekt läuft nicht (mehr).")
         team = [person for index, person in enumerate(team or []) if person not in team[:index]]
+        # Ab 0.62.4 (B-F-01): Wer nicht mehr hier arbeitet, faellt still heraus
+        team = [person for person in team if not self.state.left_firm(person)]
         options = {item["an"]: item for item in project_candidates(
             self.state, project, self.firm_levels(), self.content)}
         for person in team:
