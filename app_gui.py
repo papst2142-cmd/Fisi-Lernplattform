@@ -56,7 +56,7 @@ from fisi_core import (  # noqa: E402
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
 )
-from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT  # noqa: E402
+from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
 import fisi_game  # noqa: E402
@@ -120,7 +120,7 @@ APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und 
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.62.4"
+APP_VERSION = "0.62.5"
 
 
 def _resource_path(filename):
@@ -700,12 +700,14 @@ class Sidebar(ctk.CTkFrame):
                                  font=F["tiny"], fg=C["muted"])
         self.footer.pack(side="bottom", pady=(8, 14))
         self._build_status()
+        self.db_hint = None       # rote Zeile "wird nicht gespeichert" (ab 0.62.5)
 
         # Ab 0.48: Das Menue scrollt, wenn ausgeklappte Reiter nicht mehr in
         # das Fenster passen. Der Schieberegler erscheint nur bei Bedarf.
         self.menu_area = ScrollArea(self, bg=C["sidebar"], hide_vbar=True)
         self.menu_area.pack(fill="both", expand=True, pady=(0, 8))
         menu = self.menu_area.inner
+        self.update_db_hint()
 
         make_label(menu, "MENÜ", font=F["label"], fg=C["muted"],
                    anchor="w").pack(fill="x", padx=24, pady=(0, 6))
@@ -774,6 +776,17 @@ class Sidebar(ctk.CTkFrame):
     def update_status(self, learned, total):
         self.status_bar.set(learned / max(1, total) * 100,
                             "%d / %d" % (learned, total))
+
+    def update_db_hint(self):
+        """Ab 0.62.5 (B-G-03): bleibende rote Zeile, solange die Datenbank
+        nichts speichert (Schreibschutz, Schaden, nicht erreichbar)."""
+        line = DB_READ_ONLY_LINES.get(getattr(self.app.db, "read_only_reason", None))
+        if not line or self.db_hint is not None:
+            return
+        self.db_hint = make_label(self, line, font=F["tiny"], fg=C["red"], wraplength=200,
+                                  justify="left", anchor="w")
+        self.db_hint.pack(side="bottom", fill="x", padx=20, pady=(0, 10),
+                          before=self.menu_area)
 
 
 # ============================================================================
@@ -3255,11 +3268,7 @@ class FinalProjectView(View):
         self.app.notify_progress(refresh_view=False)
 
     def _delete_project(self):
-        if not messagebox.askyesno(
-                "Projekt löschen",
-                "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig machen "
-                "und gilt nach dem Abgleich auch auf dem Handy."
-                % fpj.project_title(self.fields)):
+        if not messagebox.askyesno(fpj.DELETE_TITLE, fpj.delete_question(self.fields)):
             return
         self.pending.clear()
         fpj.delete_project(self.db, self.project)
@@ -3269,6 +3278,7 @@ class FinalProjectView(View):
         self.project = None
         self._load_project()
         self.app.notify_progress(refresh_view=False)
+        self.app.sync.schedule()      # ab 0.62.5 (B-G-20): wie am Handy
 
     def _export(self, extension):
         self._flush()
@@ -5561,14 +5571,25 @@ class SettingsView(View):
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(self.var_auto.get())
-        fisi_update.save_settings(settings)
+        if not fisi_update.save_settings(settings):
+            self._save_failed(self.var_auto)
 
     def _toggle_sync_auto(self):
-        fisi_sync.save_sync_settings(sync_auto=bool(self.var_sync_auto.get()))
+        if not fisi_sync.save_sync_settings(sync_auto=bool(self.var_sync_auto.get())):
+            self._save_failed(self.var_sync_auto)
+
+    def _save_failed(self, var):
+        """Ab 0.62.5 (B-G-04): Einstellung nicht gespeichert - Schalter
+        zurueck auf den gespeicherten Stand, Meldung (wie am Handy)."""
+        var.set(not var.get())
+        messagebox.showerror(fo.SAVE_FAILED_TITLE, fo.SAVE_FAILED)
 
     def sync_now(self):
-        fisi_sync.save_sync_settings(sync_repo=self.entry_repo.get().strip(),
-                                     sync_token=self.entry_token.get().strip())
+        if not fisi_sync.save_sync_settings(sync_repo=self.entry_repo.get().strip(),
+                                            sync_token=self.entry_token.get().strip()):
+            # Ab 0.62.5 (B-G-04): nicht mit dem alten Repository abgleichen
+            self.lbl_sync.configure(text=fo.SAVE_FAILED, text_color=C["red"])
+            return
         if not fisi_sync.is_configured():
             self.lbl_sync.configure(text="Bitte Repository und Zugangsschlüssel "
                                          "eintragen.", text_color=C["yellow"])
@@ -5798,8 +5819,9 @@ class SettingsView(View):
             return
         try:
             data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
-            with open(path, "wb") as handle:
-                handle.write(data)
+            # Ab 0.62.5 (B-G-02): ueber eine Hilfsdatei - bei voller Platte
+            # bleibt eine vorhandene alte Sicherung heil
+            fsi.save_file(path, data)
         except OSError as error:
             messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
             return
@@ -5828,8 +5850,8 @@ class SettingsView(View):
         try:
             count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
                                      SyncController.device())
-        except fsi.BackupError as error:
-            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE,
@@ -5845,8 +5867,8 @@ class SettingsView(View):
         try:
             path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
                                    APP_VERSION, SyncController.device())
-        except fsi.BackupError as error:
-            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
@@ -6263,7 +6285,13 @@ class UpdateController:
                 self._queue.put((on_done, None, str(error)))
             except Exception as error:  # unerwartet - nie den Thread sterben lassen
                 self._queue.put((on_done, None, "Unerwarteter Fehler: %s" % error))
-        threading.Thread(target=worker, daemon=True).start()
+        try:
+            threading.Thread(target=worker, daemon=True).start()
+        except BaseException:
+            # Ab 0.62.5 (Gegenpruefung G-4): Thread startet nicht - der
+            # Auftrag zaehlt nicht, sonst wird _poll nie mehr eingeplant
+            self._pending -= 1
+            raise
         if self._pending == 1:
             self.root.after(150, self._poll)
 
@@ -6322,6 +6350,10 @@ class SyncController:
         self._again = False
         self._job = None
         self.dirty = False
+        # Ab 0.62.5 (B-B-02): gesetzt, solange kein Abgleich im Hintergrund
+        # laeuft - run_before_exit wartet darauf
+        self._idle = threading.Event()
+        self._idle.set()
 
     @staticmethod
     def device():
@@ -6338,6 +6370,7 @@ class SyncController:
             return
         self._busy = True
         self.dirty = False
+        self._idle.clear()
 
         def done(result, error):
             self._busy = False
@@ -6348,8 +6381,21 @@ class SyncController:
                 self._again = False
                 self.run()
 
-        self.app.updater.run_in_background(
-            lambda: fisi_sync.sync(self.app.db, device=self.device()), done)
+        try:
+            self.app.updater.run_in_background(self._sync_in_thread, done)
+        except BaseException:
+            # Ab 0.62.5 (Gegenpruefung G-4): Startet der Thread nicht, laeuft
+            # kein Abgleich - sonst wartete run_before_exit die ganze Frist
+            # und der naechste Abgleich bliebe gesperrt
+            self._busy = False
+            self._idle.set()
+            raise
+
+    def _sync_in_thread(self):
+        try:
+            return fisi_sync.sync(self.app.db, device=self.device())
+        finally:
+            self._idle.set()
 
     def auto_start(self):
         if self.auto_enabled():
@@ -6373,11 +6419,16 @@ class SyncController:
         if not (self.dirty and self.auto_enabled()):
             return
         task = fhg.vorgang("abgleich")   # ab 0.59.2: Haenger-Diagnose
-        worker = threading.Thread(
-            target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
-            daemon=True)
-        worker.start()
-        worker.join(timeout)
+        # Ab 0.62.5 (B-B-02): Laeuft noch ein Abgleich (z. B. der vom Start),
+        # erst auf ihn warten statt einen zweiten daneben zu starten. Ist er
+        # rechtzeitig fertig, folgt der letzte Abgleich in der restlichen Zeit.
+        deadline = time.monotonic() + timeout
+        if self._idle.wait(timeout):
+            worker = threading.Thread(
+                target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
+                daemon=True)
+            worker.start()
+            worker.join(max(0.0, deadline - time.monotonic()))
         fhg.vorgang(task)
 
 
@@ -6407,9 +6458,20 @@ class BackupDialog(ctk.CTkToplevel):
         make_label(card.body, fsi.PREVIEW_HINT, font=F["small"], fg=C["text_dim"],
                    justify="left", anchor="w", wraplength=480).pack(anchor="w", pady=(14, 0))
 
+        busy = []
+
         def choose(action):
-            self.destroy()
-            action(backup)
+            # Ab 0.62.5 (B-G-05): das Fenster schliesst erst nach der Aktion
+            # (waehrenddessen zaehlt kein weiterer Klick darin)
+            if busy:
+                return
+            busy.append(True)
+            try:
+                if action:
+                    action(backup)
+            finally:
+                if self.winfo_exists():
+                    self.destroy()
 
         buttons = transparent_frame(card.body)
         buttons.pack(fill="x", side="bottom", pady=(12, 0))
@@ -6417,7 +6479,8 @@ class BackupDialog(ctk.CTkToplevel):
                   kind="primary").pack(side="left")
         NeoButton(buttons, fsi.BTN_REPLACE, lambda: choose(on_replace),
                   kind="danger").pack(side="left", padx=10)
-        NeoButton(buttons, fsi.BTN_CANCEL, self.destroy, kind="ghost").pack(side="left")
+        NeoButton(buttons, fsi.BTN_CANCEL, lambda: choose(None),
+                  kind="ghost").pack(side="left")
         self.after(100, self._focus)
 
     def _focus(self):
@@ -6918,9 +6981,12 @@ class UpdateDialog(ctk.CTkToplevel):
                                       self.start_update, kind="primary")
         else:
             self.lbl_status.configure(
-                text="Automatisches Aktualisieren ist nur in der installierten "
-                     "Anwendung möglich. Die neue Version gibt es auf der "
-                     "Download-Seite.")
+                # Ab 0.62.5: installiert, aber im Release keine Datei fuer
+                # dieses System -> eigener Satz
+                text=fisi_update.NO_ASSET_TEXT if info.asset_missing else
+                "Automatisches Aktualisieren ist nur in der installierten "
+                "Anwendung möglich. Die neue Version gibt es auf der "
+                "Download-Seite.")
             self.btn_main = NeoButton(buttons, "Zur Download-Seite",
                                       lambda: webbrowser.open(info.page_url),
                                       kind="primary")
@@ -7582,6 +7648,8 @@ class FISIApp:
         set_focus_filter(self._focus_allowed)
 
         self.db = DBManager(error_handler=self._db_error)
+        # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
+        fsi.remove_stale_temp()
         self.container = None
         self._recoloring = False
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
@@ -7861,6 +7929,11 @@ class FISIApp:
     # -- Infrastruktur ------------------------------------------------------
 
     def _db_error(self, message):
+        # Ab 0.62.5: fisi_core meldet je Fehlerart nur einmal, auf Deutsch;
+        # die rote Zeile in der Seitenleiste bleibt stehen
+        sidebar = getattr(self, "sidebar", None)
+        if sidebar is not None:
+            sidebar.update_db_hint()
         messagebox.showerror("Datenbankfehler", message)
 
     def _setup_ttk_style(self):
@@ -8284,10 +8357,14 @@ class FISIApp:
     def check_finished_update(self):
         """Ab 0.55.1: Lief vor diesem Start ein Update? Ist die neue Version
         nicht angekommen, sagt das Programm es deutlich (keine stille
-        Rueckkehr) und nennt das Protokoll."""
+        Rueckkehr) und nennt das Protokoll. Ab 0.62.5 danach einmal die
+        Meldung, wenn einstellungen.json kaputt war (Text wie am Handy)."""
         result = fisi_update.finish_pending_update(APP_VERSION)
         if result and result[0] == "fehler":
             messagebox.showwarning(fisi_update.FAILED_TITLE, result[1], parent=self.root)
+        notice = fisi_update.broken_settings_notice()
+        if notice:
+            messagebox.showwarning(notice[0], notice[1], parent=self.root)
 
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""

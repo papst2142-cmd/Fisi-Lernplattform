@@ -57,7 +57,7 @@ from fisi_core import (  # noqa: E402
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
     SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_search, notebook_summary,
     NOTEBOOK_NO_HITS, NOTEBOOK_SEARCH_HINT, position_statuses, status_label,
-    ap1_theme_totals, content_totals, error_log_path,
+    ap1_theme_totals, content_totals, error_log_path, log_exception,
     filter_positions, group_values, ihk_note, page_slice, raid_report,
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
@@ -92,7 +92,7 @@ import ui  # noqa: E402
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (wie PC)
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.62.4"
+APP_VERSION = "0.62.5"
 
 # Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
 VERSION_LINE = "Version %s"
@@ -2157,10 +2157,7 @@ class FinalProjectScreen(Screen):
             self._load_project()
             self.app.sync.schedule()
 
-        self.app.confirm("Projekt löschen",
-                         "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig "
-                         "machen und gilt nach dem Abgleich auch am PC."
-                         % fpj.project_title(self.fields), confirmed)
+        self.app.confirm(fpj.DELETE_TITLE, fpj.delete_question(self.fields), confirmed)
 
     def _export(self, extension):
         self.flush()
@@ -3883,14 +3880,28 @@ class SettingsScreen(Screen):
     def _toggle_auto(self, event):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(event.control.value)
-        fisi_update.save_settings(settings)
+        if not fisi_update.save_settings(settings):
+            self._save_failed(event.control)
 
     def _toggle_sync_auto(self, event):
-        fisi_sync.save_sync_settings(sync_auto=bool(event.control.value))
+        if not fisi_sync.save_sync_settings(sync_auto=bool(event.control.value)):
+            self._save_failed(event.control)
+
+    def _save_failed(self, switch):
+        """Ab 0.62.5 (B-G-04): Einstellung nicht gespeichert - Schalter
+        zurueck auf den gespeicherten Stand, Meldung (wie am PC)."""
+        switch.value = not switch.value
+        self.app.info(fo.SAVE_FAILED_TITLE, fo.SAVE_FAILED)
+        self.app.page.update()
 
     def sync_now(self, _event=None):
-        fisi_sync.save_sync_settings(sync_repo=(self.entry_repo.value or "").strip(),
-                                     sync_token=(self.entry_token.value or "").strip())
+        if not fisi_sync.save_sync_settings(
+                sync_repo=(self.entry_repo.value or "").strip(),
+                sync_token=(self.entry_token.value or "").strip()):
+            # Ab 0.62.5 (B-G-04): nicht mit dem alten Repository abgleichen
+            self.lbl_sync.value, self.lbl_sync.color = fo.SAVE_FAILED, C["red"]
+            self.app.page.update()
+            return
         if not fisi_sync.is_configured():
             self.lbl_sync.value = "Bitte Repository und Zugangsschlüssel eintragen."
             self.lbl_sync.color = C["yellow"]
@@ -4131,8 +4142,8 @@ class SettingsScreen(Screen):
             try:
                 count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in chosen],
                                          "Handy")
-            except fsi.BackupError as error:
-                self.app.info(fsi.ERROR_TITLE, str(error))
+            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+                self.app.info(fsi.ERROR_TITLE, fsi.restore_error_text(error))
                 return
             self._after_restore()
             self.app.info(fsi.ERROR_TITLE,
@@ -4148,8 +4159,8 @@ class SettingsScreen(Screen):
             try:
                 path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
                                        APP_VERSION, "Handy")
-            except fsi.BackupError as error:
-                self.app.info(fsi.ERROR_TITLE, str(error))
+            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+                self.app.info(fsi.ERROR_TITLE, fsi.restore_error_text(error))
                 return
             self._after_restore()
             self.app.info(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
@@ -4494,10 +4505,23 @@ class SyncController:
         except Exception as exc:  # nie die App wegen des Abgleichs abstuerzen lassen
             error = "Unerwarteter Fehler beim Abgleich: %s" % exc
         self.busy = False
-        if result is not None and result.received:
-            self.app.refresh_after_sync()
-        self.app.screens["settings"].show_sync_status(result, error)
-        self.app.page.update()
+        # Ab 0.62.5 (B-G-21): Wirft die Anzeige danach, bleibt der Knopf nicht
+        # gesperrt und der Fehler landet in fehler.log
+        try:
+            if result is not None and result.received:
+                self.app.refresh_after_sync()
+        except Exception:
+            log_exception(*sys.exc_info())
+        try:
+            self.app.screens["settings"].show_sync_status(result, error)
+            self.app.page.update()
+        except Exception:
+            log_exception(*sys.exc_info())
+            try:
+                self.app.screens["settings"].btn_sync.set_enabled(True)
+                self.app.page.update()
+            except Exception:
+                pass
         if self.again:
             self.again = False
             self.run()
@@ -4678,6 +4702,8 @@ class FISIMobileApp:
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
         page.padding = 0
         self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
+        # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
+        fsi.remove_stale_temp()
         self.sync = SyncController(self)
         self.update_dialog_open = False
         self.last_auto_check = 0
@@ -5303,6 +5329,17 @@ class FISIMobileApp:
             self.show_update_dialog(info)
         self.page.update()
 
+    def check_broken_settings(self):
+        """Ab 0.62.5: War einstellungen.json kaputt, einmal beim Start sagen,
+        dass sie ersetzt wurde (Text wie am PC)."""
+        try:
+            notice = fisi_update.broken_settings_notice()
+            if notice:
+                self.info(*notice)
+                self.page.update()
+        except Exception:
+            traceback.print_exc()
+
     def auto_check(self, delay=0):
         if not fisi_update.load_settings().get("auto_check", True):
             return
@@ -5362,6 +5399,7 @@ def main(page: ft.Page):
         return
     app.maybe_start_tour()
     app.maybe_show_notice()
+    app.check_broken_settings()
     app.sync.auto_start()
     app.auto_check(delay=app.AUTO_DELAY)
 
