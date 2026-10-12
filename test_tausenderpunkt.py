@@ -200,9 +200,10 @@ class BildrateGrenzeTest(unittest.TestCase):
             with self.subTest(wert=wert):
                 with self.assertRaises(fc.InputError) as fehler:
                     fc.screen_report("1920", "1080", "24", wert)
-                self.assertIn("Die Zahl ist zu groß: Bildrate (fps) (höchstens 1.000)",
-                              str(fehler.exception))
-                self.assertIn("23,976", str(fehler.exception))
+                self.assertEqual(
+                    str(fehler.exception),
+                    "Die Bildrate ist zu groß (höchstens 1.000 Bilder pro Sekunde). "
+                    "Nachkommastellen bitte mit Komma eingeben, zum Beispiel 23,976.")
 
     def test_bildrate_bis_1000_wie_bisher(self):
         for wert in ("23,976", "59,94", "1000", "1.000", "0,5", "30"):
