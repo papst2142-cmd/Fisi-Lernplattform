@@ -57,7 +57,7 @@ from fisi_core import (  # noqa: E402
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
     SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_search, notebook_summary,
     NOTEBOOK_NO_HITS, NOTEBOOK_SEARCH_HINT, position_statuses, status_label,
-    ap1_theme_totals, content_totals, error_log_path,
+    ap1_theme_totals, content_totals, error_log_path, log_exception,
     filter_positions, group_values, ihk_note, page_slice, raid_report,
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
@@ -4494,10 +4494,23 @@ class SyncController:
         except Exception as exc:  # nie die App wegen des Abgleichs abstuerzen lassen
             error = "Unerwarteter Fehler beim Abgleich: %s" % exc
         self.busy = False
-        if result is not None and result.received:
-            self.app.refresh_after_sync()
-        self.app.screens["settings"].show_sync_status(result, error)
-        self.app.page.update()
+        # Ab 0.62.5 (B-G-21): Wirft die Anzeige danach, bleibt der Knopf nicht
+        # gesperrt und der Fehler landet in fehler.log
+        try:
+            if result is not None and result.received:
+                self.app.refresh_after_sync()
+        except Exception:
+            log_exception(*sys.exc_info())
+        try:
+            self.app.screens["settings"].show_sync_status(result, error)
+            self.app.page.update()
+        except Exception:
+            log_exception(*sys.exc_info())
+            try:
+                self.app.screens["settings"].btn_sync.set_enabled(True)
+                self.app.page.update()
+            except Exception:
+                pass
         if self.again:
             self.again = False
             self.run()
