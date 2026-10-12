@@ -14,20 +14,23 @@ Was verglichen wird (Auflage P-14):
      geraten oder uebersprungen), eindeutige Doppel (gleiche Art + Tag).
   2. Fall D5 (Teil 4, g4_geraet spieltag) als Ereignisliste: hier ist ein
      Unterschied ERWARTET (alt 3 Tage/450, neu 2 Tage/300).
-  3. Laeufe F1 (f1_simulation.py) mit beiden Codes, gleiche Startwerte:
-     Ergebniszeilen (ohne Zeiten/RSS) muessen gleich sein; die gesicherten
-     Datenbanken werden zusaetzlich mit beiden Codes nachgerechnet.
+  3. Laeufe F1 (f1_simulation.py) je einmal mit altem und neuem Code. Die
+     Laeufe sind NICHT wiederholbar (gemessen: gleicher Code zweimal ->
+     anderes Geld). Deshalb: jeder Lauf muss in sich sauber sein (keine
+     Ausnahme, Neuaufbau gleich, Handy-Abgleich gleich), und die gesicherten
+     Datenbanken BEIDER Laeufe werden mit beiden Codes nachgerechnet - dort
+     muss jede Spielzahl gleich sein.
   4. 30-Tage-Lauf: f1_simulation.py --tage 30 je Variante (einfach, normal,
      alt), wie 3.
-  5. Lauf F2 (f2_durchlauf.py) mit beiden Codes: Ausgabe gleich (Laufzeiten
-     und zufaellige Laufkennungen ausgeblendet).
+  5. Lauf F2 (f2_durchlauf.py) mit beiden Codes: jeder Lauf 0 Fehler und
+     jeder Vergleich "gleich" (Lauf gegen Lauf nur zur Info, wie 3).
   6. Alter Fingerabdruck (spiel/bericht_0.54/werkzeuge/fingerabdruck.py) mit
      beiden Codes, Soll f2b59ce8...6656.
 Jeder Unterschied ausser in 2. ist ein Befund ("ABWEICHUNG").
 
 Aufruf (Python 3.12):
   /home/claude/venv/bin/python -I pruefung/spiel_doppelt_vergleich.py \\
-      --alt <git-archive v0.62.3 oder Basis> --neu <git-archive mit Aenderung> \\
+      --alt <Basis OHNE Aenderung> --neu <dieselbe Basis MIT Aenderung> \\
       --arbeit <leerer Wegwerf-Ordner> [--stufe schnell|voll] [--nur 1,2,3,4,5,6]
   schnell: F1 je Variante Startwert 0, 120 Tage, --sparsam 2; F2 mit 40
            Firmentagen (zusammen grob 10-20 min fuer beide Codes)
@@ -343,7 +346,30 @@ def main():
     teile = set(args.nur.split(","))
     bericht = {"alt": alt, "neu": neu, "stufe": args.stufe, "teile": {}}
     zeilen_txt = ["Vorher/Nachher B-G-26  alt=%s  neu=%s  stufe=%s" % (alt, neu, args.stufe)]
-    alles_ok = True
+    # alt und neu duerfen sich NUR in fisi_game.py unterscheiden (sonst wirken
+    # z.B. 0.62.4-Aenderungen in fisi_core.py mit - erster Lauf gegen v0.62.3)
+    basis_diff = []
+    for path in sorted(glob.glob(os.path.join(alt, "**", "*.py"), recursive=True) +
+                       glob.glob(os.path.join(alt, "inhalte", "**", "*.json"), recursive=True)):
+        rel = os.path.relpath(path, alt)
+        other = os.path.join(neu, rel)
+        if rel == "fisi_game.py":
+            continue
+        with open(path, "rb") as h_a:
+            mine = h_a.read()
+        same = False
+        if os.path.exists(other):
+            with open(other, "rb") as h_n:
+                same = h_n.read() == mine
+        if not same:
+            basis_diff.append(rel)
+    bericht["basis_unterschiede"] = basis_diff
+    zeilen_txt.append("Dateien ausser fisi_game.py verschieden: %s" % (
+        basis_diff[:20] or "keine (gleiche Basis)"))
+    if basis_diff:
+        zeilen_txt.append("WARNUNG: alt und neu haben verschiedene Basis - das ist keine "
+                          "Pruefung nur von B-G-26")
+    alles_ok = not basis_diff
 
     def melde(teil, eintraege):
         nonlocal alles_ok
@@ -387,31 +413,54 @@ def main():
         erg_alt, dbs_alt = f1_laeufe(alt, "alt_" + kurz, arbeit, laeufe, tage, sparsam, sichern)
         erg_neu, dbs_neu = f1_laeufe(neu, "neu_" + kurz, arbeit, laeufe, tage, sparsam, sichern)
         eintraege = []
-        for key in sorted(set(erg_alt) | set(erg_neu)):
-            a, n = erg_alt.get(key), erg_neu.get(key)
-            eintraege.append({"stand": "Lauf " + key, "alt": (a or {}).get("ende"),
-                              "neu": (n or {}).get("ende"), "ok": a == n and a is not None,
-                              "info": {"tage": (a or {}).get("tage_gespielt"),
-                                       "fehler_alt": len((a or {}).get("fehler", [])),
-                                       "fehler_neu": len((n or {}).get("fehler", []))}})
-        # gesicherte Datenbanken (vom alten Code erzeugt) mit beiden Codes nachrechnen
+        # Die F1-Laeufe sind NICHT wiederholbar (gemessen: gleicher Code, zwei
+        # Laeufe, anderes Geld). Deshalb: jeder Lauf muss in sich fehlerfrei
+        # sein (Ausnahmen, Neuaufbau, Handy-Abgleich), und die gesicherten
+        # Datenbanken BEIDER Laeufe werden mit beiden Codes nachgerechnet -
+        # dort muss alles gleich sein. Lauf alt gegen Lauf neu nur zur Info.
+        for herkunft, ergebnisse in (("alt", erg_alt), ("neu", erg_neu)):
+            for key in sorted(ergebnisse):
+                item = ergebnisse[key]
+                sauber = not item.get("fehler") and not item.get("abweichungen") and \
+                    not item.get("stau") and item.get("handy_abgleich") == "gleich" and \
+                    item.get("tage_gespielt") == tage
+                eintraege.append({"stand": "Lauf %s mit Code %s" % (key, herkunft),
+                                  "alt": item.get("tage_gespielt"), "neu": item.get("ende"),
+                                  "ok": sauber,
+                                  "info": {"fehler": len(item.get("fehler", [])),
+                                           "abweichungen": len(item.get("abweichungen", [])),
+                                           "verstoesse": len(item.get("verstoesse", [])),
+                                           "handy_abgleich": item.get("handy_abgleich")}})
         staende = {}
-        for path in dbs_alt:
-            staende.update(staende_aus_db(path, os.path.basename(path)))
+        for herkunft, dbs in (("alt", dbs_alt), ("neu", dbs_neu)):
+            for path in dbs:
+                staende.update(staende_aus_db(path, "%s/%s" % (herkunft,
+                                                              os.path.basename(path))))
         eintraege += vergleiche(staende, _rechne_mit(alt, staende, arbeit, kurz + "_db_alt"),
                                 _rechne_mit(neu, staende, arbeit, kurz + "_db_neu"))
-        eintraege.append({"stand": "gesicherte DBs alt/neu", "ok": len(dbs_alt) == len(dbs_neu),
+        erwartet_dbs = len(laeufe) * len(sichern.split(","))
+        eintraege.append({"stand": "gesicherte DBs (soll je %d)" % erwartet_dbs,
+                          "ok": len(dbs_alt) == len(dbs_neu) == erwartet_dbs,
                           "alt": len(dbs_alt), "neu": len(dbs_neu)})
         melde(teil, eintraege)
     if "5" in teile:
         firmentage = 0 if args.stufe == "voll" else 40
         rc_a, out_a = f2_lauf(alt, "alt", arbeit, firmentage)
         rc_n, out_n = f2_lauf(neu, "neu", arbeit, firmentage)
-        diff = [line for line in set(out_a.splitlines()) ^ set(out_n.splitlines())][:20]
-        melde("5 Lauf F2", [{"stand": "f2_durchlauf (Firmentage %s)" % (firmentage or "alle"),
-                             "alt": "exit %d" % rc_a, "neu": "exit %d" % rc_n,
-                             "ok": rc_a == 0 and rc_n == 0 and out_a == out_n,
-                             "info": {"zeilen_verschieden": diff}}])
+        # F2 ist wie F1 nicht wiederholbar: jeder Lauf muss in sich sauber sein
+        # (0 Fehler, jeder Vergleich "gleich"); Unterschied der Laeufe nur Info
+        eintraege = []
+        for herkunft, rc, out in (("alt", rc_a, out_a), ("neu", rc_n, out_n)):
+            checks = [line for line in out.splitlines() if "neu aufgebaut:" in line]
+            sauber = rc == 0 and "FEHLER (Ausnahmen/Abweichungen): 0" in out and \
+                bool(checks) and all(line.count(": gleich") == 3 for line in checks)
+            eintraege.append({"stand": "f2_durchlauf (Firmentage %s) mit Code %s" % (
+                firmentage or "alle", herkunft), "alt": "exit %d" % rc,
+                "neu": "%d Vergleiche" % len(checks), "ok": sauber})
+        eintraege.append({"stand": "F2 alt gegen neu (nur Info)", "ok": True,
+                          "info": {"zeilen_verschieden": len(set(out_a.splitlines()) ^
+                                                             set(out_n.splitlines()))}})
+        melde("5 Lauf F2", eintraege)
     if "6" in teile:
         fp_a, fp_n = fingerabdruck(alt, arbeit, "alt"), fingerabdruck(neu, arbeit, "neu")
         melde("6 alter Fingerabdruck", [{"stand": "fingerabdruck.py", "alt": fp_a, "neu": fp_n,
