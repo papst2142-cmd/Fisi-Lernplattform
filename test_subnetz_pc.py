@@ -392,7 +392,9 @@ class PcAufbauTest(PcCase):
             "Bitte eine Zahl eingeben: %s. Zum Beispiel 1.000." % fc.SUBNET_PAGE_JUMP_FIELD,
             "Bitte eine ganze Zahl eingeben: %s." % fc.SUBNET_PAGE_JUMP_FIELD])
         view["jump"].set("2")
-        view["jump"].event_generate("<Return>")
+        view["jump"]._entry.focus_force()        # Tasten gehen an das Feld mit Fokus
+        self.settle(2)
+        view["jump"]._entry.event_generate("<Return>")
         self.settle(2)
         self.assertEqual(view["page"], 2)
 
