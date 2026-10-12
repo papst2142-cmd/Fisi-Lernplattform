@@ -3,7 +3,7 @@
 
   * B-C-01: Kachel "Gesamtergebnis" rundet Gesamt und Teil 2 ab (E-C2), damit
     nie "50 Punkte" neben "nicht bestanden" steht. Note und Regeln bleiben.
-  * B-C-02 bis B-C-10: je Befund die korrigierte Stelle (Text-Test, bei Zahlen
+  * B-C-02 bis B-C-10 (ohne B-C-06, zurueckgestellt): je Befund die korrigierte Stelle (Text-Test, bei Zahlen
     mit Nachrechnung) und dass der alte, falsche Text weg ist.
   * Bestand: Anzahl der Eintraege, richtige Antwort an gleicher Stelle und
     Pruefwerte ueber alle Eintraege ausser den geplanten Feldern (= Stand
@@ -163,15 +163,13 @@ class InhalteTest(unittest.TestCase):
         self.assertNotIn("104 W", hinweis)
         self.assertIn("(je Kamera 12,95 W)", projekt["aufgaben"][3])
 
-    def test_b_c_06_einheit(self):
+    def test_b_c_06_zurueckgestellt(self):
+        # B-C-06 (P1480) ist zurueckgestellt: Der Fragetext darf wegen
+        # test_rahmenplan.UmhaengenTest (Fragetexte Stand 0.54) ohne Freigabe
+        # nicht geaendert werden. Bis zur Entscheidung bleibt er wie in 0.62.5.
         frage = self.quiz[1479]  # P1480
-        self.assertTrue(frage["q"].endswith("(ohne Overhead, 1 GB = 10^9 Byte)?"))
+        self.assertTrue(frage["q"].endswith("Wie lange dauert das mindestens (ohne Overhead)?"))
         self.assertEqual(frage["a"], "ca. 28 Minuten 48 Sekunden")
-        sekunden = 12 * 18 * 10 ** 9 * 8 / 10 ** 9
-        self.assertEqual(divmod(int(sekunden), 60), (28, 48))
-        umbenannt = lade("umbenennungen.json")["quiz"]
-        alt = frage["q"].replace("(ohne Overhead, 1 GB = 10^9 Byte)?", "(ohne Overhead)?")
-        self.assertEqual(umbenannt.get(alt), frage["q"])
 
     def test_b_c_07_quote(self):
         loesung = self.ap1[182]["solution"][2]  # A1-183
@@ -222,19 +220,19 @@ GEPLANT = {
     "karteikarten.json": {33: [("options", 1), ("a_full",)],
                           64: [("a",), ("options", 0), ("options", 2), ("a_full",)]},
     "projektarbeiten.json": {4: [("hinweise", 4)], 9: [("hinweise", 3)]},
-    "quizfragen.json": {1479: [("q",)]},
     "szenarien_ap1.json": {182: [("solution", 2)]},
     "szenarien_ap2.json": {123: [("solution", 0)], 288: [("solution", 2)],
                            293: [("solution", 2)]},
 }
 ANZAHL = {"karteikarten.json": 1565, "quizfragen.json": 2120, "szenarien_ap1.json": 265,
           "szenarien_ap2.json": 330, "projektarbeiten.json": 50}
-# SHA-256 ueber alle Eintraege, geplante Felder durch "*" ersetzt (Stand 0.62.5, cf4912b)
+# SHA-256 ueber alle Eintraege, geplante Felder durch "*" ersetzt (Stand 0.62.5, cf4912b;
+# quizfragen.json ohne geplante Felder, B-C-06 zurueckgestellt)
 PRUEFWERT = {
     "karteikarten.json":
         "adfb69fb728ccd513b0e781d777794b8e0e71a71f295526b0c308d9976ee7165",
     "quizfragen.json":
-        "38c41c3376bab5b9b169c5e7b87d02c0e4b6df506072fadce7d94978dcf89ac4",
+        "7cc29b855bf441fb1e0d9317b27c97dbf363817c08bc52b3deedcd991b6cc9c3",
     "szenarien_ap1.json":
         "321e2e6e564791532d68da033f38d87fe3b5c14935a7e8c9b2e6bc7000649a95",
     "szenarien_ap2.json":
@@ -277,10 +275,11 @@ class BestandTest(unittest.TestCase):
         for datei, soll in PRUEFWERT.items():
             self.assertEqual(pruefwert(datei, lade(datei)), soll, datei)
 
-    def test_umbenennungen_nur_angehaengt(self):
+    def test_umbenennungen_unveraendert(self):
+        # B-C-06 zurueckgestellt: kein neuer Eintrag, Datei wie in 0.62.5
         daten = lade("umbenennungen.json")
         self.assertEqual(pruefwert_umbenennungen(daten), PRUEFWERT_UMBENENNUNGEN)
-        self.assertEqual(list(daten["quiz"].values())[-1], P1480_NEU)
+        self.assertNotIn(P1480_NEU, daten["quiz"].values())
 
     def test_richtige_antwort_an_gleicher_stelle(self):
         # B-C-02/03 tauschen nur Texte, die Stelle der richtigen Antwort bleibt

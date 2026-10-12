@@ -18,7 +18,6 @@
     "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?",
     "Was beschreibt eine Dockerfile?": "Was beschreibt ein Dockerfile?",
     "Was unterscheidet eine differentielle Sicherung von einer inkrementellen Sicherung?": "Was unterscheidet eine differenzielle Sicherung von einer inkrementellen Sicherung?",
-    "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-Live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?",
-    "Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB betankt. Der Deployment-Server hängt mit 1 Gbit/s am Switch. Wie lange dauert das mindestens (ohne Overhead)?": "Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB betankt. Der Deployment-Server hängt mit 1 Gbit/s am Switch. Wie lange dauert das mindestens (ohne Overhead, 1 GB = 10^9 Byte)?"
+    "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-Live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?"
   }
 }
