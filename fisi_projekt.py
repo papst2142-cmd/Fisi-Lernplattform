@@ -178,6 +178,20 @@ def delete_project(db, project):
     return db.save_project_field(project, DELETED_FIELD, "1")
 
 
+# Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich) - das Projekt
+# wird nur ausgeblendet (DELETED_FIELD), die Eingaben bleiben gespeichert
+DELETE_TITLE = "Projekt löschen"
+DELETE_QUESTION = ("„%s“ löschen? Das Projekt verschwindet aus der Auswahl, nach dem "
+                   "Abgleich auch auf deinen anderen Geräten. Das lässt sich in der App "
+                   "nicht rückgängig machen.\n\nHinweis: Die Eingaben werden nur "
+                   "ausgeblendet, nicht entfernt. Sie bleiben in der Datenbank, in "
+                   "Sicherungen und bei eingerichtetem Abgleich im Repository gespeichert.")
+
+
+def delete_question(fields):
+    return DELETE_QUESTION % project_title(fields)
+
+
 def active_project(db, settings):
     """Aktives Projekt dieses Geraets; sonst das erste vorhandene. Gibt es
     noch keins, eine neue Kennung - gespeichert wird das Projekt erst mit
