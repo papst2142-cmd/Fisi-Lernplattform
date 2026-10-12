@@ -147,11 +147,12 @@ def anonymize_paths(text, env=None, home=None):
     return text
 
 
-def write_error_log(text):
+def write_error_log(text, path=None):
     """Haengt einen Fehler mit Zeitpunkt und Version an fehler.log an. Darf
-    selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...)."""
+    selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...). path nur
+    fuer eine Datenbank an anderem Ort (ab 0.62.5: fehler.log daneben)."""
     try:
-        path = error_log_path()
+        path = path or error_log_path()
         if os.path.exists(path) and os.path.getsize(path) > ERROR_LOG_MAX:
             with open(path, encoding="utf-8", errors="replace") as handle:
                 rest = handle.read()[-ERROR_LOG_MAX // 2:]
@@ -527,6 +528,89 @@ def clock_deviation(value, now=None):
     return seconds
 
 
+# ============================================================================
+#  DATENBANKFEHLER (ab 0.62.5, B-G-01, B-G-03, B-G-06, B-G-12)
+# ============================================================================
+#
+# Jeder Datenbankfehler landet mit dem technischen Text in fehler.log. Die
+# Oberflaeche (PC: Fenster, Handy: roter Hinweis) zeigt je Fehlerart nur die
+# erste Meldung, verstaendlich und auf Deutsch; weitere werden gezaehlt.
+# Ist die Datenbank beschaedigt, schreibgeschuetzt oder nicht erreichbar,
+# speichert die App nichts mehr (read_only_reason) - die Datei wird nie
+# ueberschrieben. Texte gelten fuer PC und Handy gleich.
+
+DB_ERROR_TEXTS = {
+    "kaputt": ("Die Datenbank mit deinem Lernfortschritt ist beschädigt. Damit sie nicht "
+               "weiter Schaden nimmt, speichert die App ab jetzt nichts mehr; angezeigte "
+               "Zahlen können unvollständig sein. Die Datei selbst bleibt unverändert. "
+               "Den Datenordner findest du unter Optionen > Problem melden."),
+    "schreibschutz": ("Dein Lernfortschritt wird nicht gespeichert: Der Datenordner ist "
+                      "schreibgeschützt. Die App läuft weiter, Antworten werden aber nicht "
+                      "gespeichert. Gib dem Datenordner und der Datei fisi_lernplattform.db "
+                      "Schreibrechte und starte die App neu. Den Datenordner findest du "
+                      "unter Optionen > Problem melden."),
+    "nicht_erreichbar": ("Dein Lernfortschritt wird nicht gespeichert: Der Datenordner ist "
+                         "nicht erreichbar. Die Datenbank lässt sich nicht öffnen, zum "
+                         "Beispiel weil ein Laufwerk fehlt. Prüfe den Datenordner und "
+                         "starte die App neu."),
+    "voll": ("Der Speicherplatz ist voll. Dein Lernfortschritt wird erst wieder "
+             "gespeichert, wenn Platz frei ist."),
+    "gesperrt": ("Die Datenbank ist gerade belegt, zum Beispiel durch ein anderes Programm. "
+                 "Der letzte Schritt wurde vielleicht nicht gespeichert."),
+    "sonstige": ("Beim Zugriff auf die Datenbank ist ein Fehler aufgetreten. Einzelheiten "
+                 "stehen im Fehlerprotokoll (Optionen > Problem melden)."),
+}
+# Bleibende rote Zeile (PC: Seitenleiste), solange nichts gespeichert wird
+DB_READ_ONLY_LINES = {
+    "kaputt": "Dein Lernfortschritt wird nicht gespeichert: Die Datenbank ist beschädigt.",
+    "schreibschutz": ("Dein Lernfortschritt wird nicht gespeichert: Der Datenordner ist "
+                      "schreibgeschützt."),
+    "nicht_erreichbar": ("Dein Lernfortschritt wird nicht gespeichert: Der Datenordner ist "
+                         "nicht erreichbar."),
+}
+# Fehlerart aus dem englischen Text von SQLite (erster Treffer gilt)
+_DB_ERROR_KINDS = (
+    ("schreibschutz", ("readonly", "read-only")),
+    ("kaputt", ("malformed", "not a database", "corrupt", "disk image")),
+    ("nicht_erreichbar", ("unable to open",)),
+    ("voll", ("is full",)),
+    ("gesperrt", ("locked", "busy")),
+)
+
+
+def db_error_kind(text):
+    """Fehlerart (Schluessel von DB_ERROR_TEXTS) zum Text eines SQLite-Fehlers."""
+    text = str(text).lower()
+    for kind, needles in _DB_ERROR_KINDS:
+        if any(needle in text for needle in needles):
+            return kind
+    return "sonstige"
+
+
+def _folder_writable(folder):
+    """Echte Probe statt os.access (unter Windows unzuverlaessig): eine
+    Wegwerf-Datei anlegen, sie verschwindet beim Schliessen von selbst."""
+    import tempfile
+    try:
+        with tempfile.TemporaryFile(dir=folder, prefix=".fisi_schreibprobe_"):
+            pass
+        return True
+    except OSError:
+        return False
+
+
+def _file_writable(path):
+    """Datei zum Schreiben oeffnen, ohne etwas zu aendern (fehlt sie: ja)."""
+    if not os.path.exists(path):
+        return True
+    try:
+        with open(path, "r+b"):
+            pass
+        return True
+    except OSError:
+        return False
+
+
 class DBManager:
     """SQLite-Anbindung fuer Testergebnisse und einzelne Lern-Ereignisse.
 
@@ -541,25 +625,53 @@ class DBManager:
         # Ab 0.62.4: Um wie viele Sekunden die letzte Loeschmarke wegen einer
         # falschen Geraeteuhr korrigiert wurde (0 = nicht), fuer den Hinweis
         self.last_clock_fix = 0
+        # Ab 0.62.5: Grund, warum nichts gespeichert wird (Schluessel von
+        # DB_READ_ONLY_LINES) oder None; Fehlerzaehler je Art; abgelehnte
+        # Schreibzugriffe
+        self.read_only_reason = None
+        self.error_counts = {}
+        self.refused_writes = 0
         self.init_db()
 
     # -- Infrastruktur ------------------------------------------------------
 
-    def _report(self, message):
-        if self.error_handler:
-            self.error_handler(message)
-        else:
+    def _report(self, message, kind=None):
+        """Ab 0.62.5: technischer Text nach fehler.log, je Fehlerart nur die
+        erste verstaendliche Meldung an die Oberflaeche, der Rest wird
+        gezaehlt. Wird schon nichts mehr gespeichert, kommt keine weitere
+        Meldung (die erste hat das gesagt)."""
+        kind = kind or db_error_kind(message)
+        write_error_log("Datenbankfehler (%s): %s" % (kind, message), os.path.join(
+            os.path.dirname(os.path.abspath(self.db_path)), ERROR_LOG_NAME))
+        first = kind not in self.error_counts
+        self.error_counts[kind] = self.error_counts.get(kind, 0) + 1
+        already_read_only = self.read_only_reason is not None
+        if not already_read_only and kind in DB_READ_ONLY_LINES:
+            self.read_only_reason = kind
+        if not self.error_handler:
             print("[DB] " + message, file=sys.stderr)
+        elif first and not already_read_only:
+            self.error_handler(DB_ERROR_TEXTS[kind])
 
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path)
+        if self.read_only_reason:
+            # Ab 0.62.5: auch direkte Schreibzugriffe scheitern, die Datei
+            # bleibt unveraendert
+            conn.execute("PRAGMA query_only = ON")
+        return conn
 
     def _execute(self, sql, params=(), fetch=None, commit=False, default=None):
         """Fuehrt eine Abfrage aus und faengt Datenbankfehler zentral ab.
 
         Rueckgabe: bei fetch das Abfrageergebnis, bei einem reinen
         Schreibvorgang True. Im Fehlerfall immer der Wert von default.
+        Ab 0.62.5: Wird nichts gespeichert (read_only_reason), lehnt sie
+        Schreibvorgaenge still ab (default); die Meldung kam schon.
         """
+        if self.read_only_reason and (commit or fetch is None):
+            self.refused_writes += 1
+            return default
         conn = None
         try:
             conn = self.get_connection()
@@ -709,6 +821,10 @@ class DBManager:
             )
             """,
         ]
+        # Ab 0.62.5: erst pruefen, ob gespeichert werden darf (Schreibrecht,
+        # Datei heil) - sonst nichts anlegen und nichts nachruesten
+        if not self._check_storage():
+            return
         conn = None
         try:
             conn = self.get_connection()
@@ -722,6 +838,38 @@ class DBManager:
         finally:
             if conn is not None:
                 conn.close()
+
+    def _check_storage(self):
+        """Ab 0.62.5 (B-G-03, B-G-06): Beim Start einmal pruefen, ob Ordner
+        und Datei beschreibbar sind und ob die Datei heil ist (PRAGMA
+        quick_check, nur lesend). Rueckgabe False = nichts schreiben; dann
+        ist read_only_reason gesetzt und die Meldung gezeigt."""
+        folder = os.path.dirname(os.path.abspath(self.db_path))
+        if os.path.isdir(folder) and not (_folder_writable(folder)
+                                          and _file_writable(self.db_path)):
+            self._report("Schreibprobe beim Start gescheitert: Datenordner oder %s "
+                         "ist schreibgeschuetzt" % os.path.basename(self.db_path),
+                         kind="schreibschutz")
+            return False
+        if not os.path.isfile(self.db_path) or os.path.getsize(self.db_path) == 0:
+            return True
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            rows = conn.execute("PRAGMA quick_check(1)").fetchall()
+        except sqlite3.Error as exc:
+            if db_error_kind(exc) != "kaputt":
+                return True    # z.B. gesperrt: der normale Weg meldet es
+            self._report("Pruefung beim Start (quick_check): %s" % exc, kind="kaputt")
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
+        if rows != [("ok",)]:
+            self._report("Pruefung beim Start (quick_check) meldet Schaden: %s"
+                         % (rows[0][0] if rows else "keine Antwort"), kind="kaputt")
+            return False
+        return True
 
     @staticmethod
     def _migrate(cur):
