@@ -44,6 +44,9 @@ nach Python-Patchstand anders (Plan 0.63 M-3, E-63-6).
           einzeln, Rechenweg PC (75) und Handy (28, steps_schmal)
   T-TR-3  (0.63.1) rt.ALTE_ARTEN = Anfang von TRAINER_KINDS, dazu G-63-1
           (trainer_task unveraendert) und F-63-18 = S1
+  A-1/A-3/A-4/A-5 (Zwischenabnahme T5): kein Loesungsbeispiel im Feldnamen,
+          Ergebnis im Rechenweg = Loesung in allen Aufgaben, Abgleich mit
+          unbekannter Art, falsche Eingabeform ohne Fehler
 
 T-K-11 (Mutation macht T-K-5 rot) laeuft als Gegenprobe ausserhalb des
 Arbeitsbaums (Beleg im Bericht).
@@ -3453,6 +3456,211 @@ class TrainerSchutzTest(unittest.TestCase):
             quelle = datei.read()
         self.assertIn('"\\n".join(getattr(task, "steps_schmal", None) or task.steps)', quelle)
         self.assertIn('if task.kind in ("ipv6", "zahlen", "teilen", "bedarf")', quelle)
+
+
+# ---------------------------------------------------------------------------
+#  Nachlieferung T5 (Zwischenabnahme 0.63.1, Auflagen A-1, A-3, A-4, A-5)
+# ---------------------------------------------------------------------------
+
+def tr_abschnitt(zeilen, anfang, ende=None):
+    """Zeilen ab der ersten, die mit anfang beginnt, bis vor die erste, die
+    mit ende beginnt (ende None: bis zum Schluss)."""
+    start = next(i for i, z in enumerate(zeilen) if z.startswith(anfang))
+    stop = next((i for i, z in enumerate(zeilen) if i > start and ende
+                 and z.startswith(ende)), len(zeilen))
+    return zeilen[start:stop]
+
+
+def tr_handy_adresse(zeilen, kopf, adresse):
+    """Handy: lange Adressen stehen auf zwei Zeilen (zweite mit 3 Leerzeichen)."""
+    if len(kopf + adresse) <= GRENZE:
+        return zeilen + [kopf + adresse]
+    schnitt = adresse.find(":", len(adresse) // 2 - 3) + 1
+    return zeilen + [kopf + adresse[:schnitt], "   " + adresse[schnitt:]]
+
+
+class TrainerFeldbeispielTest(unittest.TestCase):
+    """A-1: Kein Feldname enthaelt ein Zahlenbeispiel, das Loesung sein kann."""
+
+    def test_a1_kein_loesungsbeispiel_im_feld(self):
+        gesehen = set()
+        for art in ("teilen", "bedarf"):
+            for _stufe, task in tr_aufgaben(art):
+                for key, label in task.fields:
+                    self.assertIsNone(re.search(r"2\^[0-9]", label), (task.text, label))
+                    if key == "adressen":
+                        gesehen.add(label)
+        self.assertEqual(gesehen, {"Adressen je Subnetz", "Adressen je Subnetz (als 2^n)"})
+
+
+class TrainerRechenwegErgebnisTest(unittest.TestCase):
+    """A-3: In ALLEN erzeugten Aufgaben (3 Stufen x 200 Startwerte, beide
+    Arten) steht im Rechenweg (PC und Handy) dasselbe Ergebnis wie in der
+    Loesung. Erwartete Zeilen aus der eigenen Rechnung dieser Datei."""
+
+    def test_a3_teilen_schritt6_und_liste(self):
+        for _stufe, task in tr_aufgaben("teilen"):
+            e = tr_teilen_lesen(task)
+            v4 = e["version"] == 4
+            text = lambda wert: eigen_text(e["version"], wert)   # noqa: E731
+            netz, ende, basis = text(e["start"]), text(e["ende"]), text(e["netz"])
+            self.assertEqual(task.solution["netz"], netz, task.text)
+            self.assertEqual(task.solution["broadcast" if v4 else "letzte"], ende, task.text)
+            nr, k = e["nr"], e["neu"] - e["praefix"]
+            groesse = eigen_de(e["groesse"]) if v4 else "2^%d" % (128 - e["neu"])
+            bits = format(nr - 1, "0%db" % k)
+            # PC, Schritt 6 woertlich aus eigener Rechnung
+            pc = ["SCHRITT 6: Gefragt ist Subnetz Nr. %d" % nr]
+            if not v4:
+                pc.append("   Subnetz-Bits: %d - 1 = %d = binär %s" % (nr, nr - 1, bits))
+            pc.append("   Netzadresse = Nr. 1 + (%d - 1) x %s Adressen" % (nr, groesse))
+            if v4:
+                pc += ["   = %s + %s = %s" % (basis, eigen_de((nr - 1) * e["groesse"]), netz),
+                       "   Broadcast-Adresse = nächste Netzadresse - 1 = %s" % ende]
+            else:
+                pc += ["   = %s" % netz, "   Letzte Adresse = nächste Netzadresse - 1",
+                       "   = %s" % ende]
+            self.assertEqual(tr_abschnitt(task.steps, "SCHRITT 6"), pc, task.text)
+            # Handy, Schritt 6
+            handy = ["SCHRITT 6: Gefragt ist", "Subnetz Nr. %d" % nr]
+            if not v4:
+                handy += [" Subnetz-Bits: %d - 1 = %d" % (nr, nr - 1), " = binär %s" % bits]
+            handy += [" Netzadresse = Nr. 1", " + (%d - 1) x %s" % (nr, groesse)]
+            if v4:
+                handy += [" = %s" % basis, " + %s" % eigen_de((nr - 1) * e["groesse"])]
+            handy = tr_handy_adresse(handy, " = ", netz)
+            handy += [" Broadcast-Adresse" if v4 else " Letzte Adresse",
+                      " = nächste Netzadresse - 1"]
+            handy = tr_handy_adresse(handy, " = ", ende)
+            self.assertEqual(tr_abschnitt(task.steps_schmal, "SCHRITT 6"), handy, task.text)
+            # Steht das Subnetz auch in der Liste (Schritt 4), dann gleich
+            liste = tr_abschnitt(task.steps, "SCHRITT 4", "SCHRITT 5")
+            for zeile in liste:
+                teile = zeile.split()
+                if re.match(r"  [0-9]+ ", zeile) and teile[0] == str(nr):
+                    if v4:
+                        self.assertEqual(teile[1], "%s/%d" % (netz, e["neu"]), task.text)
+                        self.assertEqual(teile[-1], ende, task.text)
+                    else:
+                        self.assertEqual(teile[-1], "%s/%d" % (netz, e["neu"]), task.text)
+            kurz = tr_ohne_leer(tr_abschnitt(task.steps_schmal, "SCHRITT 4", "SCHRITT 5"))
+            marke = "Subnetz%d:" % nr
+            if marke in kurz:
+                block = re.split(r"Subnetz[0-9]", kurz.split(marke, 1)[1], maxsplit=1)[0]
+                self.assertIn("Netz:%s/%d" % (netz, e["neu"]), block, task.text)
+
+    def test_a3_bedarf_vergabe_und_rest(self):
+        for _stufe, task in tr_aufgaben("bedarf"):
+            e = tr_bedarf_lesen(task)
+            anzahl = len(e["bedarfe"])
+            reihenfolge = sorted(range(anzahl), key=lambda i: (-e["bedarfe"][i], i))
+            pc = tr_ohne_leer(tr_abschnitt(task.steps, "SCHRITT 4", "SCHRITT 5"))
+            handy = tr_ohne_leer(tr_abschnitt(task.steps_schmal, "SCHRITT 4", "SCHRITT 5"))
+            for nr, i in enumerate(reihenfolge, 1):
+                start, p = e["vergabe"][i]
+                groesse = 2 ** (32 - p)
+                netz = "%s/%d" % (eigen_v4_text(start), p)
+                erste, letzte = eigen_v4_text(start + 1), eigen_v4_text(start + groesse - 2)
+                bc = eigen_v4_text(start + groesse - 1)
+                maske = eigen_v4_text((2 ** 32 - 1) ^ (groesse - 1))
+                self.assertEqual(task.solution["netz%d" % i], netz, task.text)
+                self.assertEqual(task.solution["maske%d" % i], maske, task.text)
+                if nr == e["nr"]:
+                    self.assertEqual(task.solution["broadcast"], bc, task.text)
+                name = e["namen"][i]
+                self.assertIn("%d%s%s%s%s%s" % (nr, name, netz, erste, letzte, bc), pc,
+                              (task.text, nr))
+                menge = "".join(fc.subnet_hosts_text(e["bedarfe"][i]).split())
+                self.assertIn("%d.%s(%s)Netz:%sMaske:%sErste:%sLetzte:%sBroadcast:%s"
+                              % (nr, name, menge, netz, maske, erste, letzte, bc), handy,
+                              (task.text, nr))
+                self.assertIn("Maske%s," % maske, tr_ohne_leer(
+                    tr_abschnitt(task.steps, "SCHRITT 2", "SCHRITT 3")), (task.text, nr))
+            rest = 2 ** (32 - e["praefix"]) - sum(2 ** (32 - p) for _s, p in
+                                                   e["vergabe"].values())
+            self.assertEqual(task.solution["rest"], eigen_de(rest), task.text)
+            for zeilen in (task.steps, task.steps_schmal):
+                kurz = tr_ohne_leer(tr_abschnitt(zeilen, "SCHRITT 5"))
+                if rest:
+                    self.assertIn("=%sAdressen" % eigen_de(rest), kurz, task.text)
+                else:
+                    self.assertIn("KeinRest", kurz, task.text)
+
+
+class TrainerAbgleichTest(unittest.TestCase):
+    """A-4 (Plan 0.63 Abschnitt 7): Ein Geraet mit den neuen Arten gleicht mit
+    einem Geraet ab, das sie nicht kennt. Die Eintraege kommen ueber
+    export_local/merge_into_local (Kern des Abgleichs) an, zaehlen in der
+    Statistik und im Tagesziel mit, und auch eine noch unbekannte Art
+    ("zukunft") stoert nicht. Die Anzeige (PC und Handy) summiert nur ueber
+    trainer_stats und schlaegt keine Art im Namensverzeichnis nach."""
+
+    def test_a4_unbekannte_art_im_abgleich(self):
+        import datetime
+        import shutil
+        import tempfile
+        import fisi_sync
+        ordner = tempfile.mkdtemp(prefix="fisi_t5_abgleich_")
+        try:
+            neu = fc.DBManager(db_path=os.path.join(ordner, "neu.db"))
+            alt = fc.DBManager(db_path=os.path.join(ordner, "alt.db"))
+            for art, stufe, richtig in (("teilen", 1, True), ("bedarf", 3, False),
+                                        ("zukunft", 2, True), ("ipv4", 1, True)):
+                self.assertTrue(neu.log_trainer(art, stufe, richtig) is not False)
+            alt.log_trainer("vlsm", 2, True)
+            self.assertEqual(fisi_sync.merge_into_local(alt, fisi_sync.export_local(neu),
+                                                        check_future=False, mixed=False), 4)
+            self.assertEqual(fisi_sync.merge_into_local(neu, fisi_sync.export_local(alt),
+                                                        check_future=False, mixed=False), 1)
+            erwartet = {"teilen": (1, 1), "bedarf": (1, 0), "zukunft": (1, 1),
+                        "ipv4": (1, 1), "vlsm": (1, 1)}
+            self.assertEqual(alt.trainer_stats(), erwartet)
+            self.assertEqual(neu.trainer_stats(), erwartet)
+            heute = datetime.date.today().isoformat()
+            self.assertEqual(alt.activity_days()[heute], 5)
+            self.assertEqual(neu.activity_days()[heute], 5)
+            # nochmal abgleichen: nichts doppelt
+            self.assertEqual(fisi_sync.merge_into_local(alt, fisi_sync.export_local(neu),
+                                                        check_future=False, mixed=False), 0)
+        finally:
+            shutil.rmtree(ordner, ignore_errors=True)
+        self.assertNotIn("zukunft", fl.TRAINER_KIND_NAME)
+        for datei in ("app_gui.py", os.path.join("mobile", "src", "main.py")):
+            with open(os.path.join(CODE, datei), encoding="utf-8") as h:
+                quelle = h.read()
+            stelle = quelle.index("    def show_stats(self):\n        stats = self.db.trainer_stats()")
+            rumpf = quelle[stelle:quelle.index("\n    def ", stelle + 10)]
+            self.assertIn("sum(total for total, _right in stats.values())", rumpf, datei)
+            self.assertNotIn("TRAINER_KIND_NAME", rumpf, datei)
+
+
+class TrainerEingabeformTest(unittest.TestCase):
+    """A-5: falsche Form in den neuen Feldern (Praefix an der Netzadresse,
+    Netzadresse ohne Praefix bei "Nach Hostbedarf", Buchstaben, Hochzahl,
+    Ziffern aus anderen Schriften): check() wirft nie, das Feld gilt als
+    falsch, die Rueckmeldung zeigt die erwartete Form ("richtig wäre: ..."
+    wie PC und Handy sie bauen) und enthaelt kein englisches Wort."""
+
+    UNSINN = ("abc", "zehn", "²", "2²", "/²7", "１０", "٣٢", "10,5", "2^", "2^x", "0x20",
+              "fe80::1%eth0", "-1", "1e3", "∞")
+
+    def test_a5_falsche_form_kein_fehler(self):
+        for art in ("teilen", "bedarf"):
+            for _stufe, task in tr_aufgaben(art):
+                for key, _label in task.fields:
+                    loesung = task.solution[key]
+                    proben = list(self.UNSINN)
+                    if key == "netz":                    # mit Praefix statt ohne
+                        proben.append("%s%s" % (loesung, task.solution["praefix"]))
+                    if key.startswith("netz") and art == "bedarf":   # ohne Praefix
+                        proben.append(loesung.split("/")[0])
+                    for probe in proben:
+                        ergebnis = task.check({key: probe})
+                        self.assertFalse(ergebnis[key], (task.text, key, probe))
+                    rueckmeldung = "richtig wäre: %s" % loesung
+                    self.assertRegex(loesung, r"^[0-9a-f.:/^]+$", (task.text, key))
+                    if key.startswith("netz"):
+                        self.assertEqual("/" in loesung, art == "bedarf", rueckmeldung)
 
 
 if __name__ == "__main__":
