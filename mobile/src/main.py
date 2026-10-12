@@ -2859,6 +2859,18 @@ def _pills(options, **kwargs):
     return ui.PillGroup(options, **kwargs)
 
 
+def _redraw(*controls):
+    """Geaenderte Steuerelemente sofort zeichnen. Noetig, wenn im selben
+    Ereignis ein Hinweis (toast -> page.show_dialog) kommt: Danach uebernimmt
+    Flet die uebrigen Aenderungen nicht mehr von selbst (ui.PillGroup).
+    Ohne Seite (Tests, Aufbau) passiert nichts."""
+    for control in controls:
+        try:
+            control.update()
+        except (RuntimeError, AssertionError, AttributeError):
+            pass
+
+
 def _clear_picture(picture):
     """USV-Bild leeren (0.62.6 B-D-04). ui.UpsPicture.set_picture(None) zeigt
     den Leer-Zustand; aeltere ui.py ohne Leer-Zustand: Bild einfach leeren."""
@@ -2983,6 +2995,7 @@ class CalcScreen(Screen):
             ui.set_box(self.out_ups, "")
             self.out_ups_hint.value = ""
             _clear_picture(self.ups_picture)
+            _redraw(self.out_ups, self.out_ups_hint, self.ups_picture)
             if not quiet:
                 self.toast(str(error), C["red"])
             return
@@ -3023,6 +3036,7 @@ class CalcScreen(Screen):
         except InputError as error:
             # Ab 0.63 (0.62.6 B-D-04): Kasten leeren, die Meldung kommt als Hinweis
             ui.set_box(output, "")
+            _redraw(output)
             self.toast(str(error), C["red"])
             return False
         return True
@@ -3194,6 +3208,7 @@ class CalcScreen(Screen):
         if "pager" in panel:
             self._paint_pager(panel)
         self._fold(panel["explain"])
+        _redraw(panel["box"])
         self.toast(str(error), C["red"])
 
     def calc_subnet_view(self, mode, view):
@@ -3219,6 +3234,7 @@ class CalcScreen(Screen):
             return text
         if not self._run(panel["out"], report):
             self._fold(panel["explain"])
+            _redraw(panel["box"])
 
     def calc_split(self, mode=None):
         """Netz aufteilen; der Rechenkern bekommt die Version des Schalters."""

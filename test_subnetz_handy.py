@@ -407,6 +407,53 @@ class FehlerLeerenTest(unittest.TestCase):
         self.assertIn("USV passend", screen.out_ups.data.value)
         self.assertTrue(screen.ups_picture.label.startswith("Bild: Last 600 W"))
 
+    def test_fehler_wird_sofort_gezeichnet(self):
+        """Im Browser gesehen: Nach dem Hinweis (page.show_dialog) zeichnet
+        Flet die uebrigen Aenderungen nicht mehr von selbst. Der geleerte
+        Kasten muss darum ausdruecklich gezeichnet werden."""
+        screen = self.screen
+        gezeichnet = []
+
+        def merke(*controls):
+            gezeichnet.extend(id(c) for c in controls)
+            # zum Zeitpunkt des Zeichnens ist der Kasten schon leer
+            for c in controls:
+                data = getattr(c, "data", None)
+                if c in kaesten:
+                    self.assertEqual(data.value, "")
+        panels = screen.subnet_panels
+        kaesten = [panels[k]["out"] for k in panels] + [screen.out_raid, screen.out_screen,
+                                                        screen.out_ups]
+        faelle = [
+            (lambda: setattr(panels[("ipv4", "netzdaten")]["net"], "value", "x"),
+             lambda: screen.calc_subnet(mode="ipv4"), panels[("ipv4", "netzdaten")]),
+            (lambda: setattr(panels[("ipv6", "aufteilen")]["count"], "value", "0"),
+             lambda: screen.calc_split("ipv6"), panels[("ipv6", "aufteilen")]),
+            (lambda: setattr(panels[("ipv4", "bedarf")]["needs"], "value", "A 1, B 2"),
+             screen.calc_hosts, panels[("ipv4", "bedarf")]),
+        ]
+        with mock.patch.object(handy, "_redraw", merke):
+            for setze, rechne, panel in faelle:
+                rechne()
+                gezeichnet.clear()
+                setze()
+                rechne()
+                self.assertIn(id(panel["box"]), gezeichnet, panel["view"])
+            screen.calc_raid()
+            gezeichnet.clear()
+            screen.entry_disks.value = "abc"
+            screen.calc_raid()
+            self.assertIn(id(screen.out_raid), gezeichnet)
+            gezeichnet.clear()
+            screen.entry_width.value = "abc"
+            screen.calc_screen()
+            self.assertIn(id(screen.out_screen), gezeichnet)
+            gezeichnet.clear()
+            screen.ups_entries["last"].value = "abc"
+            screen.calc_ups("akku")
+            for control in (screen.out_ups, screen.out_ups_hint, screen.ups_picture):
+                self.assertIn(id(control), gezeichnet)
+
     def test_usv_plus_null_prozent(self):
         """Schutz (D-5): Alterung "-0" zeigt "+0 %", nie "+-"."""
         screen = self.screen
