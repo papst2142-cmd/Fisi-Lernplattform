@@ -395,7 +395,7 @@ class TrainerTest(unittest.TestCase):
 
     def test_9_pc_text(self):
         count = 0
-        for kind, _name in fl.TRAINER_KINDS:
+        for kind in rt.ALTE_ARTEN:
             for level, _label in fl.TRAINER_LEVELS:
                 for seed in range(rt.TRAINER_SEEDS):
                     alt = self.basis["trainer:%s|%d|%d" % (kind, level, seed)]
