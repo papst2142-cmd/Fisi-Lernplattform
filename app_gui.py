@@ -64,6 +64,8 @@ from fisi_core import (  # noqa: E402
     split_report, subnet_by_hosts, subnet_parse,
 )
 import fisi_core  # noqa: E402  (ab 0.63: neuere Kern-Teile ueber getattr)
+# ab 0.63.1 (Plan 0.63.1 Teil 1.3): Umbruch der Subnetting-Kaesten wie am Handy
+from fisi_core import fit_lines  # noqa: E402
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -4161,12 +4163,50 @@ def subnet_core(name):
     return getattr(fisi_core, name, None)
 
 
+def box_chars(box):
+    """Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Zeichen je Zeile, die in einen
+    Textkasten (make_text, Festbreitenschrift) passen. None, solange der
+    Kasten noch keine Breite hat (nicht abgebildet)."""
+    text = box._textbox
+    width = text.winfo_width()
+    if width <= 1:
+        return None
+    edge = 2 * sum(int(float(text.cget(name)))
+                   for name in ("padx", "borderwidth", "highlightthickness"))
+    char = int(text.tk.call("font", "measure", text.cget("font"), "0")) or 1
+    return max(1, (width - edge) // char)
+
+
+class SubnetViews(dict):
+    """(Modus, Ansicht) -> Widgets und Stand einer Ansicht der Subnetting-Karte.
+
+    Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Eine Ansicht entsteht erst beim ersten
+    Zugriff mit [] (z.B. erstes Antippen ihrer Pille). "in", get() und
+    Schleifen bauen nichts. Gibt es die Ansicht im Modus nicht (IPv6 hat keine
+    Ansicht "bedarf"), bleibt es beim KeyError."""
+
+    def __init__(self, calc):
+        super().__init__()
+        self.calc = calc
+
+    def __missing__(self, where):
+        mode, key = where
+        if key not in [k for k, _name in SUBNET_VIEWS.get(mode, ())]:
+            raise KeyError(where)
+        self.calc.build_mode(mode)
+        if not dict.__contains__(self, where):
+            self.calc._build_view(mode, key)
+        return dict.__getitem__(self, where)
+
+
 class SubnetCalc:
     """Die Subnetting-Karte des Rechners. Jeder Modus hat eigene Eingaben,
     Ergebnisse und Rechenwege; jede Ansicht merkt sich ihr Ergebnis und ihre
     Seite. Beim Wechsel wird nichts neu gerechnet, der Rechenweg klappt zu.
-    Der IPv4-Teil entsteht beim Oeffnen, der IPv6-Teil beim ersten Wechsel
-    oder vorher verdeckt beim Vorladen (CalcView.prepare)."""
+    Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Beim Oeffnen entsteht nur die Ansicht
+    "netzdaten" von IPv4, beim ersten Wechsel nur die von IPv6; die uebrigen
+    Ansichten beim ersten Antippen (SubnetViews) oder vorher verdeckt beim
+    Vorladen (CalcView.prepare, build_rest)."""
 
     def __init__(self, card):
         self.card = card
@@ -4174,7 +4214,7 @@ class SubnetCalc:
         self.view_of = {"ipv4": "netzdaten", "ipv6": "netzdaten"}
         self.mode_frames = {}
         self.view_pills = {}
-        self.views = {}              # (Modus, Ansicht) -> Widgets und Stand
+        self.views = SubnetViews(self)   # (Modus, Ansicht) -> Widgets und Stand
         self.mode_pills = PillGroup(card.body, SUBNET_MODES, on_change=self.set_mode)
         self.mode_pills.pack(anchor="w", pady=(0, 10))
         self.build_mode("ipv4")
@@ -4186,7 +4226,8 @@ class SubnetCalc:
         return mode in self.mode_frames
 
     def build_mode(self, mode):
-        """Baut alle Ansichten eines Modus (verdeckt)."""
+        """Baut Pillenzeile und Ansicht "netzdaten" eines Modus (verdeckt); die
+        uebrigen Ansichten entstehen erst bei Bedarf (ab 0.63.1)."""
         if mode in self.mode_frames:
             return False
         frame = transparent_frame(self.card.body)
@@ -4195,10 +4236,21 @@ class SubnetCalc:
                           on_change=lambda key, m=mode: self.set_view(m, key))
         pills.pack(anchor="w", pady=(0, 14))
         self.view_pills[mode] = pills
-        for key, _name in SUBNET_VIEWS[mode]:
-            self._build_view(mode, key)
+        self._build_view(mode, "netzdaten")
         self.views[(mode, "netzdaten")]["frame"].pack(fill="both", expand=True)
         return True
+
+    def build_rest(self):
+        """Baut alle noch fehlenden Teile verdeckt (Vorladen). True, wenn
+        dabei etwas gebaut wurde."""
+        worked = False
+        for mode, _name in SUBNET_MODES:
+            worked = self.build_mode(mode) or worked
+            for key, _name in SUBNET_VIEWS[mode]:
+                if (mode, key) not in self.views:
+                    self._build_view(mode, key)
+                    worked = True
+        return worked
 
     def _build_view(self, mode, key):
         frame = transparent_frame(self.mode_frames[mode])
@@ -4227,15 +4279,19 @@ class SubnetCalc:
             view["needs"].pack(anchor="w", fill="x", pady=(8, 12))
         NeoButton(frame, "Berechnen", lambda: self.calc(mode, key),
                   kind="accent").pack(anchor="w")
+        # Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Die Kaesten brechen selbst um
+        # (fit_lines, _fit_box); wrap="none", damit Tabellen Tabellen bleiben
         if key == "netzdaten" and mode == "ipv4":
-            box = make_text(frame, height=9, readonly=True, font=F["mono_small"])
+            box = make_text(frame, height=9, readonly=True, font=F["mono_small"],
+                            wrap="none")
         else:
             # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
             # um; der Kasten waechst mit, statt Zeilen zu verstecken
             box = make_autogrow_text(frame, min_height=9, max_height=40,
-                                     font=F["mono_small"])
+                                     font=F["mono_small"], wrap="none")
             box.configure(state="disabled")
         box.pack(fill="both", expand=True, pady=(14, 0))
+        self._fit_box(box)
         view["box"] = box
         if key == "aufteilen":
             self._build_pager(view)
@@ -4248,8 +4304,47 @@ class SubnetCalc:
                                         lambda: self.toggle_info(mode, key), kind="ghost")
         view["info_button"].pack(anchor="w")
         view["info"] = make_autogrow_text(frame, min_height=4, max_height=200,
-                                          font=F["mono_small"])
+                                          font=F["mono_small"], wrap="none")
         view["info"].configure(state="disabled")
+        self._fit_box(view["info"])
+
+    # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Umbruch auf die Kastenbreite -------
+    #
+    # Jeder Ergebnis- und Rechenweg-Kasten merkt sich seinen Rohtext
+    # (fit_raw). Angezeigt wird fit_lines(Rohtext, Zeichen), dieselbe Regel
+    # wie am Handy: "Beschriftung : Wert", das nicht passt, steht als
+    # "Beschriftung:" und darunter eingerueckt der Wert; Saetze brechen an
+    # Leerzeichen; Tabellen (doppelte Leerzeichen) bleiben, wie sie sind, und
+    # lassen sich im Kasten seitlich schieben. Neu gesetzt wird nur, wenn sich
+    # Rohtext oder Zeichenzahl aendern (keine Schleife ueber <Configure>).
+
+    def _fit_box(self, box):
+        box.fit_raw = ""
+        box.fit_chars = None
+        box.fit_pending = False
+        box.bind("<Configure>", lambda _e, b=box: self._schedule_refit(b), add="+")
+
+    def _schedule_refit(self, box):
+        if not box.fit_pending:
+            box.fit_pending = True
+            box.after_idle(lambda: self._refit(box))
+
+    def _refit(self, box):
+        box.fit_pending = False
+        try:
+            chars = box_chars(box)
+            if chars is None or chars == box.fit_chars:
+                return
+            box.fit_chars = chars
+            set_text(box, fit_lines(box.fit_raw, chars))
+        except tk.TclError:
+            pass
+
+    def put(self, box, text):
+        """Text in einen Kasten der Karte (Rohtext merken, umbrechen)."""
+        box.fit_raw = text
+        box.fit_chars = box_chars(box)
+        set_text(box, fit_lines(text, box.fit_chars))
 
     def _build_pager(self, view):
         """Blaettern (Plan 2.2 Nr. 8, F-63-9): erst bei mehr als einer Seite."""
@@ -4348,17 +4443,17 @@ class SubnetCalc:
         """Ergebnis der Ansicht in den Kasten (ohne neu zu rechnen)."""
         result = view["result"]
         if view["key"] == "netzdaten":
-            set_text(view["box"], result)
+            self.put(view["box"], result)
         elif view["key"] == "aufteilen":
-            set_text(view["box"], split_report(result, view["page"]))
+            self.put(view["box"], split_report(result, view["page"]))
             self._paint_pager(view)
         else:
-            set_text(view["box"], hosts_report(result))
+            self.put(view["box"], hosts_report(result))
 
     def fail(self, view, error):
         """B-D-04 (D-4): Kasten leer, Rechenweg zu, dann die Meldung. Der
         Rechenweg-Text bleibt bei der letzten gueltigen Rechnung."""
-        set_text(view["box"], "")
+        self.put(view["box"], "")
         if "pager" in view:
             view["pager"].pack_forget()
         self.collapse(view)
@@ -4425,7 +4520,7 @@ class SubnetCalc:
         return hosts_explain(result)
 
     def _fill_info(self, view):
-        set_text(view["info"], self.explanation(view))
+        self.put(view["info"], self.explanation(view))
 
     def toggle_info(self, mode, key):
         view = self.views[(mode, key)]
@@ -4538,6 +4633,50 @@ class CalcView(View):
 
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+        # Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Subnetting-Karte nie breiter als
+        # der sichtbare Bereich
+        self._fit_pending = False
+        self.subnet_gap = 0
+        self.canvas.bind("<Configure>", self._schedule_fit, "+")
+        self.content.bind("<Configure>", self._schedule_fit, "+")
+
+    # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
+    #
+    # Die Seite ist so breit wie ihre breiteste Karte (heute die USV-Karte mit
+    # ihrer Mindestbreite). Die Subnetting-Karte bekommt rechts so viel
+    # Abstand, dass sie am rechten sichtbaren Rand endet (Muster wie das
+    # Dashboard 0.58). Der Abstand haengt nur von den uebrigen Karten ab, nie
+    # von der Subnetting-Karte selbst - so entsteht keine Schleife. Die Kaesten
+    # darin brechen dann auf ihre Breite um (SubnetCalc.put).
+
+    CONTENT_PAD = 28   # Seitenrand der Ansicht (View.__init__, logische px)
+
+    def _schedule_fit(self, _event=None):
+        if not self._fit_pending:
+            self._fit_pending = True
+            self.after_idle(self._fit)
+
+    def available_width(self):
+        """Sichtbare Breite fuer den Inhalt (echte Pixel, ohne Seitenrand)."""
+        return self.canvas.winfo_width() - 2 * px(self.CONTENT_PAD)
+
+    def _fit(self):
+        self._fit_pending = False
+        try:
+            if self.canvas.winfo_width() <= 1:
+                return
+            avail = self.available_width()
+            card = self.subnet.card
+            others = max((child.winfo_reqwidth() for child in self.calc_layout.grid_slaves()
+                          if child is not card), default=0)
+            gap = max(0, others - avail)
+            if gap != self.subnet_gap:
+                self.subnet_gap = gap
+                card.grid_configure(padx=(0, gap))
+            card.stack_subtitle(card.head_width() > avail)
+        except tk.TclError:
+            return
 
     def _build_ups(self, layout):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
@@ -4676,8 +4815,12 @@ class CalcView(View):
     # vorhandenen Tests stuetzen (test_vorladen.py). Ohne Vorladen
     # (FISI_VORLADEN=0) oder wenn der Rechner vorher geoeffnet wird, baut der
     # erste Wechsel.
+    # Ab 0.63.1 (Plan 0.63.1 Teil 1.4): Im selben Schritt entstehen auch die
+    # Ansichten, die beim Oeffnen nicht mehr gebaut werden (IPv4 "aufteilen"
+    # und "bedarf", IPv6 "aufteilen"), damit sich mit Vorladen nichts
+    # verschlechtert.
     def prepare(self):
-        return self.subnet.build_mode("ipv6")
+        return self.subnet.build_rest()
 
     def calc_raid(self):
         try:
