@@ -835,10 +835,10 @@
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
     "q": "Wer legt die wesentlichen Inhalte eines Ausbildungsvertrags nach dem Berufsbildungsgesetz (BBiG) fest?",
-    "a": "Ausbildender (Betrieb) und Auszubildender vereinbaren sie, u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält sie in Textform fest",
+    "a": "Ausbildender (Betrieb) und Auszubildender vereinbaren u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält den Inhalt in Textform fest",
     "a_full": "Ausbildender und Auszubildender schließen den Ausbildungsvertrag (§ 10 BBiG). Nach § 11 BBiG fasst der Ausbildende den wesentlichen Inhalt unverzüglich nach Vertragsschluss, spätestens vor Beginn der Ausbildung, in Textform ab, u.a. Art, Ziel und Dauer der Ausbildung, Ausbildungsvergütung, Arbeitszeit, Probezeit und Kündigungsregeln.",
     "options": [
-      "Ausbildender (Betrieb) und Auszubildender vereinbaren sie, u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält sie in Textform fest",
+      "Ausbildender (Betrieb) und Auszubildender vereinbaren u.a. Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält den Inhalt in Textform fest",
       "Nur die IHK legt die Vertragsinhalte einseitig fest",
       "Die Berufsschule legt die Vertragsinhalte fest",
       "Die Ausbildungsvergütung ist gesetzlich nicht geregelt"

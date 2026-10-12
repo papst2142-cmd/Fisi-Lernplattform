@@ -142,6 +142,15 @@ class InhalteTest(unittest.TestCase):
         self.assertNotIn("Der Vertrag muss nicht schriftlich abgeschlossen werden",
                          karte["options"])
         self.assertIn("Textform", karte["a"])
+        # Auflage C-1 (Freigabe Plan 0.63.1): richtige Antwort und Antwort 1 woertlich
+        richtig = ("Ausbildender (Betrieb) und Auszubildender vereinbaren u.a. "
+                   "Ausbildungsziel, -dauer, Vergütung und Probezeit; der Betrieb hält "
+                   "den Inhalt in Textform fest")
+        self.assertEqual(karte["a"], richtig)
+        self.assertEqual(karte["options"][0], richtig)
+        self.assertEqual(karte["options"][2], "Die Berufsschule legt die Vertragsinhalte fest")
+        self.assertNotIn("vereinbaren sie", alles)
+        self.assertNotIn("formfrei", alles)
         self.assertIn("in Textform ab", karte["a_full"])
         self.assertIn("§ 11 BBiG", karte["a_full"])
         self.assertEqual(karte["options"][0], karte["a"])
@@ -185,6 +194,9 @@ class InhalteTest(unittest.TestCase):
         for teil in ("§ 377 HGB", "zwischen Kaufleuten", "§ 14 BGB", "§ 477 BGB",
                      "in der Regel aber kein Kaufmann"):
             self.assertIn(teil, loesung)
+        # Antwort 5 (Meldung 10): "in der Regel kein Kaufmann" ohne Ausnahmen im Lerntext
+        for ausnahme in ("MVZ", "Formkaufmann", "GmbH", "§ 6 HGB"):
+            self.assertNotIn(ausnahme, loesung)
 
     def test_b_c_09_egress(self):
         loesung = self.ap2[288]["solution"][2]  # A2-289
