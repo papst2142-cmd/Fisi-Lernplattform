@@ -15,6 +15,7 @@ Start zum Testen am PC:  python mobile/src/main.py
 
 import asyncio
 import inspect
+import ipaddress
 import os
 import random
 import sys
@@ -3227,6 +3228,15 @@ class CalcScreen(Screen):
         value = panel["net"].value or ""
 
         def report():
+            # Version des Schalters (Plan 0.63 2.3.2, N-M-2/N-M-3): ein Netz der
+            # anderen Version meldet der Rechenkern mit seinem Wortlaut
+            wanted = 4 if mode == "ipv4" else 6
+            try:
+                network = ipaddress.ip_network(value.strip(), strict=False)
+            except ValueError:
+                network = None              # Meldung kommt von subnet_report
+            if network is not None and network.version != wanted:
+                fc.subnet_parse(network.with_prefixlen, version=wanted)
             text = subnet_report(value)
             details = getattr(fc, "ipv6_details", None)
             if mode == "ipv6" and details is not None:

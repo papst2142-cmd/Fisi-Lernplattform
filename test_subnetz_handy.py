@@ -84,6 +84,14 @@ def _explain(screen, mode, view):
     return row.controls[0], box
 
 
+def _fehler(func, *args):
+    try:
+        func(*args)
+    except fc.InputError as error:
+        return error
+    raise AssertionError("keine Meldung")
+
+
 HAT_SPRUNG = hasattr(fc, "SUBNET_PAGE_JUMP_FIELD") and hasattr(fc, "SUBNET_PAGE_JUMP")
 HAT_DETAILS = hasattr(fc, "ipv6_details")
 
@@ -195,6 +203,33 @@ class RechnenTest(unittest.TestCase):
         self.screen._on_subnet_mode("ipv4")
         self.screen.calc_subnet()
         self.assertNotIn(fc.IPV6_LABEL_ADRESSTYP, self.screen.out_subnet.data.value)
+
+    def test_netzdaten_version_des_schalters(self):
+        """N-M-2/N-M-3 auch in der Ansicht Netzdaten, danach Kasten leer."""
+        screen = self.screen
+        screen.calc_subnet(mode="ipv4")
+        screen.entry_ip.value = "2001:db8::/48"
+        screen.calc_subnet(mode="ipv4")
+        self.assertEqual(screen.toasts[-1], "Im Modus IPv4 bitte ein IPv4-Netz angeben "
+                                            "(z. B. 192.168.10.0/24).")
+        self.assertEqual(screen.out_subnet.data.value, "")
+        panel = screen.subnet_panels[("ipv6", "netzdaten")]
+        for value in ("192.168.1.0/24", "10.0.0.1"):
+            screen.calc_subnet(mode="ipv6")
+            self.assertNotEqual(panel["out"].data.value, "")
+            panel["net"].value = value
+            screen.calc_subnet(mode="ipv6")
+            self.assertEqual(screen.toasts[-1], "Im Modus IPv6 bitte ein IPv6-Netz angeben "
+                                                "(z. B. 2001:db8:abcd::/48).")
+            self.assertEqual(panel["out"].data.value, "")
+            panel["net"].value = "2001:db8:abcd:12::1/64"
+        # Ohne Praefix bleibt es bei subnet_report (wie bisher): 10.0.0.1 = /32
+        screen.entry_ip.value = "10.0.0.1"
+        screen.calc_subnet(mode="ipv4")
+        self.assertEqual(screen.out_subnet.data.value, fc.subnet_report("10.0.0.1"))
+        screen.entry_ip.value = "kaputt"
+        screen.calc_subnet(mode="ipv4")
+        self.assertEqual(screen.toasts[-1], str(_fehler(fc.subnet_report, "kaputt")))
 
     def test_aufteilen_ipv4_vorgabe(self):
         screen = self.screen
