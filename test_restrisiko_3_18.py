@@ -459,6 +459,41 @@ class RestrisikoTest(unittest.TestCase):
         self.assertEqual(zahlen, {"b-vor": {"A": 0, "B": 0}, "b-nach": {"A": 3, "B": 3},
                                   "a-nach": {"A": 2, "B": 2}})
 
+    def test_schutz_auf_weiter_falsche_uhr_gestellt(self):
+        """Uhr +3 h gemessen, dann auf +1 h verstellt (weiter falsch, A-9 G2):
+        Der Sprung ist erkannt, aber die Uhr geht danach nicht richtig - es
+        bleibt bei der Messung wie 0.62.4 (Marke 2 h zu frueh: Bs Eintraege
+        vor der Loeschung bleiben, Grenze wie Restrisiko 3). Wuerde die
+        Messung stattdessen verworfen, laege die Marke 1 h zu spaet und Bs
+        Eintraege nach der Loeschung gingen verloren - ein Verlustweg, den
+        0.62.4 nicht hat."""
+        a, b = self.geraet("A"), self.geraet("B", "UTC")
+        self.zeit(0, A=3 * HOUR)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        for device in (a, b, a):
+            device.sync()                       # A misst +3 h
+        self.zeit(0.5, A=HOUR)                  # auf +1 h verstellt
+        self.zeit(2.7, A=HOUR)                  # Geraeteuhr wieder nach der Messung
+        b("lerne", 3, "vor")
+        ta.pause()
+        self.zeit(3, A=HOUR)
+        a("reset_all")
+        ta.bericht("Marke A %s" % a.marke())
+        self.zeit(3.2, A=HOUR)
+        b("lerne", 3, "nach")
+        b.sync()
+        self.zeit(4.5, A=HOUR)
+        for device in (a, b, a, b):
+            device.sync()
+        self.ruhe((a, b))
+        for device in (a, b):
+            self.assertTrue(ta.ohne(device.namen(), "-vorher"), device.name)
+        self.assertEqual(self.ergebnis("Schutz weiter falsch", (a, b), "b-nach"),
+                         {"A": 3, "B": 3})
+        self.assertEqual(self.ergebnis("Schutz weiter falsch", (a, b), "b-vor"),
+                         {"A": 3, "B": 3})
+
     def test_grenze_3_alte_messung_ohne_neue_felder(self):
         """BEWUSST FESTGEHALTENE GRENZE: Stammt die noch gueltige Messung aus
         0.62.4 (ohne Laufzeit-Uhr), ist ein Sprung nicht feststellbar - wie
