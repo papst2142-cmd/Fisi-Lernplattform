@@ -2426,6 +2426,598 @@ def subnet_report(value):
     return "\n".join(lines)
 
 
+# ----------------------------------------------------------------------------
+#  Ab 0.63 (Plan 0.63, T1): Netz aufteilen und Netz nach Hostbedarf
+# ----------------------------------------------------------------------------
+# Gerechnet wird nur mit ganzen Zahlen: Subnetz Nr. i hat die Netzadresse
+# Netz + (i - 1) x Groesse. Es entsteht nie eine Liste aller Subnetze oder
+# Adressen (Lehre aus dem /8-Fehler in 0.62.2), darum rechnen auch IPv6 /0 in
+# 2^64 Subnetze und IPv4 /8 in 2^24 Subnetze sofort. ipaddress liest nur die
+# Eingabe; die Schreibweise der Ausgabe ist eigen (RFC 5952), weil ipaddress
+# ::ffff-Adressen je nach Python-Patchstand anders schreibt (Plan 0.63 E-63-6;
+# Mischform ::ffff:1.2.3.4 erst mit R-9 in 0.63.1).
+# subnet_report und ipv4_values (Spiel) bleiben unveraendert.
+
+# Beschriftungen: eine Quelle fuer PC und Handy (Plan 0.63 Abschnitt 4.1)
+SUBNET_TITLE = "Subnetting"
+SUBNET_MODES = [("ipv4", "IPv4"), ("ipv6", "IPv6")]
+SUBNET_SUBTITLE = {"ipv4": "IPv4", "ipv6": "IPv6"}
+SUBNET_VIEWS = {
+    "ipv4": [("netzdaten", "Netzdaten"), ("aufteilen", "Netz aufteilen"),
+             ("bedarf", "Nach Hostbedarf")],
+    "ipv6": [("netzdaten", "Netzdaten"), ("aufteilen", "Netz aufteilen")],
+}
+SUBNET_FIELD_NET = {"ipv4": "Netz mit Präfix (z. B. 192.168.10.0/24)",
+                    "ipv6": "Netz mit Präfix (z. B. 2001:db8:abcd::/48)"}
+SUBNET_FIELD_COUNT = "Anzahl Subnetze"
+SUBNET_FIELD_NEEDS = "Subnetze, je Zeile Name und Hosts (z. B. A 50)"
+SUBNET_PAGE_FIRST = "Erste Seite"
+SUBNET_PAGE_BACK = "Zurück"
+SUBNET_PAGE_NEXT = "Weiter"
+SUBNET_PAGE_LAST = "Letzte Seite"
+SUBNET_PAGE_OF = "Seite %s von %s"
+# Vorgaben vor dem ersten "Berechnen" (Beispiele B, C und D aus Plan 0.63)
+SUBNET_DEFAULTS = {
+    ("ipv4", "aufteilen"): ("192.168.10.0/24", "6"),
+    ("ipv6", "aufteilen"): ("2001:db8:abcd::/48", "6"),
+    ("ipv4", "bedarf"): ("192.168.10.0/24", "A 50\nB 20\nC 10\nD 2"),
+}
+SUBNET_PAGE_SIZE = 8          # Subnetze je Seite, PC und Handy (F-63-9)
+SUBNET_HOSTS_MAX = 12         # Zeilen bei "Nach Hostbedarf" (F-63-10)
+SUBNET_NAME_MAX = 16          # Zeichen je Name bei "Nach Hostbedarf"
+SUBNET_STATE_USED = "verwendet"
+SUBNET_STATE_FREE = "frei, Reserve"
+
+SUBNET_NET_ERROR = ("Bitte ein gültiges Netz mit Präfix angeben.\n\n"
+                    "Beispiele:\n  192.168.10.0/24\n  2001:db8:abcd::/48")
+SUBNET_COUNT_ERROR = "Die Anzahl muss mindestens 1 sein."
+SUBNET_TOO_MANY = "Zu viele Subnetze: /%d + %d Bit = /%d, mehr als /%d geht nicht."
+SUBNET_HOST_HINT = ("Hinweis: %s ist eine Host-Adresse. "
+                    "Gerechnet wird mit dem Netz %s.")
+SUBNET_NO_SPLIT = "Keine Teilung nötig: Bei 1 Subnetz bleibt das Netz, wie es ist."
+SUBNET_HINT_31 = "/31: 2 Adressen, nur für Punkt-zu-Punkt-Verbindungen (RFC 3021)"
+SUBNET_HINT_32 = "/32: eine einzelne Adresse"
+SUBNET_HOSTS_V6_ERROR = ("„Nach Hostbedarf“ rechnet nur mit IPv4. "
+                         "Für IPv6 bitte „Netz aufteilen“ nutzen.")
+SUBNET_NEEDS_EMPTY = ("Bitte mindestens ein Subnetz eingeben, je Zeile Name und "
+                      "Hosts (z. B. A 50).")
+SUBNET_NEEDS_TOO_MANY = "Höchstens %d Subnetze, eingegeben sind %d."
+SUBNET_NEED_NUMBER = ("Zeile %d: Bitte die Anzahl Hosts als ganze Zahl angeben "
+                      "(z. B. A 50).")
+SUBNET_NEED_MIN = "Zeile %d: Der Hostbedarf muss mindestens 1 sein."
+SUBNET_NEED_MAX = "Zeile %d: Mehr als %s Hosts passen in kein IPv4-Netz."
+SUBNET_NAME_LONG = "Zeile %d: Der Name ist zu lang (höchstens %d Zeichen)."
+SUBNET_MISSING = "Es fehlen %s Adressen. Das Ausgangsnetz müsste mindestens /%d sein."
+SUBNET_MISSING_ALL = ("Es fehlen %s Adressen. Das passt in kein IPv4-Netz "
+                      "(höchstens 2^32 Adressen).")
+SUBNET_HINT_P2P = ("Hinweis: Für eine Punkt-zu-Punkt-Verbindung mit 2 Hosts "
+                   "reicht auch ein /31 (RFC 3021). Gerechnet wird wie üblich "
+                   "mit /30.")
+
+
+def ipv4_text(value):
+    """IPv4-Adresse aus einer ganzen Zahl (192.168.10.0)."""
+    return ".".join(str((value >> shift) & 255) for shift in (24, 16, 8, 0))
+
+
+def ipv6_groups(value):
+    """Die acht Hextette einer IPv6-Adresse als ganze Zahlen."""
+    return [(value >> (16 * (7 - i))) & 0xFFFF for i in range(8)]
+
+
+def ipv6_text(value):
+    """IPv6-Kurzschreibweise nach RFC 5952 aus einer ganzen Zahl: fuehrende
+    Nullen weg, die laengste Folge von mindestens zwei Null-Hextetten wird
+    "::" (bei Gleichstand die erste), Kleinbuchstaben."""
+    groups = ipv6_groups(value)
+    best_start, best_len, start = 0, 0, None
+    for i in range(9):
+        if i < 8 and groups[i] == 0:
+            if start is None:
+                start = i
+        elif start is not None:
+            if i - start > best_len:
+                best_start, best_len = start, i - start
+            start = None
+    parts = ["%x" % group for group in groups]
+    if best_len < 2:
+        return ":".join(parts)
+    return ":".join(parts[:best_start]) + "::" + ":".join(parts[best_start + best_len:])
+
+
+def subnet_addr_text(version, value):
+    """Adresse (ganze Zahl) in der Schreibweise ihrer Version."""
+    return ipv4_text(value) if version == 4 else ipv6_text(value)
+
+
+def subnet_net_text(version, value, prefix):
+    return "%s/%d" % (subnet_addr_text(version, value), prefix)
+
+
+def subnet_mask(prefix):
+    """IPv4-Subnetzmaske zur Praefixlaenge als ganze Zahl."""
+    return ((1 << 32) - 1) ^ ((1 << (32 - prefix)) - 1)
+
+
+def subnet_parse(text, version=None):
+    """Liest ein Netz mit Praefix (IPv4 oder IPv6). version = 4 oder 6
+    verlangt diese Version (Schalter im Rechner). Ein gesetzter Hostanteil
+    wird auf die Netzadresse gesetzt, dazu kommt ein Hinweis."""
+    raw = str(text if text is not None else "").strip()
+    if "/" not in raw or "%" in raw:
+        raise InputError(SUBNET_NET_ERROR)
+    try:
+        interface = ipaddress.ip_interface(raw)
+    except ValueError:
+        raise InputError(SUBNET_NET_ERROR) from None
+    found = interface.version
+    if version is not None and found != version:
+        example = "192.168.10.0/24" if version == 4 else "2001:db8:abcd::/48"
+        raise InputError("Im Modus IPv%d bitte ein IPv%d-Netz angeben (z. B. %s)."
+                         % (version, version, example))
+    width = 32 if found == 4 else 128
+    prefix = interface.network.prefixlen
+    address = int(interface.ip)
+    base = address - (address & ((1 << (width - prefix)) - 1))
+    hint = None
+    if address != base:
+        hint = SUBNET_HOST_HINT % (subnet_net_text(found, address, prefix),
+                                   subnet_net_text(found, base, prefix))
+    return {"version": found, "breite": width, "netz": base, "praefix": prefix,
+            "adresse": address, "hinweis": hint}
+
+
+def _subnet_whole(text):
+    """Ganze Zahl genau aus dem Text (read_number liefert ueber 2^53 nur
+    einen gerundeten Wert). Nur nach erfolgreichem read_number aufrufen."""
+    raw = str(text).strip()
+    negative = raw.startswith("-")
+    raw = raw.lstrip("-")
+    if _NUMBER_GROUPS_SPACE.fullmatch(raw):
+        raw = re.sub(r"[   ]", ".", raw)
+    whole, comma, rest = raw.partition(",")
+    if not comma and "." in whole and not _NUMBER_GROUPS.fullmatch(whole):
+        whole, _point, rest = whole.partition(".")
+    if rest.strip("0"):
+        raise InputError("Bitte eine ganze Zahl eingeben: %s." % SUBNET_FIELD_COUNT)
+    value = int(whole.replace(".", "") or "0")
+    return -value if negative else value
+
+
+def subnet_count(value):
+    """Anzahl Subnetze aus dem Feld (gemeinsame Leseregel, "1.000" = 1000)
+    oder als ganze Zahl. Fehler -> InputError."""
+    if isinstance(value, int) and not isinstance(value, bool):
+        number = value
+    else:
+        number = read_number(value, SUBNET_FIELD_COUNT, ganz=True)
+        if abs(number) >= 2 ** 53:
+            number = _subnet_whole(value)
+    if number < 1:
+        raise InputError(SUBNET_COUNT_ERROR)
+    return number
+
+
+def split_network(net_text, count, version=None):
+    """Netz in count gleich grosse Subnetze aufteilen (IPv4 und IPv6).
+    Liefert ein Woerterbuch mit den Kennwerten; die Subnetze selbst liefern
+    split_entry und split_page (ohne Aufzaehlen)."""
+    result = subnet_parse(net_text, version)
+    wanted = subnet_count(count)
+    prefix, width = result["praefix"], result["breite"]
+    bits = (wanted - 1).bit_length()        # kleinstes k mit 2^k >= N
+    new = prefix + bits
+    if new > width:
+        raise InputError(SUBNET_TOO_MANY % (prefix, bits, new, width))
+    total = 1 << bits
+    result.update({
+        "gewuenscht": wanted, "k": bits, "neu": new, "anzahl": total,
+        "groesse": 1 << (width - new),
+        "seiten": (total + SUBNET_PAGE_SIZE - 1) // SUBNET_PAGE_SIZE,
+    })
+    hints = [result["hinweis"]] if result["hinweis"] else []
+    if bits == 0:
+        hints.append(SUBNET_NO_SPLIT)
+    if result["version"] == 4:
+        result["maske"] = subnet_mask(new)
+        result["hosts"] = result["groesse"] - 2 if new < 31 else result["groesse"]
+        if new == 31:
+            hints.append(SUBNET_HINT_31)
+        elif new == 32:
+            hints.append(SUBNET_HINT_32)
+    else:
+        result["hosts"] = None              # IPv6: kein Abzug, kein Broadcast
+    if result["version"] == 6 and new % 4:
+        nibble = (new + 3) // 4 * 4         # naechste 4-Bit-Grenze (E-63-7)
+        result["nibble"] = nibble
+        result["nibble_anzahl"] = 1 << (nibble - prefix)
+    else:
+        result["nibble"] = None
+        result["nibble_anzahl"] = None
+    result["hinweise"] = hints
+    return result
+
+
+def split_entry(result, index):
+    """Subnetz Nr. index + 1 (index ab 0) ohne Liste: Netz + index x Groesse.
+    IPv4: erste/letzte Host-Adresse und Broadcast (bei /31 und /32 keiner),
+    IPv6: Anfang und Ende des Bereichs."""
+    if not 0 <= index < result["anzahl"]:
+        raise IndexError("Subnetz %d gibt es nicht" % (index + 1))
+    size = result["groesse"]
+    net = result["netz"] + index * size
+    end = net + size - 1
+    entry = {"nr": index + 1, "netz": net, "ende": end, "praefix": result["neu"],
+             "status": SUBNET_STATE_USED if index < result["gewuenscht"]
+             else SUBNET_STATE_FREE}
+    if result["version"] == 4 and result["neu"] < 31:
+        entry.update(erste=net + 1, letzte=end - 1, broadcast=end)
+    else:
+        entry.update(erste=net, letzte=end, broadcast=None)
+    return entry
+
+
+def split_page(result, page):
+    """Eine Seite mit hoechstens SUBNET_PAGE_SIZE Subnetzen. Seiten ausserhalb
+    werden auf die erste bzw. letzte Seite begrenzt."""
+    pages = result["seiten"]
+    page = min(max(int(page), 1), pages)
+    start = (page - 1) * SUBNET_PAGE_SIZE
+    stop = min(start + SUBNET_PAGE_SIZE, result["anzahl"])
+    return {"seite": page, "seiten": pages,
+            "text": SUBNET_PAGE_OF % (de_int(page), de_int(pages)),
+            "eintraege": [split_entry(result, i) for i in range(start, stop)]}
+
+
+def _subnet_host_label(result):
+    if result["version"] == 6:
+        return None
+    if result["neu"] == 31:
+        return SUBNET_HINT_31
+    if result["neu"] == 32:
+        return SUBNET_HINT_32
+    return de_int(result["hosts"])
+
+
+def split_report(result, page=1, schmal=False):
+    """Ergebnistext "Netz aufteilen" mit einer Seite der Subnetze. schmal =
+    Handy (Bloecke, hoechstens CALC_EXPLAIN_HANDY_WIDTH Zeichen je Zeile)."""
+    version = result["version"]
+    data = split_page(result, page)
+    base = subnet_net_text(version, result["netz"], result["praefix"])
+    used = result["gewuenscht"]
+    free = result["anzahl"] - used
+    count_text = de_int(result["anzahl"])
+    if free:
+        count_text += " (%s verwendet, %s frei, Reserve)" % (de_int(used), de_int(free))
+    rows = [("Ausgangsnetz", base),
+            ("Gesucht", "%s Subnetze" % de_int(used)),
+            ("Benötigte Bits", "k = %d" % result["k"]),
+            ("Neue Präfixlänge", "/%d" % result["neu"])]
+    if version == 4:
+        rows.append(("Subnetzmaske", ipv4_text(result["maske"])))
+    rows.append(("Adressen je Subnetz", de_int(result["groesse"])))
+    if version == 4:
+        rows.append(("Nutzbare Hosts", _subnet_host_label(result)))
+    rows.append(("Subnetze", count_text))
+    lines = list(result["hinweise"])
+    if result["nibble"]:
+        lines.append("Hinweis: An der nächsten 4-Bit-Grenze (Nibble): /%d = %s Subnetze."
+                     % (result["nibble"], de_int(result["nibble_anzahl"])))
+    if lines:
+        lines.append("")
+    if schmal:
+        for caption, value in rows:
+            lines += ["%s:" % caption, " %s" % value]
+        lines.append("")
+        for entry in data["eintraege"]:
+            lines.append("Subnetz %s: %s" % (de_int(entry["nr"]), entry["status"]))
+            net = subnet_net_text(version, entry["netz"], entry["praefix"])
+            lines += _handy_address(" Netz: ", net)
+            if version == 4:
+                lines += [" Erste: %s" % ipv4_text(entry["erste"]),
+                          " Letzte: %s" % ipv4_text(entry["letzte"]),
+                          " Broadcast: %s" % (ipv4_text(entry["broadcast"])
+                                              if entry["broadcast"] is not None else "keine")]
+            else:
+                lines += _handy_address(" bis: ", ipv6_text(entry["ende"]))
+        lines.append(data["text"])
+        return "\n".join(_handy_fit(lines))
+    for caption, value in rows:
+        lines.append("%-22s: %s" % (caption, value))
+    lines.append("")
+    # Spalten so breit wie noetig; "*" hinter der Nummer = frei, Reserve
+    numbers = ["%s%s" % (de_int(entry["nr"]),
+                         "" if entry["status"] == SUBNET_STATE_USED else "*")
+               for entry in data["eintraege"]]
+    width = max(2, max(len(number) for number in numbers))
+    if version == 4:
+        cells = [[subnet_net_text(4, entry["netz"], entry["praefix"]),
+                  ipv4_text(entry["erste"]), ipv4_text(entry["letzte"]),
+                  ipv4_text(entry["broadcast"]) if entry["broadcast"] is not None
+                  else "keine"] for entry in data["eintraege"]]
+        heads = ["Netzadresse", "Erste Host", "Letzte Host", "Broadcast"]
+        sizes = [max(len(heads[c]), max(len(row[c]) for row in cells)) for c in range(4)]
+        lines.append(" ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
+                                                    for c in range(4)]).rstrip())
+        for number, row in zip(numbers, cells):
+            lines.append(" ".join([number.ljust(width)] + [row[c].ljust(sizes[c])
+                                                         for c in range(4)]).rstrip())
+    else:
+        lines.append("%s Subnetz und letzte Adresse" % "Nr".ljust(width))
+        for number, entry in zip(numbers, data["eintraege"]):
+            lines.append("%s %s" % (number.ljust(width),
+                                    subnet_net_text(6, entry["netz"], entry["praefix"])))
+            lines.append("%s bis %s" % (" " * width, ipv6_text(entry["ende"])))
+    if any(number.endswith("*") for number in numbers):
+        lines.append("* frei, Reserve")
+    lines.append(data["text"])
+    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH))
+
+
+def read_host_lines(text):
+    """Liest die Bedarfszeilen "Name Hosts" oder nur "Hosts" (dann Name
+    "Netz 1", "Netz 2" ...). Erlaubt auch "A: 50" und "A 50 Hosts".
+    Liefert [(Name, Bedarf)] in der Reihenfolge der Eingabe."""
+    lines = str(text if text is not None else "").splitlines()
+    filled = [line for line in lines if line.strip()]
+    if not filled:
+        raise InputError(SUBNET_NEEDS_EMPTY)
+    if len(filled) > SUBNET_HOSTS_MAX:
+        raise InputError(SUBNET_NEEDS_TOO_MANY % (SUBNET_HOSTS_MAX, len(filled)))
+    wants = []
+    for number, line in enumerate(lines, 1):
+        parts = line.replace(":", " ").split()
+        if not parts:
+            continue
+        if len(parts) > 1 and parts[-1].lower() in ("hosts", "host"):
+            parts = parts[:-1]
+        try:
+            need = read_number(parts[-1], SUBNET_FIELD_NEEDS, ganz=True)
+        except InputError:
+            raise InputError(SUBNET_NEED_NUMBER % number) from None
+        if need < 1:
+            raise InputError(SUBNET_NEED_MIN % number)
+        if need > (1 << 32) - 2:
+            raise InputError(SUBNET_NEED_MAX % (number, de_int((1 << 32) - 2)))
+        name = " ".join(parts[:-1]) or "Netz %d" % (len(wants) + 1)
+        if len(name) > SUBNET_NAME_MAX:
+            raise InputError(SUBNET_NAME_LONG % (number, SUBNET_NAME_MAX))
+        wants.append((name, need))
+    return wants
+
+
+def subnet_host_bits(need):
+    """Kleinstes h mit 2^h - 2 >= Bedarf, mindestens 2 (also /30)."""
+    return max(2, (need + 1).bit_length())
+
+
+def subnet_blocks(start, end):
+    """Bereich start bis end - 1 als ausgerichtete Bloecke [(Netz, Praefix)],
+    jeweils der groesste Block, der an start passt (hoechstens 64 Bloecke)."""
+    blocks = []
+    while start < end:
+        size = start & -start if start else 1 << 32
+        while start + size > end:
+            size //= 2
+        blocks.append((start, 32 - (size.bit_length() - 1)))
+        start += size
+    return blocks
+
+
+def subnet_by_hosts(net_text, needs, version=None):
+    """Netz nach Hostbedarf aufteilen (VLSM, nur IPv4): groesster Bedarf
+    zuerst, Vergabe nacheinander ab der Netzadresse (dadurch ausgerichtet).
+    needs = Text der Bedarfszeilen oder Liste [(Name, Bedarf)]."""
+    result = subnet_parse(net_text, version)
+    if result["version"] != 4:
+        raise InputError(SUBNET_HOSTS_V6_ERROR)
+    wants = read_host_lines(needs) if isinstance(needs, str) else list(needs)
+    order = sorted(range(len(wants)), key=lambda i: (-wants[i][1], i))
+    capacity = 1 << (32 - result["praefix"])
+    subnets = []
+    for name, need in wants:
+        bits = subnet_host_bits(need)
+        subnets.append({"name": name, "bedarf": need, "h": bits, "praefix": 32 - bits,
+                        "groesse": 1 << bits, "maske": subnet_mask(32 - bits)})
+    total = sum(item["groesse"] for item in subnets)
+    result.update({"bedarfe": wants, "subnetze": subnets, "reihenfolge": order,
+                   "kapazitaet": capacity, "summe": total, "passt": total <= capacity,
+                   "fehlt": max(0, total - capacity), "noetig": None, "meldung": None,
+                   "rest": None, "rest_von": None, "rest_bis": None, "bloecke": []})
+    hints = [result["hinweis"]] if result["hinweis"] else []
+    if result["passt"]:
+        cursor = result["netz"]
+        for index in order:
+            item = subnets[index]
+            item.update(netz=cursor, erste=cursor + 1, letzte=cursor + item["groesse"] - 2,
+                        broadcast=cursor + item["groesse"] - 1)
+            cursor += item["groesse"]
+        end = result["netz"] + capacity
+        result.update(rest=end - cursor, rest_von=cursor, rest_bis=end - 1,
+                      bloecke=subnet_blocks(cursor, end))
+        if any(need <= 2 for _name, need in wants):
+            hints.append(SUBNET_HINT_P2P)
+    else:
+        needed = 32 - (total - 1).bit_length()
+        if needed < 0:
+            result["meldung"] = SUBNET_MISSING_ALL % de_int(result["fehlt"])
+        else:
+            result["noetig"] = needed
+            result["meldung"] = SUBNET_MISSING % (de_int(result["fehlt"]), needed)
+    result["hinweise"] = hints
+    return result
+
+
+def hosts_report(result, schmal=False):
+    """Ergebnistext "Nach Hostbedarf" in der Reihenfolge der Eingabe."""
+    lines = [h for h in result["hinweise"] if h != SUBNET_HINT_P2P]
+    if lines:
+        lines.append("")
+    base = subnet_net_text(4, result["netz"], result["praefix"])
+    if not result["passt"]:
+        lines += ["Ausgangsnetz: %s" % base,
+                  "Benötigt: %s Adressen, vorhanden: %s" % (
+                      de_int(result["summe"]), de_int(result["kapazitaet"])),
+                  "", result["meldung"]]
+        return "\n".join(_fit_lines(lines, CALC_EXPLAIN_HANDY_WIDTH if schmal
+                                     else CALC_EXPLAIN_PC_WIDTH))
+    rest = "%s bis %s = %s Adressen" % (ipv4_text(result["rest_von"]),
+                                        ipv4_text(result["rest_bis"]),
+                                        de_int(result["rest"])) if result["rest"] \
+        else "keiner, das Netz ist genau voll"
+    order = ", ".join(result["subnetze"][i]["name"] for i in result["reihenfolge"])
+    if schmal:
+        lines += ["Ausgangsnetz:", " " + base,
+                  "Summe: %s von %s Adressen" % (de_int(result["summe"]),
+                                                 de_int(result["kapazitaet"])),
+                  "Freier Rest:", " " + rest, "Vergeben in der Reihenfolge:", " " + order, ""]
+        for item in result["subnetze"]:
+            lines += ["%s (%s Hosts)" % (item["name"], de_int(item["bedarf"])),
+                      " Netz: %s/%d" % (ipv4_text(item["netz"]), item["praefix"]),
+                      " Maske: %s" % ipv4_text(item["maske"]),
+                      " Erste: %s" % ipv4_text(item["erste"]),
+                      " Letzte: %s" % ipv4_text(item["letzte"]),
+                      " Broadcast: %s" % ipv4_text(item["broadcast"])]
+    else:
+        lines += ["%-22s: %s" % ("Ausgangsnetz", base),
+                  "%-22s: %s von %s Adressen" % ("Summe der Subnetze", de_int(result["summe"]),
+                                                 de_int(result["kapazitaet"])),
+                  "%-22s: %s" % ("Freier Rest", rest),
+                  "%-22s: %s" % ("Vergabe-Reihenfolge", order), ""]
+        for item in result["subnetze"]:
+            lines += ["%s (%s Hosts): %s/%d, Maske %s" % (
+                          item["name"], de_int(item["bedarf"]), ipv4_text(item["netz"]),
+                          item["praefix"], ipv4_text(item["maske"])),
+                      "   Hosts %s bis %s, Broadcast %s" % (
+                          ipv4_text(item["erste"]), ipv4_text(item["letzte"]),
+                          ipv4_text(item["broadcast"]))]
+    if SUBNET_HINT_P2P in result["hinweise"]:
+        lines += ["", SUBNET_HINT_P2P]
+    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_HANDY_WIDTH if schmal
+                                     else CALC_EXPLAIN_PC_WIDTH))
+
+
+# Zeilen fuer Ergebnis und Rechenweg auf eine Breite bringen (Handy 28,
+# PC 75 Zeichen). Ganze Zahlen brechen vor einem Tausenderpunkt (der Punkt
+# steht am Anfang der neuen Zeile, Plan 0.63 G-12), IPv6-Adressen nach einem
+# Doppelpunkt, lange Woerter nach einem Bindestrich.
+CALC_EXPLAIN_PC_WIDTH = 75
+
+
+def _fit_pieces(word):
+    if re.fullmatch(r"[0-9]{1,3}(\.[0-9]{3})+[,;)]?", word):
+        return re.split(r"(?=\.)", word)
+    if ":" in word:
+        pieces = []
+        for piece in re.findall(r"[^:]*:|[^:]+", word):
+            if pieces and (piece == ":" or piece.startswith("/")):
+                pieces[-1] += piece          # "::" und "/64" nicht abtrennen
+            else:
+                pieces.append(piece)
+        return pieces
+    if "-" in word.strip("-"):
+        return re.findall(r"[^-]*-|[^-]+", word)
+    return [word]
+
+
+def _fit_line(line, width, more):
+    """Eine zu lange Zeile umbrechen; Folgezeilen beginnen mit more."""
+    lead = line[:len(line) - len(line.lstrip(" "))]
+    parts = re.split(r"( +)", line.strip())
+    out, current, fresh = [], lead, True
+    for word, gap in zip(parts[0::2], [""] + parts[1::2]):
+        glue = "" if fresh else gap          # Abstaende in der Zeile bleiben
+        if len(current + glue + word) <= width:
+            current, fresh = current + glue + word, False
+            continue
+        if len(more + word) <= width:        # ganzes Wort in die naechste Zeile
+            if not fresh:
+                out.append(current)
+            current, fresh = more + word, False
+            continue
+        for number, piece in enumerate(_fit_pieces(word)):
+            glue = ("" if fresh else gap) if number == 0 else ""
+            if len(current + glue + piece) <= width:
+                current, fresh = current + glue + piece, False
+                continue
+            if not fresh:
+                out.append(current)
+            current, fresh = more + piece, False
+            while len(current) > width:
+                out.append(current[:width])
+                current = more + current[width:]
+    out.append(current)
+    return out
+
+
+def _fit_lines(lines, width):
+    """Jede Zeile hoechstens width Zeichen; kuerzere bleiben unveraendert."""
+    out = []
+    for line in lines:
+        if len(line) <= width:
+            out.append(line)
+        else:
+            lead = line[:len(line) - len(line.lstrip(" "))]
+            out += _fit_line(line, width, lead + " ")
+    return out
+
+
+def _handy_fit(lines):
+    return _fit_lines(lines, CALC_EXPLAIN_HANDY_WIDTH)
+
+
+def _wrap_para(text, lead, width):
+    """Fliesstext mit gleichem Einzug in jeder Zeile."""
+    return _fit_line(lead + text, width, lead) if len(lead + text) > width \
+        else [lead + text]
+
+
+def _join_items(first, items, glue, more, width):
+    """Aufzaehlung (z. B. "A 50, B 20") auf Zeilen verteilen; ", " bleibt am
+    Zeilenende, " + " kommt an den Anfang der Folgezeile."""
+    lines, current = [], first + items[0]
+    for item in items[1:]:
+        if len(current + glue + item + glue.rstrip(" +")) <= width:
+            current += glue + item
+        elif glue.startswith(" "):
+            lines.append(current)
+            current = more + glue.lstrip() + item
+        else:
+            lines.append(current + glue.rstrip())
+            current = more + item
+    lines.append(current)
+    return lines
+
+
+def _pc_table(heads, rows, widths):
+    """Tabelle am PC: Spalten wie vorgegeben breit; wird eine Zeile breiter
+    als CALC_EXPLAIN_PC_WIDTH, nur so breit wie noetig."""
+    def build(sizes):
+        return [("  " + " ".join([cell.ljust(size) for cell, size in zip(cells, sizes)]
+                                 + [cells[-1]])).rstrip() for cells in [heads] + rows]
+    lines = build(widths)
+    if max(len(line) for line in lines) > CALC_EXPLAIN_PC_WIDTH:
+        lines = build([max(len(cells[i]) for cells in [heads] + rows)
+                       for i in range(len(widths))])
+    return lines
+
+
+def _handy_address(caption, address, indent="  "):
+    """Beschriftung und Adresse am Handy: passt beides nicht in eine Zeile,
+    kommt die Adresse eingerueckt in die naechste; passt sie dann noch
+    nicht (IPv6), wird nach einem Doppelpunkt etwa in der Mitte getrennt."""
+    width = CALC_EXPLAIN_HANDY_WIDTH
+    if len(caption + address) <= width:
+        return [caption + address]
+    head = [caption.rstrip()] if caption.strip() else []
+    lead = indent if caption.strip() else caption
+    if len(lead + address) <= width:
+        return head + [lead + address]
+    cut = address.find(":", len(address) // 2 - 3) + 1 or len(address) // 2
+    return head + _handy_fit([lead + address[:cut], indent + address[cut:]])
+
+
 def raid_values(level, disks, size):
     """Kennwerte eines RAID als Woerterbuch (brutto, netto, verlust,
     effizienz in Prozent, toleranz) oder None, wenn die Plattenzahl fuer das
