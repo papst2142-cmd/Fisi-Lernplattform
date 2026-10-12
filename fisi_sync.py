@@ -46,9 +46,10 @@ import urllib.error
 import urllib.request
 
 from fisi_core import (CLOCK_KEY, CLOCK_TOLERANCE, CLOCK_VALID, GAME_TABLES,
-                       HISTORY_TABLES, MARKED_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES, RECORD_TABLES, SLOT_TABLES,
-                       SYNC_TABLES, UTC_OFFSET, purge_deleted_runs, apply_question_renames,
-                       clock_deviation, device_now, format_with_zone, plural,
+                       HISTORY_TABLES, MARKED_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
+                       RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, UTC_OFFSET,
+                       purge_deleted_runs, apply_question_renames,
+                       device_now, format_with_zone, offset_minutes, plural,
                        purge_superseded_project_rows, write_error_log)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
@@ -74,6 +75,14 @@ WRITER = "0.62.4"
 # waehlen. Lokal steht es in sync_meta unter CLAMP_PREFIX + Schluessel.
 CLAMP_KEY = "gekappt"
 CLAMP_PREFIX = "gekappt:"
+# Ab 0.62.4: Feld in der Datei und Schluessel in sync_meta - wann (UTC) zuletzt
+# eine Datei gesehen wurde, die ein Geraet vor 0.62.4 geschrieben hat. So
+# lange danach MIXED_HOLD nicht vorbei ist, setzt kein neues Geraet eine
+# Zukunftsmarke aus der Datei auf die Uhrzeit von GitHub: Ein altes Geraet
+# kann sie schon haben, naehme sie immer wieder, und beide luden abwechselnd
+# hoch (Gegenpruefung A-9, F2).
+MIXED_KEY = "mischbetrieb"
+MIXED_HOLD = 7 * 86400
 # Gueltige Marke: Ortszeit, optional Mikrosekunden und Abstand zu UTC
 _MARKER_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(\.\d{1,6})?"
                         r"(?:([+-])(\d{2}):(\d{2}))?$")
@@ -366,7 +375,7 @@ def export_local(db):
         pair = _clamp_pair(meta.get(CLAMP_PREFIX + key))
         if pair:
             clamps[key] = pair
-    return {
+    result = {
         "format": FORMAT,
         WRITER_KEY: WRITER,
         CLAMP_KEY: clamps,
@@ -374,6 +383,45 @@ def export_local(db):
         "markers": markers,
         "tables": tables,
     }
+    if meta.get(MIXED_KEY):
+        result[MIXED_KEY] = meta[MIXED_KEY]
+    return result
+
+
+def _parse_utc(value):
+    """ISO-Zeitpunkt mit Zone als UTC, sonst None."""
+    try:
+        moment = datetime.datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+    return moment.astimezone(datetime.timezone.utc) if moment.tzinfo else None
+
+
+def _mixed_recent(db, now=None):
+    """True, solange die letzte Datei eines Geraets vor 0.62.4 hoechstens
+    MIXED_HOLD her ist (Geraeteuhr, wenn now fehlt)."""
+    seen = _parse_utc(db.get_meta(MIXED_KEY))
+    now = now or device_now().astimezone(datetime.timezone.utc)
+    return seen is not None and (now - seen).total_seconds() <= MIXED_HOLD
+
+
+def _note_mixed(db, remote, deviation):
+    """Merkt sich, ob ein Geraet vor 0.62.4 mit abgleicht (ab 0.62.4), und
+    liefert True, solange das hoechstens MIXED_HOLD her ist. Die Zeit ist die
+    Uhrzeit von GitHub, wenn bekannt, sonst die Geraeteuhr."""
+    now = device_now().astimezone(datetime.timezone.utc)
+    if deviation is not None:
+        now -= datetime.timedelta(seconds=deviation)
+    local = _parse_utc(db.get_meta(MIXED_KEY))
+    if remote is not None and remote.get(WRITER_KEY) is None:
+        local = now
+        db.set_meta(MIXED_KEY, now.isoformat())
+    elif remote is not None:
+        seen = _parse_utc(remote.get(MIXED_KEY))
+        if seen is not None and seen <= now and (local is None or seen > local):
+            local = seen
+            db.set_meta(MIXED_KEY, seen.isoformat())
+    return _mixed_recent(db, now)
 
 
 def parse_marker(value):
@@ -488,7 +536,10 @@ def merge_into_local(db, remote, check_future=True, stats=None):
     # ungueltige Marke wie "x" gilt dann wie dort. Sonst verwuerfe das aeltere
     # Geraet Eintraege, die ein neues behaelt, und beide luden sie abwechselnd
     # hoch (ueber Zeitzonen, die Zeitumstellung und ungueltige Marken).
-    zone = remote.get(WRITER_KEY) is not None
+    # Ebenso, solange ein altes Geraet vor kurzem mitgeschrieben hat
+    # (MIXED_KEY): Sonst fielen z.B. Eintraege eines Geraets mit falscher Uhr
+    # unter eine Zukunftsmarke, die ein altes Geraet festhaelt.
+    zone = remote.get(WRITER_KEY) is not None and not _mixed_recent(db)
     for source in (local_markers, remote_markers):
         for key in _invalid_markers(source, zone):
             del source[key]
@@ -597,14 +648,14 @@ def sync(db, settings=None, device=""):
         sha, remote = fetch_remote(repo, token)
         raw_markers = dict((remote or {}).get("markers") or {}) if remote else {}
         deviation = _clock_deviation()
+        mixed = _note_mixed(db, remote, deviation)
         if deviation is None:
             _log_missing_date()
         else:
-            _correct_own_entries(db, remote, deviation,
-                                 clock_deviation(db.get_meta(CLOCK_KEY)))
+            _correct_own_entries(db, remote, deviation)
             db.set_meta(CLOCK_KEY, json.dumps({"s": round(deviation, 1),
                                                "gemessen": device_now().isoformat()}))
-            clamped = _clamp_future_markers(db, remote, deviation) or clamped
+            clamped = _clamp_future_markers(db, remote, deviation, mixed) or clamped
         if remote:
             received += merge_into_local(db, remote, check_future=False, stats=stats)
         local = export_local(db)
@@ -631,7 +682,7 @@ def sync(db, settings=None, device=""):
     return result
 
 
-def _correct_own_entries(db, remote, deviation, previous):
+def _correct_own_entries(db, remote, deviation):
     """Traegt eine neu gemessene Abweichung der Geraeteuhr in utc_offset der
     eigenen, noch nicht hochgeladenen Eintraege nach (ab 0.62.4). Sie
     entstanden mit derselben falschen Uhr, bevor die Abweichung bekannt war;
@@ -639,14 +690,12 @@ def _correct_own_entries(db, remote, deviation, previous):
     scheinbar spaeter und kaemen zurueck. Eigene Eintraege sind die, die die
     Datei noch nicht kennt. Nur die letzten CLOCK_VALID Sekunden (nach der
     Geraeteuhr): Was aelter ist, kann vor dem Verstellen der Uhr entstanden
-    sein. War schon eine Abweichung bekannt, ist sie bereits enthalten; dann
-    zaehlt nur der Unterschied."""
+    sein. Nur Eintraege, deren Abstand noch der reine Zonen-Abstand ihrer
+    Ortszeit ist: Hat _stamp schon eine Abweichung eingerechnet, bleibt der
+    Eintrag, wie er ist (sonst kaeme sie doppelt hinein)."""
     if abs(deviation) <= CLOCK_TOLERANCE:
         return
-    applied = previous if previous is not None and abs(previous) > CLOCK_TOLERANCE else 0
-    delta = int(round(deviation / 60.0)) - int(round(applied / 60.0))
-    if not delta:
-        return
+    shift = int(round(deviation / 60.0))
     known = _uids(remote) if remote else {}
     since = (device_now() - datetime.timedelta(seconds=CLOCK_VALID)).strftime(
         "%Y-%m-%d %H:%M:%S")
@@ -657,11 +706,22 @@ def _correct_own_entries(db, remote, deviation, previous):
                 if UTC_OFFSET not in SYNC_TABLES.get(table, ()):
                     continue
                 skip = known.get(table, set())
-                rows = conn.execute("SELECT rowid, uid FROM %s WHERE utc_offset IS NOT NULL "
-                                    "AND timestamp >= ?" % table, (since,)).fetchall()
-                ids = [(row[0],) for row in rows if row[1] not in skip]
-                conn.executemany("UPDATE %s SET utc_offset = utc_offset + %d WHERE rowid = ?"
-                                 % (table, delta), ids)
+                rows = conn.execute("SELECT rowid, uid, timestamp, utc_offset FROM %s WHERE "
+                                    "utc_offset IS NOT NULL AND timestamp >= ?" % table,
+                                    (since,)).fetchall()
+                updates = []
+                for rowid, uid, stamp, offset in rows:
+                    if uid in skip:
+                        continue
+                    try:
+                        plain = offset_minutes(datetime.datetime.strptime(
+                            str(stamp)[:19], "%Y-%m-%d %H:%M:%S").astimezone())
+                    except (TypeError, ValueError, OverflowError, OSError):
+                        continue
+                    if offset == plain:
+                        updates.append((plain + shift, rowid))
+                conn.executemany("UPDATE %s SET utc_offset = ? WHERE rowid = ?" % table,
+                                 updates)
     finally:
         conn.close()
 
@@ -679,34 +739,39 @@ def _clamp_pair(value):
     return None
 
 
-def _clamp_future_markers(db, remote, deviation):
+def _clamp_future_markers(db, remote, deviation, mixed=False):
     """Setzt Marken mit Zone, die mehr als CLOCK_TOLERANCE nach der Uhrzeit von
     GitHub liegen, einmal auf diese Uhrzeit S (ab 0.62.4) - lokal und in der
     gelesenen Datei, die danach mit S hochgeladen wird. So nehmen alle Geraete
-    dasselbe S. Eine Zukunftsmarke aus der Datei bleibt, wenn zuletzt ein
-    aelteres Geraet geschrieben hat (Feld "schreiber" fehlt): Es wuerde sie
-    sonst beim naechsten Abgleich wieder hochladen. Marken ohne Zone bleiben
-    (ihre Zone ist unbekannt). Liefert True, wenn eine Marke gesetzt wurde."""
+    dasselbe S. Hat zuletzt ein aelteres Geraet geschrieben (Feld "schreiber"
+    fehlt), wird keine Marke gesetzt, weder in der Datei noch lokal: Das
+    aeltere Geraet naehme sonst beim naechsten Abgleich wieder seine Marke,
+    und beide luden abwechselnd hoch. Marken ohne Zone bleiben (ihre Zone ist
+    unbekannt). mixed (_note_mixed): Eine Zukunftsmarke, die schon in der
+    Datei steht, bleibt; ein altes Geraet kann sie uebernommen haben. Nur eine
+    Marke, die erst auf diesem Geraet steht, wird gesetzt, bevor sie in die
+    Datei kommt. Liefert True, wenn eine Marke gesetzt wurde."""
+    if remote is not None and remote.get(WRITER_KEY) is None:
+        return False
     server = (device_now() - datetime.timedelta(seconds=deviation)).astimezone()
     server_utc = server.astimezone(datetime.timezone.utc).replace(tzinfo=None)
     limit = server_utc + datetime.timedelta(seconds=CLOCK_TOLERANCE)
     value_s = format_with_zone(server)
     remote_markers = (remote or {}).get("markers")
     remote_markers = remote_markers if isinstance(remote_markers, dict) else {}
-    writer_new = remote is None or remote.get(WRITER_KEY) is not None
 
     def future(value):
         parsed = parse_marker(value)
         return bool(parsed and parsed[1] is not None and parsed[1] > limit)
 
-    remote_clamps = (remote or {}).get(CLAMP_KEY) if writer_new else None
+    remote_clamps = (remote or {}).get(CLAMP_KEY)
     remote_clamps = remote_clamps if isinstance(remote_clamps, dict) else {}
     changed = False
     for key in MARKERS:
         remote_value = remote_markers.get(key)
         local_value = db.get_meta(key)
-        if future(remote_value) and not writer_new:
-            continue            # wie bisher, siehe oben
+        if mixed and future(remote_value):
+            continue
         known = _clamp_pair(remote_clamps.get(key))
         own = _clamp_pair(db.get_meta(CLAMP_PREFIX + key))
         # Zwei Geraete haben dieselbe Marke gleichzeitig gesetzt: die fruehere

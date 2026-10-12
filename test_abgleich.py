@@ -23,7 +23,6 @@ Nur unter Linux/macOS (Zeitzone je Prozess ueber TZ).
 Start:  python test_abgleich.py
 """
 
-import base64
 import gzip
 import json
 import os
@@ -32,7 +31,6 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-import threading
 import time
 import unittest
 
@@ -361,6 +359,34 @@ class AbgleichTest(unittest.TestCase):
         """Die Uhr ging schon beim Lernen falsch und wurde beim Abgleich gemessen."""
         self._uhr_vor("a", TWO_H, True)
 
+    def test_03d_messung_aelter_als_ein_tag(self):
+        """Gegenpruefung A-9, F1: Die Abweichung steckt schon im Eintrag (_stamp),
+        die Messung ist beim naechsten Abgleich aber aelter als 24 h. Sie darf
+        nicht ein zweites Mal hinein, sonst faellt der Eintrag unter eine
+        Loeschung, die vor ihm lag."""
+        def zeit(stunden):
+            att.STATE.ctl["datum_versatz"] = stunden * 3600.0
+            a("uhr", stunden * 3600.0 + DAY)
+            b("uhr", stunden * 3600.0)
+
+        a, b = self.geraet("A"), self.geraet("B")
+        zeit(0)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        zeit(22)
+        b("reset_all")
+        b.sync()
+        zeit(23)
+        a("lerne", 1, "x")
+        zeit(25)
+        a.sync()
+        b.sync()
+        for device in (a, b):
+            namen = device.namen()
+            self.assertTrue(ohne(namen, "-vorher"), (device.name, namen))
+            self.assertEqual(namen.get("a-x"), 1, (device.name, namen))
+
     # ------------------------------------------------------------------ 4
     def _zukunftsmarke(self, m_in_datei):
         a, b = self.geraet("A"), self.geraet("B", "UTC")
@@ -530,18 +556,25 @@ class AbgleichTest(unittest.TestCase):
             device("lerne", 3, "vorher")
         self.alle_sync(geraete + [n1], 1)
         pause()
-        loescher = {"alt_uhr_vor": o, "neu_uhr_vor": n1, "neu_richtig_berlin": n1,
-                    "neu_richtig_utc": n2}[fall]
-        if fall.endswith("uhr_vor"):
+        loescher = {"alt_uhr_vor": o, "neu_uhr_vor": n1, "neu_uhr_vor_ohne_datum": n1,
+                    "neu_richtig_berlin": n1, "neu_richtig_utc": n2}[fall]
+        if "uhr_vor" in fall:
             loescher("uhr", DAY)
         loescher("reset_all")
+        # ohne Date-Kopf kommt die Zukunftsmarke ungekappt in die Datei, und
+        # das alte Geraet uebernimmt sie (Gegenpruefung A-9, F2)
+        att.STATE.ctl["ohne_datum"] = fall.endswith("ohne_datum")
         loescher.sync()
+        att.STATE.ctl["ohne_datum"] = False
         pause()
+        zuviel = 0
         for runde in range(3):
             for device in geraete:
                 device("lerne", 2, "r%d" % runde)
+            vorher = commits()
             for device in geraete:
                 device.sync()
+            zuviel += max(0, commits() - vorher - len(geraete))
             pause()
         vorher = commits()
         self.alle_sync(geraete, 3)
@@ -550,13 +583,14 @@ class AbgleichTest(unittest.TestCase):
         for device in geraete:
             device.close()
             self.geraete.remove(device)
-        return behalten, commits() - vorher
+        return behalten, commits() - vorher + zuviel
 
     def test_09_mischbetrieb(self):
         """Neu -> alt (v0.62.3) -> neu: kein Verlust ueber das heutige Mass
         hinaus, kein Hin und Her."""
         alt = self.alter_code()
-        for fall in ("alt_uhr_vor", "neu_uhr_vor", "neu_richtig_berlin", "neu_richtig_utc"):
+        for fall in ("alt_uhr_vor", "neu_uhr_vor", "neu_uhr_vor_ohne_datum",
+                     "neu_richtig_berlin", "neu_richtig_utc"):
             with self.subTest(fall=fall):
                 heute, _ = self._misch(fall, (alt, alt, alt))
                 misch, hochladungen = self._misch(fall, (CODE, alt, CODE))
@@ -565,6 +599,34 @@ class AbgleichTest(unittest.TestCase):
                 self.assertEqual(hochladungen, 0, "Hin und Her")
                 for name, h, m in zip(("N1", "O", "N2"), heute, misch):
                     self.assertGreaterEqual(m, h, "%s verliert mehr als heute" % name)
+
+    def test_09b_ungekappte_marke_im_mischbetrieb(self):
+        """Gegenpruefung A-9, F2: Ein neues Geraet laedt ohne Date-Kopf eine
+        Zukunftsmarke hoch, ein altes uebernimmt sie. Danach darf kein neues
+        Geraet sie mehr kappen, sonst wechselt die Marke bei jeder Runde."""
+        alt = self.alter_code()
+        n1, o, n2 = self.geraet("N1"), self.geraet("O", code=alt), self.geraet("N2", "UTC")
+        for device in (n1, o, n2):
+            device("lerne", 2, "vorher")
+        self.alle_sync([n1, o, n2, n1], 1)
+        n1("uhr", DAY)
+        pause()
+        n1("reset_all")
+        att.STATE.ctl["ohne_datum"] = True
+        n1.sync()
+        att.STATE.ctl["ohne_datum"] = False
+        o.sync()
+        zuviel = 0
+        for runde in range(5):
+            n1("lerne", 1, "r%d" % runde)
+            vorher = commits()
+            for device in (n1, o, n2):
+                device.sync()
+            zuviel += max(0, commits() - vorher - 1)
+            pause()
+        bericht("Test 9b: %d Hochladungen ohne neue Eintraege in 5 Runden" % zuviel)
+        self.assertEqual(zuviel, 0, "Hin und Her")
+        self.stabil([n1, o, n2])
 
     # ------------------------------------------------------------------ 10
     def test_10a_sicherung_zukunftsmarke(self):
