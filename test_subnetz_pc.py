@@ -488,7 +488,9 @@ class PcFehlerTest(PcCase):
         ("ipv4", "aufteilen", {"count": "0"}),
         ("ipv4", "aufteilen", {"net": "2001:db8::/48"}),
         ("ipv4", "bedarf", {"needs": "A 50, B 20"}),
+        ("ipv4", "netzdaten", {"net": "2001:db8::1/64"}),
         ("ipv6", "netzdaten", {"net": "xyz"}),
+        ("ipv6", "netzdaten", {"net": "192.168.1.50/24"}),
         ("ipv6", "aufteilen", {"net": "192.168.10.0/24"}),
         ("ipv6", "aufteilen", {"count": "2,5"}),
     ]
@@ -547,6 +549,39 @@ class PcFehlerTest(PcCase):
         self.assertEqual(self.errors[-1][1],
                          "Im Modus IPv4 bitte ein IPv4-Netz angeben (z. B. 192.168.10.0/24).")
         view["net"].set("192.168.10.0/24")
+
+    def test_netzdaten_falsche_version(self):
+        # Plan 2.3.2 N-M-2 / N-M-3 auch in "Netzdaten" (Abstimmung T3/T4)
+        for mode, value, text in (
+                ("ipv4", "2001:db8::1/64",
+                 "Im Modus IPv4 bitte ein IPv4-Netz angeben (z. B. 192.168.10.0/24)."),
+                ("ipv4", "fe80::1",
+                 "Im Modus IPv4 bitte ein IPv4-Netz angeben (z. B. 192.168.10.0/24)."),
+                ("ipv6", "192.168.1.50/24",
+                 "Im Modus IPv6 bitte ein IPv6-Netz angeben (z. B. 2001:db8:abcd::/48)."),
+                ("ipv6", "10.0.0.0/255.255.255.0",
+                 "Im Modus IPv6 bitte ein IPv6-Netz angeben (z. B. 2001:db8:abcd::/48).")):
+            with self.subTest(mode=mode, value=value):
+                self.errors.clear()
+                self.go(mode, "netzdaten")
+                view = self.sub.views[(mode, "netzdaten")]
+                saved = view["net"].get()
+                self.sub.calc(mode, "netzdaten")
+                self.assertTrue(self.box(mode, "netzdaten"))
+                view["net"].set(value)
+                self.sub.calc(mode, "netzdaten")
+                self.assertEqual([e[1] for e in self.errors], [text])
+                self.assertEqual(self.box(mode, "netzdaten"), "")
+                view["net"].set(saved)
+        # ungueltig bleibt die Meldung von subnet_report (unveraendert)
+        self.errors.clear()
+        self.go("ipv4", "netzdaten")
+        view = self.sub.views[("ipv4", "netzdaten")]
+        view["net"].set("xyz")
+        self.sub.calc("ipv4", "netzdaten")
+        self.assertEqual(self.errors[0][1], str(self._error(fc.subnet_report, "xyz")))
+        view["net"].set("192.168.1.50/24")
+        self.go("ipv4")
 
     @staticmethod
     def _error(func, *args, **kwargs):

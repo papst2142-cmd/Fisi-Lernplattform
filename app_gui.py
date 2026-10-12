@@ -18,6 +18,7 @@ protokolliert und im Dashboard ausgewertet.
 """
 
 import datetime
+import ipaddress
 import os
 import platform
 import queue
@@ -60,7 +61,7 @@ from fisi_core import (  # noqa: E402
     SUBNET_FIELD_NET, SUBNET_MODES, SUBNET_PAGE_BACK, SUBNET_PAGE_FIRST, SUBNET_PAGE_LAST,
     SUBNET_PAGE_NEXT, SUBNET_PAGE_OF, SUBNET_SUBTITLE, SUBNET_TITLE, SUBNET_VIEWS,
     de_int, hosts_explain, hosts_report, read_number, split_explain, split_network,
-    split_report, subnet_by_hosts,
+    split_report, subnet_by_hosts, subnet_parse,
 )
 import fisi_core  # noqa: E402  (ab 0.63: neuere Kern-Teile ueber getattr)
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
@@ -4319,6 +4320,12 @@ class SubnetCalc:
         try:
             if key == "netzdaten":
                 text = subnet_report(net)
+                # Plan 2.3.2: Netz der anderen Version -> N-M-2 bzw. N-M-3
+                # (Wortlaut aus dem Kern: subnet_parse mit der Version des
+                # Schalters; das Netz hat hier immer einen Praefix)
+                found = ipaddress.ip_network(net.strip(), strict=False)
+                if found.version != version:
+                    subnet_parse(str(found), version)
                 details = subnet_core("ipv6_details") if mode == "ipv6" else None
                 if details is not None:
                     text += "".join("\n%-22s: %s" % pair for pair in details(net))
