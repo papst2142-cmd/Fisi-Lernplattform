@@ -4459,13 +4459,16 @@ class CalcView(View):
         # --- Subnetting (ab 0.63 mit Schalter IPv4/IPv6, Plan 0.63 Abschnitt 4) --
         subnet = Card(layout, title=SUBNET_TITLE, accent=C["accent"],
                       subtitle=SUBNET_SUBTITLE["ipv4"])
-        subnet.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        # Ab 0.63 ueber beide Spalten (Design-Aenderung zur Abnahme): die
+        # PC-Rechenwege und Tabellen sind bis 75 Zeichen breit, eine halbe
+        # Spalte fasst nur 61 bis 63 (gemessen); RAID steht darunter
+        subnet.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.subnet = SubnetCalc(subnet)
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
                     subtitle="Nutzkapazität, Verlust, Effizienz")
-        raid.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        raid.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         make_label(raid.body, "RAID-Level", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
         self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
@@ -4493,7 +4496,7 @@ class CalcView(View):
         # --- Bildschirm-Datenvolumen ---------------------------------------
         screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
                       subtitle="Pixel, Farbtiefe, Datenrate")
-        screen.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        screen.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
 
         screen_grid = transparent_frame(screen.body)
         screen_grid.pack(anchor="w", fill="x")
@@ -4533,7 +4536,7 @@ class CalcView(View):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
         und Uebungsaufgaben. Formeln und Quellen in fisi_core."""
         ups = Card(layout, title=UPS_TITLE, accent=C["orange"], subtitle=UPS_SUBTITLE)
-        ups.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        ups.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         columns = transparent_frame(ups.body)
         columns.pack(anchor="w", fill="x")
         self.ups_entries = {}

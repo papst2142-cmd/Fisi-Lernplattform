@@ -279,6 +279,12 @@ class PcAufbauTest(PcCase):
         self.assertFalse(sub.built("ipv6") and self.app.preloader.mode == "aus")
         self.assertTrue(sub.views[("ipv4", "netzdaten")]["frame"].winfo_ismapped())
 
+    def test_0_volle_breite(self):
+        # Design-Aenderung zur Abnahme: Karte ueber beide Spalten, RAID darunter
+        self.assertEqual(int(self.sub.card.grid_info()["columnspan"]), 2)
+        raid = self.view.txt_raid.master.master
+        self.assertEqual(int(raid.grid_info()["row"]), 1)
+
     def test_1_beschriftungen(self):
         def texts(widget):
             found = []
