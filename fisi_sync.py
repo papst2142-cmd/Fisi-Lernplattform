@@ -42,8 +42,11 @@ import gzip
 import http.client
 import json
 import re
+import socket
 import sqlite3
+import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from fisi_core import (CLOCK_KEY, CLOCK_TOLERANCE, CLOCK_VALID, GAME_TABLES,
@@ -232,6 +235,8 @@ def _request(method, url, token, body=None, accept="application/vnd.github+json"
         headers["Content-Type"] = "application/json"
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
+        if not _resolved_in_time(url):
+            raise OSError("Namensauflösung hängt")
         with urllib.request.urlopen(request, timeout=TIMEOUT,
                                     context=_ssl_context()) as response:
             body = response.read()
@@ -246,6 +251,31 @@ def _request(method, url, token, body=None, accept="application/vnd.github+json"
         # ab 0.62.5 (B-G-27): z.B. IncompleteRead - Verbindung brach mitten in
         # der Antwort ab
         raise SyncError(MSG_INCOMPLETE)
+
+
+def _resolved_in_time(url):
+    """Ab 0.62.5 (B-G-22): Der timeout von urlopen gilt nicht fuer die
+    Namensaufloesung (DNS). Haengt sie, dauerte ein Fehlversuch deutlich
+    laenger als TIMEOUT. Deshalb loest vorher ein Hilfs-Thread den Namen auf;
+    False, wenn er nach TIMEOUT noch nicht fertig ist (er endet von selbst,
+    sobald das System aufgibt). Scheitert die Aufloesung schnell, geht es wie
+    bisher weiter (urlopen meldet den Fehler). Mit Proxy loest der Proxy die
+    Namen auf - dann keine Vorab-Aufloesung."""
+    parts = urllib.parse.urlsplit(url)
+    if not parts.hostname or parts.scheme in urllib.request.getproxies():
+        return True
+    port = parts.port or (443 if parts.scheme == "https" else 80)
+
+    def resolve():
+        try:
+            socket.getaddrinfo(parts.hostname, port, 0, socket.SOCK_STREAM)
+        except Exception:
+            pass
+
+    worker = threading.Thread(target=resolve, name="abgleich-dns", daemon=True)
+    worker.start()
+    worker.join(TIMEOUT)
+    return not worker.is_alive()
 
 
 # Ab 0.62.4: Uhrzeit von GitHub aus dem Date-Kopf der letzten Antwort und die
