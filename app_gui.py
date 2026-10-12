@@ -278,22 +278,76 @@ class NumberStepper(ctk.CTkFrame):
 
 
 class PillGroup(ctk.CTkFrame):
-    """Gruppe sich gegenseitig ausschliessender Auswahlknoepfe."""
+    """Gruppe sich gegenseitig ausschliessender Auswahlknoepfe.
 
-    def __init__(self, parent, options, on_change=None, initial=0):
+    Ab 0.63.1 (Plan 0.63.1 Teil 1.2): mit umbrechen=True verteilen sich die
+    Knoepfe bei Bedarf auf mehrere Zeilen (wie am Handy), damit die Gruppe
+    nie breiter als die verfuegbare Breite wird. Erste Zeile so voll wie
+    moeglich, Reihenfolge gleich, Abstand 8 px, Zeilenabstand 8 px. Die
+    Gruppe muss dafuer mit fill="x" gepackt werden. Standard (umbrechen=False)
+    ist unveraendert: alle Knoepfe nebeneinander."""
+
+    def __init__(self, parent, options, on_change=None, initial=0, umbrechen=False):
         super().__init__(parent, fg_color="transparent")
         self.on_change = on_change
         self.buttons = []
         self.values = []
+        self.umbrechen = umbrechen
+        self._wrap_width = None
+        self.rows = []
         for index, (value, label) in enumerate(options):
             button = NeoButton(self, label, kind="pill", height=34,
                                font=F["small_bold"],
                                command=lambda i=index: self.select(i))
-            button.pack(side="left", padx=(0, 8))
+            if not umbrechen:
+                button.pack(side="left", padx=(0, 8))
             self.buttons.append(button)
             self.values.append(value)
         self.current = initial
         self._paint()
+        if umbrechen:
+            # Die Knoepfe liegen frei (place): Die Gruppe verlangt nur die
+            # Breite des breitesten Knopfs und drueckt die Karte so nie
+            # breiter als das Fenster; neu verteilt wird bei jeder
+            # Groessenaenderung der Gruppe (sie fuellt den Elternrahmen).
+            tk.Misc.bind(self, "<Configure>", self._on_wrap_configure, "+")
+            self._wrap(sum(button.winfo_reqwidth() for button in self.buttons)
+                       + self._apply_widget_scaling(8) * len(self.buttons))
+
+    def _on_wrap_configure(self, event):
+        self._wrap(event.width)
+
+    def _wrap(self, width):
+        """Verteilt die Knoepfe auf Zeilen, die in width (Bildschirmpixel)
+        passen. Ein Knopf, der allein breiter ist, bekommt eine eigene Zeile."""
+        width = max(1, int(width))
+        if width == self._wrap_width:
+            return
+        self._wrap_width = width
+        gap = self._apply_widget_scaling(8)
+        rows, row, used = [], [], 0
+        for button in self.buttons:
+            need = button.winfo_reqwidth()
+            if row and used + gap + need > width:
+                rows.append(row)
+                row, used = [], 0
+            used += (gap if row else 0) + need
+            row.append(button)
+        if row:
+            rows.append(row)
+        y = 0
+        for row in rows:
+            x = 0
+            for button in row:
+                # tk.Place direkt: x/y sind schon Bildschirmpixel (die
+                # CTk-Fassung wuerde sie noch einmal skalieren)
+                tk.Place.place_configure(button, x=x, y=y)
+                x += button.winfo_reqwidth() + gap
+            y += max(button.winfo_reqheight() for button in row) + gap
+        self.rows = [[self.buttons.index(button) for button in row] for row in rows]
+        widest = max([button.winfo_reqwidth() for button in self.buttons] or [1])
+        self.configure(width=self._reverse_widget_scaling(float(widest)),
+                       height=self._reverse_widget_scaling(float(max(1, y - gap))))
 
     def _paint(self):
         for index, button in enumerate(self.buttons):
@@ -4020,8 +4074,9 @@ class TrainerPanel(ctk.CTkFrame):
                      subtitle="Zufallsaufgaben mit Selbstkontrolle")
         setup.pack(fill="x")
         make_label(setup.body, "AUFGABENART", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        self.kind_pills = PillGroup(setup.body, TRAINER_KINDS)
-        self.kind_pills.pack(anchor="w", pady=(8, 14))
+        # Ab 0.63.1 bei Bedarf zweizeilig (Plan 0.63.1 Teil 1.2)
+        self.kind_pills = PillGroup(setup.body, TRAINER_KINDS, umbrechen=True)
+        self.kind_pills.pack(anchor="w", fill="x", pady=(8, 14))
         make_label(setup.body, "SCHWIERIGKEIT", font=F["label"], fg=C["muted"]).pack(anchor="w")
         row = transparent_frame(setup.body)
         row.pack(fill="x", pady=(8, 0))
