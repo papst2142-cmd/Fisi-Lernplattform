@@ -3460,6 +3460,17 @@ class GameState:
                 self.profile = {"name": data.get("name", ""),
                                 "aussehen": normalize_appearance(data.get("aussehen"))}
             elif kind in (EV_SOLVED, EV_DEFERRED):
+                # Ab 0.62.5 (B-G-26): Dasselbe Ticket mit derselben Tagesangabe
+                # ein zweites Mal erledigt (offline auf zwei Geraeten gespielt,
+                # dann abgeglichen) zaehlt nur einmal - das erste gilt. Ohne
+                # Tagesangabe wird nichts geraten und nichts uebersprungen.
+                once = self.__dict__.setdefault("_counted_once", set())
+                key = (kind, data.get("aufgabe"), data.get("tag"))
+                if kind == EV_SOLVED and isinstance(key[1], str) and key[1] and \
+                        type(key[2]) is int and key[2] > 0:
+                    if key in once:
+                        continue
+                    once.add(key)
                 self._apply_reputation(data.get("reputation") or {})
                 self.money += int(data.get("geld", 0))
                 self._book(today, BOOK_TASKS, data.get("geld", 0))
@@ -3483,6 +3494,16 @@ class GameState:
                         for part_id in data.get("aus_lager") or []:
                             self.used[part_id] = self.used.get(part_id, 0) + 1
             elif kind == EV_DAY_END:
+                # Ab 0.62.5 (B-G-26): Ein zweiter Feierabend mit derselben
+                # Tagesangabe (zweites Geraet, abgeglichen) zaehlt nicht - der
+                # erste gilt mit allem, was er bringt. Feierabende ohne
+                # Tagesangabe zaehlen wie bisher (nicht geraten).
+                once = self.__dict__.setdefault("_counted_once", set())
+                key = (kind, data.get("tag"))
+                if type(key[1]) is int and key[1] > 0:
+                    if key in once:
+                        continue
+                    once.add(key)
                 self.days_done += 1
                 self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
                 self._book(today, BOOK_SALARY, data.get("gehalt", 0))
