@@ -5303,6 +5303,17 @@ class FISIMobileApp:
             self.show_update_dialog(info)
         self.page.update()
 
+    def check_broken_settings(self):
+        """Ab 0.62.5: War einstellungen.json kaputt, einmal beim Start sagen,
+        dass sie ersetzt wurde (Text wie am PC)."""
+        try:
+            notice = fisi_update.broken_settings_notice()
+            if notice:
+                self.info(*notice)
+                self.page.update()
+        except Exception:
+            traceback.print_exc()
+
     def auto_check(self, delay=0):
         if not fisi_update.load_settings().get("auto_check", True):
             return
@@ -5362,6 +5373,7 @@ def main(page: ft.Page):
         return
     app.maybe_start_tour()
     app.maybe_show_notice()
+    app.check_broken_settings()
     app.sync.auto_start()
     app.auto_check(delay=app.AUTO_DELAY)
 
