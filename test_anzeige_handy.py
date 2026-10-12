@@ -19,6 +19,7 @@ Aufruf: python test_anzeige_handy.py
 """
 
 import os
+import re
 import sys
 import types
 import unittest
@@ -56,6 +57,110 @@ def werte(text):
         if pos >= 0 and line[pos + 2:].strip():
             found.append(line[pos + 2:].strip())
     return found
+
+
+def wert_ganz(wert, zeilen):
+    """True, wenn `wert` in aufeinanderfolgenden Zeilen steht und nur an
+    erlaubten Stellen geteilt ist (Plan 4.3): an einem Leerzeichen, nach
+    einem Doppelpunkt (IPv6) oder vor einem Punkt (Tausenderpunkt)."""
+    teile = [line.split(": ", 1)[1].strip() if ": " in line else line.strip()
+             for line in zeilen]
+    for start in range(len(teile)):
+        pos = 0
+        for nr in range(start, len(teile)):
+            teil = teile[nr]
+            if nr > start:
+                if wert.startswith(" ", pos):
+                    pos += 1
+                elif not (teile[nr - 1].endswith(":") or teil.startswith(".")):
+                    break
+            if not wert.startswith(teil, pos):
+                break
+            pos += len(teil)
+            if pos == len(wert):
+                return True
+    return False
+
+
+# Die 13 Adresstyp-Texte aus version-063-kern (fisi_core.py IPV6_TYPES,
+# IPV6_TYPE_REST, IPV6_TYPE_MIXED; K-3..K-15). Abschrift, solange der Kern
+# nicht eingemischt ist; danach prueft test_kern_gleich die Abschrift.
+_ULA = "Unique Local (fc00::/7, RFC 4193)"
+ADRESSTYPEN = [
+    "Unspezifiziert (::/128)", "Loopback (::1/128)", "Multicast (ff00::/8)",
+    "Link-Local (fe80::/10)", "Site-Local (veraltet, RFC 3879)", _ULA,
+    _ULA + ", lokal vergeben, fd00::/8", _ULA + ", L-Bit 0, bisher nicht vergeben",
+    "Dokumentation (2001:db8::/32, RFC 3849)", "Dokumentation (3fff::/20, RFC 9637)",
+    "Global Unicast (2000::/3)",
+    "nicht zugeordnet (laut RFC 4291 als Global Unicast zu behandeln)",
+    "mehrere Adresstypen (Präfix kürzer als Typbereich)",
+]
+# Ausgeschrieben (laengster Fall /128 und Beispiel /64, Plan 4.3)
+AUSGESCHRIEBEN = ["2001:0db8:0000:0000:0000:0000:0000:0001/128",
+                  "2001:0db8:0000:0000:0000:0000:0000:0000/64",
+                  "2001:0db8:abcd:3fff:ffff:ffff:ffff:ffff"]
+# Zeichen je Zeile aus den gemessenen Kastenbreiten des Befunds (innen
+# 294/310/322 px bei 384/400/412) und 7,83 px je Zeichen x Schriftfaktor
+BREITEN = {"gross_384": 32, "gross_400": 34, "gross_412": 35,
+           "sehr_gross_384": 28, "sehr_gross_400": 30, "sehr_gross_412": 31}
+
+
+def ipv6_text(ausgeschrieben, typ):
+    return "%-22s: %s\n%-22s: %s" % ("Ausgeschrieben", ausgeschrieben, "Adresstyp", typ)
+
+
+class Plan43Test(unittest.TestCase):
+    """Erweiterung Hauptsitzung (Plan 4.3, G-12): Wert, der auch in eigener
+    Zeile nicht passt, bricht an erlaubten Stellen um."""
+
+    def test_plan_beispiele(self):
+        self.assertEqual(ui.fit_lines(ipv6_text(AUSGESCHRIEBEN[2], "x"), 28).split("\n")[:3],
+                         ["Ausgeschrieben:", "  2001:0db8:abcd:3fff:", "  ffff:ffff:ffff:ffff"])
+        self.assertEqual(ui.fit_lines(ipv6_text(AUSGESCHRIEBEN[1], "x"), 28).split("\n")[:3],
+                         ["Ausgeschrieben:", "  2001:0db8:0000:0000:",
+                          "  0000:0000:0000:0000/64"])
+        # grosse Zahl: vor einem Tausenderpunkt, Punkt beginnt die Zeile
+        zahl = "Adressen gesamt       : 18.446.744.073.709.551.616"
+        self.assertEqual(ui.fit_lines(zahl, 20).split("\n"),
+                         ["Adressen gesamt:", "  18.446.744.073.709", "  .551.616"])
+        # Text an Leerzeichen
+        self.assertEqual(ui.fit_lines(ipv6_text("x", ADRESSTYPEN[7]), 28).split("\n")[1:],
+                         ["Adresstyp:", "  Unique Local (fc00::/7,",
+                          "  RFC 4193), L-Bit 0, bisher", "  nicht vergeben"])
+        # "::" bleibt zusammen, IPv4 wird nie an Punkten geteilt
+        self.assertEqual(ui.fit_lines("A : 2001:db8:85a3::", 12).split("\n"),
+                         ["A:", "  2001:db8:", "  85a3::"])
+        self.assertEqual(ui.fit_lines("Maske : 255.255.255.192", 10).split("\n"),
+                         ["Maske:", "  255.255.255.192"])
+
+    def test_13_adresstypen_und_ausgeschrieben_bei_gemessenen_breiten(self):
+        for name, zeichen in sorted(BREITEN.items()):
+            for typ in ADRESSTYPEN:
+                for lang in AUSGESCHRIEBEN:
+                    zeilen = ui.fit_lines(ipv6_text(lang, typ), zeichen).split("\n")
+                    self.assertTrue(all(len(line) <= zeichen for line in zeilen),
+                                    (name, typ, lang, zeilen))
+                    self.assertTrue(wert_ganz(lang, zeilen), (name, lang, zeilen))
+                    self.assertTrue(wert_ganz(typ, zeilen), (name, typ, zeilen))
+                    # Fortsetzungen mit 2 Leerzeichen Einzug
+                    self.assertTrue(all(line.startswith("  ") for line in zeilen
+                                        if not line.endswith(":")
+                                        or line.startswith("  ")), zeilen)
+        # und bei 28 Zeichen (Auftrag): Kasten ohne "→ wischen"
+        for typ in ADRESSTYPEN:
+            box = ui.read_box("", mono=True, fit=True)
+            box._box_sized(types.SimpleNamespace(width=28 * 10.0 + 30))
+            box._char_width = 10.0
+            ui.set_box(box, ipv6_text(AUSGESCHRIEBEN[0], typ))
+            self.assertEqual(box.zeichen, 28)
+            self.assertFalse(box.hint.visible, (typ, box.data.value))
+
+    def test_kern_gleich(self):
+        if not hasattr(fc, "IPV6_TYPES"):
+            self.skipTest("Kern (version-063-kern) noch nicht eingemischt")
+        kern = [text for _b, _l, text in fc.IPV6_TYPES] + [fc.IPV6_TYPE_REST,
+                                                           fc.IPV6_TYPE_MIXED]
+        self.assertEqual(sorted(kern), sorted(ADRESSTYPEN))
 
 
 class FitLinesTest(unittest.TestCase):
@@ -109,34 +214,38 @@ class FitLinesTest(unittest.TestCase):
 
     def test_usv_12500_w(self):
         neu = ui.fit_lines(beispiele()["usv"], 28).split("\n")
-        self.assertEqual(neu[neu.index("Last:") + 1],
-                         "  12.500 W / 13.889 VA (Leistungsfaktor 0,9)")
-        # eingerueckte Zeilen behalten ihren Einzug
-        self.assertIn("  nein  Auslastung Wirkleistung:", neu)
-        self.assertIn("    12.500 W von 900 W = 1.388,9 %", neu)
-        # zu lang auch allein: bleibt ganz (dann zeigt der Kasten "→ wischen")
-        self.assertTrue(any(len(line) > 28 for line in neu))
+        start = neu.index("Last:")
+        self.assertEqual(neu[start + 1:start + 3],
+                         ["  12.500 W / 13.889 VA", "  (Leistungsfaktor 0,9)"])
+        # eingerueckte Zeilen behalten ihren Einzug, auch die Fortsetzung
+        start = neu.index("  nein  Auslastung Wirkleistung:")
+        self.assertEqual(neu[start + 1:start + 3],
+                         ["    12.500 W von 900 W =", "    1.388,9 %"])
+        # Zahl und Einheit bleiben zusammen
+        self.assertIn("  288,00 Wh", neu)
+        self.assertEqual(neu[-2:], ["    0,9 min, gewünscht", "    45 min"])
+        # zu lang bleiben nur Beschriftungen (dann "→ wischen")
+        self.assertTrue(all(len(line) <= 28 or line.endswith(":") for line in neu), neu)
 
     def test_kein_wert_geteilt_jede_zeile_passt_oder_hinweis(self):
-        """Fuer jede Breite 6..70: jeder Wert steht ganz in einer Zeile, die
-        Zeilen ohne Beschriftung bleiben gleich, und jede Zeile ist hoechstens
-        so lang wie der Kasten - sonst ist sie ein einzelner Wert, der auch
-        allein nicht passt (dann muss der Hinweis an sein, FitBoxTest)."""
+        """Fuer jede Breite 6..70: jeder Wert steht ganz oder nur an erlaubten
+        Stellen geteilt in aufeinanderfolgenden Zeilen (Plan 4.3), und jede
+        Zeile ist hoechstens so lang wie der Kasten - sonst ist sie ein
+        einzelnes, nicht teilbares Wort/Stueck oder eine Beschriftung (dann
+        muss der Hinweis an sein, FitBoxTest)."""
         for name, text in beispiele().items():
             alt = text.split("\n")
             for zeichen in range(6, 71):
                 neu = ui.fit_lines(text, zeichen).split("\n")
-                rest = list(neu)
                 for wert in werte(text):
-                    treffer = [line for line in rest if line.endswith(wert)]
-                    self.assertTrue(treffer, (name, zeichen, wert))
-                    rest.remove(treffer[0])
+                    self.assertTrue(wert_ganz(wert, neu), (name, zeichen, wert))
                 for line in neu:
                     if len(line) <= zeichen:
                         continue
                     stripped = line.strip()
                     self.assertTrue(
-                        stripped in werte(text) or line in alt
+                        " " not in stripped or line in alt
+                        or re.match(r"^\S*\d \S{1,4}$", stripped)
                         or stripped.endswith(":"),
                         (name, zeichen, line))
                 # nichts geht verloren, nichts kommt hinzu (ausser Umbruch/Einzug)
@@ -255,8 +364,13 @@ class FitBoxTest(unittest.TestCase):
         finally:
             ui.set_font_factor(alt)
         self.assertEqual(box.zeichen, 28)
-        self.assertIn("Letzte Adresse:\n  2001:db8:85a3:0:ffff:ffff:ffff:ffff",
+        # IPv6 bricht jetzt nach einem Doppelpunkt (Plan 4.3) ...
+        self.assertIn("Letzte Adresse:\n  2001:db8:85a3:0:\n  ffff:ffff:ffff:ffff",
                       box.data.value)
+        self.assertFalse(box.hint.visible)
+        # ... nur ein unteilbarer Wert laesst den Hinweis stehen
+        ui.set_box(box, "Pruefsumme            : " + "A1B2C3D4E5" * 3)
+        self.assertIn("Pruefsumme:\n  " + "A1B2C3D4E5" * 3, box.data.value)
         self.assertTrue(box.hint.visible)
         verlauf = box.box.foreground_decoration
         self.assertIsNotNone(verlauf)
@@ -275,8 +389,7 @@ class FitBoxTest(unittest.TestCase):
                 self.assertEqual(box.hint.visible, not passt, (name, breite))
                 self.assertEqual(box.box.foreground_decoration is not None, not passt)
                 for wert in werte(text):
-                    self.assertTrue(any(line.endswith(wert) for line in zeilen),
-                                    (name, breite, wert))
+                    self.assertTrue(wert_ganz(wert, zeilen), (name, breite, wert))
 
     def test_schaetzung_vor_messung_eher_knapp(self):
         # Vor der Textmessung: Schaetzung 0,62 je Schriftgroesse, nie mehr

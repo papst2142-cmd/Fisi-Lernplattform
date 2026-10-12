@@ -10,7 +10,9 @@ schmale Bildschirme gebaut. Alles mit Flet-Bordmitteln, ohne Pillow.
 
 import calendar
 import datetime
+import itertools
 import math
+import re
 
 import flet as ft
 import flet.canvas as cv
@@ -718,12 +720,88 @@ def _fit_sentence(line, zeichen):
     return rows
 
 
+# Ab 0.63 (Plan 4.3, G-12): grosse Zahl mit Tausenderpunkten
+_FIT_NUMBER = re.compile(r"^\d{1,3}(?:\.\d{3})+(?:,\d+)?$")
+
+
+_FIT_UNIT = re.compile(r"^(?:%|[A-Za-zÄÖÜäöü/]{1,4})[,;)]?$")
+
+
+def _fit_pieces(word):
+    """Bruchstellen eines Wortes, das allein nicht passt (Plan 4.3):
+    IPv6 (enthaelt ':') nach einem Doppelpunkt ("::" bleibt zusammen),
+    grosse Zahl VOR einem Tausenderpunkt (Punkt beginnt die neue Zeile).
+    Sonst keine Bruchstelle."""
+    if ":" in word:
+        return [piece for piece in re.split(r"(?<=:)(?=[^:])", word) if piece]
+    groups = word.split(".")
+    if _FIT_NUMBER.match(word) and not (len(groups) == 4 and
+                                        all(int(group) <= 255 for group in groups)):
+        # (vier Gruppen bis 255 sehen aus wie eine IPv4-Adresse: nie teilen)
+        return [piece for piece in re.split(r"(?=\.)", word) if piece]
+    return [word]
+
+
+def _fit_balanced(pieces, room):
+    """Stuecke (ohne Trenner) auf moeglichst wenige Zeilen <= room verteilen,
+    bei gleicher Zeilenzahl moeglichst gleich lang ("etwa in der Mitte")."""
+    for count in range(1, len(pieces) + 1):
+        best = None
+        for cuts in itertools.combinations(range(1, len(pieces)), count - 1):
+            bounds = (0,) + cuts + (len(pieces),)
+            rows = ["".join(pieces[a:b]) for a, b in zip(bounds, bounds[1:])]
+            longest = max(len(row) for row in rows)
+            if longest <= room and (best is None or longest < best[0]):
+                best = (longest, rows)
+        if best:
+            return best[1]
+    return None
+
+
+def _fit_value(value, room):
+    """Wert auf Zeilen zu hoechstens `room` Zeichen verteilen (Plan 4.3):
+    an Leerzeichen, ein zu langes Wort an seinen Bruchstellen (_fit_pieces).
+    Eine allein stehende IPv6-Adresse bricht etwa in der Mitte. Was sich so
+    nicht teilen laesst, bleibt ganz (dann "→ wischen"); Werte mit Spalten
+    (doppelte Leerzeichen) bleiben unveraendert."""
+    if room <= 0 or len(value) <= room or "  " in value:
+        return [value]
+    words = []
+    for word in value.split(" "):
+        # Zahl und Einheit bleiben zusammen ("288,00 Wh", "45 min", "925,9 %")
+        if words and words[-1][-1:].isdigit() and _FIT_UNIT.match(word):
+            words[-1] += " " + word
+        else:
+            words.append(word)
+    if len(words) == 1 and ":" in value and " " not in value:
+        rows = _fit_balanced(_fit_pieces(value), room)
+        if rows:
+            return rows
+    rows = []
+    current = ""
+    for word in words:
+        pieces = _fit_pieces(word) if len(word) > room else [word]
+        for number, piece in enumerate(pieces):
+            glue = " " if number == 0 and current else ""
+            if current and len(current) + len(glue) + len(piece) > room:
+                rows.append(current)
+                current = piece
+            else:
+                current += glue + piece
+    rows.append(current)
+    return rows
+
+
 def fit_lines(text, zeichen):
     """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
     Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
     "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
-    z.B. Datenmenge in Byte/KiB/MiB) ruecken mit. Werte werden nie geteilt:
-    Passt ein Wert auch so nicht, bleibt er ganz (der Kasten wischt dann).
+    z.B. Datenmenge in Byte/KiB/MiB) ruecken mit. Passt der Wert auch dann
+    nicht (Plan 4.3): IPv6 bricht nach einem Doppelpunkt etwa in der Mitte,
+    eine grosse Zahl vor einem Tausenderpunkt, Text an Leerzeichen; die
+    Fortsetzung steht wieder mit 2 Leerzeichen Einzug. Sonst wird nie mitten
+    im Wort geteilt; was dann noch zu lang ist, bleibt ganz (der Kasten
+    wischt, "→ wischen").
     Ein reiner Satz ohne "Beschriftung : Wert" (z.B. "Noch keine Berechnung
     durchgeführt.") bricht an Leerzeichen um, wenn er nicht passt; einzelne
     Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
@@ -741,7 +819,7 @@ def fit_lines(text, zeichen):
         if parts is None or not parts[1]:
             # keine Beschriftung (oder Folgezeile ohne Kopf)
             if parts is not None and len(line) > zeichen:
-                out.append("  " + parts[2])
+                out.extend("  " + row for row in _fit_value(parts[2], zeichen - 2))
             elif parts is None and len(line) > zeichen:
                 out.extend(_fit_sentence(line, zeichen))
             else:
@@ -761,7 +839,9 @@ def fit_lines(text, zeichen):
             continue
         indent, label, _value = parts
         out.append("%s%s:" % (indent, label))
-        out.extend("%s  %s" % (indent, item_parts[2]) for _item, item_parts in block)
+        for _item, item_parts in block:
+            out.extend("%s  %s" % (indent, row)
+                       for row in _fit_value(item_parts[2], zeichen - len(indent) - 2))
     return "\n".join(out)
 
 
