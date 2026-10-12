@@ -19,7 +19,6 @@ Start:  xvfb-run -a python test_subnetz_pc.py
 """
 
 import os
-import re
 import shutil
 import subprocess
 import sys
