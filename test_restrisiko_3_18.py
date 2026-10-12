@@ -71,6 +71,14 @@ class RestrisikoTest(unittest.TestCase):
         for device in self.geraete:
             device("uhr", stunden * HOUR + uhren.get(device.name, 0.0))
 
+    def ruhe(self, geraete):
+        """Zwei Runden nur Abgleich: nichts mehr hochladen (kein Hin und Her)."""
+        vorher = ta.commits()
+        for _ in range(2):
+            for device in geraete:
+                device.sync()
+        self.assertEqual(ta.commits() - vorher, 0, "Hin und Her")
+
     def ergebnis(self, text, geraete, etikett):
         zahlen = {d.name: d.namen().get(etikett, 0) for d in geraete}
         ta.bericht("%s: %s = %s" % (text, etikett, zahlen))
@@ -91,6 +99,7 @@ class RestrisikoTest(unittest.TestCase):
         marke_a = a.marke()
         for device in (a, b, a, b):
             device.sync()
+        self.ruhe((a, b))
         for device in (a, b):
             self.assertTrue(ta.ohne(device.namen(), "-vorher"), device.name)
         return marke_a, self.ergebnis("Risiko 3, Uhr vorher %+gs, gestellt nach %g h, "
@@ -129,10 +138,40 @@ class RestrisikoTest(unittest.TestCase):
         a("lerne", 2, "nach")                   # NACH der Loeschung
         for device in (a, b, a):
             device.sync()
+        self.ruhe((a, b))
         for device in (a, b):
             self.assertTrue(ta.ohne(device.namen(), "-vorher"), device.name)
         zahlen = self.ergebnis("Risiko 3, eigener Eintrag nach dem Stellen", (a, b), "a-nach")
         self.assertEqual(zahlen, {"A": 2, "B": 2})
+
+    def test_risiko_3_mischbetrieb(self):
+        """Wie Risiko 3, dazu ein Geraet mit 0.62.3 (O), das vor der Loeschung
+        offline lernt: Die Loeschung greift auch dort, ohne Hin und Her."""
+        alt = ta.code_stand("v0.62.3")
+        if alt is None:
+            if ta.IN_CI:
+                self.fail("Code aus v0.62.3 nicht verfuegbar")
+            self.skipTest("Code aus v0.62.3 nicht verfuegbar (git archive)")
+        a, b = self.geraet("A"), self.geraet("B", "UTC")
+        o = ta.Geraet(self.id().rsplit(".", 1)[-1], "O", "Europe/Berlin", alt)
+        self.geraete.append(o)
+        self.zeit(0, A=TWO_H)
+        for device in (a, b, o):
+            device("lerne", 2, "vorher")
+        for device in (a, b, o, a):
+            device.sync()                       # A misst +2 h
+        self.zeit(3)                            # Uhr von A gestellt
+        o("lerne", 3, "fenster")                # VOR der Loeschung
+        o.sync()
+        ta.pause()
+        a("reset_all")
+        for device in (a, b, o, a, b):
+            device.sync()
+        self.ruhe((a, b, o))
+        for device in (a, b, o):
+            self.assertTrue(ta.ohne(device.namen(), "-vorher"), device.name)
+        zahlen = self.ergebnis("Risiko 3 Mischbetrieb", (a, b, o), "o-fenster")
+        self.assertEqual(zahlen, {"A": 0, "B": 0, "O": 0})
 
     def test_risiko_3_sofort_gestellt(self):
         """Uhr +2 h gemessen und gleich danach richtig gestellt: Die Messung
@@ -158,6 +197,7 @@ class RestrisikoTest(unittest.TestCase):
         a.sync()                                # erste Messung der neuen Abweichung
         b.sync()
         a.sync()
+        self.ruhe((a, b))
         for device in (a, b):
             self.assertTrue(ta.ohne(device.namen(), "-vorher"), device.name)
         return self.ergebnis("Risiko 18, Uhr danach %+gs" % uhr_danach, (a, b), "a-frueh")

@@ -724,6 +724,7 @@ def sync(db, settings=None, device=""):
         if deviation is None:
             _log_missing_date()
         else:
+            _undo_stale_correction(db, remote, raw_markers, deviation)
             _correct_own_entries(db, remote, deviation)
             db.set_meta(CLOCK_KEY, json.dumps({"s": round(deviation, 1),
                                                "gemessen": device_now().isoformat()}))
@@ -768,7 +769,13 @@ def _correct_own_entries(db, remote, deviation):
     Geraeteuhr): Was aelter ist, kann vor dem Verstellen der Uhr entstanden
     sein. Nur Eintraege, deren Abstand noch der reine Zonen-Abstand ihrer
     Ortszeit ist: Hat _stamp schon eine Abweichung eingerechnet, bleibt der
-    Eintrag, wie er ist (sonst kaeme sie doppelt hinein)."""
+    Eintrag, wie er ist (sonst kaeme sie doppelt hinein).
+
+    Ab 0.62.5 (Restrisiko 18): Nur Eintraege, die mit der Abweichung nicht
+    vor die letzte Messung fallen. Was dann davor laege, entstand nach der
+    letzten Messung mit noch richtiger Uhr (die Datei kennt es nicht, es kam
+    also nach dem letzten Hochladen) - es wuerde sonst unter eine Loeschung
+    geschoben, die vor ihm lag."""
     if abs(deviation) <= CLOCK_TOLERANCE:
         return
     # War schon eine Abweichung bekannt, hat _stamp sie eingerechnet. Am
@@ -779,6 +786,7 @@ def _correct_own_entries(db, remote, deviation):
     if known_before is not None and abs(known_before) > CLOCK_TOLERANCE:
         return
     shift = int(round(deviation / 60.0))
+    earliest = _measured_server_time(db)
     known = _uids(remote) if remote else {}
     since = (device_now() - datetime.timedelta(seconds=CLOCK_VALID)).strftime(
         "%Y-%m-%d %H:%M:%S")
@@ -804,8 +812,120 @@ def _correct_own_entries(db, remote, deviation):
                                  for fold in (0, 1)}
                     except (TypeError, ValueError, OverflowError, OSError):
                         continue
-                    if offset in plain:
+                    if offset in plain and (earliest is None or moment - datetime.timedelta(
+                            minutes=offset + shift) >= earliest):
                         updates.append((offset + shift, rowid))
+                conn.executemany("UPDATE %s SET utc_offset = ? WHERE rowid = ?" % table,
+                                 updates)
+    finally:
+        conn.close()
+
+
+def _last_measurement(db):
+    """Letzte gespeicherte Messung der Geraeteuhr (ab 0.62.5): (Abweichung in
+    Sekunden, Geraeteuhr beim Messen in UTC ohne tzinfo), ohne Altersgrenze -
+    oder None."""
+    try:
+        data = json.loads(db.get_meta(CLOCK_KEY))
+        seconds = float(data["s"])
+        measured = _parse_utc(data["gemessen"])
+    except (TypeError, ValueError, KeyError, IndexError):
+        return None
+    if measured is None:
+        return None
+    return seconds, measured.replace(tzinfo=None)
+
+
+def _measured_server_time(db):
+    """Uhrzeit von GitHub bei der letzten Messung (UTC ohne tzinfo) minus
+    CLOCK_TOLERANCE, oder None (ab 0.62.5). Eigene, noch nicht hochgeladene
+    Eintraege und Marken entstanden nicht davor."""
+    previous = _last_measurement(db)
+    if previous is None:
+        return None
+    seconds, measured = previous
+    return measured - datetime.timedelta(seconds=seconds + CLOCK_TOLERANCE)
+
+
+def _undo_stale_correction(db, remote, raw_markers, deviation):
+    """Ab 0.62.5 (Restrisiko 3, Gegenpruefung A-9 F6): Wurde die Uhr seit der
+    letzten Messung gestellt (die neue Abweichung weicht um mehr als
+    CLOCK_TOLERANCE von der alten ab), haben _stamp und die Loeschung bis zu
+    CLOCK_VALID lang noch die alte Abweichung eingerechnet. Eigene neue
+    Marken und eigene, noch nicht hochgeladene Eintraege mit der alten
+    Abweichung werden dann mit der neuen gelesen - nur wenn das zeitlich
+    moeglich ist: nicht vor der letzten Messung und nicht nach jetzt (Uhrzeit
+    von GitHub). Ob vor oder nach dem Stellen gestempelt wurde, ist sonst
+    nicht zu erkennen; die Grenzen schliessen die Faelle aus, in denen es
+    "nach dem Stellen" nicht gewesen sein kann.
+    Eintraege werden dabei nur spaeter gelesen, nie frueher: Frueher koennte
+    einen Eintrag unter eine Loeschung schieben, der mit noch falscher Uhr
+    richtig gestempelt war (Verlust). Datei- und Datenbankformat bleiben."""
+    previous = _last_measurement(db)
+    if previous is None:
+        return
+    old, measured = previous
+    if abs(old) <= CLOCK_TOLERANCE or abs(deviation - old) <= CLOCK_TOLERANCE:
+        return
+    new = deviation if abs(deviation) > CLOCK_TOLERANCE else 0.0
+    utc = datetime.timezone.utc
+    earliest = _measured_server_time(db)
+    latest = (device_now().astimezone(utc).replace(tzinfo=None)
+              - datetime.timedelta(seconds=deviation - CLOCK_TOLERANCE))
+
+    def reread(device_utc):
+        """Geraeteuhr beim Stempeln (UTC) -> Zeitpunkt mit der neuen
+        Abweichung, oder None, wenn die alte dabei nicht galt oder die neue
+        Lesart nicht in die Zeit seit der letzten Messung passt."""
+        if not 0 <= (device_utc - measured).total_seconds() <= CLOCK_VALID:
+            return None
+        moment = device_utc - datetime.timedelta(seconds=new)
+        return moment if earliest <= moment <= latest else None
+
+    for key in MARKERS:
+        value = db.get_meta(key)
+        parsed = parse_marker(value)
+        if not parsed or parsed[1] is None or value == raw_markers.get(key):
+            continue
+        theirs = parse_marker(raw_markers.get(key))
+        if theirs and theirs[1] is not None and theirs[1] >= parsed[1]:
+            continue
+        moment = reread(parsed[1] + datetime.timedelta(seconds=old))
+        if moment is not None:
+            db.set_meta(key, format_with_zone(moment.replace(tzinfo=utc).astimezone()))
+
+    if new >= old:
+        return
+    shift_old, shift_new = int(round(old / 60.0)), int(round(new / 60.0))
+    known = _uids(remote) if remote else {}
+    since = (measured.replace(tzinfo=utc).astimezone()
+             - datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+    conn = sqlite3.connect(db.db_path)
+    try:
+        with conn:
+            for table in MARKED_TABLES:
+                if UTC_OFFSET not in SYNC_TABLES.get(table, ()):
+                    continue
+                skip = known.get(table, set())
+                rows = conn.execute("SELECT rowid, uid, timestamp, utc_offset FROM %s WHERE "
+                                    "utc_offset IS NOT NULL AND timestamp >= ?" % table,
+                                    (since,)).fetchall()
+                updates = []
+                for rowid, uid, stamp, offset in rows:
+                    if uid in skip:
+                        continue
+                    try:
+                        moment = datetime.datetime.strptime(str(stamp)[:19],
+                                                            "%Y-%m-%d %H:%M:%S")
+                        plain = {offset_minutes(moment.replace(fold=fold).astimezone())
+                                 for fold in (0, 1)}
+                    except (TypeError, ValueError, OverflowError, OSError):
+                        continue
+                    base = offset - shift_old
+                    if offset in plain or base not in plain:
+                        continue
+                    if reread(moment - datetime.timedelta(minutes=base)) is not None:
+                        updates.append((base + shift_new, rowid))
                 conn.executemany("UPDATE %s SET utc_offset = ? WHERE rowid = ?" % table,
                                  updates)
     finally:
