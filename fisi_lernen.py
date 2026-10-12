@@ -1049,7 +1049,7 @@ def _split_task(rng, level):
                  "sowie Netzadresse und Broadcast-Adresse des %d. Subnetzes" % number)
     else:
         fields = [("praefix", "Neue Präfixlänge"),
-                  ("adressen", "Adressen je Subnetz (z. B. 2^64)"),
+                  ("adressen", "Adressen je Subnetz (als 2^n)"),
                   ("netz", "Netzadresse des %d. Subnetzes" % number),
                   ("letzte", "Letzte Adresse des %d. Subnetzes" % number)]
         solution = {"adressen": "2^%d" % (width - result["neu"]),
