@@ -1739,6 +1739,65 @@ class RechenwegInhaltTest(unittest.TestCase):
                 self.assertNotIn(verboten, quelle, name)
 
 
+class Z4BeispielTest(unittest.TestCase):
+    """Auflage Z-4 (Freigabe Zwischenplan 0.63): Fehlerfall "passt nicht",
+    VLSM mit unsortierter Eingabe, /31 bzw. /32. Werte hier unabhaengig
+    nachgerechnet (eigene Ganzzahl-Rechnung); die Texte kommen als Literal
+    erst mit Plan-Fassung 3."""
+
+    def flach(self, text):
+        return " ".join(verbinde(text).split())
+
+    def test_vlsm_unsortiert(self):
+        netz, bedarf = "192.168.20.0/24", [("A", 10), ("B", 60), ("C", 25), ("D", 2)]
+        zeilen = "\n".join("%s %d" % e for e in bedarf)
+        eigen = eigen_vergabe(eigen_v4("192.168.20.0"), 24, [b for _n, b in bedarf])
+        r = fc.subnet_by_hosts(netz, zeilen)
+        self.assertEqual(r["reihenfolge"], [1, 2, 0, 3])          # B, C, A, D
+        for i, item in enumerate(r["subnetze"]):
+            self.assertEqual((item["netz"], item["praefix"]), eigen[i])
+        erwartet = {"A": "192.168.20.96/28", "B": "192.168.20.0/26",
+                    "C": "192.168.20.64/27", "D": "192.168.20.112/30"}
+        for i, name in enumerate("ABCD"):
+            self.assertEqual("%s/%d" % (eigen_v4_text(eigen[i][0]), eigen[i][1]),
+                             erwartet[name])
+        for schmal in (False, True):
+            weg = rechenweg("bedarf", netz, zeilen, schmal)
+            netze = adressen(weg, 4, True)[1:]           # ohne Ausgangsnetz
+            self.assertEqual(netze[:4], [erwartet[n] for n in "BCAD"])   # Vergabe
+            self.assertEqual(netze[-4:], [erwartet[n] for n in "ABCD"])  # Eingabe
+            self.assertIn("B 60, C 25, A 10, D 2", self.flach(weg))
+            self.assertIn("140 Adressen", self.flach(weg))
+        bericht = fc.hosts_report(r)
+        self.assertLess(bericht.index("A (10 Hosts)"), bericht.index("B (60 Hosts)"))
+
+    def test_passt_nicht(self):
+        netz, bedarfe = "192.168.10.0/24", [127, 62, 30, 14, 6, 2]
+        eigen = eigen_vergabe(eigen_v4("192.168.10.0"), 24, bedarfe)
+        self.assertEqual(eigen, ("passt nicht", 124, 23))
+        text = "\n".join("N%d %d" % (i, b) for i, b in enumerate(bedarfe))
+        for schmal in (False, True):
+            weg = self.flach(rechenweg("bedarf", netz, text, schmal))
+            self.assertIn("Es fehlen 124 Adressen. Das Ausgangsnetz müsste mindestens "
+                          "/23 sein.", weg)
+            self.assertIn("380", weg)                    # 256+64+32+16+8+4
+            self.assertIn("2^9 = 512", weg)
+
+    def test_31_und_32(self):
+        for netz, anzahl, neu, erste_zwei in (
+                ("192.168.10.0/30", 2, 31, ["192.168.10.0/31", "192.168.10.2/31"]),
+                ("192.168.10.0/30", 4, 32, ["192.168.10.0/32", "192.168.10.1/32"])):
+            eigen = eigen_aufteilen(32, eigen_v4("192.168.10.0"), 30, anzahl)
+            self.assertEqual(eigen["neu"], neu)
+            self.assertEqual(["%s/%d" % (eigen_v4_text(eigen["netz"](i)), neu)
+                              for i in (0, 1)], erste_zwei)
+            for schmal in (False, True):
+                weg = rechenweg("teilen", netz, anzahl, schmal)
+                self.assertEqual(adressen(weg, 4, True)[1:3], erste_zwei)
+                self.assertIn(fc.SUBNET_HINT_31 if neu == 31 else fc.SUBNET_HINT_32,
+                              self.flach(weg))
+
+
 class NetzdatenIPv6Test(unittest.TestCase):
     """Fester Rechenweg "Netzdaten" IPv6 (PC und Handy)."""
 
