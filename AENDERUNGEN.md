@@ -4,6 +4,32 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.62.5
+
+Diese Version geht besser mit Fehlern um: bei einer beschädigten oder
+schreibgeschützten Datenbank, beim Sichern und Einspielen, beim Update und
+beim Abgleich. Im Spiel zählen doppelte Feierabende und Tickets nur noch
+einmal.
+
+Bitte vor dem Update eine Sicherung erstellen.
+
+Spielstand: Hast du auf zwei Geräten ohne Abgleich am selben Spieltag gespielt und danach abgeglichen, wurden Feierabend und gelöste Tickets bisher doppelt gezählt. Das Programm rechnet den Spielstand beim Laden neu. Dabei können sich Geld, Tage und die Zahl der gelösten Tickets in deinem Spielstand verringern. Das ist gewollt: Die doppelt gezählten Einträge werden korrigiert. Notiere dir vor dem Update Geld, Tage und gelöste Tickets deines Spielstands, dann kannst du es danach vergleichen.
+
+- Beschädigte Datenbank: Statt vieler englischer Fehlerfenster erscheint je Fehlerart eine Meldung auf Deutsch. Beim Start prüft das Programm die Datenbank. Ist sie beschädigt, speichert es nichts mehr und lässt die Datei unverändert. Alle Fehler stehen im Fehlerprotokoll.
+- Schreibgeschützter Datenordner: Das Programm meldet es einmal. Am PC steht dann in der Seitenleiste in Rot „Dein Lernfortschritt wird nicht gespeichert: Der Datenordner ist schreibgeschützt.“
+- Abgleich und Sicherung bei beschädigter Datenbank oder schreibgeschütztem bzw. nicht erreichbarem Datenordner: Der Abgleich ist dann ausgesetzt („Der Abgleich ist ausgesetzt. …“), und eine Sicherung lässt sich nicht einspielen. „Sicherung erstellen“ geht weiter.
+- Sicherung erstellen (PC): Ist die Platte voll, bleibt die alte Sicherungsdatei erhalten.
+- Sicherung einspielen: Eine gesperrte oder volle Datenbank und eine beschädigte Sicherungsdatei melden sich jetzt mit einem verständlichen Text. Die Vorschau sagt ehrlich, dass Gelöschtes beim Zusammenführen nicht zurückkommt. Gelöschte Abschlussprojekte zählen nicht mehr mit, und Spielstände heißen wie im Spiel („Platz 1“).
+- Einstellungen: Lässt sich eine Einstellung nicht speichern, springt der Schalter zurück, und eine Meldung erscheint. Ist die Einstellungsdatei beschädigt, ersetzt das Programm sie, hebt die alte als einstellungen.defekt.json auf und sagt es dir einmal. Einen eingerichteten Abgleich musst du dann neu einrichten.
+- Projekt löschen: Die Rückfrage sagt jetzt, dass die Eingaben nur ausgeblendet werden. Am PC wird danach auch ein Abgleich geplant, wie am Handy.
+- Update: Fehler beim Herunterladen erscheinen auf Deutsch. Die heruntergeladene Datei wird mit ihrer Prüfsumme verglichen. Liegt für dein System keine Datei bei, sagt das Update-Fenster das.
+- Linux (AppImage): Startet die neue Version nach einem Update nicht, holt das Programm die bisherige zurück. Das wirkt ab dem nächsten Update.
+- Abgleich: Eine unvollständige Antwort von GitHub und ein abgelehntes Hochladen melden sich mit eigenen Texten. Hängt die Namensauflösung, kommt die Meldung nach 15 Sekunden. Beim Schließen startet kein zweiter Abgleich neben einem laufenden. Am Handy wird der Abgleich-Knopf immer wieder frei.
+- Abgleich und falsche Uhr: Stellst du eine falsch gehende Uhr richtig, rechnet das Gerät die vorher gemessene Abweichung nicht mehr ein, solange das Programm läuft (unter Linux auch nach einem Neustart des Programms). Nach einem Neustart des Geräts gilt das erst nach dem nächsten Abgleich. Gleiche deshalb nach dem Stellen der Uhr einmal von Hand ab. Der Abgleich verschiebt ältere eigene Einträge in weniger Fällen so weit, dass eine Löschung sie trifft.
+
+Bekannt: Der Rückblick im Spiel zählt doppelte Feierabende und Tickets weiter mit.
+Geld, Tage und Tickets oben im Spiel stimmen.
+
 ## 0.62.4
 
 Der Abgleich schützt deinen Lernstand jetzt besser: bei der Zeitumstellung
