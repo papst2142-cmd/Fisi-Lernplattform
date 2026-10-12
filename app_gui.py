@@ -18,6 +18,7 @@ protokolliert und im Dashboard ausgewertet.
 """
 
 import datetime
+import ipaddress
 import os
 import platform
 import queue
@@ -55,7 +56,14 @@ from fisi_core import (  # noqa: E402
     UPS_TASKS, UPS_UNITS, ups_calculate, ups_task_text,
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
+    # ab 0.63 (Plan 0.63 Abschnitt 4): Subnetting mit Schalter IPv4/IPv6
+    CALC_EXPLAIN_SUBNET_V6, SUBNET_DEFAULTS, SUBNET_FIELD_COUNT, SUBNET_FIELD_NEEDS,
+    SUBNET_FIELD_NET, SUBNET_MODES, SUBNET_PAGE_BACK, SUBNET_PAGE_FIRST, SUBNET_PAGE_LAST,
+    SUBNET_PAGE_NEXT, SUBNET_PAGE_OF, SUBNET_SUBTITLE, SUBNET_TITLE, SUBNET_VIEWS,
+    de_int, hosts_explain, hosts_report, read_number, split_explain, split_network,
+    split_report, subnet_by_hosts, subnet_parse,
 )
+import fisi_core  # noqa: E402  (ab 0.63: neuere Kern-Teile ueber getattr)
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -4137,13 +4145,311 @@ class TrainerPanel(ctk.CTkFrame):
         self.show_stats()
 
 
+# Ab 0.63 (Plan 0.63 Abschnitt 4.1, 4.2, 4.6): Karte "Subnetting" mit Schalter
+# IPv4/IPv6 und den Ansichten Netzdaten, Netz aufteilen, Nach Hostbedarf
+# (nur IPv4). Alle Beschriftungen kommen aus fisi_core (eine Quelle fuer PC und
+# Handy). Vorgaben der Netzdaten: wie bisher bzw. das Beispiel aus
+# CALC_EXPLAIN_SUBNET_V6 (Abstimmung T3/T4, 17:55).
+SUBNET_ADDRESS_DEFAULT = {"ipv4": "192.168.1.50/24", "ipv6": "2001:db8:abcd:12::1/64"}
+SUBNET_VERSION = {"ipv4": 4, "ipv6": 6}
+
+
+def subnet_core(name):
+    """Teile des Rechenkerns, die erst mit dem Zweig version-063-kern kommen
+    (ipv6_details, SUBNET_PAGE_JUMP, SUBNET_PAGE_JUMP_FIELD). Fehlen sie,
+    entfaellt nur die jeweilige Zeile bzw. der Seitensprung."""
+    return getattr(fisi_core, name, None)
+
+
+class SubnetCalc:
+    """Die Subnetting-Karte des Rechners. Jeder Modus hat eigene Eingaben,
+    Ergebnisse und Rechenwege; jede Ansicht merkt sich ihr Ergebnis und ihre
+    Seite. Beim Wechsel wird nichts neu gerechnet, der Rechenweg klappt zu.
+    Der IPv4-Teil entsteht beim Oeffnen, der IPv6-Teil beim ersten Wechsel
+    oder vorher verdeckt beim Vorladen (CalcView.prepare)."""
+
+    def __init__(self, card):
+        self.card = card
+        self.mode = "ipv4"
+        self.view_of = {"ipv4": "netzdaten", "ipv6": "netzdaten"}
+        self.mode_frames = {}
+        self.view_pills = {}
+        self.views = {}              # (Modus, Ansicht) -> Widgets und Stand
+        self.mode_pills = PillGroup(card.body, SUBNET_MODES, on_change=self.set_mode)
+        self.mode_pills.pack(anchor="w", pady=(0, 10))
+        self.build_mode("ipv4")
+        self.mode_frames["ipv4"].pack(fill="both", expand=True)
+
+    # -- Aufbau -------------------------------------------------------------
+
+    def built(self, mode):
+        return mode in self.mode_frames
+
+    def build_mode(self, mode):
+        """Baut alle Ansichten eines Modus (verdeckt)."""
+        if mode in self.mode_frames:
+            return False
+        frame = transparent_frame(self.card.body)
+        self.mode_frames[mode] = frame
+        pills = PillGroup(frame, SUBNET_VIEWS[mode],
+                          on_change=lambda key, m=mode: self.set_view(m, key))
+        pills.pack(anchor="w", pady=(0, 14))
+        self.view_pills[mode] = pills
+        for key, _name in SUBNET_VIEWS[mode]:
+            self._build_view(mode, key)
+        self.views[(mode, "netzdaten")]["frame"].pack(fill="both", expand=True)
+        return True
+
+    def _build_view(self, mode, key):
+        frame = transparent_frame(self.mode_frames[mode])
+        view = {"frame": frame, "mode": mode, "key": key, "result": None, "page": 1,
+                "info_open": False}
+        self.views[(mode, key)] = view
+        defaults = SUBNET_DEFAULTS.get((mode, key))
+        make_label(frame, SUBNET_FIELD_NET[mode], font=F["small"],
+                   fg=C["text_dim"]).pack(anchor="w")
+        view["net"] = EntryBox(frame, width=28, value=defaults[0] if defaults
+                               else SUBNET_ADDRESS_DEFAULT[mode])
+        view["net"].pack(anchor="w", pady=(8, 12), fill="x")
+        view["net"].bind("<Return>", lambda _e: self.calc(mode, key))
+        if key == "aufteilen":
+            make_label(frame, SUBNET_FIELD_COUNT, font=F["small"],
+                       fg=C["text_dim"]).pack(anchor="w")
+            view["count"] = EntryBox(frame, width=8, value=defaults[1])
+            view["count"].pack(anchor="w", pady=(8, 12))
+            view["count"].bind("<Return>", lambda _e: self.calc(mode, key))
+        elif key == "bedarf":
+            make_label(frame, SUBNET_FIELD_NEEDS, font=F["small"],
+                       fg=C["text_dim"]).pack(anchor="w")
+            # Eingabetaste = neue Zeile; gerechnet wird nur mit dem Knopf
+            view["needs"] = make_text(frame, height=6)
+            set_text(view["needs"], defaults[1])
+            view["needs"].pack(anchor="w", fill="x", pady=(8, 12))
+        NeoButton(frame, "Berechnen", lambda: self.calc(mode, key),
+                  kind="accent").pack(anchor="w")
+        if key == "netzdaten" and mode == "ipv4":
+            box = make_text(frame, height=9, readonly=True, font=F["mono_small"])
+        else:
+            # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
+            # um; der Kasten waechst mit, statt Zeilen zu verstecken
+            box = make_autogrow_text(frame, min_height=9, max_height=40,
+                                     font=F["mono_small"])
+            box.configure(state="disabled")
+        box.pack(fill="both", expand=True, pady=(14, 0))
+        view["box"] = box
+        if key == "aufteilen":
+            self._build_pager(view)
+        # Rechenweg-Knopf wie bei den anderen Rechnern; der Text kommt erst
+        # beim Aufklappen (zur letzten gueltigen Rechnung bzw. zur Vorgabe)
+        controls = transparent_frame(frame)
+        controls.pack(fill="x", pady=(10, 0))
+        view["controls"] = controls
+        view["info_button"] = NeoButton(controls, "Rechenweg anzeigen",
+                                        lambda: self.toggle_info(mode, key), kind="ghost")
+        view["info_button"].pack(anchor="w")
+        view["info"] = make_autogrow_text(frame, min_height=4, max_height=200,
+                                          font=F["mono_small"])
+        view["info"].configure(state="disabled")
+
+    def _build_pager(self, view):
+        """Blaettern (Plan 2.2 Nr. 8, F-63-9): erst bei mehr als einer Seite."""
+        pager = transparent_frame(view["frame"])
+        view["pager"] = pager
+        buttons = transparent_frame(pager)
+        buttons.pack(anchor="w", pady=(10, 0))
+        view["pager_buttons"] = {}
+        for name, caption in (("first", SUBNET_PAGE_FIRST), ("back", SUBNET_PAGE_BACK),
+                              ("next", SUBNET_PAGE_NEXT), ("last", SUBNET_PAGE_LAST)):
+            button = NeoButton(buttons, caption,
+                               lambda n=name, v=view: self.turn(v, n), kind="ghost",
+                               height=34, font=F["small_bold"])
+            button.pack(side="left", padx=(0, 8))
+            view["pager_buttons"][name] = button
+        row = transparent_frame(pager)
+        row.pack(anchor="w", pady=(8, 0))
+        view["page_label"] = make_label(row, "", font=F["small"], fg=C["text_dim"])
+        view["page_label"].pack(side="left")
+        caption = subnet_core("SUBNET_PAGE_JUMP")
+        view["jump"] = None
+        if caption and subnet_core("SUBNET_PAGE_JUMP_FIELD"):
+            view["jump"] = EntryBox(row, width=8)
+            view["jump"].pack(side="left", padx=(16, 8))
+            view["jump"].bind("<Return>", lambda _e, v=view: self.jump(v))
+            NeoButton(row, caption, lambda v=view: self.jump(v), kind="ghost",
+                      height=34, font=F["small_bold"]).pack(side="left")
+
+    # -- Wechsel (Plan 4.6) ---------------------------------------------------
+
+    def current(self):
+        return self.views[(self.mode, self.view_of[self.mode])]
+
+    def set_mode(self, mode):
+        if mode == self.mode:
+            return
+        self.collapse(self.current())
+        self.mode_frames[self.mode].pack_forget()
+        self.mode = mode
+        self.build_mode(mode)
+        self.mode_frames[mode].pack(fill="both", expand=True)
+        self.mode_pills.select_value(mode, notify=False)
+        self.card.set_subtitle(SUBNET_SUBTITLE[mode])
+        self.focus_first()
+
+    def set_view(self, mode, key):
+        old = self.views[(mode, self.view_of[mode])]
+        if old["key"] == key:
+            return
+        self.collapse(old)
+        old["frame"].pack_forget()
+        self.view_of[mode] = key
+        self.views[(mode, key)]["frame"].pack(fill="both", expand=True)
+        self.focus_first()
+
+    def focus_first(self):
+        try:
+            self.current()["net"].focus_set()
+        except tk.TclError:
+            pass
+
+    # -- Rechnen ---------------------------------------------------------------
+
+    def calc(self, mode, key):
+        view = self.views[(mode, key)]
+        version = SUBNET_VERSION[mode]
+        net = view["net"].get()
+        try:
+            if key == "netzdaten":
+                text = subnet_report(net)
+                # Plan 2.3.2: Netz der anderen Version -> N-M-2 bzw. N-M-3
+                # (Wortlaut aus dem Kern: subnet_parse mit der Version des
+                # Schalters; das Netz hat hier immer einen Praefix)
+                found = ipaddress.ip_network(net.strip(), strict=False)
+                if found.version != version:
+                    subnet_parse(str(found), version)
+                details = subnet_core("ipv6_details") if mode == "ipv6" else None
+                if details is not None:
+                    text += "".join("\n%-22s: %s" % pair for pair in details(net))
+                result = text
+            elif key == "aufteilen":
+                result = split_network(net, view["count"].get(), version=version)
+            else:
+                result = subnet_by_hosts(net, view["needs"].get("1.0", "end-1c"),
+                                         version=version)
+        except InputError as error:
+            self.fail(view, error)
+            return
+        view["result"] = result
+        view["page"] = 1
+        self.show(view)
+        if view["info_open"]:
+            self._fill_info(view)
+
+    def show(self, view):
+        """Ergebnis der Ansicht in den Kasten (ohne neu zu rechnen)."""
+        result = view["result"]
+        if view["key"] == "netzdaten":
+            set_text(view["box"], result)
+        elif view["key"] == "aufteilen":
+            set_text(view["box"], split_report(result, view["page"]))
+            self._paint_pager(view)
+        else:
+            set_text(view["box"], hosts_report(result))
+
+    def fail(self, view, error):
+        """B-D-04 (D-4): Kasten leer, Rechenweg zu, dann die Meldung. Der
+        Rechenweg-Text bleibt bei der letzten gueltigen Rechnung."""
+        set_text(view["box"], "")
+        if "pager" in view:
+            view["pager"].pack_forget()
+        self.collapse(view)
+        messagebox.showerror("Ungültige Eingabe", str(error))
+
+    # -- Blaettern -------------------------------------------------------------
+
+    def _paint_pager(self, view):
+        result = view["result"]
+        pages = result["seiten"]
+        if pages <= 1:
+            view["pager"].pack_forget()
+            return
+        page = view["page"]
+        view["page_label"].configure(text=SUBNET_PAGE_OF % (de_int(page), de_int(pages)))
+        buttons = view["pager_buttons"]
+        buttons["first"].set_enabled(page > 1)
+        buttons["back"].set_enabled(page > 1)
+        buttons["next"].set_enabled(page < pages)
+        buttons["last"].set_enabled(page < pages)
+        if not view["pager"].winfo_manager():
+            view["pager"].pack(anchor="w", fill="x", after=view["box"])
+
+    def turn(self, view, where):
+        result = view["result"]
+        if result is None:
+            return
+        page = {"first": 1, "back": view["page"] - 1, "next": view["page"] + 1,
+                "last": result["seiten"]}[where]
+        self.go(view, page)
+
+    def go(self, view, page):
+        view["page"] = min(max(int(page), 1), view["result"]["seiten"])
+        self.show(view)
+
+    def jump(self, view):
+        if view["result"] is None or view["jump"] is None:
+            return
+        try:
+            page = read_number(view["jump"].get(), subnet_core("SUBNET_PAGE_JUMP_FIELD"),
+                               ganz=True)
+        except InputError as error:
+            # Meldung wie bei den anderen Feldern; die Seite bleibt stehen
+            messagebox.showerror("Ungültige Eingabe", str(error))
+            return
+        self.go(view, page)
+
+    # -- Rechenweg ---------------------------------------------------------------
+
+    def explanation(self, view):
+        """Rechenweg zur letzten gueltigen Rechnung, vorher zur Vorgabe."""
+        mode, key = view["mode"], view["key"]
+        if key == "netzdaten":
+            return CALC_EXPLAIN_SUBNET if mode == "ipv4" else CALC_EXPLAIN_SUBNET_V6
+        result = view["result"]
+        if key == "aufteilen":
+            if result is None:
+                net, count = SUBNET_DEFAULTS[(mode, key)]
+                result = split_network(net, count, version=SUBNET_VERSION[mode])
+            return split_explain(result)
+        if result is None:
+            net, needs = SUBNET_DEFAULTS[(mode, key)]
+            result = subnet_by_hosts(net, needs, version=4)
+        return hosts_explain(result)
+
+    def _fill_info(self, view):
+        set_text(view["info"], self.explanation(view))
+
+    def toggle_info(self, mode, key):
+        view = self.views[(mode, key)]
+        if view["info_open"]:
+            self.collapse(view)
+            return
+        self._fill_info(view)
+        view["info"].pack(fill="x", pady=(10, 0), after=view["controls"])
+        view["info_open"] = True
+        view["info_button"].set_text("Rechenweg ausblenden")
+
+    def collapse(self, view):
+        if view["info_open"]:
+            view["info"].pack_forget()
+            view["info_open"] = False
+            view["info_button"].set_text("Rechenweg anzeigen")
+
+
 CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 
 class CalcView(View):
     def build(self):
-        self.info_visible = {"subnet": False, "raid": False, "screen": False,
-                             "ups": False}
+        self.info_visible = {"raid": False, "screen": False, "ups": False}
         self.info_frames = {}
         self.info_buttons = {}
 
@@ -4157,26 +4463,19 @@ class CalcView(View):
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
 
-        # --- Subnetting ---------------------------------------------------
-        subnet = Card(layout, title="Subnetting / VLSM", accent=C["accent"],
-                      subtitle="IPv4 und IPv6")
-        subnet.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        make_label(subnet.body, "IP-Adresse mit Präfix (z.B. 192.168.1.50/24)",
-                   font=F["small"], fg=C["text_dim"]).pack(anchor="w")
-        self.entry_ip = EntryBox(subnet.body, width=28, value="192.168.1.50/24")
-        self.entry_ip.pack(anchor="w", pady=(8, 12), fill="x")
-        self.entry_ip.entry.bind("<Return>", lambda _e: self.calc_subnet())
-        NeoButton(subnet.body, "Berechnen", self.calc_subnet,
-                  kind="accent").pack(anchor="w")
-        self.txt_subnet = make_text(subnet.body, height=9, readonly=True,
-                                    font=F["mono_small"])
-        self.txt_subnet.pack(fill="both", expand=True, pady=(14, 0))
-        self._build_info_toggle(subnet.body, "subnet", CALC_EXPLAIN_SUBNET)
+        # --- Subnetting (ab 0.63 mit Schalter IPv4/IPv6, Plan 0.63 Abschnitt 4) --
+        subnet = Card(layout, title=SUBNET_TITLE, accent=C["accent"],
+                      subtitle=SUBNET_SUBTITLE["ipv4"])
+        # Ab 0.63 ueber beide Spalten (Design-Aenderung zur Abnahme): die
+        # PC-Rechenwege und Tabellen sind bis 75 Zeichen breit, eine halbe
+        # Spalte fasst nur 61 bis 63 (gemessen); RAID steht darunter
+        subnet.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self.subnet = SubnetCalc(subnet)
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
                     subtitle="Nutzkapazität, Verlust, Effizienz")
-        raid.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        raid.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         make_label(raid.body, "RAID-Level", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
         self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
@@ -4204,7 +4503,7 @@ class CalcView(View):
         # --- Bildschirm-Datenvolumen ---------------------------------------
         screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
                       subtitle="Pixel, Farbtiefe, Datenrate")
-        screen.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        screen.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
 
         screen_grid = transparent_frame(screen.body)
         screen_grid.pack(anchor="w", fill="x")
@@ -4237,7 +4536,6 @@ class CalcView(View):
 
         self._build_ups(layout)
 
-        set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
 
@@ -4245,7 +4543,7 @@ class CalcView(View):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
         und Uebungsaufgaben. Formeln und Quellen in fisi_core."""
         ups = Card(layout, title=UPS_TITLE, accent=C["orange"], subtitle=UPS_SUBTITLE)
-        ups.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        ups.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         columns = transparent_frame(ups.body)
         columns.pack(anchor="w", fill="x")
         self.ups_entries = {}
@@ -4322,6 +4620,9 @@ class CalcView(View):
         try:
             result = ups_calculate(mode, fields, self.ups_unit.get())
         except InputError as error:
+            # ab 0.63: B-D-04 (D-4), Kasten und Bild leer
+            set_text(self.txt_ups, "")
+            self.ups_picture.set_picture(None)
             if not quiet:
                 messagebox.showerror("Ungültige Eingabe", str(error))
             return
@@ -4367,11 +4668,16 @@ class CalcView(View):
             frame.pack_forget()
             button.set_text("Rechenweg anzeigen")
 
-    def calc_subnet(self):
-        try:
-            set_text(self.txt_subnet, subnet_report(self.entry_ip.get()))
-        except InputError as error:
-            messagebox.showerror("Ungültige Eingabe", str(error))
+    # Ab 0.63 (Plan 0.63 Abschnitt 4.2): Der IPv6-Teil der Subnetting-Karte
+    # wird beim Vorladen verdeckt mitgebaut, damit der erste Wechsel nicht
+    # baut. Das geschieht im Vorlade-Schritt der Ansicht (prepare) und nicht
+    # als eigener Schritt in der Warteschlange: Ein zusaetzlicher Schritt
+    # aendert Reihenfolge und Ende des Vorladens, auf die sich die
+    # vorhandenen Tests stuetzen (test_vorladen.py). Ohne Vorladen
+    # (FISI_VORLADEN=0) oder wenn der Rechner vorher geoeffnet wird, baut der
+    # erste Wechsel.
+    def prepare(self):
+        return self.subnet.build_mode("ipv6")
 
     def calc_raid(self):
         try:
@@ -4379,6 +4685,7 @@ class CalcView(View):
                                                 self.entry_disks.get(),
                                                 self.entry_size.get()))
         except InputError as error:
+            set_text(self.txt_raid, "")          # ab 0.63: B-D-04 (D-4), Kasten leer
             messagebox.showerror("Ungültige Eingabe", str(error))
 
     def calc_screen(self):
@@ -4388,6 +4695,7 @@ class CalcView(View):
                                                     self.depth_pills.get(),
                                                     self.entry_fps.get()))
         except InputError as error:
+            set_text(self.txt_screen, "")        # ab 0.63: B-D-04 (D-4), Kasten leer
             messagebox.showerror("Ungültige Eingabe", str(error))
 
 

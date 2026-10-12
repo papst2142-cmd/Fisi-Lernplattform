@@ -554,6 +554,9 @@ jobs:
             # Ab 0.61: macOS ehrlich benennen (kein Mac zum Testen)
             echo "**macOS:** Die Mac-Versionen werden automatisch gebaut und auf Mac-Rechnern von GitHub einmal gestartet und geprüft. Auf einem echten Mac von Menschen getestet sind sie nicht."
             echo ""
+            # Ab 0.63: Hinweis zu den Rechtstexten (nur Release-Seite, nicht Update-Fenster)
+            echo "**Hinweis:** Die Lizenz- und Rechtstexte dieses Programms sind keine Rechtsberatung und nicht anwaltlich geprüft."
+            echo ""
             # Ab 0.59.1: Linux-Absatz zum .deb und Hinweis zum Update-Fenster
             # (ebenfalls unter "### Herunterladen", nicht im Update-Fenster)
             VERSION=$(python3 -c "import build; print(build.app_version())")
