@@ -24,6 +24,7 @@ import json
 import math
 import os
 import re
+import sys
 import threading
 
 from fisi_core import (CONTENT_DIR, KARTEIKARTEN, QUIZ_QUESTIONS, SRC_CARD, SRC_QUIZ,
@@ -560,9 +561,19 @@ def item_weight(source, key, values, today=None):
     return weight
 
 
+if sys.version_info >= (3, 9):
+    def _md5(data):
+        """MD5 nur fuer den Tageszufall, nicht fuer Sicherheit (ab 0.62.5,
+        B-B-07, wie fisi_lernen._md5)."""
+        return hashlib.md5(data, usedforsecurity=False)
+else:  # Python 3.8 kennt usedforsecurity noch nicht
+    def _md5(data):
+        return hashlib.md5(data)  # nosec B324 - nur Tageszufall, keine Sicherheit
+
+
 def _day_random(source, key, today):
-    digest = hashlib.md5(("%s|%s|%s" % (today.isoformat(), source, key))
-                         .encode("utf-8")).hexdigest()
+    digest = _md5(("%s|%s|%s" % (today.isoformat(), source, key))
+                  .encode("utf-8")).hexdigest()
     # (0, 1], nie 0 (sonst waere u ** (1 / w) fuer alle Gewichte gleich)
     return (int(digest[:13], 16) + 1) / float(16 ** 13 + 1)
 

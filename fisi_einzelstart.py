@@ -116,7 +116,7 @@ def _lock(handle):
 
 def _try_lock(folder):
     """Liefert die gesperrte Datei, _Busy oder wirft OSError (unbekannt)."""
-    handle = open(os.path.join(folder, LOCK_FILE), "a+")
+    handle = open(os.path.join(folder, LOCK_FILE), "a+", encoding="utf-8")
     try:
         _lock(handle)
     except BaseException:
