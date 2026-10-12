@@ -169,7 +169,9 @@ class SicherungTest(unittest.TestCase):
         merged = {t: {r[0] for r in rows} for t, rows in _all_rows(first).items()}
         for table in SYNC_TABLES:
             self.assertEqual(merged[table], uids_first[table] | uids_second[table], table)
-        self.assertEqual(received, sum(len(u) for u in uids_second.values()))
+        # Ab 0.62.5 (B-G-19): die internen Platz-Zeilen zaehlen nicht mit
+        self.assertEqual(received, sum(len(u) for t, u in uids_second.items()
+                                       if t != "spiel_plaetze"))
         self.assertEqual(fs.merge_backup(first, backup), 0)
         layout = fg.Game(first).layout()
         self.assertEqual(len(layout["plaetze"]), 2)
@@ -195,7 +197,7 @@ class SicherungTest(unittest.TestCase):
         backup = fs.read_backup(fs.create_backup(db, "0.51"))
         game.delete_run(run)
         received = fs.merge_backup(db, backup, restore_runs=[run], device="PC")
-        self.assertEqual(received, 4 + 2)          # Ereignisse, angelegt, umbenannt
+        self.assertEqual(received, 4)   # ab 0.62.5 (B-G-19): nur die Ereignisse
         layout = fg.Game(db).layout()
         self.assertEqual(len(layout["plaetze"]), 1)
         slot, new_run = next(iter(layout["plaetze"].items()))
@@ -221,8 +223,9 @@ class SicherungTest(unittest.TestCase):
         backup = fs.read_backup(fs.create_backup(db, "0.47"))
         db.delete_run(1, LEGACY_RUN)
         found = fs.deleted_runs(db, backup)
-        self.assertEqual(found, [{"lauf": LEGACY_RUN, "name": "Spielstand", "ereignisse": 2}])
-        self.assertEqual(fs.merge_backup(db, backup, [LEGACY_RUN]), 2 + 1)
+        # Ab 0.62.5 (B-G-19): Platzname wie im Spiel, Platz-Zeile zaehlt nicht
+        self.assertEqual(found, [{"lauf": LEGACY_RUN, "name": "Platz 1", "ereignisse": 2}])
+        self.assertEqual(fs.merge_backup(db, backup, [LEGACY_RUN]), 2)
         self.assertEqual(len(fg.Game(db).layout()["plaetze"]), 1)
 
     def test_volle_plaetze_schreiben_nichts(self):

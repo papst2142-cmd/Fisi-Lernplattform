@@ -41,7 +41,7 @@ from fisi_core import (EVENT_TABLES, LEGACY_RUN, OPTIONAL_COLUMNS, SYNC_TABLES,
 from fisi_lernen import GOAL_SETTINGS, goal_settings
 import fisi_sync
 from fisi_sync import FORMAT as SYNC_FORMAT, MARKERS, export_local, merge_into_local
-from fisi_update import load_settings, save_settings
+from fisi_update import _settings_path, load_settings
 
 BACKUP_EXT = ".fisisicherung"
 FORMAT_VERSION = 1
@@ -57,6 +57,9 @@ SLOT_DELETED = "geloescht"
 SLOT_RENAMED = "umbenannt"
 SLOT_NAME_MAX = 24
 FALLBACK_NAME = "Spielstand"
+SLOT_LABEL = "Platz %d"        # wie fisi_game.slot_default_name (ab 0.62.5, B-G-19)
+# Abschlussprojekt: Feld der Loeschmarke wie fisi_projekt.DELETED_FIELD
+PROJECT_DELETED_FIELD = "_geloescht"
 # Bestenliste: Zeilen dieser Art sind erreichte Abzeichen-Stufen
 BADGE_KIND = "erfolg"
 
@@ -73,9 +76,11 @@ BTN_MERGE = "Zusammenführen"
 BTN_REPLACE = "Alles ersetzen"
 BTN_CANCEL = "Abbrechen"
 FILE_TYPE = "Lernstand-Sicherung"   # nur Beschriftung im Dateidialog (ab 0.61)
-PREVIEW_HINT = ("Zusammenführen übernimmt alles, was auf diesem Gerät noch fehlt – "
-                "nichts geht verloren, doppelt wird nichts. Alles ersetzen stellt genau "
-                "den Stand der Sicherung her.")
+# Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck
+PREVIEW_HINT = ("Zusammenführen übernimmt, was auf diesem Gerät noch fehlt – doppelt "
+                "wird nichts. Gelöschtes kommt dabei nicht zurück: Was auf diesem Gerät "
+                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht. "
+                "Alles ersetzen stellt genau den Stand der Sicherung her.")
 DELETED_TITLE = "Gelöschter Spielstand"
 REPLACE_TITLE = "Alles ersetzen"
 REPLACE_CONFIRM_TITLE = "Wirklich ersetzen?"
@@ -86,6 +91,12 @@ SAVE_ERROR_TITLE = "Speichern fehlgeschlagen"
 
 MSG_NOT_BACKUP = "Diese Datei ist keine Sicherung der Lernplattform."
 MSG_DAMAGED = "Die Sicherung ist beschädigt (Prüfsumme stimmt nicht)."
+# Ab 0.62.5 (B-G-14): gueltige Pruefsumme, aber Inhalt mit falschen Datentypen
+MSG_BROKEN = "Die Sicherung ist beschädigt (der Inhalt hat ein unerwartetes Format)."
+# Ab 0.62.5 (B-G-05): Datenbank gesperrt, schreibgeschuetzt oder Platte voll
+MSG_RESTORE_FAILED = ("Die Sicherung ließ sich nicht einspielen. Die Datenbank ist "
+                      "gerade gesperrt (z. B. von einem anderen Programm), schreibgeschützt "
+                      "oder die Platte ist voll. Fehler: %s")
 MSG_NEWER = "Die Sicherung stammt aus Version %s. Bitte zuerst die App aktualisieren."
 MSG_SLOTS_FULL = ("Alle %d Spielstand-Plätze sind belegt. Lösche zuerst einen Platz, "
                   "dann kannst du den Spielstand wiederherstellen." % SLOT_COUNT)
@@ -93,6 +104,17 @@ MSG_SLOTS_FULL = ("Alle %d Spielstand-Plätze sind belegt. Lösche zuerst einen 
 
 class BackupError(Exception):
     """Fehler beim Lesen oder Einspielen - der Text ist fuer die Anzeige gedacht."""
+
+
+# Ab 0.62.5 (B-G-05): diese Fehler fangen PC und Handy beim Einspielen ab
+RESTORE_ERRORS = (BackupError, sqlite3.Error, OSError)
+
+
+def restore_error_text(error):
+    """Meldung zu einem Fehler aus RESTORE_ERRORS (PC und Handy gleich)."""
+    if isinstance(error, BackupError):
+        return str(error)
+    return MSG_RESTORE_FAILED % error
 
 
 # ============================================================================
@@ -208,6 +230,20 @@ def _run_name(slot_rows, run):
     return name or FALLBACK_NAME
 
 
+def _run_label(slot_rows, run):
+    """Ab 0.62.5 (B-G-19): Name eines Durchgangs fuer Rueckfrage und Meldung -
+    der eigene Name des Platzes, sonst wie im Spiel "Platz 1"."""
+    name = _run_name(slot_rows, run)
+    if name != FALLBACK_NAME:
+        return name
+    rows = sorted(slot_rows, key=lambda r: (str(r["timestamp"]), str(r["uid"])))
+    for record in rows:
+        if record["aktion"] == SLOT_CREATED and record["lauf"] == run:
+            slot = int(record["platz"] or 0)
+            return SLOT_LABEL % slot if 1 <= slot <= SLOT_COUNT else FALLBACK_NAME
+    return SLOT_LABEL % 1 if run == LEGACY_RUN else FALLBACK_NAME
+
+
 def _local_slot_rows(db):
     return [{"timestamp": t, "uid": u, "platz": s, "lauf": r, "aktion": a,
              "daten": json.dumps(d)} for t, u, s, r, a, d in db.slot_rows()]
@@ -221,7 +257,19 @@ def _summary_counts(data):
     runs = {r["lauf"] for r in slot_rows if r["aktion"] == SLOT_CREATED and r["lauf"]}
     runs |= {_run_key(r["lauf"]) for r in _records(data, "spiel_ereignisse")}
     badges = sum(1 for r in _records(data, "spiel_bestenliste") if r["art"] == BADGE_KIND)
-    projects = {r["projekt"] for r in _records(data, "abschlussprojekt") if r["projekt"]}
+    # Ab 0.62.5 (B-G-10): geloeschte Projekte (neueste Loeschmarke "1") zaehlen nicht
+    project_marks, projects = {}, set()
+    for record in _records(data, "abschlussprojekt"):
+        if not record["projekt"]:
+            continue
+        projects.add(record["projekt"])
+        if record["feld"] == PROJECT_DELETED_FIELD:
+            key = (str(record["timestamp"]), str(record["uid"]))
+            if record["projekt"] not in project_marks or \
+                    key > project_marks[record["projekt"]][0]:
+                project_marks[record["projekt"]] = (key, record["wert"])
+    projects -= {project for project, (_key, value) in project_marks.items()
+                 if str(value) == "1"}
     return {"lerneintraege": events, "spielstaende": len(runs - deleted),
             "abzeichen": badges, "projekte": len(projects)}
 
@@ -273,7 +321,46 @@ def read_backup(raw_bytes):
     if not isinstance(data, dict) or not isinstance(data.get("tables"), dict) or \
             not isinstance(settings, dict):
         raise BackupError(MSG_NOT_BACKUP)
+    if not _well_formed(data, settings):
+        raise BackupError(MSG_BROKEN)
     return backup
+
+
+_CELL_TYPES = (str, int, float, type(None))
+
+
+def _well_formed(data, settings):
+    """Ab 0.62.5 (B-G-14): passen die Datentypen? Eine von Hand gebaute Datei
+    mit gueltiger Pruefsumme loeste sonst spaeter Programmfehler ohne Meldung
+    aus. Jede Zelle muss in die Datenbank passen (Text, Zahl oder leer)."""
+    columns = data.get("columns", {})
+    markers = data.get("markers", {})
+    if not isinstance(columns, dict) or not isinstance(markers, dict):
+        return False
+    if not all(isinstance(names, list) and all(isinstance(n, str) for n in names)
+               for names in columns.values()):
+        return False
+    if not all(isinstance(value, (str, type(None))) for value in markers.values()):
+        return False
+    for table in SYNC_TABLES:
+        rows = data["tables"].get(table, [])
+        if not isinstance(rows, list):
+            return False
+        for row in rows:
+            if not isinstance(row, list) or \
+                    not all(isinstance(cell, _CELL_TYPES) for cell in row):
+                return False
+    try:
+        # Probelauf der Auswertungen, die Vorschau und Einspielen brauchen
+        _summary_counts(data)
+        slot_rows = _records(data, "spiel_plaetze")
+        _slot_state(slot_rows, True)
+        for record in _records(data, "spiel_ereignisse"):
+            _run_label(slot_rows, _run_key(record["lauf"]))
+        _goal_values(settings)
+    except (TypeError, ValueError, AttributeError, KeyError):
+        return False
+    return True
 
 
 def _german_number(number):
@@ -331,7 +418,7 @@ def deleted_runs(db, backup):
             counts[run] = counts.get(run, 0) + 1
             first.setdefault(run, str(record["timestamp"]))
     slot_rows = _records(data, "spiel_plaetze")
-    return [{"lauf": run, "name": _run_name(slot_rows, run), "ereignisse": counts[run]}
+    return [{"lauf": run, "name": _run_label(slot_rows, run), "ereignisse": counts[run]}
             for run in sorted(counts, key=lambda r: (first[r], r))]
 
 
@@ -370,7 +457,7 @@ def _uid_set(db):
 
 def merge_backup(db, backup, restore_runs=(), device=""):
     """Fuehrt die Sicherung mit dem Lernstand dieses Geraets zusammen (wie ein
-    Abgleich: nichts geht verloren, doppelte Eintraege erkennt die uid). Die
+    Abgleich: doppelte Eintraege erkennt die uid, Loeschmarken gelten). Die
     Tagesziel-Einstellungen dieses Geraets bleiben unberuehrt.
 
     restore_runs: Durchgaenge aus deleted_runs, die als neuer Spielstand auf
@@ -386,9 +473,14 @@ def merge_backup(db, backup, restore_runs=(), device=""):
     if len(free) < len(restore_runs):
         raise BackupError(MSG_SLOTS_FULL)
     before = _uid_set(db)
+    _LAST.update(stats=None, kept=0)
     merge_into_local(db, data)
+    # Ab 0.62.5 (B-G-07): Eintraege der Sicherung, die eine Loeschung auf
+    # diesem Geraet nicht hereingelassen hat (fuer merge_message)
+    stats = fisi_sync.LAST_MERGE
+    _LAST.update(stats=stats, kept=len(stats.gone - before))
     if not restore_runs:
-        return len(_uid_set(db) - before)
+        return _entry_count(_uid_set(db) - before)
 
     events = _records(data, "spiel_ereignisse")
     slot_rows = _records(data, "spiel_plaetze")
@@ -423,22 +515,49 @@ def merge_backup(db, backup, restore_runs=(), device=""):
         conn.commit()
     finally:
         conn.close()
-    return len(_uid_set(db) - before)
+    return _entry_count(_uid_set(db) - before)
+
+
+# Ergebnis des letzten merge_backup fuer merge_message (ab 0.62.5, B-G-07)
+_LAST = {"stats": None, "kept": 0}
+
+
+def _entry_count(new_uids):
+    """Ab 0.62.5 (B-G-19): neue Eintraege ohne die internen Platz-Zeilen
+    (spiel_plaetze: angelegt, umbenannt, geloescht)."""
+    return sum(1 for table, _uid in new_uids if table != "spiel_plaetze")
+
+
+def kept_deleted_text(count):
+    """Ab 0.62.5 (B-G-07): Eintraege der Sicherung, die geloescht bleiben."""
+    if count == 1:
+        return ("1 Eintrag der Sicherung bleibt gelöscht, weil er auf diesem Gerät "
+                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“). Zurück holt ihn "
+                "nur „Alles ersetzen“.")
+    return ("%s der Sicherung bleiben gelöscht, weil sie auf diesem Gerät gelöscht "
+            "wurden (z. B. mit „Alle Lerndaten löschen“). Zurück holt sie nur „Alles "
+            "ersetzen“." % plural(count, "Eintrag", "Einträge"))
 
 
 def merge_message(count, restored=()):
     """Rueckmeldung nach dem Zusammenfuehren (PC und Handy gleich)."""
+    stats = fisi_sync.LAST_MERGE
+    kept = _LAST["kept"] if stats.backup and _LAST["stats"] is stats else 0
     if count:
         text = "Sicherung eingespielt: %s übernommen." % plural(count, "Eintrag", "Einträge")
+    elif kept:
+        text = "Sicherung eingespielt: Nichts übernommen."
     else:
         text = "Sicherung eingespielt: Es fehlte nichts, alles war schon da."
     for name in restored:
         text += " Der Spielstand „%s“ liegt wieder auf einem freien Platz." % name
-    # Ab 0.62.4: was die Loeschmarken der Sicherung bewirkt haben
-    stats = fisi_sync.LAST_MERGE
+    # Ab 0.62.4: was die Loeschmarken der Sicherung bewirkt haben. Ab 0.62.5
+    # getrennt: nicht uebernommen (kept) und hier entfernt (der Rest)
     if stats.backup:
-        if stats.removed:
-            text += " %s." % fisi_sync.removed_text(stats.removed)
+        if kept:
+            text += " " + kept_deleted_text(kept)
+        if stats.removed - kept:
+            text += " %s." % fisi_sync.removed_text(stats.removed - kept)
         for note in stats.notes(backup=True):
             text += " " + note
     return text
@@ -455,7 +574,10 @@ def replace_question(backup):
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
             "Mit eingerichtetem Abgleich kommen beim nächsten Abgleich die Daten aus dem "
-            "Repository wieder dazu, und Löschungen anderer Geräte gelten weiterhin."
+            "Repository wieder dazu. Schon abgeglichene Löschungen gelten weiterhin – "
+            "die anderer Geräte und auch die dieses Geräts (z. B. „Alle Lerndaten "
+            "löschen“): Was sie betreffen, ist nach dem nächsten Abgleich wieder weg. "
+            "Bewahre die Sicherungsdatei deshalb auf."
             % backup_summary(backup)["erstellt"])
 
 
@@ -469,6 +591,50 @@ def _safety_path(folder):
     return path
 
 
+def _remove(path):
+    if path:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def save_file(path, data):
+    """Ab 0.62.5 (B-G-02, B-G-11): Datei sicher schreiben - erst in eine
+    Hilfsdatei im selben Ordner, auf die Platte bringen (fsync), dann an ihren
+    Platz (os.replace). Scheitert das (Platte voll, Absturz), bleibt eine
+    vorhandene Datei unveraendert und keine halbe Datei liegen. Wirft OSError."""
+    temp = path + ".tmp"
+    try:
+        with open(temp, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, path)
+    except OSError:
+        _remove(temp)
+        raise
+
+
+def _settings_temp(settings):
+    """Ab 0.62.5 (B-G-15): Einstellungen in eine Hilfsdatei neben
+    einstellungen.json schreiben (nur fuer den Besitzer lesbar, sie enthaelt
+    den Zugangsschluessel). Zurueck: (Hilfsdatei, Ziel). Wirft OSError."""
+    path = _settings_path()
+    temp = path + ".sicherung.tmp"
+    try:
+        handle = os.fdopen(os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                           "w", encoding="utf-8")
+        with handle:
+            json.dump(settings, handle, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except OSError:
+        _remove(temp)
+        raise
+    return temp, path
+
+
 def replace_all(db, backup, safety_dir, app_version="", device=""):
     """Ersetzt den gesamten Lernstand durch die Sicherung: dieselben Eintraege
     mit derselben uid, dieselben Loeschzeitpunkte, dazu das Tagesziel. Vorher
@@ -480,14 +646,16 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
     path = _safety_path(safety_dir)
     safety = create_backup(db, app_version, device)
     try:
-        with open(path, "wb") as handle:
-            handle.write(safety)
+        save_file(path, safety)      # ab 0.62.5 (B-G-11): keine leere Kopie bei voller Platte
     except OSError as error:
         raise BackupError("Die Sicherheitskopie ließ sich nicht speichern: %s" % error)
 
     data = backup.get("daten") or {}
     markers = {key: value for key, value in (data.get("markers") or {}).items()
                if key in MARKERS and value}
+    settings = load_settings()
+    settings.update(_goal_values(backup.get("einstellungen")))
+    temp = target = None
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -501,16 +669,21 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
                     MARKERS)
         for key, value in markers.items():
             cur.execute("INSERT INTO sync_meta (key, value) VALUES (?, ?)", (key, value))
+        # Ab 0.62.5 (B-G-15): Tagesziel schon vor dem commit in eine
+        # Hilfsdatei, direkt danach an ihren Platz - ein Absturz dazwischen
+        # laesst sonst den neuen Lernstand mit dem alten Tagesziel zurueck
+        temp, target = _settings_temp(settings)
         conn.commit()
-    except sqlite3.Error as error:
+    except (sqlite3.Error, OSError) as error:
         conn.rollback()
+        _remove(temp)
         raise BackupError("Die Sicherung ließ sich nicht einspielen: %s" % error)
     finally:
         conn.close()
-
-    settings = load_settings()
-    settings.update(_goal_values(backup.get("einstellungen")))
-    save_settings(settings)
+    try:
+        os.replace(temp, target)
+    except OSError:
+        _remove(temp)            # sehr selten: Lernstand neu, Tagesziel bleibt alt
     return path
 
 
