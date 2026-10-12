@@ -19229,7 +19229,7 @@
   {
     "cat": "netzwerk",
     "thema": "grundlagen",
-    "q": "Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB betankt. Der Deployment-Server hängt mit 1 Gbit/s am Switch. Wie lange dauert das mindestens (ohne Overhead)?",
+    "q": "Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB betankt. Der Deployment-Server hängt mit 1 Gbit/s am Switch. Wie lange dauert das mindestens (ohne Overhead, 1 GB = 10^9 Byte)?",
     "options": [
       "ca. 28 Minuten 48 Sekunden",
       "ca. 2 Minuten 24 Sekunden",
