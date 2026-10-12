@@ -145,6 +145,41 @@ class FitLinesTest(unittest.TestCase):
                                  (name, zeichen))
 
 
+class SatzTest(unittest.TestCase):
+    """Festlegung Hauptsitzung: reiner Satz bricht an Leerzeichen um."""
+
+    PLATZHALTER = "Noch keine Berechnung durchgeführt."
+
+    def test_platzhalter_zweizeilig(self):
+        # 32 Zeichen: Gross, 384 px (Platzhalter hat 35 Zeichen)
+        self.assertEqual(ui.fit_lines(self.PLATZHALTER, 32),
+                         "Noch keine Berechnung\ndurchgeführt.")
+        self.assertEqual(ui.fit_lines(self.PLATZHALTER, 35), self.PLATZHALTER)
+        self.assertEqual(ui.fit_lines(self.PLATZHALTER, None), self.PLATZHALTER)
+
+    def test_woerter_nie_geteilt(self):
+        for zeichen in range(1, 40):
+            zeilen = ui.fit_lines(self.PLATZHALTER, zeichen).split("\n")
+            self.assertEqual(" ".join(zeilen), self.PLATZHALTER, zeichen)
+            for zeile in zeilen:
+                self.assertTrue(len(zeile) <= zeichen or " " not in zeile, (zeichen, zeile))
+
+    def test_spalten_und_werte_bleiben(self):
+        tabelle = "Netz            Hosts   Maske"
+        self.assertEqual(ui.fit_lines(tabelle, 10), tabelle)
+        self.assertEqual(ui.fit_lines("2001:db8:85a3:0:ffff:ffff:ffff:ffff", 10),
+                         "2001:db8:85a3:0:ffff:ffff:ffff:ffff")
+
+    def test_kasten_vor_dem_ersten_rechnen_ohne_hinweis(self):
+        box = ui.read_box(self.PLATZHALTER, mono=True, scroll=True, fit=True)
+        box._box_sized(types.SimpleNamespace(width=294 + 30))
+        box._text_sized(types.SimpleNamespace(width=9.0 * 35))   # Gross: 9 px
+        self.assertEqual(box.zeichen, 32)
+        self.assertEqual(box.data.value, "Noch keine Berechnung\ndurchgeführt.")
+        self.assertFalse(box.hint.visible)
+        self.assertIsNone(box.box.foreground_decoration)
+
+
 class FitBoxTest(unittest.TestCase):
 
     @staticmethod

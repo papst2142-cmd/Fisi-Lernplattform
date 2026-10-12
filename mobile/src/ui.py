@@ -698,14 +698,38 @@ def _fit_parts(line):
     return indent, label, value
 
 
+def _fit_sentence(line, zeichen):
+    """Satz an Leerzeichen auf hoechstens `zeichen` Zeichen umbrechen; ein
+    Wort, das allein zu lang ist, bleibt ganz. Zeilen mit Spalten (doppelte
+    Leerzeichen) und ohne Leerzeichen bleiben unveraendert."""
+    body = line.lstrip(" ")
+    indent = line[:len(line) - len(body)]
+    if "  " in body.rstrip() or " " not in body.strip():
+        return [line]
+    rows = []
+    current = ""
+    for word in body.split():
+        if current and len(indent) + len(current) + 1 + len(word) > zeichen:
+            rows.append(indent + current)
+            current = word
+        else:
+            current = "%s %s" % (current, word) if current else word
+    rows.append(indent + current)
+    return rows
+
+
 def fit_lines(text, zeichen):
     """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
     Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
     "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
     z.B. Datenmenge in Byte/KiB/MiB) ruecken mit. Werte werden nie geteilt:
     Passt ein Wert auch so nicht, bleibt er ganz (der Kasten wischt dann).
-    Zeilen ohne Beschriftung bleiben, wie sie sind. zeichen None/0: Text
-    unveraendert. Reine Textfunktion ohne Flet."""
+    Ein reiner Satz ohne "Beschriftung : Wert" (z.B. "Noch keine Berechnung
+    durchgeführt.") bricht an Leerzeichen um, wenn er nicht passt; einzelne
+    Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
+    Spalten (zwei Leerzeichen hintereinander, z.B. Tabellen) bleiben, wie
+    sie sind. zeichen None/0: Text unveraendert. Reine Textfunktion ohne
+    Flet."""
     if not text or not zeichen or zeichen <= 0:
         return text
     lines = text.split("\n")
@@ -718,6 +742,8 @@ def fit_lines(text, zeichen):
             # keine Beschriftung (oder Folgezeile ohne Kopf)
             if parts is not None and len(line) > zeichen:
                 out.append("  " + parts[2])
+            elif parts is None and len(line) > zeichen:
+                out.extend(_fit_sentence(line, zeichen))
             else:
                 out.append(line)
             index += 1
