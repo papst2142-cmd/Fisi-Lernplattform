@@ -19,6 +19,7 @@ import datetime
 import hashlib
 import ipaddress
 import random
+import sys
 
 from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
                        SRC_CARD, SRC_QUIZ, TOPIC_NAME, StatusBook, learning_streak,
@@ -71,9 +72,20 @@ def review_state(entries):
     return stage, due
 
 
+if sys.version_info >= (3, 9):
+    def _md5(data):
+        """MD5 nur fuer eine feste Reihenfolge, nicht fuer Sicherheit (ab
+        0.62.5, B-B-07: kein Alarm im Sicherheitswerkzeug, kein Absturz auf
+        Systemen, die MD5 fuer Sicherheit sperren)."""
+        return hashlib.md5(data, usedforsecurity=False)
+else:  # Python 3.8 kennt usedforsecurity noch nicht
+    def _md5(data):
+        return hashlib.md5(data)  # nosec B324 - nur Reihenfolge, keine Sicherheit
+
+
 def _stable_rank(source, key):
     """Feste, auf allen Geraeten gleiche Reihenfolge fuer den Altbestand."""
-    return hashlib.md5(("%s|%s" % (source, key)).encode("utf-8")).hexdigest()
+    return _md5(("%s|%s" % (source, key)).encode("utf-8")).hexdigest()
 
 
 class ReviewPlan:
