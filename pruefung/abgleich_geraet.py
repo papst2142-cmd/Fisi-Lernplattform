@@ -12,6 +12,13 @@ Einzige Eingriffe (Behelfe):
   * Die Uhr dieses Geraets laesst sich verstellen ("uhr", "zeit"):
     datetime.datetime.now() in fisi_core/fisi_sync/fisi_sicherung liefert dann
     echte Zeit + Versatz.
+  * Ab 0.62.5 (Restrisiko 3): die Laufzeit-Uhr (fisi_core._boot_clock) laeuft
+    mit einem eigenen Versatz ("uhr SEK LAUF"); ohne LAUF laeuft sie mit der
+    Geraeteuhr mit (verstrichene Zeit, kein Stellen der Uhr - wie bis 0.62.4
+    in allen Tests). "neustart" spielt einen Neustart des Systems nach (neue
+    Kennung des Systemstarts und des Prozesses), "ohne_start" ein System ohne
+    lesbare Kennung des Systemstarts (Windows, macOS). Fehlt das im Code
+    (aeltere Staende), bleiben diese Befehle ohne Wirkung.
 
 Aufruf:  python -I -B abgleich_geraet.py <code-ordner> <api-url> <name>
 Danach je Zeile auf stdin ein Befehl als JSON-Liste, z.B. ["lerne", 3, "vorher"];
@@ -23,7 +30,11 @@ je Befehl eine JSON-Zeile auf stdout. Befehle:
   zaehle                 Zeilen, uids und inhaltlich Doppelte je Tabelle
   meta / setmeta K W     sync_meta lesen / einen Wert setzen
   spalten                Spalten von card_events
-  uhr SEK                Geraeteuhr = echte Zeit + SEK
+  uhr SEK [LAUF]         Geraeteuhr = echte Zeit + SEK; Laufzeit-Uhr = echte
+                         Laufzeit + LAUF (ohne LAUF: + SEK)
+  neustart [LAUF]        Neustart des Systems nachspielen (Laufzeit-Uhr dann
+                         echte Laufzeit + LAUF, ohne LAUF wie bisher)
+  ohne_start             keine Kennung des Systemstarts (wie Windows/macOS)
   zeit ISO               Geraeteuhr = dieser Zeitpunkt (UTC, "2026-10-25T00:30:00")
   timeout SEK            fisi_sync.TIMEOUT
   sync                   Abgleich; Meldung, received, sent, removed
@@ -52,6 +63,11 @@ import fisi_sicherung  # noqa: E402
 
 fisi_sync.API = API.rstrip("/")
 OFFSET = [0.0]
+LAUF = [0.0]
+_HAS_BOOT = hasattr(fisi_core, "_boot_clock")
+if _HAS_BOOT:
+    _real_boot_clock = fisi_core._boot_clock
+    fisi_core._boot_clock = lambda: _real_boot_clock() + LAUF[0]
 
 
 class _FakeDT(_real_dt.datetime):
@@ -163,11 +179,25 @@ def run(name, *args):
             conn.close()
     if name == "uhr":
         OFFSET[0] = float(args[0])
+        LAUF[0] = float(args[1]) if len(args) > 1 and args[1] is not None else OFFSET[0]
         return {"ok": True}
     if name == "zeit":
         target = _real_dt.datetime.fromisoformat(args[0]).replace(tzinfo=_real_dt.timezone.utc)
         OFFSET[0] = (target - _real_dt.datetime.now(_real_dt.timezone.utc)).total_seconds()
+        LAUF[0] = OFFSET[0]
         return {"versatz": OFFSET[0]}
+    if name == "neustart":
+        if _HAS_BOOT:
+            start = uuid.uuid4().hex
+            fisi_core._boot_id = lambda: start
+            fisi_core.PROCESS_TOKEN = uuid.uuid4().hex
+            if args and args[0] is not None:
+                LAUF[0] = float(args[0])
+        return {"ok": _HAS_BOOT}
+    if name == "ohne_start":
+        if _HAS_BOOT:
+            fisi_core._boot_id = lambda: None
+        return {"ok": _HAS_BOOT}
     if name == "timeout":
         fisi_sync.TIMEOUT = float(args[0])
         return {"ok": True}
