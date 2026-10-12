@@ -10,7 +10,9 @@ schmale Bildschirme gebaut. Alles mit Flet-Bordmitteln, ohne Pillow.
 
 import calendar
 import datetime
+import itertools
 import math
+import re
 
 import flet as ft
 import flet.canvas as cv
@@ -319,6 +321,8 @@ class PillGroup(ft.Stack):
     """Sich gegenseitig ausschliessende Auswahl-Pillen, seitlich scrollbar.
     Ab 0.48: Passt die Reihe nicht auf den Bildschirm, laeuft sie rechts
     weich aus und ein Pfeil zeigt, dass es weitergeht (Tippen scrollt).
+    Ab 0.63 (B-E-02): umbrechen=True laesst die Pillen statt dessen in die
+    naechste Zeile umbrechen (ohne feste Hoehe, ohne Auslauf und Pfeil).
 
     Hinweis fuer alle Bausteine: In Ereignissen (Tippen) nie selbst update()
     aufrufen - sonst uebernimmt Flet danach die uebrigen Aenderungen der
@@ -326,7 +330,7 @@ class PillGroup(ft.Stack):
 
     HINT_WIDTH = 34
 
-    def __init__(self, options, on_change=None, initial=0):
+    def __init__(self, options, on_change=None, initial=0, umbrechen=False):
         self.values = [value for value, _caption in options]
         self.on_select = on_change
         self.current = initial
@@ -348,6 +352,22 @@ class PillGroup(ft.Stack):
         self._captions = [caption for _v, caption in options]
         self._estimate = sum(self._widths) + 8 * max(0, len(options) - 1)
         self._placed = False
+        self.umbrechen = umbrechen
+        if umbrechen:
+            # Ab 0.63 (B-E-02): Pillen brechen in die naechste Zeile um statt
+            # seitlich zu rollen - ohne feste Hoehe, ohne Auslauf und Pfeil
+            # Jede Pille steht in einer eigenen engen Zeile: so bleibt sie so
+            # breit wie ihre Beschriftung (direkt im Umbruch wuerde sie wegen
+            # alignment die ganze Zeile fuellen) und sieht aus wie bisher
+            self.row = ft.Row([ft.Row([item], tight=True, spacing=0)
+                               for item in self.semantics],
+                              spacing=8, wrap=True, run_spacing=8)
+            self.mask = None
+            self.hint = None
+            self._more = False
+            super().__init__([self.row])
+            self._paint()
+            return
         self.row = ft.Row(self.semantics, spacing=8, scroll=ft.ScrollMode.HIDDEN,
                           on_scroll=self._scrolled, scroll_interval=50)
         self.mask = ft.ShaderMask(
@@ -617,14 +637,22 @@ def check_row(caption, value=False, on_change=None):
                   spacing=4, vertical_alignment=ft.CrossAxisAlignment.START)
 
 
-def read_box(value="", mono=False, scroll=False):
+def read_box(value="", mono=False, scroll=False, fit=False):
     """Mehrzeiliger Text zum Lesen (Aufgaben, Loesungen, Rechenergebnisse).
 
     scroll=True (ab 0.62.3, Rechenwege und Rechner-Anzeigen): Zeilen brechen
     nicht um, sondern lassen sich seitlich wischen - so bleiben Spalten und
     Bitreihen gerade, auch wenn eine Zeile breiter als der Bildschirm ist.
     Der Text steht dann in einer waagrecht scrollbaren Zeile; zum Setzen
-    set_box() nutzen (box.data ist immer das Text-Element)."""
+    set_box() nutzen (box.data ist immer das Text-Element).
+
+    fit=True (ab 0.63, B-E-01, Rechner-Ergebnisse): wie scroll=True, dazu
+    misst der Kasten seine Breite und setzt den Text mit fit_lines() so, dass
+    ein zu langer Wert unter seine Beschriftung rueckt. Passt eine Zeile auch
+    dann nicht, steht unter dem Kasten "→ wischen" und der Kasten laeuft
+    rechts aus (siehe FitBox)."""
+    if fit:
+        return FitBox(value, mono=mono)
     text = ft.Text(value, size=13 if mono else 14, color=C["text_dim"],
                    font_family=MONO if mono else None, selectable=True, no_wrap=scroll)
     content = ft.Row([text], scroll=ft.ScrollMode.AUTO) if scroll else text
@@ -635,8 +663,284 @@ def read_box(value="", mono=False, scroll=False):
 
 
 def set_box(box, value):
-    """Text einer read_box setzen (mit und ohne scroll)."""
-    box.data.value = value
+    """Text einer read_box setzen (mit und ohne scroll, auch fit=True)."""
+    if isinstance(box, FitBox):
+        box.set_value(value)
+    else:
+        box.data.value = value
+
+
+# ============================================================================
+#  ERGEBNIS-KASTEN MIT UMBRUCH NACH F-8 b (ab 0.63, B-E-01)
+# ============================================================================
+
+FIT_HINT = "→ wischen"
+# Ab 0.63: Breite eines Zeichens der Festbreitenschrift im Verhaeltnis zur
+# Schriftgroesse, bis der Kasten den echten Wert gemessen hat (DejaVu Sans
+# Mono und Droid Sans Mono 0,60; etwas Reserve, damit lieber eine Zeile zu
+# frueh umbricht als ein Wert abgeschnitten wird)
+FIT_CHAR_RATIO = 0.62
+_FIT_PADDING = 14
+_FIT_BORDER = 1
+
+
+def _fit_parts(line):
+    """Zeile "Beschriftung : Wert" zerlegen -> (Einzug, Beschriftung, Wert).
+    Ohne ": " oder ohne Wert: None. Folgezeilen ("        : Wert") haben
+    eine leere Beschriftung."""
+    pos = line.find(": ")
+    if pos < 0:
+        return None
+    value = line[pos + 2:].strip()
+    if not value:
+        return None
+    head = line[:pos]
+    label = head.strip()
+    indent = head[:len(head) - len(head.lstrip(" "))] if label else ""
+    return indent, label, value
+
+
+def _fit_sentence(line, zeichen):
+    """Satz an Leerzeichen auf hoechstens `zeichen` Zeichen umbrechen; ein
+    Wort, das allein zu lang ist, bleibt ganz. Zeilen mit Spalten (doppelte
+    Leerzeichen) und ohne Leerzeichen bleiben unveraendert."""
+    body = line.lstrip(" ")
+    indent = line[:len(line) - len(body)]
+    if "  " in body.rstrip() or " " not in body.strip():
+        return [line]
+    rows = []
+    current = ""
+    for word in body.split():
+        if current and len(indent) + len(current) + 1 + len(word) > zeichen:
+            rows.append(indent + current)
+            current = word
+        else:
+            current = "%s %s" % (current, word) if current else word
+    rows.append(indent + current)
+    return rows
+
+
+# Ab 0.63 (Plan 4.3, G-12): grosse Zahl mit Tausenderpunkten
+_FIT_NUMBER = re.compile(r"^\d{1,3}(?:\.\d{3})+(?:,\d+)?$")
+
+
+_FIT_UNIT = re.compile(r"^(?:%|[A-Za-zÄÖÜäöü/]{1,4})[,;)]?$")
+
+
+def _fit_pieces(word):
+    """Bruchstellen eines Wortes, das allein nicht passt (Plan 4.3):
+    IPv6 (enthaelt ':') nach einem Doppelpunkt ("::" bleibt zusammen),
+    grosse Zahl VOR einem Tausenderpunkt (Punkt beginnt die neue Zeile).
+    Sonst keine Bruchstelle."""
+    if ":" in word:
+        return [piece for piece in re.split(r"(?<=:)(?=[^:])", word) if piece]
+    groups = word.split(".")
+    if _FIT_NUMBER.match(word) and not (len(groups) == 4 and
+                                        all(int(group) <= 255 for group in groups)):
+        # (vier Gruppen bis 255 sehen aus wie eine IPv4-Adresse: nie teilen)
+        return [piece for piece in re.split(r"(?=\.)", word) if piece]
+    return [word]
+
+
+def _fit_balanced(pieces, room):
+    """Stuecke (ohne Trenner) auf moeglichst wenige Zeilen <= room verteilen,
+    bei gleicher Zeilenzahl moeglichst gleich lang ("etwa in der Mitte")."""
+    for count in range(1, len(pieces) + 1):
+        best = None
+        for cuts in itertools.combinations(range(1, len(pieces)), count - 1):
+            bounds = (0,) + cuts + (len(pieces),)
+            rows = ["".join(pieces[a:b]) for a, b in zip(bounds, bounds[1:])]
+            longest = max(len(row) for row in rows)
+            if longest <= room and (best is None or longest < best[0]):
+                best = (longest, rows)
+        if best:
+            return best[1]
+    return None
+
+
+def _fit_value(value, room):
+    """Wert auf Zeilen zu hoechstens `room` Zeichen verteilen (Plan 4.3):
+    an Leerzeichen, ein zu langes Wort an seinen Bruchstellen (_fit_pieces).
+    Eine allein stehende IPv6-Adresse bricht etwa in der Mitte. Was sich so
+    nicht teilen laesst, bleibt ganz (dann "→ wischen"); Werte mit Spalten
+    (doppelte Leerzeichen) bleiben unveraendert."""
+    if room <= 0 or len(value) <= room or "  " in value:
+        return [value]
+    words = []
+    for word in value.split(" "):
+        # Zahl und Einheit bleiben zusammen ("288,00 Wh", "45 min", "925,9 %")
+        if words and words[-1][-1:].isdigit() and _FIT_UNIT.match(word):
+            words[-1] += " " + word
+        else:
+            words.append(word)
+    if len(words) == 1 and ":" in value and " " not in value:
+        rows = _fit_balanced(_fit_pieces(value), room)
+        if rows:
+            return rows
+    rows = []
+    current = ""
+    for word in words:
+        pieces = _fit_pieces(word) if len(word) > room else [word]
+        for number, piece in enumerate(pieces):
+            glue = " " if number == 0 and current else ""
+            if current and len(current) + len(glue) + len(piece) > room:
+                rows.append(current)
+                current = piece
+            else:
+                current += glue + piece
+    rows.append(current)
+    return rows
+
+
+def fit_lines(text, zeichen):
+    """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
+    Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
+    "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
+    z.B. Datenmenge in Byte/KiB/MiB) ruecken mit. Passt der Wert auch dann
+    nicht (Plan 4.3): IPv6 bricht nach einem Doppelpunkt etwa in der Mitte,
+    eine grosse Zahl vor einem Tausenderpunkt, Text an Leerzeichen; die
+    Fortsetzung steht wieder mit 2 Leerzeichen Einzug. Sonst wird nie mitten
+    im Wort geteilt; was dann noch zu lang ist, bleibt ganz (der Kasten
+    wischt, "→ wischen").
+    Ein reiner Satz ohne "Beschriftung : Wert" (z.B. "Noch keine Berechnung
+    durchgeführt.") bricht an Leerzeichen um, wenn er nicht passt; einzelne
+    Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
+    Spalten (zwei Leerzeichen hintereinander, z.B. Tabellen) bleiben, wie
+    sie sind. zeichen None/0: Text unveraendert. Reine Textfunktion ohne
+    Flet."""
+    if not text or not zeichen or zeichen <= 0:
+        return text
+    lines = text.split("\n")
+    out = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        parts = _fit_parts(line)
+        if parts is None or not parts[1]:
+            # keine Beschriftung (oder Folgezeile ohne Kopf)
+            if parts is not None and len(line) > zeichen:
+                out.extend("  " + row for row in _fit_value(parts[2], zeichen - 2))
+            elif parts is None and len(line) > zeichen:
+                out.extend(_fit_sentence(line, zeichen))
+            else:
+                out.append(line)
+            index += 1
+            continue
+        block = [(line, parts)]
+        index += 1
+        while index < len(lines):
+            follow = _fit_parts(lines[index])
+            if follow is None or follow[1]:
+                break
+            block.append((lines[index], follow))
+            index += 1
+        if all(len(item) <= zeichen for item, _parts in block):
+            out.extend(item for item, _parts in block)
+            continue
+        indent, label, _value = parts
+        out.append("%s%s:" % (indent, label))
+        for _item, item_parts in block:
+            out.extend("%s  %s" % (indent, row)
+                       for row in _fit_value(item_parts[2], zeichen - len(indent) - 2))
+    return "\n".join(out)
+
+
+class FitBox(ft.Column):
+    """Ab 0.63 (B-E-01): Ergebnis-Kasten der Rechner (read_box(fit=True)).
+
+    Der Kasten selbst ist wie bei scroll=True ein ft.Container mit einer
+    waagrecht scrollbaren ft.Row und einem Text ohne Umbruch; box.content ist
+    diese Row und box.data der Text (wie bei read_box, Test 6 wischbar).
+    Darunter, ausserhalb von box.content, steht der Hinweis "→ wischen".
+
+    Der Kasten misst seine Breite (on_size_change) und der Text seine eigene
+    Breite (daraus die echte Zeichenbreite, auch mit der Schriftgroesse des
+    Systems). Daraus folgt die Zeichenzahl je Zeile, fit_lines() setzt den
+    Text. Ist danach noch eine Zeile zu lang: Hinweis sichtbar und rechts ein
+    Verlauf. Wie bei PillGroup._sized gilt: im Ereignis kein eigenes update(),
+    Flet aktualisiert die Seite danach selbst."""
+
+    def __init__(self, value="", mono=True):
+        self.raw = value or ""
+        self.zeichen = None
+        self._box_width = None
+        self._char_width = None
+        self.text = ft.Text(self.raw, size=13 if mono else 14, color=C["text_dim"],
+                            font_family=MONO if mono else None, selectable=True,
+                            no_wrap=True, on_size_change=self._text_sized,
+                            size_change_interval=100)
+        self.content = ft.Row([self.text], scroll=ft.ScrollMode.AUTO)
+        self.box = ft.Container(
+            content=self.content, data=self.text,
+            bgcolor=C["card_alt"], border_radius=12, padding=_FIT_PADDING,
+            border=ft.Border.all(_FIT_BORDER, C["border"]),
+            on_size_change=self._box_sized, size_change_interval=100)
+        # Festbreitenschrift wie im Kasten (hat den Pfeil sicher, auch in der
+        # Browser-Pruefung ohne Ersatzschriften)
+        self.hint = ft.Text(FIT_HINT, size=12, color=C["muted"], font_family=MONO,
+                            text_align=ft.TextAlign.RIGHT, visible=False)
+        super().__init__([self.box, self.hint], spacing=4, tight=True, data=self.text,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+    # --- Messen --------------------------------------------------------------
+
+    def _estimate(self):
+        return (self.text.size or 13) * FIT_CHAR_RATIO
+
+    def _box_sized(self, event):
+        width = getattr(event, "width", 0) or 0
+        if width > 0 and width != self._box_width:
+            self._box_width = width
+            self._refit()
+
+    def _text_sized(self, event):
+        width = getattr(event, "width", 0) or 0
+        longest = max((len(line) for line in (self.text.value or "").split("\n")),
+                      default=0)
+        # Erst ab einigen Zeichen messen (Rundung); kleine Schwankungen
+        # (unter 2 %) uebergehen, damit der Text nicht hin und her springt
+        if width > 0 and longest >= 8:
+            measured = width / longest
+            if not self._char_width or abs(measured - self._char_width) > 0.02 * self._char_width:
+                self._char_width = measured
+                self._refit()
+
+    def capacity(self):
+        """Zeichen je Zeile im Kasten (None, solange die Breite fehlt)."""
+        if not self._box_width:
+            return None
+        inner = self._box_width - 2 * (_FIT_PADDING + _FIT_BORDER)
+        return max(1, int(inner / (self._char_width or self._estimate()) + 1e-6))
+
+    # --- Setzen --------------------------------------------------------------
+
+    def set_value(self, value):
+        self.raw = value or ""
+        self._refit()
+
+    def _refit(self):
+        self.zeichen = self.capacity()
+        shown = fit_lines(self.raw, self.zeichen)
+        too_long = bool(self.zeichen) and any(
+            len(line) > self.zeichen for line in shown.split("\n"))
+        self.text.value = shown
+        self.hint.visible = too_long
+        self.box.foreground_decoration = self._fade() if too_long else None
+
+    def _fade(self):
+        """Verlauf rechts: blendet die letzten ca. 28 px vor dem Rand der
+        Schrift aus (dort schneidet der Bildlauf ab); der Rand selbst bleibt
+        in Kastenfarbe, die Linie des Kastens wird darueber neu gezogen."""
+        width = self._box_width or 300
+        full = max(0.5, 1 - (_FIT_PADDING + _FIT_BORDER) / width)
+        start = max(0.0, full - 28 / width)
+        clear = ft.Colors.with_opacity(0, C["card_alt"])
+        return ft.BoxDecoration(
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT,
+                colors=[clear, clear, C["card_alt"], C["card_alt"]],
+                stops=[0.0, start, full, 1.0]),
+            border=ft.Border.all(_FIT_BORDER, C["border"]), border_radius=12)
 
 
 def list_row(title, subtitle, accent, on_click, active=False, sub_color=None):
@@ -1096,6 +1400,11 @@ class UpsPicture(ft.Semantics):
 
     def set_picture(self, picture, summary=""):
         self.label = summary
+        if not picture:
+            # Ab 0.63 (B-D-04): Leer-Zustand (z.B. nach einer Fehleingabe),
+            # wie am PC UpsDiagram.set_picture(None)
+            self.column.controls = []
+            return
         boxes = (("LAST", picture["last"], picture["last_detail"], C["accent"], None),
                  ("USV", picture["usv"], picture["usv_detail"], C["purple"],
                   picture.get("auslastung")),

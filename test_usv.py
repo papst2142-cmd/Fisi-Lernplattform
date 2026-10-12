@@ -369,6 +369,7 @@ class PcTest(unittest.TestCase):
         entry.insert(0, "80")
         self.assertEqual(len(self.errors), 1)
         self.assertIn("Wirkungsgrad", self.errors[0][1])
+        self.view.calc_ups("empfehlung", quiet=True)  # ab 0.63 (D-4): Ausgangszustand wie beim Start
 
     def test_umschalten_auf_va(self):
         self.view.ups_unit.select_value("VA", notify=False)
