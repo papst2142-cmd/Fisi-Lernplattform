@@ -241,11 +241,13 @@ class SpielstandTest(unittest.TestCase):
         self.assertEqual(state.profile["aussehen"]["haut"], "hell")
 
     def test_reputation_bleibt_zwischen_0_und_100(self):
+        # Ab 0.62.5 (B-G-26, Auflage A-7): verschiedene Aufgaben, weil
+        # dieselbe Aufgabe am selben Tag nur einmal zaehlt.
         events = [("t%03d" % i, fg.EV_SOLVED,
-                   {"aufgabe": "x", "tag": 1, "richtig": False, "geld": -1,
+                   {"aufgabe": "x%d" % i, "tag": 1, "richtig": False, "geld": -1,
                     "reputation": {"fachkompetenz": -30}}) for i in range(5)]
         events += [("u%03d" % i, fg.EV_SOLVED,
-                    {"aufgabe": "x", "tag": 1, "richtig": True, "geld": 1,
+                    {"aufgabe": "x%d" % (5 + i), "tag": 1, "richtig": True, "geld": 1,
                      "reputation": {"fachkompetenz": 40}}) for i in range(5)]
         state = fg.GameState(events)
         self.assertEqual(state.reputation["fachkompetenz"], 100)

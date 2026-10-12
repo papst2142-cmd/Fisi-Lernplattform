@@ -68,6 +68,11 @@ OPTIK_TITLE = "Optische Anpassungen"
 COLORS_TITLE = "Farben"
 LEARN_ID = "lerninhalte"
 ABOUT_ID = "ueber"
+# Ab 0.62.5 (B-G-04): einstellungen.json liess sich nicht speichern (PC und
+# Handy gleich) - der Schalter springt zurueck, statt still "aus" zu zeigen
+SAVE_FAILED_TITLE = "Speichern fehlgeschlagen"
+SAVE_FAILED = ("Die Einstellung ließ sich nicht speichern. Ist der Datenordner "
+               "schreibgeschützt oder die Platte voll? Die bisherige Einstellung gilt weiter.")
 SECTIONS = {
     OPTIK_ID: [{"id": "schrift", "titel": fisi_theme.FONT_TITLE},
                {"id": "farben", "titel": COLORS_TITLE}],
