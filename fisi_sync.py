@@ -49,7 +49,7 @@ from fisi_core import (CLOCK_KEY, CLOCK_TOLERANCE, CLOCK_VALID, GAME_TABLES,
                        HISTORY_TABLES, MARKED_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
                        RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, UTC_OFFSET,
                        purge_deleted_runs, apply_question_renames,
-                       device_now, format_with_zone, offset_minutes, plural,
+                       clock_deviation, device_now, format_with_zone, offset_minutes, plural,
                        purge_superseded_project_rows, write_error_log)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
@@ -413,13 +413,20 @@ def _note_mixed(db, remote, deviation):
     if deviation is not None:
         now -= datetime.timedelta(seconds=deviation)
     local = _parse_utc(db.get_meta(MIXED_KEY))
+    # Mit der Uhrzeit von GitHub gilt ein Wert in der Zukunft als falsch (er
+    # entstand ohne Date-Kopf mit einer vorgehenden Uhr) und zaehlt nicht;
+    # so entscheiden alle Geraete gleich (Gegenpruefung A-9). Ohne sie haelt
+    # wenigstens ein Wert weit in der Zukunft nicht ewig fest.
+    limit = CLOCK_TOLERANCE if deviation is not None else MIXED_HOLD
+    if local is not None and (local - now).total_seconds() > limit:
+        local = None
+        db.set_meta(MIXED_KEY, "")
     if remote is not None and remote.get(WRITER_KEY) is None:
         local = now
         db.set_meta(MIXED_KEY, now.isoformat())
     elif remote is not None:
         seen = _parse_utc(remote.get(MIXED_KEY))
-        # Ein Wert weit in der Zukunft (falsche Uhr) haelt nicht ewig fest
-        if seen is not None and (seen - now).total_seconds() <= MIXED_HOLD and (
+        if seen is not None and (seen - now).total_seconds() <= limit and (
                 local is None or seen > local):
             local = seen
             db.set_meta(MIXED_KEY, seen.isoformat())
@@ -701,6 +708,13 @@ def _correct_own_entries(db, remote, deviation):
     Ortszeit ist: Hat _stamp schon eine Abweichung eingerechnet, bleibt der
     Eintrag, wie er ist (sonst kaeme sie doppelt hinein)."""
     if abs(deviation) <= CLOCK_TOLERANCE:
+        return
+    # War schon eine Abweichung bekannt, hat _stamp sie eingerechnet. Am
+    # Abstand allein ist das nicht sicher zu erkennen: Bei genau einer
+    # Stunde sieht ein Eintrag aus der doppelten Stunde am Ende der Sommerzeit
+    # wie unkorrigiert aus (Gegenpruefung A-9, F5).
+    known_before = clock_deviation(db.get_meta(CLOCK_KEY))
+    if known_before is not None and abs(known_before) > CLOCK_TOLERANCE:
         return
     shift = int(round(deviation / 60.0))
     known = _uids(remote) if remote else {}

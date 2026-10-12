@@ -187,7 +187,6 @@ def datei_aendern(**felder):
 
 def server_zeit(iso):
     """Uhrzeit im Date-Kopf der Attrappe = dieser Zeitpunkt (UTC)."""
-    import datetime
     target = datetime.datetime.fromisoformat(iso).replace(tzinfo=datetime.timezone.utc)
     att.STATE.ctl["datum_versatz"] = (
         target - datetime.datetime.now(datetime.timezone.utc)).total_seconds()
@@ -630,16 +629,16 @@ class AbgleichTest(unittest.TestCase):
         self.assertEqual(zuviel, 0, "Hin und Her")
         self.stabil([n1, o, n2])
 
-    def test_09c_mischfrist_mit_falscher_uhr(self):
-        """Gegenpruefung A-9, F4: Kurz vor Ende der 7-Tage-Frist nach einem
-        alten Geraet muss ein neues Geraet mit Uhr +1 Tag gleichzeitig mit den
-        anderen umschalten (Uhrzeit von GitHub), sonst vergleicht es schon in
-        UTC und das andere noch als Text, und ein Eintrag wechselt hin und her."""
+    def _mischfrist(self, werte):
+        """N1 (Berlin, Uhr +1 Tag) und N2 (UTC) mit den mischbetrieb-Werten
+        werte (Sekunden ab jetzt oder None). Liefert Hochladungen in 4
+        Ruherunden und ob Eintrag E (vor der Loeschung) je Geraet bleibt."""
         n1, n2 = self.geraet("N1"), self.geraet("N2", "UTC")
-        gesehen = (datetime.datetime.now(datetime.timezone.utc)
-                   - datetime.timedelta(seconds=MIXED_HOLD - 6 * 3600))
-        for device in (n1, n2):
-            device("setmeta", "mischbetrieb", gesehen.isoformat())
+        jetzt = datetime.datetime.now(datetime.timezone.utc)
+        for device, wert in zip((n1, n2), werte):
+            if wert is not None:
+                gesehen = jetzt + datetime.timedelta(seconds=wert)
+                device("setmeta", "mischbetrieb", gesehen.isoformat())
             device("lerne", 1, "vorher")
         self.alle_sync([n1, n2, n1], 1)
         n1("uhr", DAY)
@@ -652,11 +651,53 @@ class AbgleichTest(unittest.TestCase):
         pause()
         vorher = commits()
         self.alle_sync([n1, n2], 4)
-        zuviel = commits() - vorher
-        e = [device.namen().get("n1-e", 0) for device in (n1, n2)]
+        return commits() - vorher, [device.namen().get("n1-e", 0) for device in (n1, n2)]
+
+    def test_09c_mischfrist_mit_falscher_uhr(self):
+        """Gegenpruefung A-9, F4: Kurz vor Ende der 7-Tage-Frist nach einem
+        alten Geraet muss ein neues Geraet mit Uhr +1 Tag gleichzeitig mit den
+        anderen umschalten (Uhrzeit von GitHub), sonst vergleicht es schon in
+        UTC und das andere noch als Text, und ein Eintrag wechselt hin und her."""
+        wert = 6 * 3600 - MIXED_HOLD
+        zuviel, e = self._mischfrist((wert, wert))
         bericht("Test 9c: %d Hochladungen in 4 Ruherunden, Eintrag E behalten %s" % (zuviel, e))
         self.assertEqual(zuviel, 0, "Hin und Her")
         self.assertEqual(e[0], e[1], "uneinheitlicher Stand")
+
+    def test_09d_mischwert_in_der_zukunft(self):
+        """Gegenpruefung A-9 (Toleranz): Ein mischbetrieb-Wert weit in der
+        Zukunft (ohne Date-Kopf mit vorgehender Uhr gesetzt) darf nicht nur auf
+        einem Geraet gelten, sonst wechselt ein Eintrag hin und her."""
+        zuviel, e = self._mischfrist((16 * DAY, None))
+        bericht("Test 9d: %d Hochladungen in 4 Ruherunden, Eintrag E behalten %s" % (zuviel, e))
+        self.assertEqual(zuviel, 0, "Hin und Her")
+        self.assertEqual(e[0], e[1], "uneinheitlicher Stand")
+
+    def test_09e_doppelte_stunde_mit_bekannter_abweichung(self):
+        """Gegenpruefung A-9, F5: Uhr geht 1 Stunde nach (bekannt), Eintrag
+        um 02:30 Sommerzeit am 25.10., danach Loeschung auf einem anderen
+        Geraet. Der Eintrag darf nicht nachkorrigiert werden und muss weg."""
+        a, b = self.geraet("A"), self.geraet("B")
+        a("zeit", "2026-10-24T23:00:00")
+        b("zeit", "2026-10-25T00:00:00")
+        server_zeit("2026-10-25T00:00:00")
+        for device in (a, b):
+            device("lerne", 1, "vorher")
+        self.alle_sync([a, b, a], 1)                # A misst -1 Stunde
+        a("zeit", "2026-10-25T00:30:00")          # A zeigt 02:30 Sommerzeit
+        server_zeit("2026-10-25T01:30:00")
+        a("lerne", 1, "e")
+        b("zeit", "2026-10-25T01:40:00")          # 02:40 Winterzeit, nach E
+        server_zeit("2026-10-25T01:40:00")
+        b("reset_all")
+        b.sync()
+        a("zeit", "2026-10-25T00:41:00")
+        server_zeit("2026-10-25T01:41:00")
+        a.sync()
+        b.sync()
+        e = [device.namen().get("a-e", 0) for device in (a, b)]
+        bericht("Test 9e: Eintrag E behalten %s (soll [0, 0])" % e)
+        self.assertEqual(e, [0, 0])
 
     # ------------------------------------------------------------------ 10
     def test_10a_sicherung_zukunftsmarke(self):
