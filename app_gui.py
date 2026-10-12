@@ -6285,7 +6285,13 @@ class UpdateController:
                 self._queue.put((on_done, None, str(error)))
             except Exception as error:  # unerwartet - nie den Thread sterben lassen
                 self._queue.put((on_done, None, "Unerwarteter Fehler: %s" % error))
-        threading.Thread(target=worker, daemon=True).start()
+        try:
+            threading.Thread(target=worker, daemon=True).start()
+        except BaseException:
+            # Ab 0.62.5 (Gegenpruefung G-4): Thread startet nicht - der
+            # Auftrag zaehlt nicht, sonst wird _poll nie mehr eingeplant
+            self._pending -= 1
+            raise
         if self._pending == 1:
             self.root.after(150, self._poll)
 
@@ -6375,7 +6381,15 @@ class SyncController:
                 self._again = False
                 self.run()
 
-        self.app.updater.run_in_background(self._sync_in_thread, done)
+        try:
+            self.app.updater.run_in_background(self._sync_in_thread, done)
+        except BaseException:
+            # Ab 0.62.5 (Gegenpruefung G-4): Startet der Thread nicht, laeuft
+            # kein Abgleich - sonst wartete run_before_exit die ganze Frist
+            # und der naechste Abgleich bliebe gesperrt
+            self._busy = False
+            self._idle.set()
+            raise
 
     def _sync_in_thread(self):
         try:
