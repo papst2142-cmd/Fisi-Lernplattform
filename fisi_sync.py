@@ -55,6 +55,7 @@ from fisi_core import (CLOCK_KEY, CLOCK_TOLERANCE, CLOCK_VALID, GAME_TABLES,
                        purge_deleted_runs, apply_question_renames,
                        clock_deviation, device_now, format_with_zone, offset_minutes, plural,
                        purge_superseded_project_rows, write_error_log)
+from fisi_core import DB_READ_ONLY_LINES
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
@@ -104,6 +105,11 @@ MSG_INCOMPLETE = "Die Antwort von GitHub war unvollständig. Bitte später noch 
 MSG_UPLOAD_REJECTED = ("GitHub hat das Hochladen des Lernstands abgelehnt (HTTP 422). "
                        "Der Lernstand auf diesem Gerät bleibt erhalten.")
 
+# Ab 0.62.5 (Gegenpruefung M-1, B-G-06): Wird nichts mehr gespeichert
+# (DBManager.read_only_reason, z.B. beschaedigte Datenbank), schreibt auch
+# der Abgleich nicht - %s ist die rote Zeile aus DB_READ_ONLY_LINES
+MSG_READ_ONLY = "Der Abgleich ist ausgesetzt. %s"
+
 SETTING_DEFAULTS = {"sync_repo": "", "sync_token": "", "sync_auto": True,
                     "sync_last": ""}
 
@@ -144,6 +150,15 @@ class SyncResult:
                 parts.append(removed_text(self.removed))
             text = ", ".join(parts) + "."
         return " ".join([text] + self.notes)
+
+
+def refuse_read_only(db, message=MSG_READ_ONLY, error=SyncError):
+    """Ab 0.62.5 (Gegenpruefung M-1): Wirft error(message), wenn die
+    Datenbank nur gelesen werden darf (read_only_reason) - dann darf weder
+    der Abgleich noch die Sicherung hineinschreiben."""
+    reason = getattr(db, "read_only_reason", None)
+    if reason:
+        raise error((message % DB_READ_ONLY_LINES.get(reason, "")).strip())
 
 
 def removed_text(count):
@@ -584,8 +599,10 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     zusammenfuehren, keine Uhrzeit von GitHub): Marken mit Zone, die mehr als
     CLOCK_TOLERANCE nach der Geraeteuhr liegen, gelten nicht. Der Abgleich
     prueft das vorher selbst mit der Uhrzeit von GitHub. stats (MergeStats)
-    zaehlt mit, was die Marken entfernt haben; zusaetzlich in LAST_MERGE."""
+    zaehlt mit, was die Marken entfernt haben; zusaetzlich in LAST_MERGE.
+    Ab 0.62.5 (M-1): SyncError, wenn die Datenbank nur gelesen werden darf."""
     global LAST_MERGE
+    refuse_read_only(db)
     stats = stats if stats is not None else MergeStats()
     stats.backup = check_future
     LAST_MERGE = stats
@@ -710,6 +727,7 @@ def sync(db, settings=None, device=""):
     if repo.count("/") != 1:
         raise SyncError("Das Repository bitte als „Benutzer/Name“ angeben, "
                         "z.B. papst2142-cmd/fisi-lernstand.")
+    refuse_read_only(db)        # ab 0.62.5 (M-1): vor jedem Zugriff aufs Netz
 
     received = 0
     stats = MergeStats()

@@ -97,6 +97,10 @@ MSG_BROKEN = "Die Sicherung ist beschädigt (der Inhalt hat ein unerwartetes For
 MSG_RESTORE_FAILED = ("Die Sicherung ließ sich nicht einspielen. Die Datenbank ist "
                       "gerade gesperrt (z. B. von einem anderen Programm), schreibgeschützt "
                       "oder die Platte ist voll. Fehler: %s")
+# Ab 0.62.5 (Gegenpruefung M-1, B-G-06): Wird nichts mehr gespeichert
+# (DBManager.read_only_reason), schreibt auch die Sicherung nicht in die
+# Datenbank - %s ist die rote Zeile aus fisi_core.DB_READ_ONLY_LINES
+MSG_READ_ONLY = "Die Sicherung lässt sich nicht einspielen. %s"
 MSG_NEWER = "Die Sicherung stammt aus Version %s. Bitte zuerst die App aktualisieren."
 MSG_SLOTS_FULL = ("Alle %d Spielstand-Plätze sind belegt. Lösche zuerst einen Platz, "
                   "dann kannst du den Spielstand wiederherstellen." % SLOT_COUNT)
@@ -466,7 +470,9 @@ def merge_backup(db, backup, restore_runs=(), device=""):
     den anderen Geraeten). Reichen die freien Plaetze nicht, kommt BackupError,
     bevor irgendetwas geschrieben ist.
     Zurueck: Zahl der neu uebernommenen Eintraege (gezaehlt wird, was danach
-    wirklich da ist - Ereignisse geloeschter Durchgaenge zaehlen nicht mit)."""
+    wirklich da ist - Ereignisse geloeschter Durchgaenge zaehlen nicht mit).
+    Ab 0.62.5 (M-1): BackupError, wenn die Datenbank nur gelesen werden darf."""
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     restore_runs = [run for run in restore_runs if run]
     data = backup.get("daten") or {}
     free, names = _free_slots_after_merge(db, backup) if restore_runs else ([], {})
@@ -641,7 +647,10 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
     kommt der jetzige Stand als Sicherheitskopie nach safety_dir (Pfad ist
     der Rueckgabewert). Geraetebezogenes (aktiver Platz, Farben, Token)
     bleibt. Die Tabellen zaehlen ihre Nummern weiter (AUTOINCREMENT) - so
-    sehen change_stamp und game_event_stamp die Aenderung auf jeden Fall."""
+    sehen change_stamp und game_event_stamp die Aenderung auf jeden Fall.
+    Ab 0.62.5 (M-1): BackupError, wenn die Datenbank nur gelesen werden darf
+    (vor der Sicherheitskopie, dann bleibt alles, wie es ist)."""
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     os.makedirs(safety_dir, exist_ok=True)
     path = _safety_path(safety_dir)
     safety = create_backup(db, app_version, device)
