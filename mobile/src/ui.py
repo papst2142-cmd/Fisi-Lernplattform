@@ -319,6 +319,8 @@ class PillGroup(ft.Stack):
     """Sich gegenseitig ausschliessende Auswahl-Pillen, seitlich scrollbar.
     Ab 0.48: Passt die Reihe nicht auf den Bildschirm, laeuft sie rechts
     weich aus und ein Pfeil zeigt, dass es weitergeht (Tippen scrollt).
+    Ab 0.63 (B-E-02): umbrechen=True laesst die Pillen statt dessen in die
+    naechste Zeile umbrechen (ohne feste Hoehe, ohne Auslauf und Pfeil).
 
     Hinweis fuer alle Bausteine: In Ereignissen (Tippen) nie selbst update()
     aufrufen - sonst uebernimmt Flet danach die uebrigen Aenderungen der
@@ -352,7 +354,12 @@ class PillGroup(ft.Stack):
         if umbrechen:
             # Ab 0.63 (B-E-02): Pillen brechen in die naechste Zeile um statt
             # seitlich zu rollen - ohne feste Hoehe, ohne Auslauf und Pfeil
-            self.row = ft.Row(self.semantics, spacing=8, wrap=True, run_spacing=8)
+            # Jede Pille steht in einer eigenen engen Zeile: so bleibt sie so
+            # breit wie ihre Beschriftung (direkt im Umbruch wuerde sie wegen
+            # alignment die ganze Zeile fuellen) und sieht aus wie bisher
+            self.row = ft.Row([ft.Row([item], tight=True, spacing=0)
+                               for item in self.semantics],
+                              spacing=8, wrap=True, run_spacing=8)
             self.mask = None
             self.hint = None
             self._more = False
@@ -757,19 +764,14 @@ class FitBox(ft.Column):
                             no_wrap=True, on_size_change=self._text_sized,
                             size_change_interval=100)
         self.content = ft.Row([self.text], scroll=ft.ScrollMode.AUTO)
-        self._fade = ft.BoxDecoration(
-            gradient=ft.LinearGradient(
-                begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT,
-                colors=[ft.Colors.with_opacity(0, C["card_alt"]),
-                        ft.Colors.with_opacity(0, C["card_alt"]), C["card_alt"]],
-                stops=[0.0, 0.84, 1.0]),
-            border=ft.Border.all(_FIT_BORDER, C["border"]), border_radius=12)
         self.box = ft.Container(
             content=self.content, data=self.text,
             bgcolor=C["card_alt"], border_radius=12, padding=_FIT_PADDING,
             border=ft.Border.all(_FIT_BORDER, C["border"]),
             on_size_change=self._box_sized, size_change_interval=100)
-        self.hint = ft.Text(FIT_HINT, size=12, color=C["muted"],
+        # Festbreitenschrift wie im Kasten (hat den Pfeil sicher, auch in der
+        # Browser-Pruefung ohne Ersatzschriften)
+        self.hint = ft.Text(FIT_HINT, size=12, color=C["muted"], font_family=MONO,
                             text_align=ft.TextAlign.RIGHT, visible=False)
         super().__init__([self.box, self.hint], spacing=4, tight=True, data=self.text,
                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
@@ -817,7 +819,22 @@ class FitBox(ft.Column):
             len(line) > self.zeichen for line in shown.split("\n"))
         self.text.value = shown
         self.hint.visible = too_long
-        self.box.foreground_decoration = self._fade if too_long else None
+        self.box.foreground_decoration = self._fade() if too_long else None
+
+    def _fade(self):
+        """Verlauf rechts: blendet die letzten ca. 28 px vor dem Rand der
+        Schrift aus (dort schneidet der Bildlauf ab); der Rand selbst bleibt
+        in Kastenfarbe, die Linie des Kastens wird darueber neu gezogen."""
+        width = self._box_width or 300
+        full = max(0.5, 1 - (_FIT_PADDING + _FIT_BORDER) / width)
+        start = max(0.0, full - 28 / width)
+        clear = ft.Colors.with_opacity(0, C["card_alt"])
+        return ft.BoxDecoration(
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT,
+                colors=[clear, clear, C["card_alt"], C["card_alt"]],
+                stops=[0.0, start, full, 1.0]),
+            border=ft.Border.all(_FIT_BORDER, C["border"]), border_radius=12)
 
 
 def list_row(title, subtitle, accent, on_click, active=False, sub_color=None):

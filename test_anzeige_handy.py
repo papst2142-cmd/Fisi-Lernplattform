@@ -100,6 +100,12 @@ class FitLinesTest(unittest.TestCase):
                           "  129.600,00 KiB", "  126,56 MiB"])
         self.assertNotIn("7680 x 43", "\n".join(neu).replace("7680 x 4320", ""))
         self.assertTrue(all(len(line) <= 24 for line in neu), neu)
+        # 38 Zeichen: Kopfzeile (41) passt nicht, die Folgezeile "126,56 MiB"
+        # (34) passt - sie rueckt trotzdem mit, damit der Block zusammenbleibt
+        neu = ui.fit_lines(beispiele()["bild"], 38).split("\n")
+        start = neu.index("Datenmenge pro Bild:")
+        self.assertEqual(neu[start + 4], "  126,56 MiB")
+        self.assertIn("Pixel gesamt          : 33.177.600", neu)
 
     def test_usv_12500_w(self):
         neu = ui.fit_lines(beispiele()["usv"], 28).split("\n")
@@ -217,7 +223,13 @@ class FitBoxTest(unittest.TestCase):
         self.assertIn("Letzte Adresse:\n  2001:db8:85a3:0:ffff:ffff:ffff:ffff",
                       box.data.value)
         self.assertTrue(box.hint.visible)
-        self.assertIsNotNone(box.box.foreground_decoration)
+        verlauf = box.box.foreground_decoration
+        self.assertIsNotNone(verlauf)
+        # Verlauf endet am Rand der Schrift (324 - 14 Rand - 1 Linie), beginnt
+        # 28 px davor; die Linie des Kastens wird darueber neu gezogen
+        self.assertEqual([round(stop, 3) for stop in verlauf.gradient.stops],
+                         [0.0, round(281 / 324, 3), round(309 / 324, 3), 1.0])
+        self.assertEqual(verlauf.border, box.box.border)
 
     def test_kein_wert_geteilt_jede_zeile_passt_oder_hinweis(self):
         for name, text in beispiele().items():
@@ -250,7 +262,15 @@ class PillGroupTest(unittest.TestCase):
         self.assertIsNone(pills.height)
         self.assertEqual(pills.controls, [pills.row])
         self.assertIsNone(pills.hint)
-        self.assertEqual(pills.row.controls, pills.semantics)
+        # jede Pille in einer eigenen engen Zeile (tight): nur so breit wie
+        # ihre Beschriftung. Direkt im Umbruch fuellte sie wegen alignment
+        # die ganze Zeile (im Browser gesehen: 5 Zeilen zu je 318 px bei 384 px)
+        self.assertEqual([item.controls for item in pills.row.controls],
+                         [[sem] for sem in pills.semantics])
+        self.assertTrue(all(item.tight for item in pills.row.controls))
+        for sem, pill in zip(pills.semantics, pills.pills):
+            self.assertIs(sem.content, pill)
+            self.assertEqual(pill.height, ui.grow(36))     # Pille selbst wie bisher
         self.assertEqual([item.selected for item in pills.semantics],
                          [False, False, True, False, False])
         self.assertTrue(all(item.button for item in pills.semantics))
