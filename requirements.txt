@@ -1,3 +1,5 @@
 customtkinter==6.0.0
-pillow>=10
-certifi
+# pillow und certifi ab 0.62.5 fest (B-B-05): die Versionen aus dem
+# Release-Bau v0.62.3 (CI-Lauf 38039489984, Windows und Linux gleich)
+pillow==12.3.0
+certifi==2026.7.22
