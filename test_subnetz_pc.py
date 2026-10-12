@@ -751,6 +751,9 @@ class PcWechselTest(PcCase):
         self.assertTrue(sub.views[("ipv4", "bedarf")]["frame"].winfo_ismapped())
         # Ansichtswechsel klappt den Rechenweg ebenfalls zu
         sub.toggle_info("ipv4", "bedarf")
+        # (das Oeffnen rechnet ohne eigene Rechnung den Rechenweg zur Vorgabe,
+        # das ist kein Wechsel; daher neuer Vergleichsstand)
+        before = dict(self.calls)
         self.go("ipv4", "netzdaten")
         self.assertFalse(sub.views[("ipv4", "bedarf")]["info_open"])
         self.assertEqual(self.calls, before)
