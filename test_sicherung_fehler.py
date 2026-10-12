@@ -576,6 +576,23 @@ class TexteTest(unittest.TestCase):
                 self.assertTrue(needle in handy, "Handy: " + needle)
 
 
+class ProjektLoeschenTest(unittest.TestCase):
+    """B-G-09 (nur der Text): die Rueckfrage sagt, dass die Eingaben bleiben."""
+
+    def test_b_g_09_rueckfrage_ehrlich_und_gleich(self):
+        import fisi_projekt as fpj
+        text = fpj.delete_question({"titel": "Netzplan"})
+        self.assertTrue(text.startswith("„Netzplan“ löschen?"))
+        self.assertIn("nur ausgeblendet, nicht entfernt", text)
+        self.assertIn("in Sicherungen", text)
+        with open(os.path.join(CODE, "app_gui.py"), encoding="utf-8") as handle:
+            pc = handle.read()
+        with open(os.path.join(CODE, "mobile", "src", "main.py"), encoding="utf-8") as handle:
+            handy = handle.read()
+        self.assertTrue("fpj.delete_question(self.fields)" in pc, "PC")
+        self.assertTrue("fpj.delete_question(self.fields)" in handy, "Handy")
+
+
 def tearDownModule():
     if _PC:
         try:

@@ -2157,10 +2157,7 @@ class FinalProjectScreen(Screen):
             self._load_project()
             self.app.sync.schedule()
 
-        self.app.confirm("Projekt löschen",
-                         "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig "
-                         "machen und gilt nach dem Abgleich auch am PC."
-                         % fpj.project_title(self.fields), confirmed)
+        self.app.confirm(fpj.DELETE_TITLE, fpj.delete_question(self.fields), confirmed)
 
     def _export(self, extension):
         self.flush()
