@@ -23,6 +23,7 @@ import re
 import random
 import sqlite3
 import datetime
+import time
 import unicodedata
 import uuid
 from decimal import Decimal, ROUND_HALF_UP, localcontext
@@ -510,10 +511,82 @@ def format_with_zone(moment):
                               abs(minutes) // 60, abs(minutes) % 60)
 
 
+# Ab 0.62.5 (Restrisiko 3, Gegenpruefung A-9 F6): Zur Messung gehoert der
+# Stand einer Laufzeit-Uhr (seit Systemstart, nicht stellbar) und die Kennung
+# von Systemstart und Prozess. Damit zeigt sich beim Stempeln, ob die Uhr
+# seit der Messung gestellt wurde (siehe clock_deviation).
+PROCESS_TOKEN = uuid.uuid4().hex
+_BOOT_ID = []
+
+
+def _boot_clock():
+    """Sekunden seit Systemstart nach einer Uhr, die sich nicht stellen laesst
+    und im Ruhezustand weiterlaeuft: Linux/Android CLOCK_BOOTTIME, macOS
+    CLOCK_MONOTONIC (laeuft dort im Ruhezustand weiter), sonst (Windows)
+    time.monotonic (GetTickCount64, ebenso)."""
+    for name in ("CLOCK_BOOTTIME",) + (("CLOCK_MONOTONIC",)
+                                       if sys.platform == "darwin" else ()):
+        clock = getattr(time, name, None)
+        if clock is not None:
+            try:
+                return time.clock_gettime(clock)
+            except OSError:
+                pass
+    return time.monotonic()
+
+
+def _boot_id():
+    """Kennung des Systemstarts (Linux, Android), sonst None."""
+    if not _BOOT_ID:
+        try:
+            with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as handle:
+                _BOOT_ID.append(handle.read().strip() or None)
+        except (OSError, ValueError):
+            _BOOT_ID.append(None)
+    return _BOOT_ID[0]
+
+
+def clock_measurement(seconds):
+    """Gemessene Abweichung als Text fuer sync_meta[CLOCK_KEY]: "s" und
+    "gemessen" wie in 0.62.4 (aeltere Versionen lesen nur diese), dazu ab
+    0.62.5 "lauf" (Laufzeit-Uhr), "start" (Systemstart) und "prozess"."""
+    return json.dumps({"s": round(seconds, 1), "gemessen": device_now().isoformat(),
+                       "lauf": round(_boot_clock(), 3), "start": _boot_id(),
+                       "prozess": PROCESS_TOKEN})
+
+
+def _clock_jump(data, age):
+    """Um wie viele Sekunden die Geraeteuhr seit der Messung gegenueber der
+    Laufzeit-Uhr gesprungen ist (gestellt), oder None, wenn das nicht
+    feststellbar ist: Messung ohne Laufzeit-Uhr (aelterer Stand), anderer
+    Systemstart, oder ohne Kennung des Systemstarts ein anderer Prozess."""
+    try:
+        then = float(data["lauf"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    start = data.get("start")
+    if not (data.get("prozess") == PROCESS_TOKEN
+            or (start is not None and start == _boot_id())):
+        return None
+    elapsed = _boot_clock() - then
+    if elapsed < 0:
+        return None
+    return age - elapsed
+
+
 def clock_deviation(value, now=None):
     """Gemessene Abweichung der Geraeteuhr in Sekunden aus dem gespeicherten
     Wert, oder None, wenn sie fehlt, unlesbar oder zu alt ist (die Uhr
-    koennte inzwischen gestellt worden sein)."""
+    koennte inzwischen gestellt worden sein).
+
+    Ab 0.62.5 (Restrisiko 3): Ist die Uhr seit der Messung um mehr als
+    CLOCK_TOLERANCE gesprungen (Laufzeit-Uhr, _clock_jump) und geht sie
+    danach richtig (Abweichung + Sprung hoechstens CLOCK_TOLERANCE), wird
+    diese kleine Abweichung geliefert - _stamp und _marker_now rechnen dann
+    nichts mehr ein. Geht sie nach dem Sprung weiter falsch oder ist ein
+    Sprung nicht feststellbar, bleibt es bei der Messung (wie 0.62.4): So
+    entsteht kein Verlustweg, den 0.62.4 nicht hatte, auch wenn die
+    Laufzeit-Uhr einmal falsch zaehlen sollte."""
     try:
         data = json.loads(value)
         seconds = float(data["s"])
@@ -525,6 +598,11 @@ def clock_deviation(value, now=None):
     age = ((now or device_now()) - measured).total_seconds()
     if age < 0 or age > CLOCK_VALID:
         return None
+    if abs(seconds) > CLOCK_TOLERANCE:
+        jump = _clock_jump(data, age)
+        if (jump is not None and abs(jump) > CLOCK_TOLERANCE
+                and abs(seconds + jump) <= CLOCK_TOLERANCE):
+            return seconds + jump
     return seconds
 
 
@@ -908,7 +986,9 @@ class DBManager:
         als CLOCK_TOLERANCE von GitHub ab, enthaelt der Abstand diese
         Abweichung: Dann ist "Ortszeit minus Abstand" die echte UTC-Zeit, und
         eine Loeschung erfasst auch Eintraege, die mit der falschen Uhr
-        entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher."""
+        entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher.
+        Ab 0.62.5 nicht mehr, sobald die Uhr seit der Messung richtig gestellt
+        wurde (clock_deviation, Restrisiko 3)."""
         moment = device_now()
         offset = offset_minutes(moment)
         deviation = clock_deviation(self.get_meta(CLOCK_KEY), moment)
@@ -920,8 +1000,10 @@ class DBManager:
     def _marker_now(cur):
         """Zeitpunkt fuer eine Loeschmarke (ab 0.62.4): Ortszeit mit Zone.
         Wich die Uhr beim letzten Abgleich um mehr als CLOCK_TOLERANCE von
-        GitHub ab, gilt stattdessen die Uhrzeit von GitHub. Liefert (Text,
-        korrigierte Sekunden oder 0)."""
+        GitHub ab, gilt stattdessen die Uhrzeit von GitHub - ab 0.62.5 nicht
+        mehr, sobald die Uhr seit der Messung richtig gestellt wurde
+        (clock_deviation, Restrisiko 3). Liefert (Text, korrigierte Sekunden
+        oder 0)."""
         moment = device_now()
         row = cur.execute("SELECT value FROM sync_meta WHERE key = ?",
                           (CLOCK_KEY,)).fetchone()
