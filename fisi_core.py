@@ -2503,6 +2503,9 @@ def raid_report(level, disks_text, size_text):
     return "\n".join(lines)
 
 
+SCREEN_FPS_MAX = 1000
+
+
 def screen_report(width_text, height_text, depth, fps_text):
     """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
     # Ab 0.62.4: gemeinsame Leseregel (read_number); Bildrate leer = ohne
@@ -2518,6 +2521,12 @@ def screen_report(width_text, height_text, depth, fps_text):
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
     if fps < 0:
         raise InputError("Die Bildrate darf nicht negativ sein.")
+    # Ab 0.62.4: "23.976" liest die Leseregel als 23976 (Tausenderpunkt);
+    # ueber 1.000 fps gibt es eine Meldung statt einer falschen Rechnung
+    if fps > SCREEN_FPS_MAX:
+        raise InputError("Die Zahl ist zu groß: Bildrate (fps) (höchstens %s). "
+                         "Nachkommastellen bitte mit Komma eingeben, zum Beispiel "
+                         "23,976." % de_int(SCREEN_FPS_MAX))
 
     pixels = width * height
     bits = pixels * depth

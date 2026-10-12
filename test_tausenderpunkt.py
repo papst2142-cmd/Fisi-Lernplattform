@@ -190,6 +190,26 @@ class RechenwegTest(unittest.TestCase):
                 self.assertEqual(lines[lines.index(formel) + 1], ergebnis)
 
 
+class BildrateGrenzeTest(unittest.TestCase):
+    """Ab 0.62.4 (Gegenpruefung G4/G5, Fund M1): Normbildraten mit Punkt
+    ("23.976") liest die Leseregel als 23976. Ueber 1.000 fps kommt deshalb
+    eine Meldung statt einer still falschen Datenrate. Rot auf f0efb1d."""
+
+    def test_bildrate_mit_punkt_ueber_1000_meldung(self):
+        for wert in ("23.976", "59.940", "119.880", "1.001", "1001"):
+            with self.subTest(wert=wert):
+                with self.assertRaises(fc.InputError) as fehler:
+                    fc.screen_report("1920", "1080", "24", wert)
+                self.assertIn("Die Zahl ist zu groß: Bildrate (fps) (höchstens 1.000)",
+                              str(fehler.exception))
+                self.assertIn("23,976", str(fehler.exception))
+
+    def test_bildrate_bis_1000_wie_bisher(self):
+        for wert in ("23,976", "59,94", "1000", "1.000", "0,5", "30"):
+            with self.subTest(wert=wert):
+                fc.screen_report("1920", "1080", "24", wert)
+
+
 class SchutzTest(unittest.TestCase):
     """Schutz-Tests: schon auf v0.62.3 gruen, duerfen nicht kippen."""
 
