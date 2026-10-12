@@ -3405,7 +3405,15 @@ def _fit_sentence(line, zeichen):
         return [line]
     rows = []
     current = ""
+    words = []
     for word in body.split():
+        # ab 0.63.1 (Teil 1.6 Nr. 3): "RFC" und die Zahl dahinter bleiben
+        # zusammen ("RFC 3849"), wie ein Wort
+        if words and words[-1].endswith("RFC") and word[:1].isdigit():
+            words[-1] += " " + word
+        else:
+            words.append(word)
+    for word in words:
         if current and len(indent) + len(current) + 1 + len(word) > zeichen:
             rows.append(indent + current)
             current = word
@@ -3467,6 +3475,10 @@ def _fit_value(value, room):
     for word in value.split(" "):
         # Zahl und Einheit bleiben zusammen ("288,00 Wh", "45 min", "925,9 %")
         if words and words[-1][-1:].isdigit() and _FIT_UNIT.match(word):
+            words[-1] += " " + word
+        elif words and words[-1].endswith("RFC") and word[:1].isdigit():
+            # ab 0.63.1 (Teil 1.6 Nr. 3): "RFC" und die Zahl dahinter bleiben
+            # zusammen ("RFC 3849)")
             words[-1] += " " + word
         else:
             words.append(word)
