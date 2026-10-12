@@ -6918,9 +6918,12 @@ class UpdateDialog(ctk.CTkToplevel):
                                       self.start_update, kind="primary")
         else:
             self.lbl_status.configure(
-                text="Automatisches Aktualisieren ist nur in der installierten "
-                     "Anwendung möglich. Die neue Version gibt es auf der "
-                     "Download-Seite.")
+                # Ab 0.62.5: installiert, aber im Release keine Datei fuer
+                # dieses System -> eigener Satz
+                text=fisi_update.NO_ASSET_TEXT if info.asset_missing else
+                "Automatisches Aktualisieren ist nur in der installierten "
+                "Anwendung möglich. Die neue Version gibt es auf der "
+                "Download-Seite.")
             self.btn_main = NeoButton(buttons, "Zur Download-Seite",
                                       lambda: webbrowser.open(info.page_url),
                                       kind="primary")
@@ -8284,10 +8287,14 @@ class FISIApp:
     def check_finished_update(self):
         """Ab 0.55.1: Lief vor diesem Start ein Update? Ist die neue Version
         nicht angekommen, sagt das Programm es deutlich (keine stille
-        Rueckkehr) und nennt das Protokoll."""
+        Rueckkehr) und nennt das Protokoll. Ab 0.62.5 danach einmal die
+        Meldung, wenn einstellungen.json kaputt war (Text wie am Handy)."""
         result = fisi_update.finish_pending_update(APP_VERSION)
         if result and result[0] == "fehler":
             messagebox.showwarning(fisi_update.FAILED_TITLE, result[1], parent=self.root)
+        notice = fisi_update.broken_settings_notice()
+        if notice:
+            messagebox.showwarning(notice[0], notice[1], parent=self.root)
 
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""

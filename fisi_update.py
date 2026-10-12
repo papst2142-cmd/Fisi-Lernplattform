@@ -23,6 +23,8 @@ ob die neue Version laeuft - sonst meldet das Programm den Fehlschlag.
 """
 
 import datetime
+import hashlib
+import http.client
 import json
 import os
 import platform
@@ -52,19 +54,28 @@ class UpdateInfo:
     """Beschreibt ein verfuegbares Update."""
 
     def __init__(self, version, notes, page_url, asset_name=None,
-                 asset_url=None, asset_size=0):
+                 asset_url=None, asset_size=0, asset_digest=None):
         self.version = version
         self.notes = notes
         self.page_url = page_url
         self.asset_name = asset_name
         self.asset_url = asset_url
         self.asset_size = asset_size
+        # Ab 0.62.5: Pruefsumme aus der GitHub-Antwort ("sha256:...") oder None
+        self.asset_digest = asset_digest
 
     @property
     def installable(self):
         """True, wenn es fuer dieses System einen Installer gibt und das
         Programm als installierte Anwendung laeuft (nicht aus dem Quellcode)."""
         return bool(self.asset_url) and install_kind() is not None
+
+    @property
+    def asset_missing(self):
+        """Ab 0.62.5: installierte Anwendung, aber im Release liegt keine
+        Datei fuer dieses System (vorher hiess es faelschlich, das Programm
+        sei nicht installiert)."""
+        return not self.asset_url and install_kind() is not None
 
 
 # ============================================================================
@@ -124,7 +135,8 @@ def pick_asset(assets, kind=None, machine=None):
     if wanted is None:
         return None
     for asset in assets:
-        if wanted(asset.get("name", "")):
+        # Ab 0.62.5: Eintraege ungewohnter Form ueberspringen
+        if isinstance(asset, dict) and wanted(str(asset.get("name") or "")):
             return asset
     return None
 
@@ -156,6 +168,11 @@ def _open(url, timeout):
     return urllib.request.urlopen(request, timeout=timeout, context=_ssl_context())
 
 
+UNEXPECTED_ANSWER = "Die Antwort von GitHub ist unerwartet. Bitte später erneut versuchen."
+NO_ASSET_TEXT = ("Für dein System liegt diesmal keine Datei bei. Auf der "
+                 "Download-Seite stehen alle Dateien dieses Releases.")
+
+
 def check_for_update(current_version, timeout=10, kind=None):
     """Fragt das neueste Release ab. Liefert UpdateInfo, wenn es neuer ist
     als current_version, sonst None. Wirft UpdateError bei Netzproblemen.
@@ -171,22 +188,33 @@ def check_for_update(current_version, timeout=10, kind=None):
         raise UpdateError("Keine Verbindung zu GitHub. Bitte die "
                           "Internetverbindung prüfen.")
 
+    # Ab 0.62.5: ungewohnte Antwortform (Liste, assets: null, ...) ergibt
+    # einen deutschen Satz statt "Unerwarteter Fehler: 'list' object ..."
+    if not isinstance(release, dict):
+        raise UpdateError(UNEXPECTED_ANSWER)
     # GitHub liefert unter /releases/latest nie Vorab-Releases (Testversionen,
     # ab 0.56). Sicherheitshalber wird ein solches Release trotzdem nie
     # angeboten.
     if release.get("prerelease") or release.get("draft"):
         return None
     tag = release.get("tag_name", "")
+    assets = release.get("assets", [])
+    if not isinstance(tag, str) or not isinstance(assets, list):
+        raise UpdateError(UNEXPECTED_ANSWER)
     if not is_newer(tag, current_version):
         return None
-    asset = pick_asset(release.get("assets", []), kind)
+    asset = pick_asset(assets, kind)
+    body = release.get("body")
+    size = asset.get("size", 0) if asset else 0
+    digest = asset.get("digest") if asset else None
     return UpdateInfo(
         version=tag.lstrip("v"),
-        notes=(release.get("body") or "").strip(),
+        notes=body.strip() if isinstance(body, str) else "",
         page_url=release.get("html_url") or RELEASES_PAGE,
         asset_name=asset.get("name") if asset else None,
         asset_url=asset.get("browser_download_url") if asset else None,
-        asset_size=asset.get("size", 0) if asset else 0,
+        asset_size=size if isinstance(size, int) else 0,
+        asset_digest=digest if isinstance(digest, str) else None,
     )
 
 
@@ -218,39 +246,121 @@ def plain_notes(markdown):
     return text
 
 
+UPDATE_FOLDER = "FISI-Lernplattform-Update"
+NEW_SUFFIX = ".neu"      # AppImage: Download neben der laufenden Datei (ab 0.62.5)
+ALT_SUFFIX = ".alt"      # AppImage: bisherige Fassung bis zum ersten Start der neuen
+
+DOWNLOAD_HTTP = "Der Download ist fehlgeschlagen (HTTP %d). Bitte später erneut versuchen."
+DOWNLOAD_TIMEOUT = ("Der Download hat zu lange gedauert. Bitte die Internetverbindung "
+                    "prüfen und erneut versuchen.")
+DOWNLOAD_OFFLINE = "Keine Verbindung zum Download. Bitte die Internetverbindung prüfen."
+DOWNLOAD_INCOMPLETE = "Der Download ist unvollständig. Bitte erneut versuchen."
+DOWNLOAD_SAVE = ("Die Datei konnte nicht gespeichert werden. Bitte freien "
+                 "Speicherplatz prüfen und erneut versuchen.")
+DOWNLOAD_CHECKSUM = ("Die heruntergeladene Datei ist beschädigt (Prüfsumme stimmt "
+                     "nicht). Bitte erneut versuchen.")
+
+
+def _remove_quietly(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
+def _download_target(info):
+    """Zieldatei des Downloads. Ab 0.62.5: fuer die AppImage neben der
+    laufenden Datei (sonst scheitert das Ersetzen, wenn /tmp ein anderes
+    Laufwerk ist). Sonst im Temp-Ordner; alte Installer und Teil-Dateien
+    frueherer Updates werden dabei aufgeraeumt."""
+    current = os.environ.get("APPIMAGE")
+    if install_kind() == "appimage" and current:
+        return current + NEW_SUFFIX
+    folder = os.path.join(tempfile.gettempdir(), UPDATE_FOLDER)
+    os.makedirs(folder, exist_ok=True)
+    for name in os.listdir(folder):
+        _remove_quietly(os.path.join(folder, name))
+    return os.path.join(folder, info.asset_name)
+
+
+def _expected_sha256(info):
+    """Hex-Pruefsumme aus der GitHub-Antwort ("sha256:<hex>") oder None."""
+    digest = getattr(info, "asset_digest", None)
+    if isinstance(digest, str) and digest.lower().startswith("sha256:"):
+        value = digest.split(":", 1)[1].strip().lower()
+        if re.match(r"^[0-9a-f]{64}$", value):
+            return value
+    return None
+
+
+def _download_failed(error, text):
+    write_update_log("Download fehlgeschlagen: %s" % (error,))
+    raise UpdateError(text)
+
+
 def download(info, progress=None, timeout=30):
-    """Laedt den Installer in einen Temp-Ordner. progress(geladen, gesamt)
-    wird waehrenddessen aufgerufen. Liefert den Pfad der Datei."""
+    """Laedt den Installer herunter. progress(geladen, gesamt) wird
+    waehrenddessen aufgerufen. Liefert den Pfad der Datei.
+
+    Ab 0.62.5: deutsche Fehlertexte je Fall (die Technik steht in
+    update.log), keine liegengebliebene .part-Datei, Pruefsumme (SHA-256)
+    aus der GitHub-Antwort, wenn sie dort steht - sonst nur die Groesse und
+    eine Zeile in update.log."""
     if not info.asset_url:
         raise UpdateError("Für dieses System gibt es keinen passenden Installer.")
     write_update_log("Download startet: Version %s, %s" % (info.version, info.asset_name))
-    folder = os.path.join(tempfile.gettempdir(), "FISI-Lernplattform-Update")
-    os.makedirs(folder, exist_ok=True)
-    target = os.path.join(folder, info.asset_name)
-    partial = target + ".part"
     try:
-        with _open(info.asset_url, timeout) as response, open(partial, "wb") as handle:
-            total = int(response.headers.get("Content-Length") or info.asset_size or 0)
-            loaded = 0
-            while True:
-                chunk = response.read(256 * 1024)
-                if not chunk:
-                    break
-                handle.write(chunk)
-                loaded += len(chunk)
-                if progress:
-                    progress(loaded, total)
-    except (urllib.error.URLError, OSError) as error:
-        write_update_log("Download fehlgeschlagen: %s" % error)
-        raise UpdateError("Der Download ist fehlgeschlagen: %s" % error)
-    if info.asset_size and os.path.getsize(partial) != info.asset_size:
-        write_update_log("Download unvollständig: %d von %d Bytes"
-                         % (os.path.getsize(partial), info.asset_size))
-        os.remove(partial)
-        raise UpdateError("Der Download ist unvollständig. Bitte erneut versuchen.")
-    os.replace(partial, target)
-    write_update_log("Download fertig: %s (%d Bytes, Größe geprüft)"
-                     % (info.asset_name, os.path.getsize(target)))
+        target = _download_target(info)
+    except OSError as error:
+        _download_failed(error, DOWNLOAD_SAVE)
+    partial = target + ".part"
+    sha = hashlib.sha256()
+    finished = False
+    try:
+        try:
+            with _open(info.asset_url, timeout) as response, open(partial, "wb") as handle:
+                total = int(response.headers.get("Content-Length") or info.asset_size or 0)
+                loaded = 0
+                while True:
+                    chunk = response.read(256 * 1024)
+                    if not chunk:
+                        break
+                    handle.write(chunk)
+                    sha.update(chunk)
+                    loaded += len(chunk)
+                    if progress:
+                        progress(loaded, total)
+        except urllib.error.HTTPError as error:
+            _download_failed(error, DOWNLOAD_HTTP % error.code)
+        except urllib.error.URLError as error:
+            timed_out = isinstance(error.reason, TimeoutError)
+            _download_failed(error, DOWNLOAD_TIMEOUT if timed_out else DOWNLOAD_OFFLINE)
+        except TimeoutError as error:
+            _download_failed(error, DOWNLOAD_TIMEOUT)
+        except (http.client.HTTPException, ConnectionError) as error:
+            _download_failed(repr(error), DOWNLOAD_INCOMPLETE)
+        except OSError as error:
+            _download_failed(error, DOWNLOAD_SAVE)
+        if info.asset_size and os.path.getsize(partial) != info.asset_size:
+            write_update_log("Download unvollständig: %d von %d Bytes"
+                             % (os.path.getsize(partial), info.asset_size))
+            raise UpdateError(DOWNLOAD_INCOMPLETE)
+        expected = _expected_sha256(info)
+        if expected and sha.hexdigest() != expected:
+            write_update_log("Prüfsumme falsch: erwartet %s, erhalten %s"
+                             % (expected, sha.hexdigest()))
+            raise UpdateError(DOWNLOAD_CHECKSUM)
+        if not expected:
+            write_update_log("GitHub nennt keine Prüfsumme für %s, nur die Größe "
+                             "wird geprüft." % info.asset_name)
+        os.replace(partial, target)
+        finished = True
+    finally:
+        if not finished:
+            _remove_quietly(partial)
+    write_update_log("Download fertig: %s (%d Bytes, %s)"
+                     % (info.asset_name, os.path.getsize(target),
+                        "Größe und Prüfsumme geprüft" if expected else "Größe geprüft"))
     return target
 
 
@@ -279,6 +389,59 @@ def windows_installer_args(path, pid=None, exe=None):
             "/LOG=%s" % installer_log_path()]
 
 
+# Ab 0.62.5: Neustart nach dem AppImage-Update mit Rueckfall. Laeuft als
+# eigenes sh, weil sich das Programm gleich beendet (und mit ihm die
+# eingehaengte AppImage). Ein eigener Probestart vorab ist nicht sicher:
+# Das Programm kennt keinen reinen Versions-Aufruf, und ein zweiter Start
+# trifft auf die Sperre gegen Mehrfachstart (fisi_einzelstart). Deshalb ist
+# der echte Neustart die Probe: Endet die neue Fassung mit einem Fehler
+# (Code ungleich 0, auch "Exec format error") und liegt die alte noch als
+# .alt daneben, kommt die alte zurueck und startet; sie meldet den
+# Fehlschlag (finish_pending_update). Die neue Fassung entfernt die
+# .alt-Datei bei ihrem ersten erfolgreichen Start - danach greift der
+# Rueckfall nicht mehr.
+APPIMAGE_RESTART = r'''
+neu="$1"; alt="$2"; log="$3"
+"$neu"
+code=$?
+if [ "$code" -ne 0 ] && [ -e "$alt" ]; then
+  jetzt=$(date '+%Y-%m-%d %H:%M:%S')
+  if mv -f "$alt" "$neu"; then
+    printf '%s | Updater | Die neue Version startete nicht (Code %s). Die bisherige Version wurde wiederhergestellt und wird gestartet.\n' "$jetzt" "$code" >> "$log"
+    exec "$neu"
+  fi
+  printf '%s | Updater | Die neue Version startete nicht (Code %s). Die bisherige Version ließ sich nicht zurückholen.\n' "$jetzt" "$code" >> "$log"
+fi
+'''
+
+
+def _install_appimage(path, version):
+    """Ab 0.62.5: Die bisherige AppImage bleibt als .alt daneben liegen,
+    die neue kommt an ihren Platz und startet ueber APPIMAGE_RESTART.
+    Liefert den Hinweistext."""
+    current = os.environ["APPIMAGE"]
+    backup = current + ALT_SUFFIX
+    os.chmod(path, 0o755)
+    _remove_quietly(backup)
+    os.replace(current, backup)
+    try:
+        os.replace(path, current)
+    except OSError:
+        os.replace(backup, current)
+        raise
+    remember_pending_update(version, backup=backup)
+    write_update_log("AppImage ersetzt. Die bisherige Version liegt bis zum ersten "
+                     "Start der neuen als .alt daneben.")
+    try:
+        subprocess.Popen(["/bin/sh", "-c", APPIMAGE_RESTART, "fisi-update",
+                          current, backup, update_log_path()], start_new_session=True)
+    except OSError:
+        os.replace(backup, current)
+        forget_pending_update()
+        raise
+    return "Das Update ist installiert. Das Programm startet neu."
+
+
 def install(path, kind=None, version="", pid=None):
     """Startet die Installation. Liefert (beenden, Hinweistext): Ist beenden
     True, muss sich das Programm sofort schliessen, damit der Installer die
@@ -304,11 +467,7 @@ def install(path, kind=None, version="", pid=None):
             return True, "Das Update wird installiert. Das Programm startet danach neu."
 
         if kind == "appimage":
-            current = os.environ["APPIMAGE"]
-            os.chmod(path, 0o755)
-            os.replace(path, current)
-            subprocess.Popen([current], start_new_session=True)
-            return True, "Das Update ist installiert. Das Programm startet neu."
+            return True, _install_appimage(path, version)
 
         if kind == "deb":
             # pkexec zeigt eine grafische Passwortabfrage fuer die Installation
@@ -367,6 +526,8 @@ FAILED_TEXT = ("Das Update auf Version %(neu)s wurde nicht installiert. Installi
 REASON_ROLLBACK = ("Der Installer konnte nicht alle Dateien ersetzen und hat alle "
                    "Änderungen rückgängig gemacht.")
 REASON_UNKNOWN = "Der Installer hat die Installation nicht abgeschlossen."
+REASON_APPIMAGE = ("Die neue Version ließ sich auf diesem System nicht starten. "
+                   "Die bisherige Version wurde wiederhergestellt.")
 
 
 def _data_folder():
@@ -412,11 +573,14 @@ def read_update_log(limit=16 * 1024):
     return text.strip()
 
 
-def remember_pending_update(version):
-    """Merkt sich vor dem Start des Installers, welche Version kommen soll."""
+def remember_pending_update(version, backup=None):
+    """Merkt sich vor dem Start des Installers, welche Version kommen soll.
+    backup (ab 0.62.5, AppImage): Pfad der bisherigen Fassung (.alt)."""
     settings = load_settings()
     settings[PENDING_KEY] = {"version": version,
                              "zeit": datetime.datetime.now().isoformat(timespec="seconds")}
+    if backup:
+        settings[PENDING_KEY]["alt"] = backup
     save_settings(settings)
 
 
@@ -444,16 +608,26 @@ def finish_pending_update(current_version):
     if not isinstance(pending, dict):
         return None
     target = str(pending.get("version") or "")
+    backup = pending.get("alt")
+    backup = backup if isinstance(backup, str) and backup.endswith(ALT_SUFFIX) else None
     forget_pending_update()
     if not target or not is_newer(target, current_version):
         write_update_log("Update auf %s abgeschlossen, Programm läuft als %s."
                          % (target or "?", current_version))
+        if backup and os.path.exists(backup):
+            # Ab 0.62.5 (AppImage): die neue Fassung laeuft, die alte wird
+            # nicht mehr gebraucht
+            _remove_quietly(backup)
+            write_update_log("Die bisherige Version (.alt) wurde entfernt.")
         return "ok", current_version
     write_update_log("Update auf %s NICHT abgeschlossen, installiert ist weiterhin %s."
                      % (target, current_version))
+    if backup:
+        reason = REASON_APPIMAGE
+    else:
+        reason = REASON_ROLLBACK if _installer_rolled_back() else REASON_UNKNOWN
     return "fehler", FAILED_TEXT % {
-        "neu": target, "alt": current_version,
-        "grund": REASON_ROLLBACK if _installer_rolled_back() else REASON_UNKNOWN,
+        "neu": target, "alt": current_version, "grund": reason,
         "pfad": update_log_path()}
 
 
@@ -485,18 +659,49 @@ def load_settings():
     except ValueError:
         try:
             shutil.copyfile(path, os.path.join(os.path.dirname(path), BROKEN_SETTINGS))
+            _BROKEN_SEEN[0] = True     # ab 0.62.5: einmal melden
         except OSError:
             pass
     return settings
 
 
+# Ab 0.62.5: Meldung beim Start, wenn die Einstellungsdatei kaputt war
+# (vorher war ein eingerichteter Abgleich still weg). PC und Handy zeigen
+# denselben Text.
+_BROKEN_SEEN = [False]
+BROKEN_TITLE = "Einstellungen ersetzt"
+BROKEN_TEXT = ("Die Einstellungsdatei war beschädigt und wurde durch die "
+               "Grundeinstellungen ersetzt. Die alte Datei ist als "
+               "einstellungen.defekt.json im Datenordner aufgehoben. Falls du "
+               "den Abgleich eingerichtet hattest, richte ihn bitte neu ein.")
+
+
+def broken_settings_notice():
+    """Beim Start: (Titel, Text), wenn einstellungen.json kaputt war, sonst
+    None. Die Datei wird dann durch die Grundeinstellungen ersetzt (das
+    Original liegt schon als einstellungen.defekt.json daneben), die Meldung
+    kommt also genau einmal."""
+    load_settings()
+    if not _BROKEN_SEEN[0]:
+        return None
+    _BROKEN_SEEN[0] = False
+    save_settings(load_settings())
+    _BROKEN_SEEN[0] = False
+    return BROKEN_TITLE, BROKEN_TEXT
+
+
 def save_settings(settings):
     """Ab 0.53 atomar: erst in eine Hilfsdatei schreiben, dann ersetzen - ein
-    Absturz mitten im Schreiben hinterlaesst keine halbe Datei mehr."""
+    Absturz mitten im Schreiben hinterlaesst keine halbe Datei mehr.
+    Ab 0.62.5 nur fuer das eigene Konto lesbar (0600; die Datei enthaelt den
+    Zugangsschluessel des Abgleichs). Unter Windows ohne Wirkung."""
     path = _settings_path()
     temp = path + ".tmp"
     try:
-        with open(temp, "w", encoding="utf-8") as handle:
+        descriptor = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            if hasattr(os, "fchmod") and os.name != "nt":
+                os.fchmod(handle.fileno(), 0o600)   # falls .tmp schon da war
             json.dump(settings, handle, indent=2)
             handle.flush()
             os.fsync(handle.fileno())
