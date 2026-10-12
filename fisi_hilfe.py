@@ -262,7 +262,7 @@ HELP_SECTIONS = [
               % (fr.NOTE_LANG, fr.KI_HINWEIS))},
     {"id": "rechner", "titel": "Rechner (Subnetting, RAID, Bildschirm, USV)",
      "reiter": ["Rechner"],
-     "text": ("Unter „Rechner“ gibt es vier Rechner: „Subnetting / VLSM“ (IPv4 und IPv6), "
+     "text": ("Unter „Rechner“ gibt es vier Rechner: „Subnetting“ (IPv4 und IPv6), "
               "„RAID-Kapazität“, „Bildschirm-Datenvolumen“ und ganz unten "
               "„USV-Kapazität“. Werte eintragen und „Berechnen“ wählen. „Rechenweg "
               "anzeigen“ erklärt, wie man es von Hand rechnet.\n\n"

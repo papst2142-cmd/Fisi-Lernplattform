@@ -2657,6 +2657,87 @@ def subnet_report(value):
 
 
 # ----------------------------------------------------------------------------
+#  Ab 0.63 (Plan 0.63, F-63-4 Variante A nach F-63-17): IPv6 ausgeschrieben
+#  und Adresstyp als zwei Ergebniszeilen. subnet_report bleibt unveraendert;
+#  PC und Handy haengen die Zeilen im Modus IPv6 an.
+# ----------------------------------------------------------------------------
+# Beschriftungen: eine Quelle fuer PC und Handy
+IPV6_LABEL_AUSGESCHRIEBEN = "Ausgeschrieben"
+IPV6_LABEL_ADRESSTYP = "Adresstyp"
+# Gleicher Text wie die Meldung von subnet_report (dort keine Konstante)
+IPV6_DETAILS_ERROR = ("Bitte eine gültige Adresse angeben.\n\n"
+                      "Beispiele:\n  192.168.1.50/24\n  10.0.0.0/255.255.255.0\n"
+                      "  2001:db8::1/64")
+# Adresstypen nach Plan 0.63 Abschnitt 2.1 und 2.5 (E-63-1 bis E-63-9,
+# F-63-16 = Ja). Quellen: RFC 4291 2.4 (Unspezifiziert, Loopback, Multicast,
+# Link-Local, Rest), RFC 4193 3.1 (fc00::/7, L-Bit), RFC 3849 und RFC 9637
+# (Dokumentation), RFC 3879 (Site-Local veraltet). Je Eintrag: Praefix als
+# ganze Zahl, Praefixlaenge, Text.
+_IPV6_ULA = "Unique Local (fc00::/7, RFC 4193)"
+IPV6_TYPES = [
+    (0, 128, "Unspezifiziert (::/128)"),
+    (1, 128, "Loopback (::1/128)"),
+    (0xff << 120, 8, "Multicast (ff00::/8)"),
+    (0xfe80 << 112, 10, "Link-Local (fe80::/10)"),
+    (0xfec0 << 112, 10, "Site-Local (veraltet, RFC 3879)"),
+    (0xfc << 120, 7, _IPV6_ULA),
+    (0xfd << 120, 8, _IPV6_ULA + ", lokal vergeben, fd00::/8"),
+    (0xfc << 120, 8, _IPV6_ULA + ", L-Bit 0, bisher nicht vergeben"),
+    (0x20010db8 << 96, 32, "Dokumentation (2001:db8::/32, RFC 3849)"),
+    (0x3fff << 112, 20, "Dokumentation (3fff::/20, RFC 9637)"),
+    (0x2000 << 112, 3, "Global Unicast (2000::/3)"),
+]
+IPV6_TYPE_REST = "nicht zugeordnet (laut RFC 4291 als Global Unicast zu behandeln)"
+IPV6_TYPE_MIXED = "mehrere Adresstypen (Präfix kürzer als Typbereich)"
+
+
+def _ipv6_in(value, prefix, base, length):
+    """True, wenn das Netz value/prefix ganz im Bereich base/length liegt."""
+    return prefix >= length and (value >> (128 - length)) == (base >> (128 - length))
+
+
+def ipv6_type(value, prefix):
+    """Adresstyp eines IPv6-Netzes (Netzadresse als ganze Zahl, Praefix).
+    Regel: Es gilt der genaueste Bereich (laengstes Praefix), in dem das
+    GANZE Netz liegt. Liegt das Netz in keinem Bereich und beruehrt auch
+    keinen, ist es "nicht zugeordnet" (RFC 4291: als Global Unicast zu
+    behandeln). Ist das Praefix kuerzer als ein Typbereich, den das Netz
+    beruehrt, und liegt es in keinem (z. B. ::/64 mit :: und ::1, fe80::/9),
+    heisst es "mehrere Adresstypen"."""
+    best = None
+    for base, length, text in IPV6_TYPES:
+        if _ipv6_in(value, prefix, base, length) and (best is None or length > best[0]):
+            best = (length, text)
+    if best is not None:
+        return best[1]
+    for base, length, _text in IPV6_TYPES:
+        if _ipv6_in(base, length, value, prefix):
+            return IPV6_TYPE_MIXED
+    return IPV6_TYPE_REST
+
+
+def ipv6_long(value, prefix):
+    """Ausgeschriebene Form (8 Hextette zu je 4 Stellen) mit Praefix."""
+    return "%s/%d" % (":".join("%04x" % g for g in ipv6_groups(value)), prefix)
+
+
+def ipv6_details(value):
+    """Zwei Ergebniszeilen fuer IPv6-Netzdaten (F-63-4):
+    [(IPV6_LABEL_AUSGESCHRIEBEN, Netzadresse ausgeschrieben/Praefix),
+     (IPV6_LABEL_ADRESSTYP, Adresstyp-Text)].
+    Eingabe wie subnet_report; ungueltig oder IPv4 -> InputError."""
+    try:
+        network = ipaddress.ip_network(value.strip(), strict=False)
+    except ValueError:
+        raise InputError(IPV6_DETAILS_ERROR) from None
+    if network.version != 6:
+        raise InputError(IPV6_DETAILS_ERROR)
+    address = int(network.network_address)
+    return [(IPV6_LABEL_AUSGESCHRIEBEN, ipv6_long(address, network.prefixlen)),
+            (IPV6_LABEL_ADRESSTYP, ipv6_type(address, network.prefixlen))]
+
+
+# ----------------------------------------------------------------------------
 #  Ab 0.63 (Plan 0.63, T1): Netz aufteilen und Netz nach Hostbedarf
 # ----------------------------------------------------------------------------
 # Gerechnet wird nur mit ganzen Zahlen: Subnetz Nr. i hat die Netzadresse
@@ -2686,6 +2767,10 @@ SUBNET_PAGE_BACK = "Zurück"
 SUBNET_PAGE_NEXT = "Weiter"
 SUBNET_PAGE_LAST = "Letzte Seite"
 SUBNET_PAGE_OF = "Seite %s von %s"
+# Sprung auf eine Seitennummer (Plan 0.63 Abschnitt 2.2 Nr. 8): Zahlfeld und
+# Knopf neben "Seite x von y"; gelesen mit read_number(..., ganz=True)
+SUBNET_PAGE_JUMP_FIELD = "Seite"
+SUBNET_PAGE_JUMP = "Zur Seite"
 # Vorgaben vor dem ersten "Berechnen" (Beispiele B, C und D aus Plan 0.63)
 SUBNET_DEFAULTS = {
     ("ipv4", "aufteilen"): ("192.168.10.0/24", "6"),
