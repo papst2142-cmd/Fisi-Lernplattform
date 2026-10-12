@@ -10,7 +10,8 @@
 #    spiel    test_spiel.py (dauert allein ca. 4-5 min)
 #    lang     die langen Laeufe: Beenden, Leistung, grosse Datenmengen, Vorladen
 #    rest     alle uebrigen test_*.py (neue Testdateien landen automatisch hier)
-#    windows  Auswahl fuer den Windows-Runner (Windows-eigene Wege)
+#    windows  Auswahl fuer den Windows-Runner (Windows-eigene Wege; ab 0.62.4
+#             auch der Abgleich-Kern, test_abgleich.py laeuft dort nicht)
 #
 #  Lokal genauso nutzbar, z.B.:  bash pruefung/ci_tests.sh rest
 # ============================================================================
@@ -28,7 +29,7 @@ case "$TEIL" in
   windows) DATEIEN="test_einzelstart.py test_haenger.py test_update.py test_update_fenster.py
                     test_leistung.py test_werkzeuge.py test_optionen.py test_sicherung.py
                     test_beenden.py test_namen.py test_rechtliches.py
-                    test_optionen_0622.py test_reiter_sichtbar.py" ;;
+                    test_optionen_0622.py test_reiter_sichtbar.py test_abgleich_kern.py" ;;
   *) echo "Unbekannter Teil: $TEIL"; exit 2 ;;
 esac
 
