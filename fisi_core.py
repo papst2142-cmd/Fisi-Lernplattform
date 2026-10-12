@@ -2256,6 +2256,91 @@ class InputError(ValueError):
     """Ungueltige Benutzereingabe - der Text ist fuer die Anzeige gedacht."""
 
 
+# Ab 0.62.4 (B-D-15, Plan 0.62.4 Abschnitt 3.5, Entscheidung F-7 A): eine
+# gemeinsame Leseregel fuer die Zahlfelder von RAID, Bildschirm und USV.
+#  1. Komma ist immer das Dezimalzeichen ("1,5" = 1,5; "1,000" = 1).
+#  2. Punkt vor vollstaendigen Dreiergruppen ist ein Tausenderpunkt, wenn die
+#     Zahl nicht mit 0 beginnt ("1.000", "12.500", "1.000.000", "1.000,5").
+#  3. Sonst ist ein einzelner Punkt ein Dezimalpunkt ("1.5", "0.125").
+#  4. Abgelehnt: englische Mischform ("1,000.5"), schiefe Gruppen ("1.00,5"),
+#     e-Schreibweise, "_", inf, nan, fremde Ziffern, mehr als 20 Zeichen,
+#     mehr als 3 Nachkommastellen.
+#  7. Ganzzahlfelder melden "1.5" als "ganze Zahl".
+# Leerzeichen (auch geschuetzt oder schmal) duerfen Dreiergruppen trennen
+# ("1 000"), "-0" wird 0. Obergrenzen je Feld kommen erst mit 0.62.5.
+# raid_values, raid_input_values, raid_input_problem und ipv4_values (Spiel)
+# bleiben unberuehrt; die Regel gilt nur fuer die Text-Lesestellen.
+NUMBER_MAX_CHARS = 20
+NUMBER_MAX_DECIMALS = 3          # reicht fuer 23,976 Bilder/Sekunde
+_NUMBER_GROUPS = re.compile(r"[1-9][0-9]{0,2}(\.[0-9]{3})+")
+_NUMBER_GROUPS_SPACE = re.compile(r"[1-9][0-9]{0,2}([   ][0-9]{3})+(,[0-9]+)?")
+
+
+class _NumberProblem(ValueError):
+    """Interner Grund, warum read_number ablehnt: "leer", "keine Zahl" oder
+    "Nachkommastellen" (die Meldung fuer die Anzeige baut read_number)."""
+
+
+def _number_value(text):
+    """Liest einen Text nach der Leseregel oben als float oder wirft
+    _NumberProblem. Ohne Meldungstext, ohne Grenzen."""
+    raw = str(text if text is not None else "").strip()
+    if not raw:
+        raise _NumberProblem("leer")
+    if len(raw) > NUMBER_MAX_CHARS:
+        raise _NumberProblem("keine Zahl")
+    negative = raw.startswith("-")
+    if negative:
+        raw = raw[1:]
+    if _NUMBER_GROUPS_SPACE.fullmatch(raw):
+        raw = re.sub(r"[   ]", ".", raw)
+    if not re.fullmatch(r"[0-9.,]+", raw) or raw.count(",") > 1:
+        raise _NumberProblem("keine Zahl")          # e, _, inf, nan, fremde Ziffern
+    whole, comma, rest = raw.partition(",")
+    decimal = bool(comma)
+    if comma:
+        if "." in whole:
+            if not _NUMBER_GROUPS.fullmatch(whole):
+                raise _NumberProblem("keine Zahl")  # 1.00,5 / 1,000.5 / 1.000.5
+            whole = whole.replace(".", "")
+    elif "." in whole:
+        if _NUMBER_GROUPS.fullmatch(whole):          # Tausenderpunkt
+            whole = whole.replace(".", "")
+        elif whole.count(".") == 1:                  # Dezimalpunkt
+            whole, _point, rest = whole.partition(".")
+            decimal = True
+        else:
+            raise _NumberProblem("keine Zahl")      # 1.000.5 / 1.2.3
+    if decimal:
+        if not rest.isdigit():                       # "5," / "5." ohne Ziffer danach
+            raise _NumberProblem("keine Zahl")
+        if len(rest) > NUMBER_MAX_DECIMALS:
+            raise _NumberProblem("Nachkommastellen")
+    whole = whole or "0"                             # ",5" / ".5" = 0,5
+    if not whole.isdigit():
+        raise _NumberProblem("keine Zahl")
+    value = float(whole + ("." + rest if rest else ""))
+    return 0.0 if value == 0 else (-value if negative else value)
+
+
+def read_number(text, caption, ganz=False):
+    """Liest ein Zahlfeld der Rechner (RAID, Bildschirm, USV) nach der
+    gemeinsamen Leseregel. caption = Feldbeschriftung fuer die Meldung.
+    Liefert float, bei ganz=True int. Fehler -> InputError."""
+    try:
+        value = _number_value(text)
+    except _NumberProblem as problem:
+        if str(problem) == "leer":
+            raise InputError("Bitte einen Wert eingeben: %s." % caption) from None
+        raise InputError("Bitte eine Zahl eingeben: %s. Zum Beispiel %s."
+                         % (caption, "1.000" if ganz else "1.000 oder 1,5")) from None
+    if ganz:
+        if value != int(value):
+            raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
+        return int(value)
+    return value
+
+
 RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10"]
 
 # Mindestanzahl Platten und Formel -> (Nettokapazitaet, Ausfalltoleranz)
@@ -2389,12 +2474,9 @@ def raid_tolerance_lines(level, disks, tolerance):
 
 def raid_report(level, disks_text, size_text):
     """Berechnet Nutzkapazitaet, Verlust und Effizienz eines RAID."""
-    try:
-        disks = int(disks_text)
-        size = float(size_text.replace(",", "."))
-    except ValueError:
-        raise InputError("Bitte gültige Zahlen für Anzahl und "
-                         "Kapazität eingeben.")
+    # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
+    disks = read_number(disks_text, "Anzahl Festplatten", ganz=True)
+    size = read_number(size_text, "Kapazität je Festplatte (GB)")
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
 
@@ -2423,15 +2505,15 @@ def raid_report(level, disks_text, size_text):
 
 def screen_report(width_text, height_text, depth, fps_text):
     """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
+    # Ab 0.62.4: gemeinsame Leseregel (read_number); Bildrate leer = ohne
+    width = read_number(width_text, "Breite (Pixel)", ganz=True)
+    height = read_number(height_text, "Höhe (Pixel)", ganz=True)
     try:
-        width = int(width_text)
-        height = int(height_text)
         depth = int(depth)
-        fps_raw = fps_text.strip().replace(",", ".")
-        fps = float(fps_raw) if fps_raw else 0.0
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
                          "Bildrate eingeben.")
+    fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
     if fps < 0:
@@ -2585,19 +2667,8 @@ def ups_number(fields, key):
     Grenzen. Fehler kommen als InputError mit der Feldbeschriftung."""
     caption = UPS_FIELD_CAPTIONS[key]
     low, high, integer, zero_ok = UPS_LIMITS[key]
-    raw = str(fields.get(key, "") or "").strip().replace(" ", "")
-    if not raw:
-        raise InputError("Bitte einen Wert eingeben: %s." % caption)
-    raw = raw.replace(".", "").replace(",", ".") if raw.count(".") and \
-        raw.count(",") else raw.replace(",", ".")
-    try:
-        value = float(raw)
-    except ValueError:
-        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
-    if value != value or value in (float("inf"), float("-inf")):
-        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
-    if integer and value != int(value):
-        raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
+    # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
+    value = read_number(str(fields.get(key, "") or ""), caption, ganz=integer)
     too_small = value < low if zero_ok else value <= low
     if too_small or value > high:
         if zero_ok:
@@ -3019,43 +3090,43 @@ CALC_EXPLAIN_SUBNET = (
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
-    "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
+    "Am Beispiel 4 Festplatten x 1.000 GB (Bruttokapazität 4.000 GB)\n\n"
     "RAID 0 - Striping (ohne Redundanz, min. 2 Festplatten)\n"
     "   Die Daten werden ohne Redundanz auf alle Festplatten verteilt.\n"
     "   Formel:  Nutzkapazität = Anzahl x Kapazität\n"
-    "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
+    "   Beispiel: 4 x 1.000 GB = 4.000 GB nutzbar\n"
     "   Ausfalltoleranz: 0 Festplatten (fällt eine aus, sind alle\n"
     "   Daten weg)\n\n"
     "RAID 1 - Spiegelung (Mirroring, min. 2 Festplatten)\n"
     "   Die Daten werden 1:1 auf alle weiteren Festplatten gespiegelt\n"
     "   (bei 2 Festplatten auf die zweite).\n"
     "   Formel:  Nutzkapazität = 1 x Kapazität\n"
-    "   Beispiel: 1000 GB nutzbar (bei 4 Festplatten stehen nur\n"
-    "   1000 GB Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
+    "   Beispiel: 1.000 GB nutzbar (bei 4 Festplatten stehen nur\n"
+    "   1.000 GB Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
     "   Ausfalltoleranz: n-1 Festplatten\n\n"
     "RAID 5 - verteilte Parität (min. 3 Festplatten)\n"
     "   Eine Festplatte Kapazität wird rechnerisch für Paritätsdaten\n"
     "   verwendet (die Parität selbst liegt verteilt auf allen\n"
     "   Festplatten).\n"
     "   Formel:  Nutzkapazität = (Anzahl - 1) x Kapazität\n"
-    "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
+    "   Beispiel: (4 - 1) x 1.000 GB = 3.000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Festplatte\n\n"
     "RAID 6 - doppelte Parität (min. 4 Festplatten)\n"
     "   Wie RAID 5, aber mit doppelter Parität für mehr Sicherheit.\n"
     "   Formel:  Nutzkapazität = (Anzahl - 2) x Kapazität\n"
-    "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Beispiel: (4 - 2) x 1.000 GB = 2.000 GB nutzbar\n"
     "   Ausfalltoleranz: 2 Festplatten\n\n"
     "RAID 10 - Spiegelung + Striping (min. 4 Festplatten, gerade Anzahl)\n"
     "   Je zwei Festplatten werden gespiegelt (RAID 1), diese\n"
     "   Spiegelpaare werden anschließend im Striping-Verfahren\n"
     "   (RAID 0) zusammengefasst.\n"
     "   Formel:  Nutzkapazität = (Anzahl / 2) x Kapazität\n"
-    "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Beispiel: (4 / 2) x 1.000 GB = 2.000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Festplatte sicher (bis zu 2, wenn je\n"
     "   Spiegelpaar nur eine ausfällt)\n\n"
     "SPEICHEREFFIZIENZ\n"
     "   Effizienz = Nutzkapazität / Bruttokapazität x 100\n"
-    "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
+    "   Beispiel RAID 5: 3.000 GB / 4.000 GB x 100 = 75 %"
 )
 CALC_EXPLAIN_SCREEN = (
     "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
@@ -3198,8 +3269,8 @@ CALC_EXPLAIN_SUBNET_HANDY = (
 CALC_EXPLAIN_RAID_HANDY = (
     "RECHENWEG RAID\n"
     "Am Beispiel 4 Festplatten\n"
-    "x 1000 GB\n"
-    "(Bruttokapazität 4000 GB)\n"
+    "x 1.000 GB\n"
+    "(Bruttokapazität 4.000 GB)\n"
     "\n"
     "RAID 0 - Striping (ohne\n"
     "Redundanz, min. 2\n"
@@ -3211,7 +3282,7 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " Anzahl x Kapazität\n"
     " Beispiel:\n"
-    " 4 x 1000 GB = 4000 GB\n"
+    " 4 x 1.000 GB = 4.000 GB\n"
     " nutzbar\n"
     " Ausfalltoleranz:\n"
     " 0 Festplatten (fällt eine\n"
@@ -3228,9 +3299,9 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Formel:\n"
     " Nutzkapazität =\n"
     " 1 x Kapazität\n"
-    " Beispiel: 1000 GB nutzbar\n"
+    " Beispiel: 1.000 GB nutzbar\n"
     " (bei 4 Festplatten stehen\n"
-    " nur 1000 GB Nutzkapazität\n"
+    " nur 1.000 GB Nutzkapazität\n"
     " zur Verfügung, der Rest ist\n"
     " Spiegelung)\n"
     " Ausfalltoleranz:\n"
@@ -3248,8 +3319,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl - 1) x Kapazität\n"
     " Beispiel:\n"
-    " (4 - 1) x 1000 GB = 3000 GB\n"
-    " nutzbar\n"
+    " (4 - 1) x 1.000 GB\n"
+    " = 3.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 1 Festplatte\n"
     "\n"
@@ -3262,8 +3333,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl - 2) x Kapazität\n"
     " Beispiel:\n"
-    " (4 - 2) x 1000 GB = 2000 GB\n"
-    " nutzbar\n"
+    " (4 - 2) x 1.000 GB\n"
+    " = 2.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 2 Festplatten\n"
     "\n"
@@ -3280,8 +3351,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität =\n"
     " (Anzahl / 2) x Kapazität\n"
     " Beispiel:\n"
-    " (4 / 2) x 1000 GB = 2000 GB\n"
-    " nutzbar\n"
+    " (4 / 2) x 1.000 GB\n"
+    " = 2.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
     " 1 Festplatte sicher (bis zu\n"
     " 2, wenn je Spiegelpaar nur\n"
@@ -3292,7 +3363,7 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Nutzkapazität /\n"
     " Bruttokapazität x 100\n"
     " Beispiel RAID 5:\n"
-    " 3000 GB / 4000 GB x 100\n"
+    " 3.000 GB / 4.000 GB x 100\n"
     " = 75 %"
 )
 CALC_EXPLAIN_SCREEN_HANDY = (
