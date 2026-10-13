@@ -78,8 +78,13 @@ BTN_CANCEL = "Abbrechen"
 FILE_TYPE = "Lernstand-Sicherung"   # nur Beschriftung im Dateidialog (ab 0.61)
 # Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck
 PREVIEW_HINT = ("Zusammenführen übernimmt, was auf diesem Gerät noch fehlt – doppelt "
-                "wird nichts. Gelöschtes kommt dabei nicht zurück: Was auf diesem Gerät "
-                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht. "
+                "wird nichts. "
+                # Ab 0.63.2 (FG-92, B-G-08): Wortlaut Chat, Antwort Meldung 31 B.4
+                "Gelöschtes kommt dabei in der Regel nicht zurück: Was auf diesem Gerät "
+                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht – "
+                "außer die Sicherung wurde auf einem Gerät erstellt, nachdem es nach dieser "
+                "Löschung mit „Alles ersetzen“ einen älteren Stand eingespielt hatte; dann "
+                "kommt dieser Stand zurück. "
                 "Alles ersetzen stellt genau den Stand der Sicherung her.")
 DELETED_TITLE = "Gelöschter Spielstand"
 REPLACE_TITLE = "Alles ersetzen"
