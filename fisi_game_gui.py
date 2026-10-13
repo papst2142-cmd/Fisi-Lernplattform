@@ -2548,7 +2548,8 @@ class FitWidth:
             self._fit_changed = 0
             # Ueberstand so, wie gebaut (Test: ohne Ueberstand keine Aenderung)
             self._fit_built = max(0, self.inner.winfo_reqwidth() - width)
-            overflow = self.inner.winfo_reqwidth() > width + 1
+            # dieselbe Schwelle wie der Rest-Durchgang unten: jeder Ueberstand
+            overflow = self._fit_built > 0
             for _round in range(4 if overflow else 0):
                 # jede Runde rechnet von aussen neu (auch nach weniger Spalten)
                 self._fit_grids = []
