@@ -21,7 +21,7 @@ Tests ab 0.63.2 fuer die Spiel-Fehler am PC (Bauauftrag N2):
           auf einer Wand, mind. 4,5:1 gegen den Boden (auch dunkel);
           Ortsschilder der Karte bei jeder Schriftgroesse gleich; "Bahnsteig 1"
           ueberdeckt keinen Automaten; "Platz wechseln" mit Abstand zum
-          Suchfeld.
+          Suchfeld; Knopftexte "Laufend buchen" / "Einmalig buchen".
 
 Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
 Start:  xvfb-run -a python test_spiel_pc_0632.py
@@ -659,6 +659,11 @@ class NamensschildTest(unittest.TestCase):
             for floor in floors:
                 self.assertGreaterEqual(fisi_theme.contrast(shapes[-1]["color"], floor), 4.5,
                                         (key, shapes[-1]["color"], floor))
+
+    def test_knopftexte_marketing(self):
+        import fisi_game as fg
+        self.assertEqual(dict(fg.AD_MODES), {fg.AD_RUNNING: "Laufend buchen",
+                                             fg.AD_ONCE: "Einmalig buchen"})
 
 
 _CHILD_ANSICHT = r"""

@@ -7911,7 +7911,8 @@ def tax_day_lines(items, content=None):
 
 AD_RUNNING = "laufend"
 AD_ONCE = "einmalig"
-AD_MODES = ((AD_RUNNING, "Laufend"), (AD_ONCE, "Einmalig"))
+# Ab 0.63.2 (B-D-10): Knopftexte als Handlung ("Laufend" las sich wie ein Zustand)
+AD_MODES = ((AD_RUNNING, "Laufend buchen"), (AD_ONCE, "Einmalig buchen"))
 
 
 def marketing_rules(content=None):

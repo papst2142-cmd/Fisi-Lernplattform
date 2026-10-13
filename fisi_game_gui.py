@@ -5736,11 +5736,16 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             elif booking:
                 make_label(side, "gebucht", font=F["small_bold"], fg=C["green"]).pack()
             else:
+                # Ab 0.63.2 (B-D-10): beide Knoepfe so breit wie der laengere
+                # Text ("Laufend buchen" / "Einmalig buchen"), mindestens 110
+                from fisi_widgets import text_width   # wie NeoButton selbst
+                wide = max(110, max(int(text_width(label, F["small_bold"]) + 44)
+                                    for _mode, label in fg.AD_MODES))
                 for mode, label in fg.AD_MODES:
                     offer = item["angebote"][mode]
                     button = NeoButton(side, label, lambda o=offer: self._book_ad(o),
                                        kind="primary" if mode == fg.AD_RUNNING else "ghost",
-                                       height=32, width=110, font=F["small_bold"])
+                                       height=32, width=wide, font=F["small_bold"])
                     button.pack(pady=(0, 6))
                     button.set_enabled(not offer["problem"])
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \
