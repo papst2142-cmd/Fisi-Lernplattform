@@ -455,13 +455,30 @@ class PcTourTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.app.on_close(final_sync=False)
+        # Ab 0.63.2: on_close schaltet den Notausgang scharf (arm_emergency_exit:
+        # nach EXIT_GRACE_SECONDS os._exit(0)). Im Testprozess beendete der
+        # Waechter sonst den ganzen Lauf mitten in einer spaeteren Testklasse -
+        # mit Rueckgabe 0 und ohne "Ran N tests"/"OK", der Lauf sah gruen aus.
+        # Hier wird der Aufruf nur festgehalten (und geprueft), der Waechter
+        # startet nicht. Den echten Notausgang prueft test_beenden.py im
+        # Kindprozess.
+        import app_gui
+        armed = []
+        real_arm = app_gui.arm_emergency_exit
+        app_gui.arm_emergency_exit = lambda *args, **kwargs: armed.append((args, kwargs))
+        try:
+            cls.app.on_close(final_sync=False)
+        finally:
+            app_gui.arm_emergency_exit = real_arm
         for key, value in cls.old.items():
             if value is None:
                 os.environ.pop(key, None)
             else:
                 os.environ[key] = value
         shutil.rmtree(cls.folder, ignore_errors=True)
+        if armed != [((False,), {})]:
+            raise AssertionError("on_close hat den Notausgang nicht genau einmal "
+                                 "(ohne Update) scharf geschaltet: %r" % (armed,))
 
     def _app(self):
         import app_gui
