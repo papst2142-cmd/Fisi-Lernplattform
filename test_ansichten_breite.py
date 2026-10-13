@@ -257,7 +257,17 @@ Z3_STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 # aufgeklappt ebenso (+6 px, Messung S1c2). Normal gehoert nicht zu Z3 und
 # bleibt unveraendert (Weisung Hauptstrang) - deshalb dort erwarteter
 # Fehlschlag, gemeldet in bau_0.63.2/s1c2/ergebnis.md.
-Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen")
+Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten")
+# Bekannte Grenze bei Z3 (Nacharbeit Gegenpruefung M1): Fortschritt mit
+# gespeicherten Test-Sessions, Tabelle "Historie der Pruefungssessions" bei
+# Sehr gross 1120 (Spaltenkoepfe + Datum passen nicht, ohne Text zu kuerzen).
+# Offene Designfrage an Nico (Varianten mit Fotos in ergebnis_nacharbeit_gp.md).
+Z3_GRENZE_BEKANNT = {("fortschritt_daten", 1.3, 1120)}
+
+
+def _bekannt(name, faktor, breite):
+    return ((faktor == 1.0 and breite == 1120 and name in Z3_NORMAL_1120_BEKANNT)
+            or (name, faktor, breite) in Z3_GRENZE_BEKANNT)
 
 
 def _normal_unveraendert(ctx):
@@ -309,9 +319,43 @@ def _unterklassen_sichtbar(ctx, zustand):
             stack.append(child)
 
 
+def _tabellen_lesbar(ctx, zustand):
+    """Nacharbeit Gegenpruefung S1c2 (M1/L3): in jeder sichtbaren Tabelle
+    (ttk.Treeview) passt jeder Spaltenkopf und jeder Zelltext in seine
+    Spalte - nichts ist abgeschnitten. Nur Gross/Sehr gross (Z3); Normal
+    bleibt wie 0.63.1 (dort ist "Pruefung" mit langem Namen schon zu schmal,
+    gemeldet in ergebnis_nacharbeit_gp.md)."""
+    if ctx.faktor == 1.0:
+        return
+    from tkinter import ttk
+    import tkinter.font as tkfont
+    stack = [ctx.view.inner]
+    while stack:
+        widget = stack.pop()
+        stack.extend(widget.winfo_children())
+        if not isinstance(widget, ttk.Treeview) or not widget.winfo_ismapped():
+            continue
+        style = widget.cget("style") or "Treeview"
+        lookup = ttk.Style().lookup
+        head = tkfont.Font(font=lookup(style + ".Heading", "font") or "TkHeadingFont")
+        body = tkfont.Font(font=lookup(style, "font") or "TkDefaultFont")
+        spalten = widget["displaycolumns"]
+        if spalten in ("#all", ("#all",)):
+            spalten = widget["columns"]
+        for key in spalten:
+            breite = int(widget.column(key, "width"))
+            texte = [(head, widget.heading(key, "text"))]
+            texte += [(body, widget.set(item, key)) for item in widget.get_children()]
+            for font, text in texte:
+                if font.measure(text) > breite:
+                    ctx.fehler.append("%s/%s: Tabellentext abgeschnitten %r (%d > Spalte %d)"
+                                      % (ctx.name, zustand, text, font.measure(text), breite))
+
+
 def _z3_pruefe(ctx, zustand):
     ctx.pruefe(zustand)
     _unterklassen_sichtbar(ctx, zustand)
+    _tabellen_lesbar(ctx, zustand)
     _normal_unveraendert(ctx)
 
 
@@ -422,6 +466,32 @@ def pruefe_optionen(ctx):
     ctx.pump(0.3)
 
 
+@ansicht("fortschritt_daten")
+def pruefe_fortschritt_daten(ctx):
+    """Fortschritt MIT gespeicherten Klausursimulationen und Test-Sessions
+    (Gegenpruefung S1c2, M1): je Pruefungsart eine Simulation, darunter der
+    laengste Name ("AP2 · Konzeption und Administration von IT-Systemen"),
+    laengste Note und Dauer. Steht als letzte Ansicht, damit die anderen
+    Ansichten weiter mit leerer Datenbank laufen."""
+    import fisi_pruefung as fp
+    view = ctx.zeige("progress")
+    ctx.pump(1.0)
+    db = ctx.app.db
+    for art in fp.EXAM:
+        db.save_exam(art, 55.5, "3 (Befriedigend)", 5999, {})
+    for _ in range(3):
+        db.save_test_result(37, 40, 92.5, "3 (Befriedigend)", 5999)
+    view.refresh()      # wie "Aktualisieren": neue Zeilen nach dem ersten Anpassen
+    ctx.pump(1.0)
+    _z3_pruefe(ctx, "mit_daten")
+    # noch eine Simulation: neue Zeile, sonst aendert sich keine Groesse -
+    # nur das Neuanpassen nach refresh (Z3_REFIT) passt sie an
+    db.save_exam(fp.KONZEPTION, 55.5, "3 (Befriedigend)", 5999, {})
+    view.refresh()
+    ctx.pump(1.0)
+    _z3_pruefe(ctx, "neue_zeile")
+
+
 def worker(faktor, breite, hoehe, namen):
     """Laeuft im eigenen Prozess; gibt eine JSON-Zeile "ERG {...}" aus."""
     home = tempfile.mkdtemp(prefix="fisi_ansichten_")
@@ -513,7 +583,7 @@ class AnsichtBreiteBasis(unittest.TestCase):
             normal = [f for f in mine["fehler"] if "bei Normal" in f]
             self.assertEqual(normal, [], "%s Normal %dx%d umgestellt" % (self.NAME, breite, hoehe))
             self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
-                            "Z3_NORMAL_1120_BEKANNT anpassen" % (self.NAME, breite, hoehe))
+                            "Z3_NORMAL_1120_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
         else:
             self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
                                                                  breite, hoehe))
@@ -557,10 +627,10 @@ class AbschlussprojektBreiteTest(AnsichtBreiteBasis):
 
 def fuer_alle_stufen(cls):
     """Z3: je Schriftstufe (Normal, Gross, Sehr gross) und Fenster ein
-    Testfall. Normal 1120 bei Z3_NORMAL_1120_BEKANNT: nur Ueberstand erlaubt, nichts umgestellt."""
+    Testfall. Bekannte Faelle (_bekannt): nur Ueberstand erlaubt, bei Normal nichts umgestellt."""
     for faktor, stufe in Z3_STUFEN.items():
         for breite, hoehe in FENSTER:
-            bekannt = faktor == 1.0 and breite == 1120 and cls.NAME in Z3_NORMAL_1120_BEKANNT
+            bekannt = _bekannt(cls.NAME, faktor, breite)
             test = _make(faktor, breite, hoehe, bekannt)
             setattr(cls, "test_%s_%d" % (stufe, breite), test)
     return cls
@@ -589,6 +659,11 @@ class PruefungstrainerBreiteTest(AnsichtBreiteBasis):
 @fuer_alle_stufen
 class OptionenBreiteTest(AnsichtBreiteBasis):
     NAME = "optionen"
+
+
+@fuer_alle_stufen
+class FortschrittDatenBreiteTest(AnsichtBreiteBasis):
+    NAME = "fortschritt_daten"
 
 
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")

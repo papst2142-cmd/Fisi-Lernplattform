@@ -1842,27 +1842,46 @@ class FitRowsMixin(FitWidthMixin):
     def _z3_tree(self, tree, room):
         """Tabellenspalten schmaler, wenn die Tabelle nicht passt: anteilig,
         aber keine Spalte schmaler als ihre Ueberschrift oder ihr laengster
-        Eintrag. Passt sie: Breiten wie bisher."""
+        Eintrag (nichts abgeschnitten). Passt sie: Breiten wie bisher.
+        Ab Gegenpruefung S1c2 (M1): Zellen mit Kurzform (tree._fisi_z3_kurz,
+        {Zeile: {Spalte: (lang, kurz)}}) zeigen die Kurzform, solange die
+        Tabelle mit den langen Texten nicht passt."""
         if "_fisi_z3_columns" not in tree.__dict__:
             tree._fisi_z3_columns = {key: int(tree.column(key, "width"))
                                      for key in tree["columns"]}
             tree._fisi_z3_stretch = {key: tree.column(key, "stretch")
                                      for key in tree["columns"]}
         base = tree._fisi_z3_columns
-        others = sum(w.winfo_reqwidth() for w in tree.master.pack_slaves() if w is not tree)
+        # nur was neben der Tabelle steht (Rollbalken), nicht darunter
+        others = sum(w.winfo_reqwidth() for w in tree.master.pack_slaves()
+                     if w is not tree and w.pack_info().get("side") in ("left", "right"))
         room -= others + (px(6) if others else 0)
         style = tree.cget("style") or "Treeview"
         lookup = ttk.Style().lookup
         head_font = tkfont.Font(font=lookup(style + ".Heading", "font") or "TkHeadingFont")
         body_font = tkfont.Font(font=lookup(style, "font") or "TkDefaultFont")
         pad = px(self.Z3_CELL_PAD)
-        least = {}
-        for key in base:
-            texts = [tree.set(item, key) for item in tree.get_children()]
-            least[key] = max([head_font.measure(tree.heading(key, "text"))]
-                             + [body_font.measure(text) for text in texts]) + pad
+        items = tree.get_children()
+        kurz = {item: cells for item, cells in tree.__dict__.get("_fisi_z3_kurz", {}).items()
+                if item in items}
+
+        def least_for(short):
+            least = {}
+            for key in base:
+                texts = []
+                for item in items:
+                    pair = kurz.get(item, {}).get(key)
+                    texts.append(pair[1 if short else 0] if pair else tree.set(item, key))
+                least[key] = max([head_font.measure(tree.heading(key, "text"))]
+                                 + [body_font.measure(text) for text in texts]) + pad
+            return least
+
+        least = least_for(False)
+        short = bool(kurz) and sum(least.values()) > room
+        if short:
+            least = least_for(True)
         widths = dict(base)
-        if sum(base.values()) > room:
+        if sum(base.values()) > room or any(least[k] > base[k] for k in base):
             # anteilig verkleinern; Spalten an ihrer Untergrenze bleiben dort
             fixed = {}
             while True:
@@ -1875,11 +1894,16 @@ class FitRowsMixin(FitWidthMixin):
                 if not low:
                     break
                 fixed.update({k: least[k] for k in low})
-            widths = {k: min(base[k], max(least[k], widths[k])) for k in base}
-        # verglichen mit dem zuletzt gesetzten Wert: Tk dehnt Spalten mit
+            # nie breiter als bisher, aber nie schmaler als der Text
+            widths = {k: max(least[k], min(base[k], widths[k])) for k in base}
+        # verglichen mit dem zuletzt gesetzten Stand: Tk dehnt Spalten mit
         # stretch selbst, die gelesene Breite taugt nicht zum Vergleich
-        if widths == tree.__dict__.get("_fisi_z3_widths", base):
+        state = (widths, short, tuple(items))
+        if state == tree.__dict__.get("_fisi_z3_state", (base, False, tuple(items))):
             return False
+        for item, cells in kurz.items():
+            for key, pair in cells.items():
+                tree.set(item, key, pair[1 if short else 0])
         for key, width in widths.items():
             # gedehnte Spalten hielten die Tabelle so breit wie bisher
             # (Tk verlangt die gedehnte Breite weiter): beim Verkleinern
@@ -1888,8 +1912,8 @@ class FitRowsMixin(FitWidthMixin):
             tree.column(key, width=width, stretch=stretch)
         # Tk rechnet die verlangte Breite erst beim Konfigurieren neu
         tree.configure(height=tree.cget("height"))
-        tree._fisi_z3_widths = widths
-        tree._fisi_z3_umgestellt = widths != base
+        tree._fisi_z3_state = state
+        tree._fisi_z3_umgestellt = widths != base or short
         return True
 
     @staticmethod
@@ -5639,12 +5663,18 @@ class ProgressView(FitRowsMixin, View):
         for item in self.exam_tree.get_children():
             self.exam_tree.delete(item)
         exams = self.db.exams()
+        # ab 0.63.2 (Z3, Gegenpruefung M1): Kurzname wie in der Pruefungs-
+        # Historie des Pruefungstrainers, falls die Tabelle bei grosser
+        # Schrift mit den langen Namen nicht passt (FitRowsMixin._z3_tree)
+        self.exam_tree._fisi_z3_kurz = {}
         for entry in exams:
             exam = fp.EXAM.get(entry["art"])
-            self.exam_tree.insert("", "end", values=(
+            item = self.exam_tree.insert("", "end", values=(
                 entry["timestamp"], exam["name"] if exam else entry["art"],
                 _points(entry["punkte"]), entry["note"],
                 "%02d:%02d min" % (entry["dauer"] // 60, entry["dauer"] % 60)))
+            if exam:
+                self.exam_tree._fisi_z3_kurz[item] = {"pruefung": (exam["name"], exam["kurz"])}
         for child in self.weak_box.winfo_children():
             child.destroy()
         title, weak = fp.latest_weak(exams)
