@@ -76,7 +76,7 @@ BTN_MERGE = "Zusammenführen"
 BTN_REPLACE = "Alles ersetzen"
 BTN_CANCEL = "Abbrechen"
 FILE_TYPE = "Lernstand-Sicherung"   # nur Beschriftung im Dateidialog (ab 0.61)
-# Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck
+# Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck (ab 0.63.2 FG-92: ausser nach "Alles ersetzen")
 PREVIEW_HINT = ("Zusammenführen übernimmt, was auf diesem Gerät noch fehlt – doppelt "
                 "wird nichts. "
                 # Ab 0.63.2 (FG-92, B-G-08): Wortlaut Chat, Antwort Meldung 31 B.4
@@ -590,17 +590,20 @@ def replace_question(backup):
             "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
             "dem Repository wieder dazu. Löschungen, die dieses Gerät schon kennt (zum "
             "Beispiel „Alle Lerndaten löschen“), löschen das Eingespielte nicht noch "
-            "einmal; das gilt auch für deine anderen Geräte, sobald sie mindestens Version "
-            "0.63.2 haben und sich einmal abgeglichen haben. Ein Gerät mit einer älteren "
-            "Version, das die Löschung kennt, löscht das Eingespielte bei sich weiterhin; "
-            "aktualisiere deine anderen Geräte deshalb bald. Was ein anderes Gerät ohne "
-            "Verbindung gelernt hat, bleibt in der Regel erhalten, wenn es sich erst nach "
-            "dem Ersetzen wieder abgleicht und alle Geräte, die die Löschung kennen, "
-            "mindestens Version 0.63.2 haben. Was nach dem Erstellen der Sicherung schon "
-            "abgeglichen war, bleibt gelöscht. Löschungen, die erst nach der letzten "
-            "Löschung auf diesem Gerät kamen und die es noch nicht kennt, gelten weiter; "
-            "eine unbekannte frühere Löschung eines anderen Geräts wird dagegen aufgehoben. "
-            "Bewahre die Sicherungsdatei deshalb auf."
+            "einmal; das gilt auch für deine anderen Geräte, wenn alle deine Geräte schon "
+            "beim Ersetzen mindestens Version 0.63.2 hatten. Solange ein Gerät noch eine "
+            "ältere Version hat, kann das Eingespielte auf deinen anderen Geräten "
+            "zeitweise wieder fehlen, und ein Gerät mit einer älteren Version, das die "
+            "Löschung kennt, löscht es bei sich weiterhin; aktualisiere deine anderen "
+            "Geräte deshalb bald. Was ein anderes Gerät ohne Verbindung gelernt hat, "
+            "bleibt in der Regel erhalten, wenn es sich erst nach dem Ersetzen wieder "
+            "abgleicht und alle deine Geräte schon beim Ersetzen mindestens Version 0.63.2 "
+            "hatten. Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt "
+            "gelöscht. Löschungen, die erst nach der letzten Löschung auf diesem Gerät "
+            "kamen und die es noch nicht kennt, gelten weiter; eine unbekannte frühere "
+            "Löschung derselben Art (zum Beispiel ebenfalls „Alle Lerndaten löschen“) "
+            "eines anderen Geräts wird dagegen aufgehoben. Bewahre die Sicherungsdatei "
+            "deshalb auf."
             % backup_summary(backup)["erstellt"])
 
 
