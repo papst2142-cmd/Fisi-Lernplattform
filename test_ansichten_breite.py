@@ -26,6 +26,7 @@ bei 1120 x 720, Messung Plan: +34 bis +565 px).
 Start:  xvfb-run -a python test_ansichten_breite.py
 """
 
+import datetime
 import json
 import os
 import re
@@ -284,8 +285,21 @@ Z3_UEBERSTAND = {
                                       "pruefung_bewertung_laengstes": 2514},
     ("pruefungstrainer", 1.0, 1360): {"pruefung_bewertung": 1254,
                                       "pruefung_bewertung_laengstes": 2274},
-    ("fortschritt_daten", 1.3, 1120): {"mit_daten": 55, "neue_zeile": 55},
+    # N-M1: gemessen mit TESTZEIT (breitestes Datum), vorher 55 mit Uhrzeit des Laufs
+    ("fortschritt_daten", 1.3, 1120): {"mit_daten": 70, "neue_zeile": 70},
 }
+# Gegenpruefung S1c2 Nacharbeit (N-M1): feste Uhrzeit fuer alle
+# Testdaten (Zeitstempel ueber fisi_core.device_now, im worker gesetzt).
+# Die Tabellen-Spalte "Datum & Uhrzeit" ist so breit wie ihr laengster Text,
+# die Ziffern der Schrift (Inter) sind unterschiedlich breit; mit der echten
+# Uhr schwankte der Ueberstand bei Sehr gross 1120 (gemessen +40 bis +65).
+# 2026-04-04 00:00:00 ist der breiteste Text "%Y-%m-%d %H:%M:%S" des Jahres
+# 2026 in allen drei Stufen (Messung ueber alle Tage und alle Uhrzeiten:
+# Normal 135 px, Gross 166 px, Sehr gross 182 px; "1" ist am schmalsten,
+# "0/4/6/8/9" in allen Stufen am breitesten; Tag und Monat sind immer zweistellig).
+TESTZEIT = datetime.datetime(2026, 4, 4, 0, 0, 0)
+
+
 _ZUSTAND = re.compile(r"^([a-z_]+)/([a-z_0-9]+): (.*)$", re.S)
 _INHALT = re.compile(r"^Inhalt (\d+) px breiter als sichtbar")
 
@@ -592,6 +606,9 @@ def worker(faktor, breite, hoehe, namen):
     import app_gui
     import fisi_theme
     import fisi_widgets
+    import fisi_core
+    # feste Uhrzeit der Testdaten (TESTZEIT, N-M1): Ergebnis unabhaengig vom Testlauf
+    fisi_core.device_now = lambda: TESTZEIT.astimezone()
     fisi_theme.apply_font_size(STUFEN[faktor])
     fisi_widgets.apply_ui_scale(faktor)
     app_gui.UpdateController.auto_check = lambda self: None
