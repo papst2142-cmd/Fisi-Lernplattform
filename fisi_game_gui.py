@@ -2450,6 +2450,7 @@ class FitWidth:
         self._fit_width = None
         self._fit_pending = False
         self._fit_overflow = 0      # Ueberstand nach dem Zurechtruecken (Test)
+        self._fit_built = 0         # Ueberstand so, wie gebaut (Test)
         self._fit_changed = 0       # zurechtgerueckte Elemente (Test)
         self._fit_grids = []        # (Kachelraster, Platz) im letzten Durchgang
         self.canvas.bind("<Configure>", self._fit_on_canvas, add="+")
@@ -2537,6 +2538,8 @@ class FitWidth:
             self._fit_restore()
             self.update_idletasks()
             self._fit_changed = 0
+            # Ueberstand so, wie gebaut (Test: ohne Ueberstand keine Aenderung)
+            self._fit_built = max(0, self.inner.winfo_reqwidth() - width)
             overflow = self.inner.winfo_reqwidth() > width + 1
             for _round in range(4 if overflow else 0):
                 # jede Runde rechnet von aussen neu (auch nach weniger Spalten)
@@ -2552,6 +2555,17 @@ class FitWidth:
                     self._fit_regrid(grid, grid.__dict__.get("_fit_cols_now",
                                                             grid._fit_columns) - 1)
                 self.update_idletasks()
+            # Bleibt ein Rest (Schriften messen anders als angenommen), wird mit
+            # entsprechend weniger Platz noch einmal gerechnet, bis es passt
+            extra = 0
+            for _round in range(6):
+                rest = self.inner.winfo_reqwidth() - width
+                if rest <= 0:
+                    break
+                extra += rest
+                self._fit_grids = []
+                self._fit_area(self.inner, width - extra)
+                self.update_idletasks()
             self._fit_overflow = max(0, self.inner.winfo_reqwidth() - width)
             self.after(40, self._refit_width)
         except tk.TclError:
@@ -2561,6 +2575,10 @@ class FitWidth:
 
     def _fit_area(self, widget, room):
         """Verteilt room (echte px, Platz von widget) auf seine Kinder."""
+        if widget.__dict__.get("_fit_flow") is not None:
+            # schon auf Zeilen verteilt: mit dem neuen Platz neu verteilen
+            self._fit_flow(widget, room)
+            return
         packed = widget.pack_slaves()
         if packed and self._fit_flow_row(widget):
             natural = sum(item.winfo_reqwidth() +
@@ -2573,6 +2591,7 @@ class FitWidth:
         if self._fit_must_stack(sides, room):
             self._fit_stack(widget, sides)
             sides = [(item, item.pack_info()) for item in packed]
+        before = 0      # Breite der vorher links/rechts gepackten Teile
         for item, info in sides:
             left, right = _pad_pair(info.get("padx", 0))
             space = room - left - right
@@ -2581,6 +2600,11 @@ class FitWidth:
                     if other is not item and other_info.get("side") in ("left", "right"):
                         space -= other.winfo_reqwidth() + sum(
                             _pad_pair(other_info.get("padx", 0)))
+                before += item.winfo_reqwidth() + left + right
+            else:
+                # oben/unten gepackt: bekommt nur, was die vorher seitlich
+                # gepackten Teile uebrig lassen (pack-Hohlraum)
+                space -= before
             if self._fit_stretch(item, info):
                 self._fit_shrink(item, space)
                 continue
@@ -2614,6 +2638,9 @@ class FitWidth:
         if not self._fit_container(widget):
             return widget.winfo_reqwidth()
         packed = widget.pack_slaves()
+        if not packed and not widget.grid_slaves():
+            # leerer Rahmen (z. B. Farbstreifen links einer Zeile): feste Breite
+            return widget.winfo_reqwidth()
         if packed and self._fit_flow_row(widget):
             return max(self._fit_hard(item) for item in packed)
         wide = 0
@@ -2626,7 +2653,8 @@ class FitWidth:
             if info.get("side") in ("left", "right"):
                 across += need
             else:
-                wide = max(wide, need)
+                # neben den vorher seitlich gepackten Teilen
+                wide = max(wide, across + need)
         if widget.grid_slaves():
             if widget.__dict__.get("_fit_columns"):
                 wide = max([wide] + [self._fit_hard(item) for item in widget.grid_slaves()])
@@ -2694,30 +2722,54 @@ class FitWidth:
             bar.configure(width=width)
             self._fit_changed += 1
 
-    # -- Knopfzeilen umbrechen -----------------------------------------------
-
     # -- Kachelraster: weniger Spalten ---------------------------------------
 
     def _fit_regrid(self, grid, columns):
-        """Kacheln in gleicher Reihenfolge auf columns Spalten verteilen,
-        Abstaende wie beim Aufbau (6 px zwischen den Kacheln)."""
-        tiles = sorted(grid.grid_slaves(),
-                       key=lambda item: (int(item.grid_info()["row"]),
-                                         int(item.grid_info()["column"])))
-        group = grid.__dict__.get("_fit_uniform")
-        if group is None:
-            group = str(grid.grid_columnconfigure(0).get("uniform") or "")
-            grid._fit_uniform = group
+        """Kacheln in gleicher Reihenfolge auf columns Spalten verteilen
+        (6 px zwischen den Kacheln). Bei der vollen Spaltenzahl kommt alles
+        genau wie gebaut zurueck (Spalten-Gewichte und Abstaende)."""
+        saved = grid.__dict__.get("_fit_saved")
+        if saved is None:
+            saved = grid._fit_saved = {
+                "spalten": [{key: grid.grid_columnconfigure(column).get(key)
+                             for key in ("weight", "uniform", "minsize")}
+                            for column in range(grid._fit_columns)],
+                "kacheln": [(tile, self._fit_gridded(tile)) for tile in sorted(
+                    grid.grid_slaves(), key=lambda item: (int(item.grid_info()["row"]),
+                                                          int(item.grid_info()["column"])))]}
+        if columns >= grid._fit_columns:
+            for column, conf in enumerate(saved["spalten"]):
+                grid.columnconfigure(column, weight=conf["weight"],
+                                     uniform=conf["uniform"] or "", minsize=conf["minsize"])
+            for tile, kwargs in saved["kacheln"]:
+                tile.grid(**kwargs)
+            grid._fit_cols_now = grid._fit_columns
+            return
+        group = str(saved["spalten"][0]["uniform"] or "") or "fit"
         for column in range(grid._fit_columns):
             used = column < columns
             grid.columnconfigure(column, weight=1 if used else 0,
                                  uniform=group if used else "")
-        for index, tile in enumerate(tiles):
+        for index, (tile, _kwargs) in enumerate(saved["kacheln"]):
             tile.grid(row=index // columns, column=index % columns, sticky="nsew",
                       padx=(0 if index % columns == 0 else 6, 0),
                       pady=(0 if index < columns else 6, 0))
         grid._fit_cols_now = columns
         self._fit_changed += 1
+
+    @staticmethod
+    def _fit_gridded(item):
+        """Grid-Angaben eines Teils so, wie sie beim Einordnen angegeben waren."""
+        call = item.__dict__.get("_last_geometry_manager_call")
+        if call and call.get("function") is not None and \
+                getattr(call["function"], "__name__", "") == "grid" and \
+                call.get("kwargs") is not None:
+            return dict(call["kwargs"])
+        info = dict(item.grid_info())
+        info.pop("in", None)
+        return info
+
+    # -- Knopfzeilen umbrechen -----------------------------------------------
 
     @staticmethod
     def _fit_packed(item):
@@ -2733,9 +2785,13 @@ class FitWidth:
     def _fit_flow(self, frame, room):
         """Nebeneinander gepackte Teile auf Zeilen verteilen (Raster statt
         pack, gleiche Reihenfolge: links gepackte, dann rechts gepackte)."""
-        items = [(item, item.pack_info().get("side"), self._fit_packed(item))
-                 for item in frame.pack_slaves()]
-        frame._fit_flow = items
+        items = frame.__dict__.get("_fit_flow")
+        if items is None:
+            items = [(item, item.pack_info().get("side"), self._fit_packed(item))
+                     for item in frame.pack_slaves()]
+            frame._fit_flow = items
+            for item, _side, _kwargs in items:
+                item.pack_forget()
         ordered = [entry for entry in items if entry[1] != "right"] + \
             [entry for entry in items if entry[1] == "right"][::-1]
         gap = px(self.FIT_GAP)
@@ -2748,8 +2804,6 @@ class FitWidth:
             if sum(widths) + gap * (count - 1) <= room:
                 columns = count
                 break
-        for item, _side, _kwargs in items:
-            item.pack_forget()
         for index, (item, _side, _kwargs) in enumerate(ordered):
             row, column = divmod(index, columns)
             # CustomTkinter-Widgets bekommen logische px (rechnen selbst um)
@@ -6831,6 +6885,7 @@ class JourneyView(FitWidth, TabCache, ReusableView, ScrollArea):
         row.pack(fill="x", pady=(14, 0))
         row.columnconfigure(0, weight=3, uniform="rc")
         row.columnconfigure(1, weight=2, uniform="rc")
+        row._fit_columns = 2       # ab 0.63.2 (FitWidth): untereinander, wenn eng
         left = _frame(row)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         card = Card(left, title="Tickets je Arbeitstag", accent=C["accent"],
