@@ -2537,6 +2537,22 @@ class FitWidth:
                     stack.append(child)
 
     def _fit_now(self):
+        """Zurechtruecken. Waehrenddessen ist _fit_running gesetzt: Ansichten,
+        die selbst etwas an die Breite anpassen, warten damit bis danach
+        (_fit_done) - sonst kann sich beides in den update_idletasks-Aufrufen
+        hier gegenseitig aufschaukeln."""
+        self._fit_running = True
+        try:
+            self._fit_run()
+        finally:
+            self._fit_running = False
+        self._fit_done()
+
+    def _fit_done(self):
+        """Nach dem Zurechtruecken (fuer Ansichten, die selbst etwas an die
+        Breite anpassen)."""
+
+    def _fit_run(self):
         self._fit_pending = False
         try:
             width = self.canvas.winfo_width()
@@ -6834,8 +6850,9 @@ class JourneyView(FitWidth, TabCache, ReusableView, ScrollArea):
                           justify="left", anchor="w")
         name.pack(anchor="w")
         # ab 0.53: lange Namen in schmalen Kacheln umbrechen statt abschneiden
-        info.bind("<Configure>", lambda event, label=name: _wrap_to(label, event.width),
+        info.bind("<Configure>", lambda event, label=name: self._badge_wrap(label, event.width),
                   add="+")
+        info._badge_name = name
         name._fit_base = 200     # ab 0.63.2 (FitWidth): Umbruchbreite wie gebaut
         status, color = fg.badge_status(item)
         make_label(info, status, font=F["small_bold"], fg=fg.tier_text_color(color),
@@ -6857,6 +6874,33 @@ class JourneyView(FitWidth, TabCache, ReusableView, ScrollArea):
             make_label(tile, goals, font=F["tiny"], fg=C["muted"], wraplength=300,
                        justify="left", anchor="w").pack(anchor="w", padx=12, pady=(0, 12))
         return tile
+
+    def _badge_wrap(self, label, width):
+        """Namens-Umbruch an die Kachelbreite (ab 0.53). Ab 0.63.2: nicht,
+        waehrend FitWidth zurechtrueckt - sonst schaukeln sich Umbruch und
+        Spaltenbreite des Rasters gegenseitig auf (Sehr gross, 1920 -> 1120:
+        haengt); danach einmal mit der dann gueltigen Breite."""
+        if self.__dict__.get("_fit_running"):
+            self._badge_rewrap = True
+            return
+        _wrap_to(label, width)
+
+    def _fit_done(self):
+        if self.__dict__.pop("_badge_rewrap", False):
+            self.after_idle(self._badge_rewrap_all)
+
+    def _badge_rewrap_all(self):
+        try:
+            stack = [self.inner]
+            while stack:
+                widget = stack.pop()
+                for child in widget.winfo_children():
+                    stack.append(child)
+                    name = child.__dict__.get("_badge_name")
+                    if name is not None and child.winfo_ismapped():
+                        _wrap_to(name, child.winfo_width())
+        except tk.TclError:
+            pass
 
     def _choose_badges(self, group):
         self.badge_group = group
