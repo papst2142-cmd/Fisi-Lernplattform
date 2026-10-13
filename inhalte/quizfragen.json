@@ -19320,7 +19320,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse 172.16.9.155/27. Welche Netz- und Broadcastadresse tragen Sie ein?",
+    "q": "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse 172.16.9.155/27. Welche Netz- und Broadcast-Adresse tragen Sie ein?",
     "options": [
       "Netz 172.16.9.128, Broadcast 172.16.9.159",
       "Netz 172.16.9.144, Broadcast 172.16.9.159",
@@ -19333,7 +19333,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool verlangt die Broadcastadresse seines Subnetzes. Welche tragen Sie ein?",
+    "q": "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool verlangt die Broadcast-Adresse seines Subnetzes. Welche tragen Sie ein?",
     "options": [
       "10.44.7.255",
       "10.44.7.192",

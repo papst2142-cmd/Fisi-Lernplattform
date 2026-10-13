@@ -5,18 +5,18 @@ S4-Felder (N-d) und schon gestellte WiSo-Fragen (N-g).
   * B-N-08: in inhalte/*.json steht kein "z.B." mehr, sondern "z. B." (wie
     B-D-13/S4, normales Leerzeichen), und "Broadcast-Adresse" statt
     "Broadcastadresse". Bewusst NICHT geaendert: inhalte/spiel/ (F25 a,
-    "_hinweis" in aufgaben_vorlagen.json) und die zwei Fragetexte P1487/P1488
-    mit "Broadcastadresse" ohne "z.B." (keine Lernstand-Ausnahme freigegeben,
-    Weisung zu Meldung 21, 2.6 - gemeldet).
+    "_hinweis" in aufgaben_vorlagen.json).
   * Umbenennungen: die 27 Fragetexte mit "z.B." (28 Stellen: 14 Karten,
-    13 Quizfragen) je mit Eintrag in inhalte/umbenennungen.json, nur
-    angehaengt, keine Kette zu den Eintraegen von S4.
+    13 Quizfragen) und die 2 Fragetexte P1487/P1488 mit "Broadcastadresse"
+    (Nacharbeit Meldung 24, Frage 4 a) je mit Eintrag in
+    inhalte/umbenennungen.json, nur angehaengt, keine Kette zu den
+    Eintraegen von S4.
   * Bestand: Anzahl 1.565/2.120/265/330/50, Kriterienzahl jeder AP1/AP2-
     Teilaufgabe gleich (laufende AP1/AP2-Pruefungen nicht betroffen),
     Rahmenplan-Zuordnung gleich, Fragetexte im Schutzbereich STAND_054 nur
     um diese Umbenennungen geaendert.
   * Lernstand-Migration (Plan Nr. 38 Test (3)): Datenbank mit dem Code v0.63.1
-    und Antworten zu allen 12 (S4) + 27 (N12) umbenannten Fragen: mit diesem
+    und Antworten zu allen 12 (S4) + 29 (N12) umbenannten Fragen: mit diesem
     Stand geoeffnet aendern sich genau diese Fragetexte, nichts sonst, keine
     Antwort geht verloren; ohne solche Antworten byte-gleich; Abgleich von
     einem Geraet mit v0.63.1.
@@ -106,9 +106,15 @@ UMBENANNT_ZB = [
                    "weiter. Dieser prüft die Zahlungsdaten auch nach eigenen gesetzlichen "
                    "Pflichten, z.B. zur Geldwäsche. Welche Rolle hat er?"),
 ]
-# Bewusst nicht geaendert (keine Lernstand-Ausnahme freigegeben): Fragetexte mit
-# "Broadcastadresse", aber ohne "z.B." (P1487, P1488)
-OFFEN_BC = [("quiz", 1486), ("quiz", 1487)]
+# Fragetexte mit "Broadcastadresse", aber ohne "z.B." (P1487, P1488): ab der
+# Nacharbeit zu Meldung 24 (Frage 4 a) ebenfalls umbenannt (je Index, alter Text)
+UMBENANNT_BC = [
+    ("quiz", 1486, "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse "
+                   "172.16.9.155/27. Welche Netz- und Broadcastadresse tragen Sie ein?"),
+    ("quiz", 1487, "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool "
+                   "verlangt die Broadcastadresse seines Subnetzes. Welche tragen Sie ein?"),
+]
+UMBENANNT_N12 = UMBENANNT_ZB + UMBENANNT_BC
 # Die zwei WiSo-Fragen, die B-N-08 beruehrt (Themen recht/arbeitswelt)
 WISO_FERNABSATZ = 346      # nur der Fragetext
 WISO_WERKVERTRAG = 150     # Antwort = Option 0 (dieselbe Option)
@@ -119,7 +125,7 @@ ANZAHL_TEXT = {
     "fachgespraech.json": (7, 0, 0),             # (0 + 7)
     "karteikarten.json": (433, 3, 0),            # (29 + 404)
     "projektarbeiten.json": (68, 0, 0),          # (23 + 45)
-    "quizfragen.json": (211, 27, 2),             # (13 + 198), (19 + 8), 2 offen
+    "quizfragen.json": (211, 29, 0),             # (13 + 198), (19 + 10)
     "szenarien_ap1.json": (156, 9, 0),           # (1 + 155), (6 + 3)
     "szenarien_ap2.json": (201, 3, 0),           # (19 + 182), (1 + 2)
 }
@@ -138,7 +144,7 @@ def neu(text):
 
 def neue_texte():
     listen = {"karte": lade("karteikarten.json"), "quiz": lade("quizfragen.json")}
-    return [(art, alt, listen[art][index]["q"]) for art, index, alt in UMBENANNT_ZB]
+    return [(art, alt, listen[art][index]["q"]) for art, index, alt in UMBENANNT_N12]
 
 
 # ============================================================================
@@ -165,15 +171,17 @@ class ZbTest(unittest.TestCase):
             for zeichen in (" ", " ", " "):
                 self.assertNotIn("z." + zeichen + "B.", text, datei)
 
-    def test_offen_broadcast_fragetexte(self):
-        # P1487/P1488: Fragetext bleibt (keine Lernstand-Ausnahme freigegeben),
-        # Erklaerung schon "Broadcast-Adresse"
+    def test_broadcast_fragetexte(self):
+        # P1487/P1488 (Nacharbeit Meldung 24, Frage 4 a): Fragetext und
+        # Erklaerung "Broadcast-Adresse", sonst wie vorher; nirgends mehr
+        # "Broadcastadresse"
         quiz = lade("quizfragen.json")
-        for _art, index in OFFEN_BC:
-            self.assertIn(BC, quiz[index]["q"], index)
+        for _art, index, alt in UMBENANNT_BC:
+            self.assertIn(BC, alt)
+            self.assertEqual(quiz[index]["q"], alt.replace(BC, BC_NEU), index)
             self.assertNotIn(BC, quiz[index]["exp"], index)
         rest = [i for i, q in enumerate(quiz) if BC in json.dumps(q, ensure_ascii=False)]
-        self.assertEqual(rest, [index for _art, index in OFFEN_BC])
+        self.assertEqual(rest, [])
 
     def test_fachgespraech_nur_zb(self):
         # fachgespraech.json (7 Hinweise): ausser "z. B." alles wie bis S4
@@ -246,7 +254,7 @@ class BestandZbTest(unittest.TestCase):
         # Umbenennungen ergibt sich genau der Wert von S4
         for name, art, anzahl in (("karteikarten", "karte", 1400), ("quizfragen", "quiz", 1946)):
             texte = [e["q"] for e in lade(name + ".json")[:anzahl]]
-            for a, index, alt in UMBENANNT_ZB:
+            for a, index, alt in UMBENANNT_N12:
                 if a == art and index < anzahl:
                     texte[index] = alt
             self.assertEqual(hashlib.sha256("\n".join(texte).encode("utf-8")).hexdigest(),
@@ -263,6 +271,12 @@ class UmbenennungenZbTest(unittest.TestCase):
         self.assertEqual(len(UMBENANNT_ZB), 27)
         self.assertEqual(sum(alt.count(ZB) for _a, _i, alt in UMBENANNT_ZB), 28)
         self.assertEqual(sum(1 for a, _i, _t in UMBENANNT_ZB if a == "karte"), 14)
+
+    def test_2_broadcast_fragen(self):
+        self.assertEqual(len(UMBENANNT_BC), 2)
+        self.assertEqual(sum(alt.count(BC) for _a, _i, alt in UMBENANNT_BC), 2)
+        self.assertEqual(sum(alt.count(ZB) for _a, _i, alt in UMBENANNT_BC), 0)
+        self.assertEqual(len(UMBENANNT_N12), 29)
 
     def test_neu_ist_alt_mit_zb(self):
         for art, alt, jetzt in neue_texte():
@@ -294,6 +308,7 @@ class UmbenennungenZbTest(unittest.TestCase):
         for art in ("karte", "quiz"):
             for alt, jetzt in daten[art].items():
                 self.assertNotIn(ZB, jetzt)
+                self.assertNotIn(BC, jetzt)
                 self.assertNotIn(jetzt, daten[art])
                 self.assertIn(jetzt, alle[art], jetzt)
 
@@ -307,14 +322,15 @@ class UmbenennungenZbTest(unittest.TestCase):
 
     def test_genehmigte_ausnahmen(self):
         # Lernstand-Ausnahmen: 12 (S4, F7 d / Meldung 21 Frage 22, K1430 und P2103
-        # namentlich) + 27 (B-N-08); umbenennungen.json kennt keine weiteren neuen
+        # namentlich) + 27 (B-N-08) + 2 (P1487/P1488, Meldung 24 Frage 4 a);
+        # umbenennungen.json kennt keine weiteren neuen
         s4_ids = sorted((art, index) for art, index, _alt in s4.UMBENANNT)
         self.assertEqual(len(s4_ids), 12)
         self.assertIn(("karte", 1429), s4_ids)      # K1430
         self.assertIn(("quiz", 2102), s4_ids)       # P2103
         daten = lade("umbenennungen.json")
         neu_seit_0631 = sum(len(daten[art]) for art in ("karte", "quiz")) - (5 + 9)
-        self.assertEqual(neu_seit_0631, 12 + 27)
+        self.assertEqual(neu_seit_0631, 12 + 27 + 2)
 
 
 # ============================================================================
@@ -335,10 +351,11 @@ class MigrationZbTest(unittest.TestCase):
         daten = {"karte": [], "quiz": [],
                  "andere_karte": [[karten[0]["cat"], karten[0]["q"]]],
                  "anderes_quiz": [[quiz[0]["cat"], quiz[0]["q"]],
-                                  # Fragetext mit "Broadcastadresse" bleibt (offen)
-                                  [quiz[1486]["cat"], quiz[1486]["q"]]]}
-        # alle genehmigten Ausnahmen: 12 aus S4 (F7 d, Frage 22) und 27 aus B-N-08
-        for art, index, alt in list(s4.UMBENANNT) + UMBENANNT_ZB:
+                                  # Nachbar von P1487, bleibt
+                                  [quiz[1485]["cat"], quiz[1485]["q"]]]}
+        # alle genehmigten Ausnahmen: 12 aus S4 (F7 d, Frage 22), 27 aus B-N-08
+        # und 2 aus Meldung 24 Frage 4 a (P1487/P1488)
+        for art, index, alt in list(s4.UMBENANNT) + UMBENANNT_N12:
             eintrag = listen[art][index]
             daten[art].append([eintrag["cat"], alt])
             cls.paare[art][alt] = eintrag["q"]
@@ -375,11 +392,11 @@ class MigrationZbTest(unittest.TestCase):
                 if alt[3] != jetzt[3]:
                     geaendert += 1
                     texte.add((art, alt[3]))
-        # Karten je 3 Antworten (17 Fragen), Quiz je 2 bzw. 3 (22 Fragen)
-        self.assertEqual(geaendert, 17 * 3 + 22 * 2 + 8)
+        # Karten je 3 Antworten (17 Fragen), Quiz je 2 bzw. 3 (24 Fragen)
+        self.assertEqual(geaendert, 17 * 3 + 24 * 2 + 8)
         soll = {(art, alt) for art, paare in self.paare.items() for alt in paare}
         self.assertEqual(texte, soll)
-        self.assertEqual(len(texte), 12 + 27)
+        self.assertEqual(len(texte), 12 + 27 + 2)
 
     def test_lernstand_je_frage_vollstaendig(self):
         alt = {(q, k): v for q, k, v in self.vorher["ergebnisse"]}

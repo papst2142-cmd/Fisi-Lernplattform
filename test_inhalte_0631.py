@@ -355,10 +355,16 @@ def pruefwert_umbenennungen(daten):
         kopie[art] = {alt: neu for alt, neu in kopie[art].items() if alt not in alte}
     kopie["quiz"] = {alt: neu for alt, neu in kopie["quiz"].items() if neu != P1480_NEU}
     # Ab 0.63.2 (N12, B-N-08): angehaengte Eintraege, deren neuer Text genau der alte
-    # mit "z. B." statt "z.B." ist; einzeln geprueft in test_inhalte_zb (27 Stueck)
+    # mit "z. B." statt "z.B." ist; einzeln geprueft in test_inhalte_zb (27 Stueck).
+    # Nacharbeit N12 (Meldung 24, Frage 4 a, FG-60): ebenso die 2 Eintraege, deren
+    # neuer Text genau der alte mit "Broadcast-Adresse" statt "Broadcastadresse" ist
+    # (P1487, P1488; einzeln geprueft in test_inhalte_zb.UMBENANNT_BC)
     for art in ("karte", "quiz"):
         kopie[art] = {alt: neu for alt, neu in kopie[art].items()
-                      if not ("z.B." in alt and neu == alt.replace("z.B.", "z. B."))}
+                      if not ("z.B." in alt and neu == alt.replace("z.B.", "z. B."))
+                      and not ("Broadcastadresse" in alt
+                               and neu == alt.replace("Broadcastadresse",
+                                                      "Broadcast-Adresse"))}
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
