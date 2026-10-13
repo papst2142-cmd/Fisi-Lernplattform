@@ -3966,9 +3966,11 @@ def ups_check(watt, va, rated_va, rated_w, minutes_end, minutes):
     """Empfehlung nach UPS_RULE_TEXT. Liefert (passend, Pruefzeilen)."""
     checks = []
     share_va = va / rated_va * 100
+    # ab 0.63.2 (B-N-07, Gegenpruefung L6): VA wie im Rechenweg ungerundet
+    # (666,67 statt 667), damit die Prozentzahl zur angezeigten Zahl passt
     checks.append((share_va <= UPS_LOAD_LIMIT,
                    "Auslastung Scheinleistung: %s VA von %s VA = %s %%"
-                   % (de_number(va, 0), de_number(rated_va, 0),
+                   % (_de_short(va), de_number(rated_va, 0),
                       de_number(share_va, 1))))
     if rated_w:
         share_w = watt / rated_w * 100

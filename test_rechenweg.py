@@ -11,7 +11,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14-Z28 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z29 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -134,6 +134,11 @@ FREIGEGEBEN = {
                               ("replace", 50, ["n:67", "n:18.43"], ["n:66.7", "n:18.4"],
                                "Z25"),
                               ("insert", 53, [], ["n:80", "n:0.8", "n:3", "n:4"], "Z22")],
+    # Z29 = Gegenpruefung L6 (B-N-07 4.9): Anzeige "Auslastung Scheinleistung:
+    # 666,67 VA von 1.500 VA = 44,4 %" statt "667 VA ... = 44,4 %" (667 / 1.500
+    # waeren 44,5 %), nachgerechnet in test_4_z29_nachgerechnet
+    "ups:empfehlung": [("replace", 18, ["n:667"], ["n:666.67"], "Z29")],
+    "ups:empfehlung|nenn_w leer": [("replace", 18, ["n:667"], ["n:666.67"], "Z29")],
     # Z28 = 4.15b IPv6-Anzeige "Adressen gesamt : 2^64 = 18.446..." (Zweierpotenz
     # vor der Zahl), nachgerechnet in test_4_z28_nachgerechnet
     "subnet:2001:db8::1/64": [("insert", 4, [], ["n:2", "n:64"], "Z28")],
@@ -354,7 +359,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z28."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z29."""
 
     @classmethod
     def setUpClass(cls):
@@ -385,7 +390,7 @@ class ZahlenUnveraendertTest(unittest.TestCase):
         nummern = sorted({e[4] for liste in FREIGEGEBEN.values() for e in liste})
         self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z19",
                                    "Z2", "Z20", "Z21", "Z22", "Z23", "Z24", "Z25", "Z26",
-                                   "Z27", "Z28", "Z3", "Z5", "Z6"])
+                                   "Z27", "Z28", "Z29", "Z3", "Z5", "Z6"])
 
     def test_4_z18_nachgerechnet(self):
         # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
@@ -428,6 +433,20 @@ class ZahlenUnveraendertTest(unittest.TestCase):
             else:   # Werte der Buchstaben: A = 10 ... F = 15
                 for wert in ops[0][3]:
                     self.assertIn(int(wert[2:]), range(10, 16))
+
+    def test_4_z29_nachgerechnet(self):
+        # ab 0.63.2 (Gegenpruefung L6): die VA-Zahl der Pruefzeile ist der
+        # ungerundete Wert 600 W / 0,9, aus dem die Prozentzahl gerechnet wird
+        quellen = sorted(q for q, l in FREIGEGEBEN.items() if l[0][4] == "Z29")
+        self.assertEqual(quellen, ["ups:empfehlung", "ups:empfehlung|nenn_w leer"])
+        self.assertEqual(fc.de_number(600 / 0.9), "666,67")
+        self.assertEqual(fc.de_number(666.67 / 1500 * 100, 1), "44,4")
+        self.assertEqual(fc.de_number(667 / 1500 * 100, 1), "44,5")
+        for quelle in quellen:
+            self.assertIn("Auslastung Scheinleistung: 666,67 VA von 1.500 VA = 44,4 %",
+                          self.neu[quelle])
+            self.assertIn("Auslastung Scheinleistung: 667 VA von 1.500 VA = 44,4 %",
+                          self.basis[quelle])
 
     def test_4_z28_nachgerechnet(self):
         # ab 0.63.2 (B-N-07 4.15b): 2^(128 - Praefix) = Anzahl, und eingefuegt
