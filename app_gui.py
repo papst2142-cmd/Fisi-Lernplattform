@@ -2888,8 +2888,10 @@ class CoverageCard(Card):
 
 
 def _points(value):
-    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis, ohne Gleitkommafehler
-    return fp.punkte_text(value)
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis, ohne Gleitkommafehler.
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def _note_color(points):

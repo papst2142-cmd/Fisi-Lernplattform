@@ -1093,8 +1093,10 @@ WISO_PAGE = 5
 
 
 def points_text(value):
-    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis (gleiche Hilfe wie am PC)
-    return fp.punkte_text(value)
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis (gleiche Hilfe wie am PC).
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def note_color(points):
