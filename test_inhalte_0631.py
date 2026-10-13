@@ -313,7 +313,10 @@ def pruefwert(datei, eintraege):
     # andere Aenderung bleibt rot. Dass wirklich nur diese Ersetzung geschah und
     # keine Stelle verschwand, pruefen test_inhalte_zb (Zahl je Datei, kein "z.B."
     # mehr) und das Werkzeug des Eintrag-fuer-Eintrag-Vergleichs.
+    # Ab FG-87 (0.63.2, Zusatz von Nico): ebenso die 13 Stellen "Z.B." -> "Z. B."
+    # (Zahl je Datei und kein "Z.B." mehr: test_inhalte_zb.KriterienGrossZbTest)
     text = text.replace("z. B.", "z.B.").replace("Broadcast-Adresse", "Broadcastadresse")
+    text = text.replace("Z. B.", "Z.B.")
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 

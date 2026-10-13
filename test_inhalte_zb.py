@@ -28,10 +28,12 @@ S4-Felder (N-d) und schon gestellte WiSo-Fragen (N-g).
 Aufruf:  python test_inhalte_zb.py
 """
 import hashlib
+import itertools
 import json
 import os
 import shutil
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -50,6 +52,7 @@ import test_inhalte_0632 as s4  # noqa: E402  (Migration: lauf, code_stand, zeil
 INHALTE = os.path.join(HERE, "inhalte")
 ZB, ZB_NEU = "z.B.", "z. B."
 BC, BC_NEU = "Broadcastadresse", "Broadcast-Adresse"
+ZB_GROSS, ZB_GROSS_NEU = "Z.B.", "Z. B."          # FG-87
 
 
 def lade(datei):
@@ -129,8 +132,16 @@ ANZAHL_TEXT = {
     "szenarien_ap1.json": (156, 9, 0),           # (1 + 155), (6 + 3)
     "szenarien_ap2.json": (201, 3, 0),           # (19 + 182), (1 + 2)
 }
-# Kriterienzahl je Teilaufgabe aller 595 AP1/AP2-Aufgaben (Stand S4 29558a8 = N12)
-KRITERIEN_HASH = "1065d53e08a3c65ef4bc859ac473da0deb5235fae25030b36a1983309bc7dee2"
+# Kriterienzahl je Teilaufgabe aller 595 AP1/AP2-Aufgaben. Bis 29ef1b0 (= S4
+# 29558a8 = 0.63.1): 1065d53e...7dee2. Ab FG-87 ("Z.B." kein eigenes Kriterium
+# mehr) genau drei Teilaufgaben mit einem Kriterium weniger (KRITERIEN_FG87);
+# mit den alten Zahlen dieser drei ergibt sich wieder der alte Wert.
+KRITERIEN_HASH_BIS_29EF1B0 = "1065d53e08a3c65ef4bc859ac473da0deb5235fae25030b36a1983309bc7dee2"
+KRITERIEN_HASH = "4fc35722cd7f0b4d7334d4b188ae63c624d592727bfe77d6f425924a1042e4df"
+# (Quelle, Index, Teilaufgabe): (Kriterien bis 29ef1b0, ab FG-87)
+KRITERIEN_FG87 = {("ap1", 24, 1): (3, 2),      # A1-025 T2
+                  ("ap1", 38, 2): (3, 2),      # A1-039 T3
+                  ("ap2", 35, 0): (2, 1)}      # A2-036 T1
 # Rahmenplan-Punkte aller Karten/Fragen der Reihe nach (= 14b3bd4 = 29558a8)
 RAHMENPLAN_HASH = "b62aa2d0a92a4a7e49881fa11f6fec7208f9c05b6d2ded733aa990adf5c15220"
 # test_rahmenplan.STAND_054 bis S4 (c582094/29558a8)
@@ -184,9 +195,12 @@ class ZbTest(unittest.TestCase):
         self.assertEqual(rest, [])
 
     def test_fachgespraech_nur_zb(self):
-        # fachgespraech.json (7 Hinweise): ausser "z. B." alles wie bis S4
+        # fachgespraech.json (7 Hinweise): ausser "z. B." alles wie bis S4;
+        # ab FG-87 ebenso "Z. B." statt "Z.B." (4 Hinweise, gezaehlt in
+        # KriterienGrossZbTest)
         text = json.dumps(lade("fachgespraech.json"), ensure_ascii=False, sort_keys=True)
-        self.assertEqual(hashlib.sha256(text.replace(ZB_NEU, ZB).encode("utf-8")).hexdigest(),
+        text = text.replace(ZB_NEU, ZB).replace(ZB_GROSS_NEU, ZB_GROSS)
+        self.assertEqual(hashlib.sha256(text.encode("utf-8")).hexdigest(),
                          "2535d08816d2094809ba212028ffc9545717d7f6711323cfecbe13a469ef5dad")
 
     def test_spielinhalte_unberuehrt(self):
@@ -221,10 +235,11 @@ class BestandZbTest(unittest.TestCase):
         for datei, anzahl in s4.ANZAHL.items():
             self.assertEqual(len(lade(datei)), anzahl, datei)
 
-    def test_kriterien_je_teilaufgabe_gleich(self):
+    def test_kriterien_je_teilaufgabe(self):
         # Test (5): laufende AP1/AP2-Pruefungen speichern Haken je Kriterium;
-        # "z. B." darf keinen Satz teilen
-        anzahl, gleich = {}, 0
+        # "z. B." darf keinen Satz teilen. Ab FG-87 (TZ2): genau drei
+        # Teilaufgaben haben ein Kriterium weniger, alle anderen gleich viele
+        anzahl, gleich, weniger = {}, 0, {}
         for quelle in ("ap1", "ap2"):
             for index, szenario in enumerate(fp.source_data(quelle)):
                 teile = fp.scenario_parts(szenario)
@@ -232,13 +247,22 @@ class BestandZbTest(unittest.TestCase):
                     len(t["kriterien"]) for t in teile["teile"]]
                 if teile is None:
                     continue
-                for teil in teile["teile"]:
+                for nummer, teil in enumerate(teile["teile"]):
                     alt = teil["loesung"].replace(ZB_NEU, ZB)
                     self.assertEqual(len(fp.criteria(alt)), len(teil["kriterien"]))
                     gleich += 1
+                    if (quelle, index, nummer) in KRITERIEN_FG87:
+                        weniger[(quelle, index, nummer)] = len(teil["kriterien"])
         self.assertEqual(hashlib.sha256(json.dumps(anzahl, sort_keys=True).encode())
                          .hexdigest(), KRITERIEN_HASH)
         self.assertEqual(gleich, 1787)
+        self.assertEqual(weniger, {k: neu for k, (_alt, neu) in KRITERIEN_FG87.items()})
+        # mit den alten Zahlen der drei: genau der Wert bis 29ef1b0 (also sonst
+        # keine Teilaufgabe geaendert)
+        for (quelle, index, nummer), (alt, _neu) in KRITERIEN_FG87.items():
+            anzahl["%s-%d" % (quelle, index)][nummer] = alt
+        self.assertEqual(hashlib.sha256(json.dumps(anzahl, sort_keys=True).encode())
+                         .hexdigest(), KRITERIEN_HASH_BIS_29EF1B0)
 
     def test_rahmenplan_gleich(self):
         import fisi_core as core
@@ -525,6 +549,323 @@ class GestelltTest(unittest.TestCase):
         fp.used_items(verlauf, fp.WISO)
         fp.new_exam(fp.WISO, verlauf, seed=5)
         self.assertEqual(verlauf, kopie)
+
+
+# ============================================================================
+#  FG-87 (Zusatz von Nico, Frage 5 b): "Z.B." in den Bewertungskriterien
+# ============================================================================
+
+# Kriterien der drei Teilaufgaben bis 0.63.1 (= bis 29ef1b0)
+KRITERIEN_FG87_ALT = {
+    ("ap1", 24, 1): ["Z.B.",
+                     "\"Standard-Image freigegeben\" und \"Alle 40 Arbeitsplätze umgestellt\".",
+                     "Meilensteine haben keine Dauer, sie markieren einen wichtigen "
+                     "Zwischenstand."],
+    ("ap1", 38, 2): ["Z.B.",
+                     "TCP 3389 (RDP), TCP 445 (SMB), TCP 22 (SSH ohne Einschränkung), "
+                     "Datenbankports wie 3306.",
+                     "Fernzugriff gehört hinter ein VPN."],
+    ("ap2", 35, 0): ["Z.B.",
+                     "\"Bei welchen Tätigkeiten merken Sie die Langsamkeit besonders?\", "
+                     "\"Mit welchen Programmen arbeiten Sie täglich?\", \"Wie viele Mitarbeiter "
+                     "arbeiten an den Geräten?\", \"Welche Pläne haben Sie für die nächsten "
+                     "Jahre?\""],
+}
+
+SKRIPT_FG87 = r"""
+import json, os, sys
+code, aufgabe, daten = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
+sys.path.insert(0, code)
+import fisi_core as core
+import fisi_pruefung as fp
+out = {"datei": fp.__file__}
+if aufgabe == "kriterien":
+    out["kriterien"] = [fp.task_details({"aufgaben": [{"quelle": q, "index": i}]}, 0)
+                        ["teile"][t]["kriterien"] for q, i, t in daten["teile"]]
+if aufgabe == "anlegen":
+    state = fp.new_exam(daten["art"], seed=1)
+    state["aufgaben"] = daten["aufgaben"]
+    for nummer in range(len(state["aufgaben"])):
+        for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+            key = fp.answer_key(nummer, teil)
+            state["antworten"][key] = "Antwort %s" % key
+            state["kriterien"][key] = daten["haken"].get(
+                key, [i % 2 == 0 for i in range(len(part["kriterien"]))])
+            state["punkte"][key] = max(0, part["punkte"] - nummer - teil)
+    fp.submit(state)
+    fp.save_running(state)
+    out["state"] = state
+if aufgabe == "laden":
+    out["geladen"] = fp.load_running()
+if aufgabe == "speichern":
+    # wie die Oberflaeche nach einem Klick: laden (umgestellt) und speichern
+    state = fp.load_running()
+    fp.save_running(state)
+    out["geladen"] = state
+if aufgabe == "abgeben":
+    state = fp.load_running()
+    out["geladen"] = json.loads(json.dumps(state))
+    out["ergebnis"] = fp.finish(core.DBManager(), state)
+    out["laufend"] = fp.load_running()
+print("ERGEBNIS " + json.dumps(out, ensure_ascii=False))
+"""
+
+
+def lauf_fg87(code, datenbank, aufgabe, daten=None):
+    env = dict(os.environ, FISI_DB_PATH=datenbank, HOME=_TMP, APPDATA=_TMP,
+               FISI_SELFTEST=os.path.join(_TMP, "selbsttest_fg87.log"))
+    proc = subprocess.run([sys.executable, "-c", SKRIPT_FG87, code, aufgabe,
+                           json.dumps(daten or {}, ensure_ascii=False)],
+                          cwd=_TMP, env=env, capture_output=True, timeout=600)
+    zeilen = [z for z in proc.stdout.decode("utf-8").splitlines() if z.startswith("ERGEBNIS ")]
+    if proc.returncode or not zeilen:
+        raise AssertionError("Lauf %s mit %s: %s" % (aufgabe, code, proc.stderr.decode()[-2000:]))
+    ergebnis = json.loads(zeilen[-1][len("ERGEBNIS "):])
+    if os.path.dirname(os.path.abspath(ergebnis["datei"])) != os.path.abspath(code):
+        raise AssertionError("falscher Code: %s statt %s" % (ergebnis["datei"], code))
+    return ergebnis
+
+
+def laufender_stand(aufgaben, kriterien, art=fp.AP1):
+    return {"art": art, "start": "2026-10-13 10:00:00", "start_utc": 0, "minuten": 90,
+            "phase": "laeuft", "aufgaben": aufgaben,
+            "antworten": {k: "Antwort %s" % k for k in kriterien},
+            "punkte": {k: 3 for k in kriterien}, "kriterien": kriterien}
+
+
+def teile_von(quelle, index):
+    return fp.task_details({"aufgaben": [{"quelle": quelle, "index": index}]}, 0)["teile"]
+
+
+class KriterienGrossZbTest(unittest.TestCase):
+    """FG-87: "Z.B." / "Z. B." teilt kein Kriterium mehr; laufende Pruefungen
+    mit A1-025 T2, A1-039 T3, A2-036 T1 werden umgestellt (Haken von "Z.B."
+    faellt weg, die Aussage behaelt ihren eigenen), alle anderen bleiben
+    byte-gleich. Tests TZ1-TZ8 (Plan plan_fg87_ZB.md T1-T8)."""
+
+    def test_tz1_criteria_gross_zb(self):
+        self.assertEqual(fp.criteria("Z.B. Router tauschen. Danach testen."),
+                         ["Z.B. Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("Z. B. Router tauschen. Danach testen."),
+                         ["Z. B. Router tauschen.", "Danach testen."])
+        # vor "Z.B." endet ein Satz weiterhin (darum nicht im Tupel _ABBREVIATIONS)
+        self.assertEqual(fp.criteria("Das reicht so. Z.B. Router tauschen. Danach testen."),
+                         ["Das reicht so.", "Z.B. Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("Das reicht so. Z. B. Router tauschen."),
+                         ["Das reicht so.", "Z. B. Router tauschen."])
+        # mitten im Satz und am Zeilenanfang einer Aufzaehlung
+        self.assertEqual(fp.criteria("Beispiele, Z.B. Router tauschen. Danach testen."),
+                         ["Beispiele, Z.B. Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("- Z. B. Router tauschen. Danach testen."),
+                         ["Z. B. Router tauschen.", "Danach testen."])
+        # klein wie bisher
+        self.assertEqual(fp.criteria("Das ist z. B. so. Gut so."), ["Das ist z. B. so.", "Gut so."])
+        self.assertEqual(fp.criteria("Das ist z.B. so. Gut so."), ["Das ist z.B. so.", "Gut so."])
+
+    def test_tz1_bekannte_grenzen(self):
+        # Nicht erkannt (im Bestand nicht vorhanden, siehe test_tz3_*): Verhalten
+        # wie bis 0.63.1
+        self.assertEqual(fp.criteria("Z.b. Router tauschen. Danach testen."),
+                         ["Z.b.", "Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("z.b. Router tauschen. Danach testen."),
+                         ["z.b.", "Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("Z. B. Router tauschen. Danach testen."),
+                         ["Router tauschen.", "Danach testen."])
+        self.assertEqual(fp.criteria("XYZ.B. Router tauschen."), ["XYZ.B.", "Router tauschen."])
+
+    def test_tz2_nur_drei_teilaufgaben(self):
+        # Gegenrechnung zu BestandZbTest.test_kriterien_je_teilaufgabe: bis 0.63.1
+        # stand "Z.B." allein; heute steht es vor der Aussage
+        for (quelle, index, teil), (alt, neu) in KRITERIEN_FG87.items():
+            kriterien = teile_von(quelle, index)[teil]["kriterien"]
+            self.assertEqual(len(KRITERIEN_FG87_ALT[(quelle, index, teil)]), alt)
+            self.assertEqual(len(kriterien), neu)
+            self.assertTrue(kriterien[0].startswith((ZB_GROSS + " ", ZB_GROSS_NEU + " ")))
+
+    def test_tz5_alle_hakenmuster(self):
+        # Haken-Regel (Antwort Meldung 26, Frage 2 a): Haken von "Z.B." faellt
+        # weg, die Aussage behaelt ihren eigenen, nie ein fremder Haken
+        for (quelle, index, teil), alt in KRITERIEN_FG87_ALT.items():
+            teile = teile_von(quelle, index)
+            for muster in itertools.product([False, True], repeat=len(alt)):
+                kriterien = {fp.answer_key(0, n): [n % 2 == 0] * len(p["kriterien"])
+                             for n, p in enumerate(teile)}
+                key = fp.answer_key(0, teil)
+                kriterien[key] = list(muster)
+                vorher = laufender_stand([{"quelle": quelle, "index": index}], kriterien)
+                kopie = json.loads(json.dumps(vorher))
+                jetzt = fp.migrate_running(kopie)
+                self.assertEqual(jetzt["kriterien"][key], list(muster[1:]), (quelle, index, muster))
+                self.assertEqual(len(jetzt["kriterien"][key]), len(teile[teil]["kriterien"]))
+                for k in kriterien:
+                    if k != key:
+                        self.assertEqual(jetzt["kriterien"][k], vorher["kriterien"][k])
+                ohne = {k: v for k, v in jetzt.items() if k != "kriterien"}
+                self.assertEqual(ohne, {k: v for k, v in vorher.items() if k != "kriterien"})
+                # zweites Oeffnen aendert nichts
+                self.assertEqual(fp.migrate_running(json.loads(json.dumps(jetzt))), jetzt)
+
+    def test_tz6_criteria_before_wie_0631(self):
+        for schluessel, alt in KRITERIEN_FG87_ALT.items():
+            self.assertEqual(fp.CRITERIA_BEFORE[schluessel], alt, schluessel)
+        self.assertEqual(fp._SPLIT_FRAGMENTS, ("Z.B.",))
+        alt_code = s4.code_stand(s4.ALT_TAG)
+        if alt_code is None:
+            if s4.IN_CI:
+                self.fail("Code aus %s nicht verfuegbar" % s4.ALT_TAG)
+            self.skipTest("Code aus %s nicht verfuegbar" % s4.ALT_TAG)
+        ordner = tempfile.mkdtemp(prefix="fg87_kriterien_", dir=_TMP)
+        teile = sorted(KRITERIEN_FG87_ALT)
+        ergebnis = lauf_fg87(alt_code, os.path.join(ordner, "k.db"), "kriterien",
+                             {"teile": [list(t) for t in teile]})
+        self.assertEqual(ergebnis["kriterien"], [KRITERIEN_FG87_ALT[t] for t in teile])
+
+    def test_tz7_andere_pruefungen_byte_gleich(self):
+        # alle 592 anderen Aufgaben, je 3 Hakenmuster: migrate_running aendert nichts
+        faelle = 0
+        for quelle in ("ap1", "ap2"):
+            for index, _szenario in enumerate(fp.source_data(quelle)):
+                if any((quelle, index) == k[:2] for k in KRITERIEN_FG87):
+                    continue
+                teile = teile_von(quelle, index)
+                for muster in ("alle", "keine", "wechsel"):
+                    kriterien = {}
+                    for n, p in enumerate(teile):
+                        m = len(p["kriterien"])
+                        kriterien[fp.answer_key(0, n)] = (
+                            [True] * m if muster == "alle" else [False] * m if muster == "keine"
+                            else [k % 2 == 0 for k in range(m)])
+                    stand = laufender_stand([{"quelle": quelle, "index": index}], kriterien)
+                    vorher = json.dumps(stand, sort_keys=True)
+                    self.assertEqual(json.dumps(fp.migrate_running(stand), sort_keys=True),
+                                     vorher, (quelle, index, muster))
+                    faelle += 1
+        self.assertEqual(faelle, 592 * 3)
+        # die drei Aufgaben, schon mit den neuen Kriterien (in 0.63.2 gestartet)
+        for quelle, index, _teil in KRITERIEN_FG87:
+            teile = teile_von(quelle, index)
+            kriterien = {fp.answer_key(0, n): [True] * len(p["kriterien"])
+                         for n, p in enumerate(teile)}
+            stand = laufender_stand([{"quelle": quelle, "index": index}], kriterien)
+            vorher = json.dumps(stand, sort_keys=True)
+            self.assertEqual(json.dumps(fp.migrate_running(stand), sort_keys=True), vorher)
+
+    def test_tz8_unbekannt_kuerzer_bleibt(self):
+        # (iv) kuerzere neue Liste ohne passenden Eintrag: unveraendert
+        teile = teile_von("ap1", 0)
+        kriterien = {fp.answer_key(0, n): [True, False] * (len(p["kriterien"]) + 1)
+                     for n, p in enumerate(teile)}
+        stand = laufender_stand([{"quelle": "ap1", "index": 0}], kriterien)
+        vorher = json.dumps(stand, sort_keys=True)
+        self.assertEqual(json.dumps(fp.migrate_running(stand), sort_keys=True), vorher)
+        # betroffene Aufgabe, aber Laenge passt nicht zu CRITERIA_BEFORE: unveraendert
+        key = fp.answer_key(0, 1)
+        stand = laufender_stand([{"quelle": "ap1", "index": 24}],
+                                {key: [True, True, False, True]})
+        vorher = json.dumps(stand, sort_keys=True)
+        self.assertEqual(json.dumps(fp.migrate_running(stand), sort_keys=True), vorher)
+        # S4-Fall (neue Liste laenger) wie bisher, "Z.B." spielt dort keine Rolle
+        self.assertEqual(fp.align_marks([True], ["a"], ["b", "c"]), [True, False])
+        stand = laufender_stand([{"quelle": "ap1", "index": 4}], {fp.answer_key(0, 2): [True]})
+        self.assertEqual(fp.migrate_running(stand)["kriterien"][fp.answer_key(0, 2)],
+                         [True, False])
+
+
+class MischbetriebFg87Test(unittest.TestCase):
+    """TZ5 mit echtem Code v0.63.1: laufende Pruefung in 0.63.1 gestartet,
+    in 0.63.2 geoeffnet (umgestellt) und gespeichert, wieder geoeffnet, in
+    0.63.1 wieder geoeffnet, abgegeben. Einstellungen liegen nur auf diesem
+    Geraet (einstellungen.json, kein Abgleich, nicht in der Sicherung)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.alt = s4.code_stand(s4.ALT_TAG)
+        if cls.alt is not None:
+            cls.ordner = tempfile.mkdtemp(prefix="fg87_misch_", dir=_TMP)
+
+    def setUp(self):
+        if self.alt is None:
+            if s4.IN_CI:
+                self.fail("Code aus %s nicht verfuegbar" % s4.ALT_TAG)
+            self.skipTest("Code aus %s nicht verfuegbar (git archive)" % s4.ALT_TAG)
+
+    def einstellungen(self, datenbank):
+        with open(os.path.join(os.path.dirname(datenbank), "einstellungen.json"), "rb") as handle:
+            return handle.read()
+
+    def datenbank(self, name):
+        ordner = os.path.join(self.ordner, name)
+        os.makedirs(ordner)
+        return os.path.join(ordner, "lernstand.db")
+
+    FAELLE = [
+        # (Art, Aufgaben, Haken in 0.63.1, erwartet in 0.63.2)
+        ("ap1", [{"quelle": "ap1", "index": 24}, {"quelle": "ap1", "index": 38}],
+         {"0-1": [True, False, True], "1-2": [False, True, False]},
+         {"0-1": [False, True], "1-2": [True, False]}),
+        ("netzwerke", [{"quelle": "ap2", "index": 35}, {"quelle": "ap2", "index": 134}],
+         {"0-0": [True, False]},
+         # A2-135 (S4, neue Liste laenger) daneben wie in test_inhalte_0632
+         {"0-0": [False], "1-0": [True, False, False, True, False, True]}),
+        ("netzwerke", [{"quelle": "ap2", "index": 35}],
+         {"0-0": [False, True]},
+         {"0-0": [True]}),
+    ]
+
+    def test_tz5_mischbetrieb(self):
+        for nummer, (art, aufgaben, haken, erwartet) in enumerate(self.FAELLE):
+            with self.subTest(fall=nummer):
+                db = self.datenbank("fall%d" % nummer)
+                alt = lauf_fg87(self.alt, db, "anlegen",
+                                {"art": art, "aufgaben": aufgaben, "haken": haken})["state"]
+                datei_alt = self.einstellungen(db)
+                # 0.63.2 oeffnet: umgestellt, aber nichts geschrieben
+                neu = lauf_fg87(HERE, db, "laden")["geladen"]
+                self.assertEqual(self.einstellungen(db), datei_alt)
+                for key, liste in alt["kriterien"].items():
+                    self.assertEqual(neu["kriterien"][key], erwartet.get(key, liste), key)
+                self.assertEqual(neu["punkte"], alt["punkte"])
+                self.assertEqual(neu["antworten"], alt["antworten"])
+                self.assertEqual({k: v for k, v in neu.items() if k != "kriterien"},
+                                 {k: v for k, v in alt.items() if k != "kriterien"})
+                # speichern (wie nach einem Klick), danach zweites Oeffnen: nichts
+                # doppelt umgestellt, Datei byte-gleich
+                lauf_fg87(HERE, db, "speichern")
+                gespeichert = self.einstellungen(db)
+                self.assertEqual(lauf_fg87(HERE, db, "laden")["geladen"], neu)
+                self.assertEqual(self.einstellungen(db), gespeichert)
+                # wieder 0.63.1 (Rueckkehr auf diesem Geraet): laedt, nichts
+                # umgestellt, Punkte und Antworten gleich
+                zurueck = lauf_fg87(self.alt, db, "laden")["geladen"]
+                self.assertEqual(zurueck, neu)
+                self.assertEqual(self.einstellungen(db), gespeichert)
+                # abgeben in 0.63.2: Ergebnis = vergebene Punkte, Pruefung beendet
+                ab = lauf_fg87(HERE, db, "abgeben")
+                self.assertEqual(ab["geladen"], neu)
+                self.assertIsNone(ab["laufend"])
+                self.assertEqual(ab["ergebnis"]["punkte"], float(sum(alt["punkte"].values())))
+
+    def test_tz5_alt_abgeben_nach_umstellung(self):
+        # 0.63.1 -> 0.63.2 (gespeichert) -> Abgabe wieder in 0.63.1: geht, gleiche Punkte
+        art, aufgaben, haken, _erwartet = self.FAELLE[0]
+        db = self.datenbank("alt_abgabe")
+        alt = lauf_fg87(self.alt, db, "anlegen",
+                        {"art": art, "aufgaben": aufgaben, "haken": haken})["state"]
+        lauf_fg87(HERE, db, "speichern")
+        ab = lauf_fg87(self.alt, db, "abgeben")
+        self.assertIsNone(ab["laufend"])
+        self.assertEqual(ab["ergebnis"]["punkte"], float(sum(alt["punkte"].values())))
+
+    def test_tz5_in_0632_gestartet_byte_gleich(self):
+        art, aufgaben, _haken, _erwartet = self.FAELLE[0]
+        db = self.datenbank("neu_gestartet")
+        neu = lauf_fg87(HERE, db, "anlegen", {"art": art, "aufgaben": aufgaben, "haken": {}})
+        datei = self.einstellungen(db)
+        self.assertEqual(lauf_fg87(HERE, db, "laden")["geladen"], neu["state"])
+        lauf_fg87(HERE, db, "speichern")
+        self.assertEqual(self.einstellungen(db), datei)
+        self.assertEqual(len(neu["state"]["kriterien"]["0-1"]), 2)
+        self.assertEqual(len(neu["state"]["kriterien"]["1-2"]), 2)
 
 
 if __name__ == "__main__":

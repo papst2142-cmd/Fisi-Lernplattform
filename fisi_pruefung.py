@@ -108,6 +108,14 @@ _ABBREVIATIONS = ("z.B.", "z. B.", "d.h.", "d. h.", "ca.", "bzw.", "u.a.", "usw.
                   "Abs.", "Std.", "Min.", "Mio.", "Tsd.", "etc.", "z.T.")
 
 
+# Ab 0.63.2 (FG-87): "Z.B." / "Z. B." (gross, meist am Satzanfang). Nur die
+# Punkte werden geschuetzt, das "Z" bleibt sichtbar: davor darf ein Satz enden,
+# danach wird nicht geteilt (bis 0.63.1 war "Z.B." ein eigenes Kriterium).
+# Nicht erkannt (bekannte Grenze, im Bestand nicht vorhanden): "Z.b.", "z.b.",
+# "Z." + geschuetztes Leerzeichen + "B.", "Z.B." am Ende eines Wortes ("XYZ.B.").
+_CAPITAL_EXAMPLE = re.compile(r"(?<![^\W\d_])Z\.( ?)B\.")
+
+
 def criteria(text):
     """Bewertungskriterien aus einer Musterloesung: jeder Satz bzw. jede
     Aufzaehlungszeile ein Kriterium."""
@@ -116,14 +124,14 @@ def criteria(text):
         line = line.strip().lstrip("-•*").strip()
         if not line:
             continue
-        protected = line
+        protected = _CAPITAL_EXAMPLE.sub(lambda m: "Z\x02" + m.group(1) + "B\x02", line)
         for number, abbreviation in enumerate(_ABBREVIATIONS):
             protected = protected.replace(abbreviation, "\x00%d\x00" % number)
         protected = re.sub(r"(\d)\.(\d)", "\\1\x01\\2", protected)
         for sentence in re.split(r"(?<=[.!?])\s+(?=[A-ZÄÖÜ0-9„\"(])", protected):
             for number, abbreviation in enumerate(_ABBREVIATIONS):
                 sentence = sentence.replace("\x00%d\x00" % number, abbreviation)
-            sentence = sentence.replace("\x01", ".").strip()
+            sentence = sentence.replace("\x01", ".").replace("\x02", ".").strip()
             if len(sentence) > 2:
                 items.append(sentence)
     return items or [text.strip()]
@@ -510,7 +518,10 @@ def migrate_running(state):
     bleibt unveraendert stehen.
     AP1/AP2 - hat eine Musterloesung jetzt mehr Kriterien, wird die Liste der
     Haken mit "nicht abgehakt" verlaengert (vorher IndexError beim Abhaken);
-    gesetzte Haken und vergebene Punkte bleiben.
+    gesetzte Haken und vergebene Punkte bleiben. Ab FG-87 (0.63.2): hat sie
+    weniger Kriterien, wird nur mit einem Eintrag in CRITERIA_BEFORE
+    umgestellt (abgetrenntes "Z.B." samt Haken faellt weg), sonst bleibt
+    die Liste unveraendert.
     Gespeichert wird erst beim naechsten save_running (kein Schreiben hier)."""
     try:
         if state.get("art") == WISO:
@@ -558,20 +569,28 @@ def _migrate_tasks(state):
         for part_number, part in enumerate(details["teile"]):
             key = answer_key(number, part_number)
             checked = marks.get(key)
-            if not isinstance(checked, list) or len(checked) >= len(part["kriterien"]):
+            if not isinstance(checked, list) or len(checked) == len(part["kriterien"]):
                 continue
             old = CRITERIA_BEFORE.get((task.get("quelle"), task.get("index"), part_number))
             if old is not None and len(old) == len(checked):
-                marks[key] = align_marks(checked, old, part["kriterien"])
-            else:
+                # FG-87: ein abgetrenntes "Z.B." traegt keine Aussage, sein Haken
+                # faellt weg; die Aussage steht im folgenden Kriterium
+                kept = [(mark, text) for mark, text in zip(checked, old)
+                        if text not in _SPLIT_FRAGMENTS]
+                marks[key] = align_marks([mark for mark, _t in kept],
+                                         [text for _m, text in kept], part["kriterien"])
+            elif len(checked) < len(part["kriterien"]):
                 # unbekannte Aenderung: Haken behalten, Rest "nicht abgehakt"
                 checked.extend([False] * (len(part["kriterien"]) - len(checked)))
+            # unbekannt und weniger Kriterien: so lassen, wie es ist
 
 
 # Ab 0.63.2 (Nacharbeit S4, M1): Kriterien der Musterloesungen, die in 0.63.2
 # laenger wurden, im Stand 0.63.1 (Schluessel: Quelle, Index, Teilaufgabe).
 # Damit stehen die Haken einer beim Update laufenden Pruefung wieder beim
 # richtigen Kriterium (A2-135: neues Kriterium an Position 3, nicht hinten).
+# Ab FG-87 auch Musterloesungen mit weniger Kriterien (A1-025, A1-039, A2-036:
+# "Z.B." war bis 0.63.1 ein eigenes Kriterium); nur mit Eintrag hier.
 CRITERIA_BEFORE = {
     ("ap1", 4, 2): [
         "Damit ein lokales Ereignis wie Brand, Diebstahl oder ein Wasserschaden nicht "
@@ -586,7 +605,25 @@ CRITERIA_BEFORE = {
         "Meldung: 72 Stunden nach Kenntnis, bis Montag, 05.10.2026, 22:40 Uhr.",
         "Die Meldung um 15:00 Uhr ist rechtzeitig.",
         "Abschlussmeldung: einen Monat nach der Meldung, also bis 05.11.2026."],
+    # Ab 0.63.2 (FG-87): "Z.B." am Anfang der Loesung war bis 0.63.1 (und bis
+    # 29ef1b0) ein eigenes Kriterium; neu "Z. B. <Aussage>" in einem Kriterium
+    ("ap1", 24, 1): [
+        "Z.B.",
+        "\"Standard-Image freigegeben\" und \"Alle 40 Arbeitsplätze umgestellt\".",
+        "Meilensteine haben keine Dauer, sie markieren einen wichtigen Zwischenstand."],
+    ("ap1", 38, 2): [
+        "Z.B.",
+        "TCP 3389 (RDP), TCP 445 (SMB), TCP 22 (SSH ohne Einschränkung), Datenbankports wie 3306.",
+        "Fernzugriff gehört hinter ein VPN."],
+    ("ap2", 35, 0): [
+        "Z.B.",
+        "\"Bei welchen Tätigkeiten merken Sie die Langsamkeit besonders?\", \"Mit welchen "
+        "Programmen arbeiten Sie täglich?\", \"Wie viele Mitarbeiter arbeiten an den Geräten?\", "
+        "\"Welche Pläne haben Sie für die nächsten Jahre?\""],
 }
+# FG-87: abgetrennte Stuecke ohne eigene Aussage; ihr Haken faellt beim
+# Umstellen weg (nie ein fremder Haken), die Aussage behaelt ihren eigenen
+_SPLIT_FRAGMENTS = ("Z.B.",)
 
 
 def align_marks(checked, old, new):
