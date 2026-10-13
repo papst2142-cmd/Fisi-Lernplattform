@@ -34,6 +34,9 @@ SCREEN_INPUTS = [("1920", "1080", "24", "0"), ("1920", "1080", "24", "30"),
                  ("1280", "720", "8", "25"), ("3840", "2160", "32", "60"),
                  ("800", "600", "16", "0")]
 TRAINER_SEEDS = 40
+# Ab 0.63.1 (Plan 0.63 Abschnitt 6.4): nur die Arten, die es in 0.62.2 schon
+# gab. Die neuen Arten haben keine Ausgangsbasis; sie prueft T-TR-1.
+ALTE_ARTEN = ("ipv4", "vlsm", "zahlen", "ipv6")
 
 
 def erzeuge(fc, fl):
@@ -58,7 +61,7 @@ def erzeuge(fc, fl):
         "empfehlung", dict(defaults, nenn_w=""), "W")["text"]
     for index in range(len(fc.UPS_TASKS)):
         out["upsaufgabe:%d" % index] = fc.ups_task_text(index, True)
-    for kind, _name in fl.TRAINER_KINDS:
+    for kind in ALTE_ARTEN:
         for level, _label in fl.TRAINER_LEVELS:
             for seed in range(TRAINER_SEEDS):
                 out["trainer:%s|%d|%d" % (kind, level, seed)] = trainer_text(

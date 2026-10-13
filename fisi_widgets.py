@@ -2768,10 +2768,12 @@ ctk.CTkLabel.destroy = _release_image(ctk.CTkLabel.destroy)
 ctk.CTkButton.destroy = _release_image(ctk.CTkButton.destroy)
 
 
-def make_text(parent, height=6, readonly=False, font=None):
-    """Abgerundetes, mehrzeiliges Textfeld. height ist die Zeilenanzahl."""
+def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
+    """Abgerundetes, mehrzeiliges Textfeld. height ist die Zeilenanzahl.
+    Ab 0.63.1: wrap="none" fuer Kaesten, die selbst umbrechen (fit_lines);
+    breitere Zeilen lassen sich dann im Kasten seitlich schieben."""
     font = font or F["body"]
-    widget = ctk.CTkTextbox(parent, height=_text_height(font, height), wrap="word",
+    widget = ctk.CTkTextbox(parent, height=_text_height(font, height), wrap=wrap,
                             fg_color=C["card_alt"], text_color=C["text_soft"],
                             border_color=C["field_border"], border_width=1,
                             corner_radius=12, font=font,
@@ -2836,12 +2838,14 @@ def _display_line_count(widget):
         return 1
 
 
-def make_autogrow_text(parent, min_height=4, max_height=18, font=None):
+def make_autogrow_text(parent, min_height=4, max_height=18, font=None, wrap="word"):
     """Mehrzeiliges Eingabefeld, das mit seinem Inhalt automatisch mitwaechst
     (bis zu max_height Zeilen), statt eine feste Groesse mit Scrollbalken zu
-    haben. Fuer laengere Freitext-Loesungen bei AP1-/AP2-Szenarien gedacht."""
+    haben. Fuer laengere Freitext-Loesungen bei AP1-/AP2-Szenarien gedacht.
+    Ab 0.63.1: wrap wie bei make_text (bei "none" zaehlt jede Textzeile als
+    eine Anzeigezeile)."""
     font = font or F["body"]
-    widget = make_text(parent, height=min_height, font=font)
+    widget = make_text(parent, height=min_height, font=font, wrap=wrap)
     state = {"lines": min_height}
 
     def _resize(_event=None):
