@@ -17,6 +17,8 @@ Tests 0.63.2, Bauer S2a (Handy-Anzeige/Rechenweg)
          jedem "/", sichtbarer Wortlaut wie am PC
   * A5-d Bei "→ wischen" endet alles Teilbare vor dem Verlauf, rechts ein
          Leerraum von 28 px in der wischbaren Zeile
+  * A3   (Meldung S2c) auch die Rechenweg-Kaesten der Rechner sind FitBoxen:
+         keine Zeile abgeschnitten bei Normal/Gross/Sehr gross (384 px)
   * B-N-05 Problembericht in einer FitBox (Saetze mit Einzug, Unteilbares
          wischt), Kopieren/Speichern weiter mit dem Rohtext
 
@@ -225,6 +227,49 @@ class TrainerRechenwegTest(unittest.TestCase):
         self.assertTrue(trainer.steps.visible)
         self.assertEqual(trainer.steps.raw,
                          "\n".join(getattr(task, "steps_schmal", None) or task.steps))
+
+
+class RechnerRechenwegTest(unittest.TestCase):
+    """A3, Meldung S2c: Rechenwege der Rechner (auf 28 Zeichen gesetzt) wurden
+    bei Sehr gross (27 Zeichen bei 384 px, gemessen) rechts abgeschnitten."""
+
+    # Zeichen je Zeile bei 384 px: Sehr gross 27, Normal 35 (gemessen im
+    # Behelf, fotos/nachher/log_*.txt); Gross liegt dazwischen
+    BREITEN = (27, 31, 35)
+
+    def _boxen(self):
+        screen = FeldbeschriftungTest._screen(self)
+        ergebnis = {id(b) for b in (screen.out_raid, screen.out_screen)}
+        boxen = [c for c in _walk(screen.calc_box) if isinstance(c, ui.FitBox)
+                 and id(c) not in ergebnis and c.raw.startswith("RECHENWEG")]
+        return screen, boxen
+
+    def test_alle_rechenwege_fitbox(self):
+        screen, boxen = self._boxen()
+        texte = {box.raw for box in boxen}
+        for name in ("CALC_EXPLAIN_SUBNET_HANDY", "CALC_EXPLAIN_RAID_HANDY",
+                     "CALC_EXPLAIN_SCREEN_HANDY", "CALC_EXPLAIN_UPS_HANDY",
+                     "CALC_EXPLAIN_SUBNET_V6_HANDY"):
+            self.assertIn(getattr(fc, name), texte, name)
+        self.assertGreaterEqual(len(boxen), 8)
+
+    def test_nichts_abgeschnitten(self):
+        screen, _boxen = self._boxen()
+        screen.calc_split("ipv4")
+        screen.calc_split("ipv6")
+        screen.calc_hosts()
+        boxen = [b for b in _walk(screen.calc_box)
+                 if isinstance(b, ui.FitBox) and b.raw.startswith("RECHENWEG")]
+        self.assertGreaterEqual(len(boxen), 8)
+        for box in boxen:
+            raw = box.raw
+            for zeichen in self.BREITEN:
+                _set_width(box, zeichen, NORMAL * 1.3)
+                zeilen = box.data.value.split("\n")
+                self.assertTrue(all(len(z) <= zeichen for z in zeilen),
+                                (zeichen, [z for z in zeilen if len(z) > zeichen]))
+                self.assertFalse(box.hint.visible)
+                self.assertEqual(_norm(box.data.value), _norm(raw))
 
 
 # ---------------------------------------------------------------------------

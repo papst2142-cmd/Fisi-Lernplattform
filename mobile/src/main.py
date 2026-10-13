@@ -3039,7 +3039,10 @@ class CalcScreen(Screen):
 
     @staticmethod
     def _explain(explanation):
-        box = ui.read_box(explanation, mono=True, scroll=True)
+        # Ab 0.63.2 (A3, Meldung S2c): Rechenweg im Kasten der Rechner-
+        # Ergebnisse - die auf 28 Zeichen gesetzten Zeilen wurden bei Sehr
+        # gross (27 Zeichen bei 384 px) rechts abgeschnitten
+        box = ui.read_box(explanation, mono=True, scroll=True, fit=True)
         box.visible = False
         button = ui.GradientButton("Rechenweg anzeigen", None, kind="ghost", height=40)
 
