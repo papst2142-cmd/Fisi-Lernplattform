@@ -1295,7 +1295,10 @@ class TerminalBoard(ft.Column):
         self.step_label = ui.label("")
         self.goal_label = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         self.lines = ft.Column(spacing=2, tight=True)
-        self.screen = ft.Container(content=self.lines, bgcolor=TERMINAL_BG, border_radius=12,
+        # Ab 0.63.2 (B-N-04): Zeilen ohne Umbruch, der Bereich ist waagrecht wischbar
+        # (Spalten tabellenartiger Ausgaben bleiben erhalten)
+        self.screen = ft.Container(content=ft.Row([self.lines], scroll=ft.ScrollMode.AUTO),
+                                   bgcolor=TERMINAL_BG, border_radius=12,
                                    border=ft.Border.all(1, C["border"]),
                                    padding=ft.Padding.symmetric(horizontal=12, vertical=10))
         self.choices = ft.Column(spacing=8, tight=True,
@@ -1319,14 +1322,17 @@ class TerminalBoard(ft.Column):
         self._paint()
 
     def _line(self, role, value):
+        # Ab 0.63.2 (B-N-04): jede Zeile einzeilig (no_wrap); Ein- und Ausgabe
+        # wachsen gleich mit der Schriftgroesse (ui.fs bzw. ft.Text-Groesse)
         if role in ("eingabe", "cursor"):
             return ft.Text(spans=[
                 ft.TextSpan(self.task["prompt"] + " ",
                             ft.TextStyle(color=C["green"], font_family=ui.MONO, size=ui.fs(12))),
                 ft.TextSpan(value, ft.TextStyle(
                     color=C["accent"] if role == "cursor" else C["text"],
-                    font_family=ui.MONO, size=ui.fs(12)))])
-        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
+                    font_family=ui.MONO, size=ui.fs(12)))], no_wrap=True)
+        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role],
+                       no_wrap=True)
 
     def _paint(self):
         lines = [self._line(role, value)
