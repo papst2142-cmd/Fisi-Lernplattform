@@ -12,6 +12,9 @@
 #    rest     alle uebrigen test_*.py (neue Testdateien landen automatisch hier)
 #    windows  Auswahl fuer den Windows-Runner (Windows-eigene Wege; ab 0.62.4
 #             auch der Abgleich-Kern, test_abgleich.py laeuft dort nicht)
+#    ibus     ab 0.63.2 (B-A-01): test_eingabe.py mit FISI_TEST_IBUS=1, also mit
+#             den Nachstellungstests mit echtem IBus (braucht ibus, dbus-x11).
+#             Fehlt ein Werkzeug, ist der Teil rot statt still "skipped".
 #
 #  Lokal genauso nutzbar, z.B.:  bash pruefung/ci_tests.sh rest
 # ============================================================================
@@ -30,6 +33,11 @@ case "$TEIL" in
                     test_leistung.py test_werkzeuge.py test_optionen.py test_sicherung.py
                     test_beenden.py test_namen.py test_rechtliches.py
                     test_optionen_0622.py test_reiter_sichtbar.py test_abgleich_kern.py" ;;
+  ibus)    DATEIEN="test_eingabe.py"
+           export FISI_TEST_IBUS=1
+           # kurzer Zwischenspeicher-Pfad fuer IBus (Stolperstein aus 0.62.4)
+           XDG_CACHE_HOME=$(mktemp -d /tmp/ibus.XXXXXX)
+           export XDG_CACHE_HOME ;;
   *) echo "Unbekannter Teil: $TEIL"; exit 2 ;;
 esac
 

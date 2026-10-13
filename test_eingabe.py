@@ -13,6 +13,8 @@ Tests fuer 0.59.3 (fisi_eingabe.py und die kleinen Korrekturen).
     "vorladen:start" bis zum ersten Schritt; Begrenzungen unveraendert
   * Nachstellung (nur mit IBus und Display): Tk haengt in XCreateIC, wenn
     ibus-daemon nicht antwortet - mit der Umgehung nicht
+  * Ab 0.63.2 (B-A-01, B-P-03): CI-Teil "ibus" setzt FISI_TEST_IBUS=1; fehlt
+    dann ein Werkzeug, ist das ein Fehler. Aufraeumen ohne "pkill -f".
 
 Start:  python test_eingabe.py
 """
@@ -408,6 +410,23 @@ FENSTER = textwrap.dedent("""
 """)
 
 
+class IbusSchalterTest(unittest.TestCase):
+    """Ab 0.63.2 (B-A-01): Ist der Schalter FISI_TEST_IBUS=1 gesetzt (CI-Teil
+    "ibus"), muessen die Nachstellungstests wirklich laufen. Fehlt dann ein
+    Werkzeug, ist das ein Fehler und kein stilles "skipped"."""
+
+    def test_schalter_ohne_werkzeuge_ist_fehler(self):
+        if os.environ.get("FISI_TEST_IBUS") != "1":
+            self.skipTest("Schalter FISI_TEST_IBUS=1 nicht gesetzt")
+        fehlt = [name for name, da in (
+            ("Tk mit Display", HAS_TK), ("ibus-daemon", shutil.which("ibus-daemon")),
+            ("ibus-x11", IBUS_X11), ("dbus-launch", shutil.which("dbus-launch")))
+            if not da]
+        self.assertEqual(fehlt, [], "FISI_TEST_IBUS=1, aber es fehlt: %s"
+                         % ", ".join(fehlt))
+        self.assertTrue(HAS_IBUS)
+
+
 @unittest.skipUnless(HAS_IBUS, "braucht IBus, dbus-launch und Display (FISI_TEST_IBUS=1)")
 class NachstellungTest(unittest.TestCase):
     """ibus-daemon wird angehalten (SIGSTOP): ibus-x11 bekommt keine Antwort
@@ -420,8 +439,12 @@ class NachstellungTest(unittest.TestCase):
                              text=True, check=True).stdout
         for key, value in re.findall(r"(DBUS_SESSION_BUS_\w+)='?([^';]+)'?;", out):
             env[key] = value
+        # Ab 0.63.2 (B-P-03): eigene Prozessgruppe (Nummer = pid des Daemons).
+        # ibus-x11 loest sich vom Daemon (Eltern-pid 1), bleibt aber in dieser
+        # Gruppe - so trifft das Aufraeumen unten nur die eigenen Prozesse
         daemon = subprocess.Popen(["ibus-daemon", "--xim", "--replace"], env=env,
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                  process_group=0)
         proc = None
         try:
             time.sleep(3)
@@ -442,8 +465,17 @@ class NachstellungTest(unittest.TestCase):
             if proc is not None and proc.poll() is None:
                 proc.kill()
             os.kill(daemon.pid, signal.SIGCONT)
+            # Ab 0.63.2 (B-P-03): nur das ibus-x11 beenden, das dieser Test
+            # gestartet hat (Prozessgruppe des eigenen ibus-daemon, genauer
+            # Name) - nie "pkill -f", das traefe auch die IBus-Sitzung am Rechner
+            subprocess.run(["pkill", "-g", str(daemon.pid), "-x", "ibus-x11"],
+                           check=False)
             daemon.terminate()
-            subprocess.run(["pkill", "-f", "ibus-x11"], check=False)
+            try:
+                daemon.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                daemon.kill()
+                daemon.wait()
             os.kill(int(env["DBUS_SESSION_BUS_PID"]), signal.SIGTERM)
 
     def test_ohne_umgehung_haengt_tk(self):
