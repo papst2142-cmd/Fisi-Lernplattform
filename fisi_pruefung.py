@@ -164,7 +164,11 @@ def wiso_pool(exam=None):
 # ============================================================================
 
 def used_items(history, art):
-    """Bereits gestellte Aufgaben/Fragen dieses Pruefungsbereichs."""
+    """Bereits gestellte Aufgaben/Fragen dieses Pruefungsbereichs.
+    Ab 0.63.2 (N-g): Fragetexte abgeschlossener Pruefungen gelten beim
+    heutigen Text (current_question, inhalte/umbenennungen.json), damit eine
+    umbenannte Frage nicht als "nie gestellt" frueher wiederkommt. Gelesen
+    wird nur; gespeicherte Pruefungen werden nicht umgeschrieben."""
     used = set()
     for entry in history:
         if entry.get("art") != art:
@@ -173,7 +177,8 @@ def used_items(history, art):
         for task in details.get("aufgaben", []):
             used.add(task.get("index"))
         for question in details.get("fragen", []):
-            used.add(question.get("q") if isinstance(question, dict) else question)
+            used.add(current_question(question.get("q") if isinstance(question, dict)
+                                      else question))
     return used
 
 

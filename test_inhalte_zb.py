@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Tests ab 0.63.2, Bauauftrag N12: "z. B." in den Lerninhalten (B-N-08) und
-S4-Felder (N-d).
+"""Tests ab 0.63.2, Bauauftrag N12: "z. B." in den Lerninhalten (B-N-08),
+S4-Felder (N-d) und schon gestellte WiSo-Fragen (N-g).
 
   * B-N-08: in inhalte/*.json steht kein "z.B." mehr, sondern "z. B." (wie
     B-D-13/S4, normales Leerzeichen), und "Broadcast-Adresse" statt
@@ -20,6 +20,8 @@ S4-Felder (N-d).
     Stand geoeffnet aendern sich genau diese Fragetexte, nichts sonst, keine
     Antwort geht verloren; ohne solche Antworten byte-gleich; Abgleich von
     einem Geraet mit v0.63.1.
+  * N-g: used_items liest abgeschlossene WiSo-Pruefungen ueber den heutigen
+    Fragetext (auch ueber Ketten), schreibt aber nichts um.
   Laufende WiSo-Pruefung ueber das Update (Test (4)): test_inhalte_0632.
   LaufendePruefungTest.test_wiso_zb_ueber_das_update.
 
@@ -424,6 +426,88 @@ class MigrationZbTest(unittest.TestCase):
         finally:
             conn.close()
         self.assertEqual(ergebnis["kennzahlen"], self.vorher["kennzahlen"])
+
+    def test_gestellte_fragen_beim_neuen_text(self):
+        # N-g mit echter Datenbank: die mit v0.63.1 gespeicherte WiSo-Pruefung
+        # (alte Fragetexte in pruefungen.daten) zaehlt beim heutigen Text, die
+        # Datenbank bleibt dabei byte-gleich
+        import fisi_core as core
+        kopie = os.path.join(self.ordner, "verlauf.db")
+        shutil.copyfile(self.db_neu, kopie)
+        vorher = s4.sha(kopie)
+        db = core.DBManager(kopie)
+        verlauf = db.exams()
+        used = fp.used_items(verlauf, fp.WISO)
+        for frage_alt, frage_neu in self.paare["quiz"].items():
+            self.assertIn(frage_neu, used)
+            self.assertNotIn(frage_alt, used)
+        fp.new_exam(fp.WISO, verlauf, seed=3)
+        del db
+        self.assertEqual(s4.sha(kopie), vorher)
+
+
+# ============================================================================
+#  N-g: schon gestellte WiSo-Fragen
+# ============================================================================
+
+class GestelltTest(unittest.TestCase):
+
+    def setUp(self):
+        self.quiz = lade("quizfragen.json")
+        self.fern_alt = UMBENANNT_ZB[[i for _a, i, _t in UMBENANNT_ZB].index(WISO_FERNABSATZ)][2]
+        self.fern_neu = self.quiz[WISO_FERNABSATZ]["q"]
+        # S4: P1025 (Widerrufsrecht), ebenfalls im WiSo-Pool
+        self.agb_alt = [alt for art, index, alt in s4.UMBENANNT if (art, index) == ("quiz", 1024)][0]
+        self.agb_neu = self.quiz[1024]["q"]
+
+    def verlauf(self, fragen):
+        return [{"art": fp.WISO, "daten": {"fragen": [{"q": q, "richtig": True} for q in fragen]}},
+                {"art": fp.AP1, "daten": {"aufgaben": [{"index": 4}]}}]
+
+    def test_alter_text_zaehlt_beim_neuen(self):
+        used = fp.used_items(self.verlauf([self.fern_alt, self.agb_alt]), fp.WISO)
+        self.assertEqual(used, {self.fern_neu, self.agb_neu})
+        # auch die Kurzform (nur Text statt dict) aus aelteren Staenden
+        self.assertEqual(fp.used_items([{"art": fp.WISO, "daten": {"fragen": [self.fern_alt]}}],
+                                       fp.WISO), {self.fern_neu})
+        self.assertEqual(fp.used_items(self.verlauf([]), fp.AP1), {4})
+
+    def test_neue_pruefung_meidet_die_frage(self):
+        verlauf = self.verlauf([self.fern_alt, self.agb_alt])
+        pool = fp.wiso_pool()
+        self.assertIn(self.fern_neu, pool)
+        self.assertIn(self.agb_neu, pool)
+        for seed in range(60):
+            fragen = fp.new_exam(fp.WISO, verlauf, seed=seed)["fragen"]
+            self.assertEqual(len(fragen), fp.WISO_COUNT)
+            self.assertNotIn(self.fern_neu, fragen, seed)
+            self.assertNotIn(self.agb_neu, fragen, seed)
+
+    def test_kette(self):
+        # alt -> Zwischentext -> heutiger Text
+        gespeichert = fp.QUESTION_RENAMES.get("quiz_answers")
+        try:
+            fp.QUESTION_RENAMES["quiz_answers"] = dict(gespeichert, **{
+                "Ganz alter Text?": self.fern_alt})
+            used = fp.used_items(self.verlauf(["Ganz alter Text?"]), fp.WISO)
+            self.assertEqual(used, {self.fern_neu})
+        finally:
+            fp.QUESTION_RENAMES["quiz_answers"] = gespeichert
+
+    def test_ohne_umbenennung_wie_bisher(self):
+        fragen = [q for q in fp.wiso_pool()[:10]]
+        verlauf = self.verlauf(fragen) + [{"art": fp.WISO, "daten": {}},
+                                          {"art": fp.WISO, "daten": {"fragen": ["unbekannt?"]}}]
+        self.assertEqual(fp.used_items(verlauf, fp.WISO), set(fragen) | {"unbekannt?"})
+        for seed in range(20):
+            self.assertFalse(set(fp.new_exam(fp.WISO, verlauf, seed=seed)["fragen"]) & set(fragen))
+
+    def test_verlauf_wird_nicht_umgeschrieben(self):
+        verlauf = self.verlauf([self.fern_alt])
+        kopie = json.loads(json.dumps(verlauf))
+        fp.used_items(verlauf, fp.WISO)
+        fp.new_exam(fp.WISO, verlauf, seed=5)
+        self.assertEqual(verlauf, kopie)
 
 
 if __name__ == "__main__":
