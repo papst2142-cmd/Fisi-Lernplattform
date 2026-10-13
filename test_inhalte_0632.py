@@ -657,11 +657,18 @@ if aufgabe == "pruefung_anlegen":
             for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
                 key = fp.answer_key(nummer, teil)
                 state["antworten"][key] = "Antwort %s" % key
-                state["kriterien"][key] = [True] * len(part["kriterien"])
+                anzahl = len(part["kriterien"])
+                if daten.get("haken") == "wechsel":     # 1., 3., 5. ... abgehakt
+                    state["kriterien"][key] = [i % 2 == 0 for i in range(anzahl)]
+                else:
+                    state["kriterien"][key] = [True] * anzahl
                 state["punkte"][key] = part["punkte"]
         fp.submit(state)
     fp.save_running(state)
     out["state"] = state
+if aufgabe == "pruefung_laden":
+    import fisi_pruefung as fp
+    out["geladen"] = fp.load_running()
 if aufgabe == "pruefung_abgeben":
     import fisi_pruefung as fp
     state = fp.load_running()
@@ -916,6 +923,40 @@ class LaufendePruefungTest(unittest.TestCase):
         self.assertEqual(ergebnis["geladen"]["punkte"], angelegt["state"]["punkte"])
         self.assertIsNone(ergebnis["laufend"])
 
+    def test_haken_an_richtiger_stelle(self):
+        # Nacharbeit 2 (M1): neue Kriterien stehen nicht immer hinten
+        # (A2-135: an Stelle 3). Abgehakt sind in 0.63.1 das 1., 3., 5. ...
+        # Kriterium; nach dem Update muss jeder Haken beim selben Kriterium
+        # stehen und jedes neue Kriterium "nicht abgehakt" sein.
+        faelle = [("ap1", [{"quelle": "ap1", "index": 4}, {"quelle": "ap1", "index": 58}],
+                   {"0-2": [True, False], "1-2": [True, False, False, False]}),
+                  ("netzwerke", [{"quelle": "ap2", "index": 134}],
+                   {"0-0": [True, False, False, True, False, True]})]
+        for art, aufgaben, erwartet in faelle:
+            with self.subTest(art=art):
+                angelegt = lauf(self.alt, self.db, "pruefung_anlegen",
+                                {"art": art, "aufgaben": aufgaben, "haken": "wechsel"})
+                alt_haken = angelegt["state"]["kriterien"]
+                geladen = lauf(HERE, self.db, "pruefung_laden")["geladen"]["kriterien"]
+                state = {"aufgaben": aufgaben}
+                for nummer in range(len(aufgaben)):
+                    for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+                        key = fp.answer_key(nummer, teil)
+                        if key in erwartet:
+                            self.assertEqual(geladen[key], erwartet[key], key)
+                            alt = fp.CRITERIA_BEFORE[(aufgaben[nummer]["quelle"],
+                                                      aufgaben[nummer]["index"], teil)]
+                            # unveraenderte Kriterien: Haken wie vorher
+                            for i, text in enumerate(alt):
+                                if text in part["kriterien"]:
+                                    self.assertEqual(geladen[key][part["kriterien"].index(text)],
+                                                     alt_haken[key][i], (key, text))
+                        else:
+                            self.assertEqual(geladen[key], alt_haken[key], key)
+        self.assertEqual(fp.align_marks([True], ["a"], ["b", "c"]), [True, False])
+        # faellt ein Kriterium weg, geht sein Haken nicht verloren
+        self.assertEqual(fp.align_marks([False, True], ["a", "b"], ["a"]), [True])
+
 
 class PruefungRobustTest(unittest.TestCase):
     """Zuordnung gespeicherter Texte ohne Umbenennungsliste (im Zweifel behalten)."""
@@ -947,7 +988,39 @@ class PruefungRobustTest(unittest.TestCase):
         self.assertEqual(state["fragen"], fragen)            # nichts verworfen
         zeilen = fp.wiso_result(state)
         self.assertEqual([z[3] for z in zeilen], [False, True])
-        self.assertEqual(fp.evaluate(fp.submit(state))["punkte"], 50.0)
+        # Nacharbeit 2 (L2): die unbekannte Frage senkt die Punkte nicht
+        # (bis c582094 hier 50.0, da sie im Nenner zaehlte)
+        self.assertEqual(fp.evaluate(fp.submit(state))["punkte"], 100.0)
+
+    def test_abgabe_mit_unbekannter_frage(self):
+        # Nacharbeit 2 (L1/L2): finish schreibt fuer die unbekannte Frage nichts
+        # in den Lernstand, sie zaehlt nicht in den Punkten, bleibt aber im
+        # gespeicherten Ergebnis unter "unbekannt" sichtbar.
+        import fisi_core as core
+        bekannt = self.quiz[2]
+        unbekannt = "Eine Frage, die es nicht mehr gibt?"
+        fragen = [unbekannt, bekannt["q"]]
+        state = fp.migrate_running(self.state(
+            fragen, {f: ["a", "b", "c", "d"] for f in fragen},
+            {unbekannt: "a", bekannt["q"]: bekannt["a"]}))
+        pfad = os.path.join(tempfile.mkdtemp(prefix="abgabe_", dir=_TMP), "lernstand.db")
+        db = core.DBManager(pfad)
+        ergebnis = fp.finish(db, fp.submit(state))
+        self.assertEqual(ergebnis["punkte"], 100.0)
+        self.assertEqual(ergebnis["daten"]["richtig"], 1)
+        self.assertEqual([f["q"] for f in ergebnis["daten"]["fragen"]], [bekannt["q"]])
+        self.assertEqual(ergebnis["daten"]["unbekannt"], [unbekannt])
+        conn = sqlite3.connect(pfad)
+        try:
+            zeilen = conn.execute("SELECT question, correct FROM quiz_answers").fetchall()
+            gespeichert = conn.execute("SELECT punkte, daten FROM pruefungen").fetchall()
+        finally:
+            conn.close()
+        self.assertEqual([z[0] for z in zeilen], [bekannt["q"]])
+        self.assertEqual([bool(z[1]) for z in zeilen], [True])
+        self.assertEqual(len(gespeichert), 1)
+        self.assertEqual(gespeichert[0][0], 100.0)
+        self.assertEqual(json.loads(gespeichert[0][1])["unbekannt"], [unbekannt])
 
 
 if __name__ == "__main__":
