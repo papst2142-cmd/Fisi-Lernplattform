@@ -217,12 +217,15 @@ class FitLinesTest(unittest.TestCase):
         start = neu.index("Last:")
         self.assertEqual(neu[start + 1:start + 3],
                          ["  12.500 W / 13.889 VA", "  (Leistungsfaktor 0,9)"])
-        # eingerueckte Zeilen behalten ihren Einzug, auch die Fortsetzung
+        # eingerueckte Zeilen behalten ihren Einzug, auch die Fortsetzung;
+        # ab 0.63.2 (A5): "=" steht vor dem Wert, nie am Zeilenende
         start = neu.index("  nein  Auslastung Wirkleistung:")
         self.assertEqual(neu[start + 1:start + 3],
-                         ["    12.500 W von 900 W =", "    1.388,9 %"])
-        # Zahl und Einheit bleiben zusammen
-        self.assertIn("  288,00 Wh", neu)
+                         ["    12.500 W von 900 W", "    = 1.388,9 %"])
+        self.assertFalse(any(line.rstrip().endswith((" =", " ->", " hex"))
+                             for line in neu), neu)
+        # Zahl und Einheit bleiben zusammen (ab 0.63.2 mit "=" davor, A5)
+        self.assertIn("  = 288,00 Wh", neu)
         self.assertEqual(neu[-2:], ["    0,9 min, gewünscht", "    45 min"])
         # zu lang bleiben nur Beschriftungen (dann "→ wischen")
         self.assertTrue(all(len(line) <= 28 or line.endswith(":") for line in neu), neu)
