@@ -22,6 +22,14 @@
 #      als Datei. Ein Pre-release liefert GitHub nie als "latest" aus, die
 #      Update-Funktion bietet es deshalb niemandem an.
 #
+#  Nachholen, wenn ein Release-Lauf nach dem Anlegen des Tags scheitert:
+#  zuerst im roten Lauf "Re-run failed jobs". Geht das nicht, im Reiter
+#  "Actions" -> "Installer bauen" -> "Run workflow" bei "Use workflow from"
+#  den Tag (z.B. v0.63.2) waehlen. Dann wird fuer diesen Tag gebaut und
+#  veroeffentlicht. Ab 0.63.2 holt "Release automatisch" (release.yml) das
+#  beim naechsten Push auf main auch selbst nach: Es prueft, ob es das
+#  Release gibt, nicht nur den Tag.
+#
 #  Ab 0.56 laeuft vor jedem Release (und vor jeder Testversion) der
 #  automatische Update-Test (Job "update-test"): letzte normale Version aus
 #  dem Release installieren, neue Version als Update einspielen, pruefen.
@@ -55,16 +63,30 @@ on:
         description: "Versions-Tag, fuer den gebaut und veroeffentlicht wird (z.B. v0.28)"
         type: string
         required: true
+    # Ab 0.63.2 (B-M-07): release.yml gibt nur diese zwei Secrets weiter
+    # (statt "secrets: inherit"). Fehlt eines, meldet es der Job "android".
+    secrets:
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
 
 # Tag des Laufs: beim Aufruf aus release.yml uebergeben, sonst der gepushte Tag
 env:
   TAG: ${{ inputs.tag || github.ref_name }}
   IS_RELEASE: ${{ inputs.tag != '' || startsWith(github.ref, 'refs/tags/v') }}
 
+# Ab 0.63.2 (B-M-07): Token nur mit Leserecht; Schreibrecht haben nur die
+# Jobs "vorab" und "release" (dort eigenes "permissions")
+permissions:
+  contents: read
+
 jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    # Ab 0.63.2 (B-M-03): Zeitgrenze (laengster Lauf bisher unter 10 min)
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -104,6 +126,8 @@ jobs:
 
       - name: Linux-Werkzeuge installieren
         if: runner.os == 'Linux'
+        # Ab 0.63.2 (B-M-03): normal unter 1 min, ein Haenger lief 41 min
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y tk-dev xvfb
@@ -111,9 +135,9 @@ jobs:
           # Pruefung - stimmt eine Pruefsumme nicht, bricht der Bau ab.
           # appimagetool 1.9.1 und die AppImage-Laufzeit type2-runtime
           # 20251108 (ihre Lizenzen stehen in THIRD_PARTY_NOTICES.txt).
-          curl -fsSL -o appimagetool \
+          curl -fsSL --connect-timeout 30 --max-time 300 -o appimagetool \
             https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
-          curl -fsSL -o runtime-x86_64 \
+          curl -fsSL --connect-timeout 30 --max-time 300 -o runtime-x86_64 \
             https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
           printf '%s\n' \
             "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool" \
@@ -172,6 +196,8 @@ jobs:
   android:
     name: android
     runs-on: ubuntu-24.04
+    # Ab 0.63.2 (B-M-03): Zeitgrenze (laengster Lauf bisher gut 10 min)
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -235,9 +261,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(python -c "import build; print(build.app_version())")
-          ALT=$(gh api repos/${{ github.repository }}/releases/latest --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
+          ALT=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
           echo "Vergleich mit: $ALT"
-          curl -fsSL -o "$RUNNER_TEMP/alt.apk" "$ALT"
+          curl -fsSL --connect-timeout 30 --max-time 300 -o "$RUNNER_TEMP/alt.apk" "$ALT"
           python pruefung/apk_pruefen.py "installer_output/FISI-Lernplattform-${VERSION}-Android.apk" "$RUNNER_TEMP/alt.apk"
 
       # Ab 0.62 (Weg B, E5): Lizenzliste der Handy-App mit der neuen APK
@@ -272,7 +298,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        teil: [spiel, lang, rest]
+        # Ab 0.63.2 (B-A-01): Teil "ibus" = Nachstellung mit echtem IBus
+        teil: [spiel, lang, rest, ibus]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -283,10 +310,16 @@ jobs:
           python-version: "3.12"
 
       - name: Werkzeuge fuer die Tests
+        env:
+          TEIL: ${{ matrix.teil }}
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb openbox x11-utils desktop-file-utils \
             hunspell hunspell-de-de
+          # Ab 0.63.2 (B-A-01): IBus und dbus-launch nur fuer den Teil "ibus"
+          if [ "$TEIL" = "ibus" ]; then
+            sudo apt-get install -y ibus dbus-x11
+          fi
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
@@ -295,7 +328,9 @@ jobs:
           python mobile/vorbereiten.py
 
       - name: Tests ausfuehren
-        run: bash pruefung/ci_tests.sh ${{ matrix.teil }}
+        env:
+          TEIL: ${{ matrix.teil }}
+        run: bash pruefung/ci_tests.sh "$TEIL"
 
   tests-windows:
     name: Tests Windows
@@ -343,7 +378,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ALT=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          ALT=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
           NEU=$(python -c "import build; print(build.app_version())")
           echo "alt=${ALT#v}" >> "$GITHUB_OUTPUT"
           echo "neu=$NEU" >> "$GITHUB_OUTPUT"
@@ -365,9 +400,12 @@ jobs:
 
       - name: Update testen
         shell: pwsh
+        env:
+          ALT_VERSION: ${{ steps.alt.outputs.alt }}
+          NEU_VERSION: ${{ steps.alt.outputs.neu }}
         run: |
           $setup = (Get-ChildItem "neu\*Setup*.exe")[0].FullName
-          .github\update-test\update_test.ps1 -AltVersion "${{ steps.alt.outputs.alt }}" -NeuVersion "${{ steps.alt.outputs.neu }}" -NeuSetup $setup
+          .github\update-test\update_test.ps1 -AltVersion "$env:ALT_VERSION" -NeuVersion "$env:NEU_VERSION" -NeuSetup $setup
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -389,6 +427,8 @@ jobs:
           || (needs.tests.result == 'success' && needs.tests-windows.result == 'success'))
       && (inputs.vorab_dateien != 'linux-handy' || needs.android.result == 'success')
     runs-on: ubuntu-24.04
+    # Ab 0.63.2 (B-M-03): Zeitgrenze (der Job braucht unter 1 min)
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -417,6 +457,7 @@ jobs:
         env:
           VORAB: ${{ inputs.vorab }}
           ZWECK: ${{ inputs.vorab_zweck }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           case "$VORAB" in *[!A-Za-z0-9._-]*|"") echo "Ungueltiger Name: $VORAB"; exit 1;; esac
           mkdir -p vorab
@@ -428,7 +469,7 @@ jobs:
           {
             echo "**Nur zum Testen, nicht veröffentlichen.** Testversion $VORAB, nicht für alle."
             echo ""
-            echo "Gebaut aus dem Zweig \`${{ github.ref_name }}\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
+            echo "Gebaut aus dem Zweig \`$REF_NAME\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
             if [ -n "$ZWECK" ]; then
               echo ""
               echo "Getestet wird: $ZWECK"
@@ -448,6 +489,7 @@ jobs:
         if: inputs.vorab_dateien != 'linux-handy'
         env:
           VORAB: ${{ inputs.vorab }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           case "$VORAB" in *[!A-Za-z0-9._-]*|"") echo "Ungueltiger Name: $VORAB"; exit 1;; esac
           mkdir -p vorab
@@ -456,7 +498,7 @@ jobs:
           {
             echo "**Testversion $VORAB - nur zum Prüfen, nicht für alle.**"
             echo ""
-            echo "Gebaut aus dem Zweig \`${{ github.ref_name }}\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
+            echo "Gebaut aus dem Zweig \`$REF_NAME\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
             echo ""
             echo "Die Update-Funktion bietet diese Testversion nicht an (Vorab-Release). Installation von Hand: Datei herunterladen und starten. Der Lernstand bleibt erhalten."
             echo ""
@@ -468,7 +510,10 @@ jobs:
           } > vorab.md
           cat vorab.md
 
-      - uses: softprops/action-gh-release@v3
+      # Ab 0.63.2 (B-M-04): fremde Action auf den Commit festgelegt, auf den
+      # v3 am 13.10.2026 zeigte (= v3.0.3, gleicher Code); Dependabot schlaegt
+      # neuere Staende als Pull Request vor
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: vorab-${{ inputs.vorab }}
           target_commitish: ${{ github.sha }}
@@ -483,8 +528,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VORAB: ${{ inputs.vorab }}
         run: |
-          LATEST=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
-          PRE=$(gh api repos/${{ github.repository }}/releases/tags/vorab-$VORAB --jq .prerelease)
+          LATEST=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          PRE=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/vorab-$VORAB" --jq .prerelease)
           python3 -m pip install --quiet certifi
           # ab 0.59.1 fuer alle drei Installationsarten der Testversionen
           ANGEBOT=$(python3 -c "import fisi_update as u; print(' '.join((lambda i: i.version if i else '-')(u.check_for_update('0.1', kind=k)) for k in ('windows', 'deb', 'android')))")
@@ -513,6 +558,8 @@ jobs:
       && (vars.TESTS_UEBERSPRINGEN == 'ja'
           || (needs.tests.result == 'success' && needs.tests-windows.result == 'success'))
     runs-on: ubuntu-24.04
+    # Ab 0.63.2 (B-M-03): Zeitgrenze (der Job braucht unter 1 min)
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -578,7 +625,10 @@ jobs:
           } >> versionshinweise.md
           cat versionshinweise.md
 
-      - uses: softprops/action-gh-release@v3
+      # Ab 0.63.2 (B-M-04): fremde Action auf den Commit festgelegt, auf den
+      # v3 am 13.10.2026 zeigte (= v3.0.3, gleicher Code); Dependabot schlaegt
+      # neuere Staende als Pull Request vor
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ env.TAG }}
           name: Fachinformatiker Lernplattform ${{ env.TAG }}
