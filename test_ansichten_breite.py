@@ -241,6 +241,188 @@ def pruefe_abschlussprojekt(ctx):
                               "(%d Teile)" % len(top.pack_slaves()))
 
 
+# ---------------------------------------------------------------------------
+#  Ab 0.63.2 (Z3, S1c2): die fuenf weiteren Ansichten bei Gross/Sehr gross
+# ---------------------------------------------------------------------------
+#
+# Notizblock, Fortschritt, Karteikarten, Pruefungstrainer (Uebung und
+# Pruefung) und Optionen (alle Bereiche aufgeklappt). Geprueft wird jede
+# Schriftstufe; bei Normal muss die Ansicht genau wie bisher bleiben (keine
+# umbrochene Zeile, keine verschobene Unterschrift - Normal ist nicht Teil
+# von Z3; Pixelvergleich der Fotos im Bericht).
+
+Z3_STUFEN = {1.0: "normal"}
+# Gross/Sehr gross folgt im eigenen Commit (Design, F11)
+# Normal 1120: Notizblock (+99 px) und Fortschritt (+34 px) waren schon in
+# 0.63.1 zu breit (Messung Plan S1), die Optionen mit allen Bereichen
+# aufgeklappt ebenso (+6 px, Messung S1c2). Normal gehoert nicht zu Z3 und
+# bleibt unveraendert (Weisung Hauptstrang) - deshalb dort erwarteter
+# Fehlschlag, gemeldet in bau_0.63.2/s1c2/ergebnis.md.
+Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen")
+
+
+def _normal_unveraendert(ctx):
+    """Bei Normal: keine Zeile umbrochen, keine Unterschrift verschoben."""
+    if ctx.faktor != 1.0:
+        return
+    stack = [ctx.view.inner]
+    while stack:
+        widget = stack.pop()
+        flow = widget.__dict__.get("_fisi_flow")
+        if flow is not None and flow.wrapped:
+            ctx.fehler.append("%s: bei Normal umbrochen: %s" % (ctx.name, widget))
+        if widget.__dict__.get("_sub_stacked"):
+            ctx.fehler.append("%s: bei Normal Unterschrift verschoben: %s" % (ctx.name, widget))
+        if widget.__dict__.get("_fisi_z3_umgestellt"):
+            ctx.fehler.append("%s: bei Normal umgestellt: %s" % (ctx.name, widget))
+        stack.extend(widget.winfo_children())
+
+
+def _unterklassen_sichtbar(ctx, zustand):
+    """Ctx.pruefe erkennt Bedienelemente am genauen Klassennamen. Abgeleitete
+    Klassen (z. B. eine Aufklappliste mit Rahmen aus S1b) prueft dies hier
+    ueber isinstance: ganz im sichtbaren Bereich und in ihrem Rahmen."""
+    import customtkinter as ctk
+    view = ctx.view
+    links = view.canvas.winfo_rootx()
+    rechts = links + view.canvas.winfo_width()
+    stack = [view.inner]
+    while stack:
+        widget = stack.pop()
+        for child in widget.winfo_children():
+            try:
+                if not child.winfo_ismapped():
+                    continue
+            except Exception:  # noqa: BLE001
+                continue
+            if isinstance(child, (ctk.CTkOptionMenu, ctk.CTkEntry, ctk.CTkCheckBox,
+                                  ctk.CTkSwitch, ctk.CTkTextbox)):
+                if type(child).__name__ in BEDIEN_KLASSEN:
+                    continue
+                x, w = child.winfo_rootx(), child.winfo_width()
+                master = child.master
+                if x < links - 1 or x + w > rechts + 1 or \
+                        x + w > master.winfo_rootx() + master.winfo_width() + 1:
+                    ctx.fehler.append("%s/%s: %s ausserhalb (x %d..%d, sichtbar %d..%d)"
+                                      % (ctx.name, zustand, type(child).__name__,
+                                         x, x + w, links, rechts))
+                continue
+            stack.append(child)
+
+
+def _z3_pruefe(ctx, zustand):
+    ctx.pruefe(zustand)
+    _unterklassen_sichtbar(ctx, zustand)
+    _normal_unveraendert(ctx)
+
+
+@ansicht("notizblock")
+def pruefe_notizblock(ctx):
+    import fisi_core
+    view = ctx.zeige("notebook")
+    _z3_pruefe(ctx, "start")
+    # Status "Offen": Liste mit Eintraegen und Uebungsknoepfen
+    view.status_pills.select_value(fisi_core.Q_OPEN)
+    ctx.pump(0.6)
+    _z3_pruefe(ctx, "offen")
+    view.answer_pills.select_value("an")
+    ctx.pump(0.6)
+    _z3_pruefe(ctx, "musterantworten")
+    view.answer_pills.select_value("aus")
+    view.status_pills.select_value(fisi_core.Q_PRACTICE)
+    ctx.pump(0.3)
+
+
+@ansicht("fortschritt")
+def pruefe_fortschritt(ctx):
+    ctx.zeige("progress")
+    ctx.pump(1.0)    # Rahmenplan-Karte kommt nach dem ersten Zeichnen
+    _z3_pruefe(ctx, "start")
+
+
+@ansicht("karteikarten")
+def pruefe_karteikarten(ctx):
+    view = ctx.zeige("cards")
+    _z3_pruefe(ctx, "freitext")
+    view.txt_answer.insert("1.0", "Eine Antwort")
+    view.check_answer()
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "freitext_geprueft")
+    view.next_card()
+    view.set_mode("mc")
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "mc")
+    view.options.select(view.options._rows[0]["text"])
+    view.check_answer()
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "mc_geprueft")
+    view.set_mode("reveal")
+    ctx.pump(0.3)
+    view.check_answer()
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "aufgedeckt")
+    view.set_mode("freitext")
+    ctx.pump(0.3)
+
+
+@ansicht("pruefungstrainer")
+def pruefe_pruefungstrainer(ctx):
+    import app_gui
+    import random
+    import fisi_pruefung as fp
+    random.seed(6302)    # immer dieselben Pruefungsaufgaben
+    view = ctx.zeige("quiz")
+    _z3_pruefe(ctx, "start")
+    view.start_quiz()
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "frage")
+    view.options.select(view.options._rows[0]["text"])
+    view.submit_answer()
+    ctx.pump(0.4)
+    _z3_pruefe(ctx, "beantwortet")
+    ja = app_gui.messagebox.askyesno
+    app_gui.messagebox.askyesno = lambda *a, **k: True
+    try:
+        view.cancel_quiz()
+        view.mode_pills.select_value("pruefung")
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_auswahl")
+        view.exam.start(fp.AP1)
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_laeuft")
+        view.exam._submit()
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_bewertung")
+        view.exam._finish()
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_ergebnis")
+        view.exam.show_choice()
+        view.exam.start(fp.WISO)
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_wiso")
+        view.exam.cancel()
+        ctx.pump(0.4)
+        _z3_pruefe(ctx, "pruefung_historie")
+        view.mode_pills.select_value("uebung")
+        ctx.pump(0.3)
+    finally:
+        app_gui.messagebox.askyesno = ja
+
+
+@ansicht("optionen")
+def pruefe_optionen(ctx):
+    view = ctx.zeige("settings")
+    _z3_pruefe(ctx, "start")
+    for card in view.folds.values():
+        card.set_opened(True)
+        ctx.pump(0.2)
+    ctx.pump(0.8)
+    _z3_pruefe(ctx, "alles_offen")
+    for card in view.folds.values():
+        card.set_opened(False)
+    ctx.pump(0.3)
+
+
 def worker(faktor, breite, hoehe, namen):
     """Laeuft im eigenen Prozess; gibt eine JSON-Zeile "ERG {...}" aus."""
     home = tempfile.mkdtemp(prefix="fisi_ansichten_")
@@ -324,9 +506,9 @@ class AnsichtBreiteBasis(unittest.TestCase):
         result = ergebnis(faktor, breite, hoehe)
         self.assertIsInstance(result, dict, result)
         mine = result[self.NAME]
-        print("\n  %s %s %dx%d: %s" % (self.NAME, FAKTOREN[faktor], breite, hoehe,
+        print("\n  %s %s %dx%d: %s" % (self.NAME, Z3_STUFEN[faktor], breite, hoehe,
                                       {k: v["inhalt"] for k, v in mine["werte"].items()}))
-        self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, FAKTOREN[faktor],
+        self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
                                                              breite, hoehe))
         self.assertTrue(mine["werte"], "keine Zustaende geprueft")
 
@@ -363,6 +545,43 @@ class TestprojektBreiteTest(AnsichtBreiteBasis):
 @fuer_alle_fenster
 class AbschlussprojektBreiteTest(AnsichtBreiteBasis):
     NAME = "abschlussprojekt"
+
+
+def fuer_alle_stufen(cls):
+    """Z3: je Schriftstufe (Normal, Gross, Sehr gross) und Fenster ein
+    Testfall. Normal 1120 bei Z3_NORMAL_1120_BEKANNT: erwarteter Fehlschlag."""
+    for faktor, stufe in Z3_STUFEN.items():
+        for breite, hoehe in FENSTER:
+            test = _make(faktor, breite, hoehe)
+            if faktor == 1.0 and breite == 1120 and cls.NAME in Z3_NORMAL_1120_BEKANNT:
+                test = unittest.expectedFailure(test)
+            setattr(cls, "test_%s_%d" % (stufe, breite), test)
+    return cls
+
+
+@fuer_alle_stufen
+class NotizblockBreiteTest(AnsichtBreiteBasis):
+    NAME = "notizblock"
+
+
+@fuer_alle_stufen
+class FortschrittBreiteTest(AnsichtBreiteBasis):
+    NAME = "fortschritt"
+
+
+@fuer_alle_stufen
+class KarteikartenBreiteTest(AnsichtBreiteBasis):
+    NAME = "karteikarten"
+
+
+@fuer_alle_stufen
+class PruefungstrainerBreiteTest(AnsichtBreiteBasis):
+    NAME = "pruefungstrainer"
+
+
+@fuer_alle_stufen
+class OptionenBreiteTest(AnsichtBreiteBasis):
+    NAME = "optionen"
 
 
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
