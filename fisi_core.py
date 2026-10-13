@@ -4315,7 +4315,8 @@ CALC_EXPLAIN_UPS = (
 # Hostbits, Praefixlaenge, UND/ODER, Nutzkapazitaet, Festplatten, KiB/MiB),
 # Spalten gerade, Fehler aus der Pruefung e3 berichtigt. Zu jedem Rechenweg
 # gibt es eine Handy-Fassung (..._HANDY, weiter unten) mit denselben
-# Schritten und Zahlen, aber hoechstens 28 Zeichen je Zeile.
+# Schritten und Zahlen, aber kuerzeren Zeilen (ab 0.63.2, FG-82: feste Texte
+# hoechstens 26 Zeichen, erzeugte Rechenwege 28).
 CALC_EXPLAIN_SUBNET = (
     "RECHENWEG SUBNETTING\n"
     "Am Beispiel 192.168.1.50/24\n\n"
@@ -4459,7 +4460,8 @@ CALC_EXPLAIN_SCREEN = (
 
 # Ab 0.62.3 (Teil E, F-E1): Handy-Fassungen der vier Rechenwege. Dieselben
 # Schritte, Zahlen und Ergebnisse in derselben Reihenfolge wie am PC, aber
-# hoechstens 28 Zeichen je Zeile (passt am Galaxy S24 auch bei "Sehr gross"),
+# hoechstens 26 Zeichen je Zeile (ab 0.63.2, FG-82: feste Texte hoechstens 26,
+# erzeugte Rechenwege CALC_EXPLAIN_HANDY_WIDTH = 28),
 # Bitreihen Oktett fuer Oktett. Am Handy sind die Zeilen also kuerzer als am
 # PC (dort bis 67 Zeichen). test_rechenweg.py prueft Laenge, Zahlen,
 # Reihenfolge und Schritte gegen die PC-Texte.

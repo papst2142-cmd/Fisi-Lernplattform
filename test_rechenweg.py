@@ -51,7 +51,8 @@ import rechenweg_texte as rt      # noqa: E402
 GRENZE = 26    # vorher 28 (Freigabe 0.62.3, F-P2)
 # Test 9: Schritt 3 des Trainers am Handy (fisi_lernen.py, nicht Teil von
 # FG-73) behaelt die bisherige Grenze 28; seine Zeile "3. UND-Verknuepfung je
-# Oktett" hat 28 Zeichen.
+# Oktett" hat 28 Zeichen. Ab FG-82 auch die Breite der erzeugten Rechenwege
+# ("Netz aufteilen", "Nach Hostbedarf"): CALC_EXPLAIN_HANDY_WIDTH = 28 (Test 1).
 GRENZE_TRAINER = 28
 
 PAARE = [("SUBNET", fc.CALC_EXPLAIN_SUBNET, fc.CALC_EXPLAIN_SUBNET_HANDY),
@@ -379,7 +380,9 @@ def _ueberschriften(text):
 
 class HandyFassungTest(unittest.TestCase):
     def test_1_zeilenlaenge(self):
-        self.assertEqual(fc.CALC_EXPLAIN_HANDY_WIDTH, GRENZE)
+        # ab 0.63.2 (FG-82): erzeugte Rechenwege 28 (= GRENZE_TRAINER), feste
+        # Texte unten gegen GRENZE = 26
+        self.assertEqual(fc.CALC_EXPLAIN_HANDY_WIDTH, GRENZE_TRAINER)
         for name, _pc, handy in PAARE:
             for number, line in enumerate(handy.split("\n"), 1):
                 self.assertLessEqual(len(line), GRENZE, "%s Zeile %d hat %d Zeichen: %r"
