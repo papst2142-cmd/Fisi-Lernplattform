@@ -330,6 +330,73 @@ class NavigationsleisteTest(unittest.TestCase):
         self.assertEqual(thema.label_text_style.size, 11)
 
 
+_WECHSEL_HANDY = r"""
+import asyncio, json, os, sys
+sys.path.insert(0, %r); os.chdir(%r)
+import main, ui
+th = main.fisi_theme
+
+class Seite:
+    def __init__(self):
+        self.views, self.overlay = [], []
+    def update(self, *a, **k):
+        pass
+    def run_task(self, fn, *args):
+        asyncio.run(fn(*args))
+    def __getattr__(self, _name):
+        return None
+
+app = main.FISIMobileApp.__new__(main.FISIMobileApp)
+app.page = Seite()
+app.db = main.DBManager()
+app.sync = main.SyncController(app)
+app.perf = main.MobilePerf(app)
+app.screens = {}
+app._recoloring = False
+th.apply_font_size("normal"); ui.set_font_factor(1.0)
+app._build_ui()
+schritte = []
+for ziel in (%r, "normal"):
+    app.change_color(font_size=ziel)
+    thema = app.page.theme.navigation_bar_theme
+    schritte.append({"stufe": th.current_font_size, "faktor": ui.FONT_FACTOR[0],
+                     "gespeichert": th.saved_font_size(), "tab": app.tab,
+                     "leiste": thema.height, "abdeckung": len(app.page.overlay),
+                     "gesperrt": bool(app._recoloring)})
+print("ERG " + json.dumps(schritte))
+"""
+
+
+def _wechsel_handy(stufe):
+    home = tempfile.mkdtemp(prefix="fisi_stufe_wechsel_")
+    env = dict(os.environ, HOME=home, APPDATA=home, FISI_DB_PATH=os.path.join(home, "h.db"),
+               FISI_SELFTEST=os.path.join(home, "s.log"))
+    done = subprocess.run([sys.executable, "-c", _WECHSEL_HANDY % (SRC, SRC, stufe)],
+                          capture_output=True, text=True, timeout=900, env=env)
+    lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
+    return (json.loads(lines[-1][4:]) if lines else
+            "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:], done.stderr[-4000:]))
+
+
+@unittest.skipUnless(os.path.exists(os.path.join(SRC, "fisi_theme.py")),
+                     "vorher python mobile/vorbereiten.py")
+class HandyWechselTest(unittest.TestCase):
+
+    def test_normal_200_normal(self):
+        """A-N9-11: Optionen Normal -> 200 % -> Normal (change_color mit
+        font_size): ohne Fehler, gespeichert, Seite bleibt Optionen, Leiste
+        waechst und schrumpft wieder, Abdeckung weg."""
+        erg = _wechsel_handy("riesig")
+        self.assertIsInstance(erg, list, erg)
+        self.assertEqual([(w["stufe"], w["faktor"], w["gespeichert"]) for w in erg],
+                         [("riesig", 2.0, "riesig"), ("normal", 1.0, "normal")])
+        self.assertEqual([w["leiste"] for w in erg], [160, 80])
+        for schritt in erg:
+            self.assertEqual(schritt["tab"], "settings", schritt)
+            self.assertEqual(schritt["abdeckung"], 0, schritt)
+            self.assertFalse(schritt["gesperrt"], schritt)
+
+
 # ---------------------------------------------------------------------------
 #  PC (Anzeige noetig)
 # ---------------------------------------------------------------------------
@@ -375,8 +442,10 @@ def _firma(path):
     game.hire(fg.applicants(game.state, game.content)[0]["id"])
 
 
-def worker(stufe, breite, hoehe):
-    """Im eigenen Prozess: alle Ansichten bei dieser Stufe; "ERG {...}"."""
+def worker(stufe, breite, hoehe, wechsel=False):
+    """Im eigenen Prozess: alle Ansichten bei dieser Stufe; "ERG {...}".
+    wechsel=True: Start bei Normal, in den Optionen (Optik offen) auf diese
+    Stufe und zurueck auf Normal wechseln (A-N9-10/11)."""
     home = tempfile.mkdtemp(prefix="fisi_stufe_pc_")
     os.environ.update(HOME=home, APPDATA=home, FISI_DB_PATH=os.path.join(home, "t.db"),
                       FISI_SELFTEST=os.path.join(home, "log.txt"))
@@ -387,7 +456,7 @@ def worker(stufe, breite, hoehe):
     import fisi_widgets
     import fisi_hilfe
     fisi_hilfe.mark_tour_seen()
-    fisi_theme.apply_font_size(stufe)
+    fisi_theme.apply_font_size("normal" if wechsel else stufe)
     fisi_widgets.apply_ui_scale(fisi_theme.font_factor())
     app_gui.UpdateController.auto_check = lambda self: None
     app_gui.SyncController.auto_start = lambda self: None
@@ -463,6 +532,39 @@ def worker(stufe, breite, hoehe):
     root.geometry("%dx%d+0+0" % (breite, hoehe))
     pump(0.8)
     ergebnis = {"ansichten": {}, "fehler": []}
+    if wechsel:
+        import fisi_optionen as fo
+        ergebnis["wechsel"] = []
+        try:
+            app.show_view("settings")
+            pump(0.6)
+            app.views["settings"].open_area(fo.OPTIK_ID)
+            pump(0.6)
+            for ziel in (stufe, "normal"):
+                app.change_font_size(ziel)
+                pump(1.2)
+                view = app.views["settings"]
+                fold = view.folds[fo.OPTIK_ID]
+                knoepfe = list(view.font_choice.buttons.values())
+                ergebnis["wechsel"].append({
+                    "stufe": fisi_theme.current_font_size,
+                    "faktor": fisi_theme.font_factor(),
+                    "ansicht": app.current, "optik_offen": bool(fold.opened),
+                    "auswahl": view.font_choice.value,
+                    "auswahl_breite": view.font_choice.winfo_width(),
+                    "knoepfe": len(knoepfe),
+                    "knoepfe_sichtbar": sum(1 for w in knoepfe if w.winfo_ismapped()),
+                    "zeitgeber": len(app_gui._orphaned_timers(root)),
+                    "funde": pruefe("settings")[1]})
+        except Exception as error:  # noqa: BLE001
+            import traceback
+            ergebnis["fehler"].append("Wechsel: Ausnahme %r\n%s" % (error,
+                                                                 traceback.format_exc()))
+        ergebnis["fehler"].extend("Fehlermeldung: %r" % (m,) for m in meldungen)
+        ergebnis["fehler"].extend("Ausnahme im Ereignis: %s" % a for a in ausnahmen)
+        print("ERG " + json.dumps(ergebnis, ensure_ascii=False))
+        sys.stdout.flush()
+        os._exit(0)
     for key in PC_ANSICHTEN + ["SPIEL"] + PC_SPIEL:
         try:
             if key == "SPIEL":
@@ -494,11 +596,12 @@ def worker(stufe, breite, hoehe):
 _ERG = {}
 
 
-def pc_ergebnis(stufe, breite=1120, hoehe=720):
-    key = (stufe, breite, hoehe)
+def pc_ergebnis(stufe, breite=1120, hoehe=720, wechsel=False):
+    key = (stufe, breite, hoehe, wechsel)
     if key not in _ERG:
         done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall", stufe,
-                               str(breite), str(hoehe)], capture_output=True, text=True,
+                               str(breite), str(hoehe)] + (["--wechsel"] if wechsel else []),
+                              capture_output=True, text=True,
                               timeout=1200, cwd=HERE)
         lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
         _ERG[key] = (json.loads(lines[-1][4:]) if lines else
@@ -532,9 +635,28 @@ class PcStufenTest(unittest.TestCase):
         self.assertFalse(any(v["kopf_untereinander"] for v in erg["ansichten"].values()),
                          erg["ansichten"])
 
+    def test_wechsel_normal_200_normal(self):
+        """A-N9-10/11: Optionen offen, Normal -> 200 % -> Normal in 1120 x 720:
+        ohne Fehler, Optik bleibt offen, keine verwaisten Zeitgeber, die
+        Auswahlreihe der Stufen (5 Eintraege) ist ganz erreichbar."""
+        erg = pc_ergebnis("riesig", wechsel=True)
+        self.assertIsInstance(erg, dict, erg)
+        self.assertEqual(erg["fehler"], [])
+        self.assertEqual([(w["stufe"], w["faktor"]) for w in erg["wechsel"]],
+                         [("riesig", 2.0), ("normal", 1.0)])
+        for schritt in erg["wechsel"]:
+            self.assertEqual(schritt["ansicht"], "settings", schritt)
+            self.assertTrue(schritt["optik_offen"], schritt)
+            self.assertEqual(schritt["auswahl"], schritt["stufe"], schritt)
+            self.assertEqual(schritt["knoepfe"], 5, schritt)
+            self.assertEqual(schritt["knoepfe_sichtbar"], 5, schritt)
+            self.assertEqual(schritt["zeitgeber"], 0, schritt)
+            self.assertEqual(schritt["funde"], [], schritt)
+
 
 if __name__ == "__main__":
     if "--fall" in sys.argv:
         index = sys.argv.index("--fall")
-        worker(sys.argv[index + 1], int(sys.argv[index + 2]), int(sys.argv[index + 3]))
+        worker(sys.argv[index + 1], int(sys.argv[index + 2]), int(sys.argv[index + 3]),
+               "--wechsel" in sys.argv)
     unittest.main()
