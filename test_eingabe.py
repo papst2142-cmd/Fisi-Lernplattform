@@ -391,7 +391,8 @@ class VorladenTest(unittest.TestCase):
 IBUS_X11 = next((p for p in ("/usr/libexec/ibus-x11", "/usr/lib/ibus/ibus-x11")
                  if os.path.exists(p)), None)
 HAS_IBUS = bool(HAS_TK and shutil.which("ibus-daemon") and IBUS_X11
-                and shutil.which("dbus-launch") and os.environ.get("FISI_TEST_IBUS") == "1")
+                and shutil.which("dbus-launch") and shutil.which("xprop")
+                and os.environ.get("FISI_TEST_IBUS") == "1")
 
 FENSTER = textwrap.dedent("""
     import os, sys, time, tkinter
@@ -420,7 +421,8 @@ class IbusSchalterTest(unittest.TestCase):
             self.skipTest("Schalter FISI_TEST_IBUS=1 nicht gesetzt")
         fehlt = [name for name, da in (
             ("Tk mit Display", HAS_TK), ("ibus-daemon", shutil.which("ibus-daemon")),
-            ("ibus-x11", IBUS_X11), ("dbus-launch", shutil.which("dbus-launch")))
+            ("ibus-x11", IBUS_X11), ("dbus-launch", shutil.which("dbus-launch")),
+            ("xprop", shutil.which("xprop")))
             if not da]
         self.assertEqual(fehlt, [], "FISI_TEST_IBUS=1, aber es fehlt: %s"
                          % ", ".join(fehlt))
@@ -442,12 +444,30 @@ class NachstellungTest(unittest.TestCase):
         # Ab 0.63.2 (B-P-03): eigene Prozessgruppe (Nummer = pid des Daemons).
         # ibus-x11 loest sich vom Daemon (Eltern-pid 1), bleibt aber in dieser
         # Gruppe - so trifft das Aufraeumen unten nur die eigenen Prozesse
-        daemon = subprocess.Popen(["ibus-daemon", "--xim", "--replace"], env=env,
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        protokoll = tempfile.TemporaryFile("w+")
+        daemon = subprocess.Popen(["ibus-daemon", "--xim", "--replace", "--verbose"], env=env,
+                                  stdout=protokoll, stderr=subprocess.STDOUT,
                                   process_group=0)
         proc = None
         try:
             time.sleep(3)
+            # Vorbedingung (CI-Befund 0.63.2): IBus muss sich als XIM-Server
+            # gemeldet haben, sonst haengt Tk nie und beide Tests sagen nichts
+            xim = ""
+            for _ in range(120):
+                xim = subprocess.run(["xprop", "-root", "XIM_SERVERS"], env=env,
+                                     capture_output=True, text=True).stdout
+                if "@server=ibus" in xim:
+                    break
+                time.sleep(0.1)
+            if "@server=ibus" not in xim:
+                gruppe = subprocess.run(["pgrep", "-a", "-g", str(daemon.pid)],
+                                        capture_output=True, text=True).stdout
+                protokoll.seek(0)
+                self.fail("IBus ist kein XIM-Server: %s\nProzesse: %s\nibus-daemon: %s\n"
+                          "XDG_CACHE_HOME=%s XDG_RUNTIME_DIR=%s"
+                          % (xim.strip(), gruppe.strip() or "-", protokoll.read()[-2000:],
+                             env.get("XDG_CACHE_HOME"), env.get("XDG_RUNTIME_DIR")))
             proc = subprocess.Popen([sys.executable, "-c", FENSTER % {
                 "here": HERE, "umgehung": umgehung}], env=env, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, text=True)
@@ -477,6 +497,7 @@ class NachstellungTest(unittest.TestCase):
                 daemon.kill()
                 daemon.wait()
             os.kill(int(env["DBUS_SESSION_BUS_PID"]), signal.SIGTERM)
+            protokoll.close()
 
     def test_ohne_umgehung_haengt_tk(self):
         self.assertFalse(self._lauf(False))
