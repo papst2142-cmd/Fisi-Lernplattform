@@ -400,18 +400,26 @@ class ReleaseNachholenTest(unittest.TestCase):
                   'echo "python $*" >> "$PROTOKOLL"\nexit 0\n',
         "git": '#!/bin/bash\necho "git $*" >> "$PROTOKOLL"\n'
                '[ "$ATTRAPPE_TAG" = da ] && exit 0\nexit 2\n',
+        # gh wie auf dem Runner: ohne GH_TOKEN bricht es ab (Nacharbeit L3)
         "gh": '#!/bin/bash\necho "gh $*" >> "$PROTOKOLL"\n'
+              'if [ -z "$GH_TOKEN" ]; then echo "gh: To use GitHub CLI in a GitHub '
+              'Actions workflow, set the GH_TOKEN environment variable." >&2; exit 4; fi\n'
               'case "$ATTRAPPE_GH" in\n'
               '  da) echo v0.63.2; exit 0 ;;\n'
               '  404) echo \'{"message":"Not Found","status":"404"}\'; '
               'echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;\n'
+              '  fehler404) echo "gh: Bad Gateway (HTTP 502), Anfrage 7404" >&2; exit 1 ;;\n'
               '  *) echo "gh: Bad Gateway (HTTP 502)" >&2; exit 1 ;;\nesac\n',
     }
 
     def _lauf(self, tag, gh):
         if not shutil.which("bash"):
             self.skipTest("kein bash")
-        skript = _run_text(_schritt(_lesen(RELEASE), "Neue Version?"))
+        schritt = _schritt(_lesen(RELEASE), "Neue Version?")
+        skript = _run_text(schritt)
+        # env des Schritts wie auf dem Runner: GH_TOKEN nur, wenn der Schritt
+        # ihn setzt (Nacharbeit L3)
+        token = "x" if "          GH_TOKEN: ${{ github.token }}" in schritt else ""
         with tempfile.TemporaryDirectory() as tmp:
             bin_ordner = os.path.join(tmp, "bin")
             os.mkdir(bin_ordner)
@@ -429,7 +437,8 @@ class ReleaseNachholenTest(unittest.TestCase):
             open(protokoll, "w").close()
             env = dict(os.environ, PATH=bin_ordner + os.pathsep + os.environ.get("PATH", ""),
                        GITHUB_OUTPUT=ausgabe, GITHUB_REPOSITORY="beispiel/repo",
-                       PROTOKOLL=protokoll, ATTRAPPE_TAG=tag, ATTRAPPE_GH=gh)
+                       PROTOKOLL=protokoll, ATTRAPPE_TAG=tag, ATTRAPPE_GH=gh,
+                       GH_TOKEN=token)
             r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", pfad],
                                env=env, capture_output=True, text=True, timeout=60)
             werte = dict(z.split("=", 1) for z in _lesen(ausgabe).splitlines() if "=" in z)
@@ -458,6 +467,23 @@ class ReleaseNachholenTest(unittest.TestCase):
         self.assertNotEqual(rc, 0)
         self.assertEqual(werte, {})
         self.assertIn("HTTP 502", text)
+
+    def test_unklare_antwort_mit_404_im_text_bricht_ab(self):
+        # Nacharbeit L3 (R5): nur genau "HTTP 404" heisst "Release fehlt"
+        rc, werte, text, prot = self._lauf("da", "fehler404")
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(werte, {})
+        schritt = "\n".join(_schritt(_lesen(RELEASE), "Neue Version?"))
+        self.assertIn('              *"HTTP 404"*) ;;', schritt)
+
+    def test_schritt_hat_gh_token(self):
+        # Nacharbeit L3 (R6): ohne GH_TOKEN scheitert gh auf dem Runner; jeder
+        # Push auf main mit vorhandenem Tag waere rot, Nachholen nie moeglich
+        schritt = _schritt(_lesen(RELEASE), "Neue Version?")
+        self.assertIn("        env:", schritt)
+        self.assertIn("          GH_TOKEN: ${{ github.token }}", schritt)
+        rc, werte, text, prot = self._lauf("da", "da")
+        self.assertEqual(rc, 0, text)
 
     def test_tag_anlegen_nur_bei_neuem_tag(self):
         schritt = _schritt(_lesen(RELEASE), "Tag anlegen")
