@@ -135,6 +135,39 @@ class DebNeustartTest(unittest.TestCase):
                     process.kill()
                     process.wait()
 
+    @unittest.skipUnless(os.path.exists("/bin/sh") and os.name == "posix", "nur mit /bin/sh")
+    def test_warten_hat_obergrenze(self):
+        # L1 (Gegenpruefung): hoechstens 150 x 0,2 s = 30 s warten. Der
+        # Skripttext muss diese Grenze enthalten; ausgefuehrt wird er mit
+        # einer kurzen Grenze (2 Runden) gegen einen Prozess, der nicht
+        # endet - das Programm muss trotzdem starten.
+        fake = _FakeSubprocess(code=0)
+        self._install(fake)
+        args, _kwargs = fake.popens[0]
+        script = args[2]
+        self.assertIn('[ "$i" -lt 150 ]', script)
+        self.assertIn("sleep 0.2", script)
+        self.assertIn("i=$((i+1))", script)
+        short = script.replace('[ "$i" -lt 150 ]', '[ "$i" -lt 2 ]')
+        folder = tempfile.mkdtemp(prefix="grenze_", dir=_TMP)
+        marker = os.path.join(folder, "gestartet")
+        program = os.path.join(folder, "programm.sh")
+        with open(program, "w", encoding="utf-8") as handle:
+            handle.write("#!/bin/sh\ntouch '%s'\n" % marker)
+        os.chmod(program, 0o755)
+        running = subprocess.Popen(["sleep", "60"])
+        helper = subprocess.Popen(["/bin/sh", "-c", short, "fisi-update",
+                                   str(running.pid), program])
+        try:
+            self.assertEqual(helper.wait(timeout=10), 0)
+            self.assertTrue(os.path.exists(marker))
+            self.assertIsNone(running.poll(), "Stellvertreter sollte noch laufen")
+        finally:
+            for process in (running, helper):
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
