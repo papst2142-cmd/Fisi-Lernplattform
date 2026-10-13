@@ -581,15 +581,21 @@ def replace_question(backup):
             "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
-            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat (Meldung 21, 2.7; Meldung 24, 2.7)
+            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Neufassung Antwort Meldung 31 B.3
             "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
-            "dem Repository wieder dazu. Auch was ein anderes Gerät ohne Verbindung "
-            "gelernt hat, bleibt erhalten, sobald es sich wieder abgleicht. Löschungen, "
-            "die dieses Gerät schon kennt (zum Beispiel „Alle Lerndaten löschen“), löschen "
-            "das Eingespielte nicht noch einmal; das gilt auch für deine anderen Geräte, "
-            "sobald sie mindestens Version 0.63.2 haben. Ein Gerät mit einer älteren "
-            "Version löscht das Eingespielte bei sich weiterhin. Löschungen, die dieses "
-            "Gerät noch nicht kennt, gelten weiter. Bewahre die Sicherungsdatei deshalb auf."
+            "dem Repository wieder dazu. Löschungen, die dieses Gerät schon kennt (zum "
+            "Beispiel „Alle Lerndaten löschen“), löschen das Eingespielte nicht noch "
+            "einmal; das gilt auch für deine anderen Geräte, sobald sie mindestens Version "
+            "0.63.2 haben und sich einmal abgeglichen haben. Ein Gerät mit einer älteren "
+            "Version, das die Löschung kennt, löscht das Eingespielte bei sich weiterhin; "
+            "aktualisiere deine anderen Geräte deshalb bald. Was ein anderes Gerät ohne "
+            "Verbindung gelernt hat, bleibt in der Regel erhalten, wenn es sich erst nach "
+            "dem Ersetzen wieder abgleicht und alle Geräte, die die Löschung kennen, "
+            "mindestens Version 0.63.2 haben. Was nach dem Erstellen der Sicherung schon "
+            "abgeglichen war, bleibt gelöscht. Löschungen, die erst nach der letzten "
+            "Löschung auf diesem Gerät kamen und die es noch nicht kennt, gelten weiter; "
+            "eine unbekannte frühere Löschung eines anderen Geräts wird dagegen aufgehoben. "
+            "Bewahre die Sicherungsdatei deshalb auf."
             % backup_summary(backup)["erstellt"])
 
 
