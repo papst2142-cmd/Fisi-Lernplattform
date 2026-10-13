@@ -463,9 +463,13 @@ class BenutzerpfadTest(TempDB, unittest.TestCase):
 # P1934), jeder mit Eintrag in inhalte/umbenennungen.json. Stand vorher (0.63.1):
 # Karten 5d94402f...ffa83, Quiz 6c6b5eda...e4296; der neue Wert ist genau der alte
 # Stand mit diesen 10 Umbenennungen (test_inhalte_0632.UmbenennungenTest).
+# Ab N12 (B-N-08, FG-60): "z. B." statt "z.B." in 27 Fragetexten (14 Karten und 13
+# Quizfragen, alle im Schutzbereich), jeder mit Eintrag in inhalte/umbenennungen.json. Stand
+# bis S4: Karten c5613803...2759, Quiz d014140d...492a; mit den alten Texten dieser
+# Fragen ergibt sich genau dieser Wert (test_inhalte_zb.test_stand_054_nur_umbenannt).
 STAND_054 = {
-    "karteikarten": (1400, "c561380390f8e0017a47b1ea1d41760d0851b71ccc237a896d4d2bf4853c2759"),
-    "quizfragen": (1946, "d014140dec13a4e19cc334b72994024603ee41c43bb5e1c760d036782a3d492a"),
+    "karteikarten": (1400, "54aa48840c51ee65e1d9cec7a3f9d81a2a81dc381df69bd0229aa40a611605f4"),
+    "quizfragen": (1946, "ffd59aef5458be50bc1e82678a3947bff9c16de56aa1284c2a8495f0e321a780"),
     "szenarien_ap1": (250, "833fea3f1964c0feaf212c69e6f833bd06499d9342b4ac2923f03589153ec7ff"),
     "szenarien_ap2": (300, "05ad5c7df8a76814617a90a929eac75dc3127d778cfe8148a11466ee0f49d58b"),
     "projektarbeiten": (50, "d64254b71ce4a0d2f812d2e5afdb7da4d328ef7873f01f7226bd7e76553c6e58"),

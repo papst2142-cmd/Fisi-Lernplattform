@@ -280,7 +280,8 @@ class InhalteTest(unittest.TestCase):
 
     def test_b_c_32_shadow(self):
         frage = self.quiz[628]  # P0629
-        neu = "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z.B. 640 root:shadow oder 000"
+        # ab N12 (B-N-08): "z. B." statt "z.B."
+        neu = "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z. B. 640 root:shadow oder 000"
         self.assertEqual((frage["a"], frage["options"][0]), (neu, neu))
 
     def test_b_c_33_itil(self):
@@ -424,7 +425,11 @@ FELDER = {
                            (296, ("text", 4)), (296, ("text", 5))],
 }
 # SHA-256 ueber den Wortlaut aller 80 Felder (Stand 0.63.1: 7c4483f2...cf19)
-PRUEFWERT_FELDER = "6a778451d3e3ce7d140b8bd66b395e9a9f9989a420bcf76daf57c4bb120336ab"
+# Ab N12 (B-N-08/N-d, FG-60): 7 dieser Felder enthielten "z.B." und haben jetzt
+# "z. B." (K0302, K0859, T010, P0029, P0629 a/options, A1-005). Wert bis S4
+# (c582094/29558a8): 6a778451...36ab; genau diesen Wert ergibt der neue Wortlaut,
+# wenn man "z. B." wieder zu "z.B." macht (test_inhalte_zb.test_s4_felder_nur_zb).
+PRUEFWERT_FELDER = "ba35e8e89f6330cef4f1b9a3a641ef172fe9594ef59a7d4edc79077507114da9"
 # SHA-256 ueber die Stelle der richtigen Antwort aller Karten bzw. Fragen (= 0.63.1)
 ANTWORTSTELLEN = {
     "karteikarten.json": "3302b4c437a357738619fc6dec0abb0e00bcf7951d7dd9e8ffb37ae3e6aeb1ba",
@@ -651,6 +656,9 @@ if aufgabe == "pruefung_anlegen":
         state["fragen"] = vorne + [q for q in state["fragen"] if q not in vorne][:len(state["fragen"]) - len(vorne)]
         state["optionen"] = {q: list(reversed(nach_text[q]["options"])) for q in state["fragen"]}
         state["antworten"] = {q: nach_text[q]["a"] for q in state["fragen"]}
+        # ab N12 (Test (4) B-N-08): bei diesen Fragen eine falsche Antwort waehlen
+        for q in daten.get("falsch", []):
+            state["antworten"][q] = [o for o in nach_text[q]["options"] if o != nach_text[q]["a"]][0]
     else:
         state["aufgaben"] = daten["aufgaben"]
         for nummer in range(len(state["aufgaben"])):
@@ -666,6 +674,12 @@ if aufgabe == "pruefung_anlegen":
         fp.submit(state)
     fp.save_running(state)
     out["state"] = state
+if aufgabe == "pruefung_bewerten":
+    # ab N12: Bewertung ohne Speichern (Vergleichswert mit dem alten Code)
+    import fisi_pruefung as fp
+    state = fp.submit(fp.load_running())
+    out["bewertet"] = fp.evaluate(state)
+    out["zeilen"] = fp.wiso_result(state)
 if aufgabe == "pruefung_laden":
     import fisi_pruefung as fp
     out["geladen"] = fp.load_running()
@@ -891,6 +905,50 @@ class LaufendePruefungTest(unittest.TestCase):
             self.assertEqual([w for _t, w in antworten[("quiz", frage)]], [True])
         for alt in wiso:
             self.assertNotIn(("quiz", alt), antworten)
+
+    def test_wiso_zb_ueber_das_update(self):
+        # N12, B-N-08 Test (4) (GP-S1): laufende WiSo-Pruefung aus v0.63.1 mit den
+        # zwei Fragen, die "z.B." beruehrt: Fernabsatz (nur Fragetext) und
+        # Werkvertrag (richtige Antwort = Option 0 geaendert). Gleiche Punkte wie
+        # dieselbe Pruefung ohne Umbenennung (alter Code, alter Inhalt), je Frage
+        # genau eine Antwort unter dem neuen Text, richtig bleibt richtig,
+        # falsch bleibt falsch.
+        quiz = lade("quizfragen.json")
+        fern_neu, werk = quiz[346]["q"], quiz[150]["q"]
+        fern_alt = fern_neu.replace("z. B.", "z.B.")
+        werk_a_neu = quiz[150]["a"]
+        werk_a_alt = werk_a_neu.replace("z. B.", "z.B.")
+        self.assertNotEqual(fern_alt, fern_neu)
+        self.assertNotEqual(werk_a_alt, werk_a_neu)
+        self.assertEqual(quiz[150]["options"][0], werk_a_neu)
+        for falsch, punkte in (([], 100.0), ([fern_alt, werk], round(100.0 * 28 / 30, 1))):
+            with self.subTest(falsch=bool(falsch)):
+                angelegt = lauf(self.alt, self.db, "pruefung_anlegen",
+                                {"art": "wiso", "fragen": [fern_alt, werk], "falsch": falsch})
+                alt_state = angelegt["state"]
+                self.assertEqual(alt_state["fragen"][:2], [fern_alt, werk])
+                self.assertIn(werk_a_alt, alt_state["optionen"][werk])
+                if not falsch:
+                    self.assertEqual(alt_state["antworten"][werk], werk_a_alt)
+                soll = lauf(self.alt, self.db, "pruefung_bewerten")["bewertet"]["punkte"]
+                self.assertEqual(soll, punkte)
+                ergebnis = lauf(HERE, self.db, "pruefung_abgeben")
+                geladen = ergebnis["geladen"]
+                self.assertEqual(geladen["fragen"][:2], [fern_neu, werk])
+                self.assertNotIn(fern_alt, geladen["antworten"])
+                self.assertIn(werk_a_neu, geladen["optionen"][werk])
+                self.assertNotIn(werk_a_alt, geladen["optionen"][werk])
+                self.assertEqual(geladen["antworten"][werk],
+                                 alt_state["antworten"][werk] if falsch else werk_a_neu)
+                self.assertEqual(ergebnis["ergebnis"]["punkte"], soll)
+                self.assertNotIn("unbekannt", ergebnis["ergebnis"]["daten"])
+                self.assertIsNone(ergebnis["laufend"])
+                antworten = {(q, k): v for q, k, v in ergebnis["ergebnisse"]}
+                for frage in (fern_neu, werk):
+                    self.assertEqual([w for _t, w in antworten[("quiz", frage)]], [not falsch],
+                                     frage)
+                self.assertNotIn(("quiz", fern_alt), antworten)
+                os.remove(self.db)
 
     def test_aufgaben_mit_mehr_kriterien(self):
         # A1-005 (B-C-37) und A1-059 (B-C-34): Musterloesung hat jetzt mehr Kriterien
