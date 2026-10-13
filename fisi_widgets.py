@@ -2218,7 +2218,8 @@ class CalendarPanel(ctk.CTkFrame):
                     self.canvas.create_image(cx, cy, image=self._circle(
                         diameter, outline=C["accent"], outline_width=2))
                 if active:
-                    color = C["card"]   # ab 0.63.2 (B-J-03): >= 4,5:1 auf Lila
+                    # ab 0.63.2 (B-J-03): C["card"] auf Lila, bis 0.63.1 #12071F
+                    color = lesbare_schrift(C["card"], "#12071F", C["purple"])
                 elif col >= 5:
                     color = C["accent2"]
                 else:
@@ -2786,6 +2787,29 @@ ctk.CTkLabel.destroy = _release_image(ctk.CTkLabel.destroy)
 ctk.CTkButton.destroy = _release_image(ctk.CTkButton.destroy)
 
 
+# Ab 0.63.2 (Nacharbeit M2): Schriftfarbe auf einer Flaeche ohne Rueckschritt.
+# Mit den Farbwelten gilt immer die neue Farbe (dort >= 4,5:1). Mit eigenen
+# Farben (apply_custom) kann sie bei manchen Reglerstellungen schlechter lesbar
+# sein als die Farbe bis 0.63.1 - dann bleibt die bisherige.
+MIN_SCHRIFT = 4.5
+
+
+def lesbare_schrift(neu, alt, flaeche, minimum=MIN_SCHRIFT):
+    """Die neue Schriftfarbe, wenn sie auf der Flaeche >= minimum erreicht oder
+    nicht schlechter ist als die alte; sonst die alte (besser lesbare)."""
+    neu_k = fisi_theme.contrast(neu, flaeche)
+    if neu_k >= minimum or neu_k >= fisi_theme.contrast(alt, flaeche):
+        return neu
+    return alt
+
+
+def tabellen_auswahl():
+    """Ab 0.63.2 (B-J-02): Flaeche und Schrift der ausgewaehlten Tabellenzeile
+    (bis 0.63.1 Weiss)."""
+    flaeche = mix(C["card_alt"], C["purple"], 0.45)
+    return flaeche, lesbare_schrift(C["text"], "#FFFFFF", flaeche)
+
+
 def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
     """Abgerundetes, mehrzeiliges Textfeld. height ist die Zeilenanzahl.
     Ab 0.63.1: wrap="none" fuer Kaesten, die selbst umbrechen (fit_lines);
@@ -2800,7 +2824,9 @@ def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
                             padx=6, pady=6, insertofftime=0)
     widget._textbox.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"],
-                              selectforeground=C["card"])   # ab 0.63.2 (B-J-01)
+                              # ab 0.63.2 (B-J-01), bis 0.63.1 Weiss
+                              selectforeground=lesbare_schrift(C["card"], "#FFFFFF",
+                                                               C["purple"]))
     if readonly:
         widget.configure(state="disabled")
     # Ab 0.56: Tab springt wie in Eingabefeldern zum naechsten Bedienelement

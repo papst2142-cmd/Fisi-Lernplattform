@@ -121,6 +121,7 @@ from fisi_widgets import (  # noqa: E402
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo, _text_height,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
+    lesbare_schrift, tabellen_auswahl,
 )
 
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und Handy)
@@ -7114,8 +7115,10 @@ class LegalDialog(ctk.CTkToplevel):
             self.listbox = tk.Listbox(
                 side, width=list_chars, activestyle="none", exportselection=False,
                 font=tk_font(F["small"]), bg=C["card_alt"], fg=C["text_soft"],
-                # Ab 0.63.2 (B-J-01): Schrift C["card"] auf Lila (>= 4,5:1)
-                selectbackground=C["purple"], selectforeground=C["card"],
+                # Ab 0.63.2 (B-J-01): Schrift C["card"] auf Lila (>= 4,5:1),
+                # mit eigenen Farben ohne Rueckschritt (lesbare_schrift)
+                selectbackground=C["purple"],
+                selectforeground=lesbare_schrift(C["card"], "#FFFFFF", C["purple"]),
                 highlightthickness=1, highlightbackground=C["field_border"],
                 highlightcolor=C["purple"], relief="flat", borderwidth=0)
             for name in self.choices:
@@ -8564,10 +8567,12 @@ class FISIApp:
         style.map("Dash.Treeview.Heading",
                   background=[("active", C["violet"])],
                   foreground=[("active", "#FFFFFF")])
-        # Ab 0.63.2 (B-J-02): Auswahlschrift C["text"] (>= 4,5:1 hell und dunkel)
+        # Ab 0.63.2 (B-J-02): Auswahlschrift C["text"] (>= 4,5:1 hell und dunkel),
+        # mit eigenen Farben ohne Rueckschritt (tabellen_auswahl)
+        selected_bg, selected_fg = tabellen_auswahl()
         style.map("Dash.Treeview",
-                  background=[("selected", mix(C["card_alt"], C["purple"], 0.45))],
-                  foreground=[("selected", C["text"])])
+                  background=[("selected", selected_bg)],
+                  foreground=[("selected", selected_fg)])
 
     # -- Navigation ---------------------------------------------------------
 
