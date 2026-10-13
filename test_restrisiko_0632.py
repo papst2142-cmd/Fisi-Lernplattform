@@ -621,10 +621,15 @@ class RdWegATest(unittest.TestCase):
         widersprechend oder anderer Systemstart, Eintraege ueber 26 h (auch
         schon korrigierte). Die verschobenen Eintraege sind immer eine
         Teilmenge derer von 14b3bd4; bei nachgehender Uhr und ohne Messung
-        genau dieselben (Vergleichstest "Nachlauf wie heute")."""
+        genau dieselben (Vergleichstest "Nachlauf wie heute").
+        Ab der Nacharbeit (gp_s6b A4, L4/L5): bei vorgehender Uhr mit Messung
+        genau die Menge nach der Planregel (orakel), dazu je Fall Eintraege
+        an den Grenzen "sicher vor"/"sicher nach" (+-10 min) und alte falsche
+        Messungen ohne Sprung (zweiter Zufall, die Faelle oben bleiben)."""
         zufall = random.Random(20261025)
+        rand = random.Random(4711)
         basis = datetime.datetime(2026, 10, 25, 0, 30)
-        weniger = gleich = 0
+        weniger = gleich = orakel_faelle = 0
         for nummer in range(400):
             wahr_jetzt = basis + datetime.timedelta(hours=zufall.uniform(-30, 30))
             j = zufall.choice((-1, 1)) * zufall.uniform(301, 2 * 86400)
@@ -635,12 +640,19 @@ class RdWegATest(unittest.TestCase):
             alter = zufall.uniform(0.05, 30) * HOUR       # wahre Zeit seit der Messung
             gemessen = (wahr_jetzt - datetime.timedelta(seconds=alter)
                         + datetime.timedelta(seconds=s_vorher))
+            if art == "falsch" and rand.random() < 0.5:
+                j = s_vorher + rand.uniform(-250, 250)      # seit der Messung nicht gestellt
             jetzt = wahr_jetzt + datetime.timedelta(seconds=j)
             uhr = zufall.choice(("passt", "passt", "widerspricht", "neustart"))
             laufzeit = alter + (zufall.uniform(600, 3 * HOUR) * zufall.choice((-1, 1))
                                 if uhr == "widerspricht" else 0.0)
             eintraege = [(jetzt - datetime.timedelta(seconds=zufall.uniform(0, 26 * HOUR)),
                           zufall.choice((0,) * 9 + (60,))) for _ in range(25)]
+            sprung = j - s_vorher
+            for grenze in (gemessen + datetime.timedelta(seconds=sprung),
+                           jetzt - datetime.timedelta(seconds=sprung)):
+                eintraege += [(grenze + datetime.timedelta(seconds=rand.uniform(-600, 600)), 0)
+                              for _ in range(4)]
             lauf = self.fall("f%d" % nummer, eintraege,
                              None if art == "keine" else (s_vorher, gemessen), jetzt,
                              max(laufzeit, 0.0), *(("S2", "P2") if uhr == "neustart" else ()))
@@ -650,11 +662,41 @@ class RdWegATest(unittest.TestCase):
             self.assertLessEqual(neu, alt, text)
             if j < 0 or art == "keine":
                 self.assertEqual(neu, alt, text)
+            if j > 0 and art != "keine":
+                erwartet = self.orakel(alt, eintraege, s_vorher, gemessen, jetzt, j,
+                                       max(laufzeit, 0.0), uhr == "neustart")
+                self.assertEqual(neu, erwartet, text)
+                orakel_faelle += 1
             weniger += neu < alt
             gleich += neu == alt
         ta.bericht("R-d (0): 400 Faelle, %d gleich wie 14b3bd4, %d mit weniger "
-                   "verschobenen Eintraegen, 0 mit mehr" % (gleich, weniger))
+                   "verschobenen Eintraegen, 0 mit mehr; %d Faelle exakt nach der "
+                   "Planregel" % (gleich, weniger, orakel_faelle))
         self.assertGreater(weniger, 20)     # die Regel greift wirklich
+
+    @staticmethod
+    def orakel(alt, eintraege, s, gemessen, jetzt, j, laufzeit, neustart):
+        """Planregel R-d Weg A (Plan-Nachtrag 4.3, F19) bei vorgehender Uhr mit
+        Messung, unabhaengig vom Code hergeleitet: Sprung = J - s; bestaetigt,
+        wenn die Laufzeit-Uhr (gleicher Systemstart) denselben Sprung sieht
+        (+-5 min). Messung richtig (|s| <= 5 min) und bestaetigt: verschoben
+        wird, was 14b3bd4 verschob und sicher nach dem Stellen entstand
+        (T >= Messung + Sprung + 5 min und T > jetzt - Sprung + 5 min). Alte
+        falsche Messung ohne Sprung (bestaetigt): alles wie 14b3bd4. Sonst
+        mehrdeutig: nichts."""
+        tol = 300.0
+        sprung = j - s
+        lauf = None if neustart else (jetzt - gemessen).total_seconds() - laufzeit
+        bestaetigt = lauf is not None and abs(lauf - sprung) <= tol
+        if abs(s) <= tol and bestaetigt:
+            vor = gemessen + datetime.timedelta(seconds=sprung + tol)
+            nach = jetzt - datetime.timedelta(seconds=sprung - tol)
+            return {"e-%d" % nummer for nummer, (moment, _) in enumerate(eintraege)
+                    if "e-%d" % nummer in alt and moment.replace(microsecond=0) >= vor
+                    and moment.replace(microsecond=0) > nach}
+        if abs(s) > tol and abs(sprung) <= tol and bestaetigt:
+            return set(alt)
+        return set()
 
     # ------------------------------------------------------------ (0b)
     def test_rd_0b_ueberlappung_sicher_vor_gilt(self):
