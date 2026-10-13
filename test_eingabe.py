@@ -466,8 +466,9 @@ class NachstellungTest(unittest.TestCase):
                 protokoll.seek(0)
                 self.fail("IBus ist kein XIM-Server: %s\nProzesse: %s\nibus-daemon: %s\n"
                           "XDG_CACHE_HOME=%s XDG_RUNTIME_DIR=%s"
-                          % (xim.strip(), gruppe.strip() or "-", protokoll.read()[-2000:],
-                             env.get("XDG_CACHE_HOME"), env.get("XDG_RUNTIME_DIR")))
+                          % tuple(str(teil).replace(os.path.expanduser("~"), "~") for teil in (
+                              xim.strip(), gruppe.strip() or "-", protokoll.read()[-2000:],
+                              env.get("XDG_CACHE_HOME"), env.get("XDG_RUNTIME_DIR"))))
             proc = subprocess.Popen([sys.executable, "-c", FENSTER % {
                 "here": HERE, "umgehung": umgehung}], env=env, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, text=True)
