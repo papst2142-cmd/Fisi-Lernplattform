@@ -91,7 +91,7 @@ from fisi_lernen import (  # noqa: E402
     split_summary,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME,
-    TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
     practice_next_text, reminder_due, reminder_text, save_learning_settings,
@@ -4077,7 +4077,7 @@ class TrainerPanel(ctk.CTkFrame):
         self.results = []
         self.checked = False
 
-        setup = Card(self, title="Subnetting-Trainer", accent=C["accent"],
+        setup = Card(self, title=TRAINER_TITLE, accent=C["accent"],
                      subtitle="Zufallsaufgaben mit Selbstkontrolle")
         setup.pack(fill="x")
         make_label(setup.body, "AUFGABENART", font=F["label"], fg=C["muted"]).pack(anchor="w")

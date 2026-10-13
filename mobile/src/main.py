@@ -79,7 +79,7 @@ from fisi_lernen import (  # noqa: E402
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
-    TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
     practice_next_text, reminder_due, reminder_text, save_learning_settings,
@@ -2730,7 +2730,7 @@ class TrainerPanel(ft.Column):
         self.lbl_counter = ui.text("", size=12, color=C["muted"])
         self.entries, self.marks = {}, {}
         super().__init__([
-            ui.Card("Subnetting-Trainer", [
+            ui.Card(TRAINER_TITLE, [
                 ui.label("Aufgabenart"), self.kind_pills,
                 ui.label("Schwierigkeit"), self.level_pills,
                 ft.Row([ui.GradientButton("Runde starten", lambda _e: self.start_round())]),
