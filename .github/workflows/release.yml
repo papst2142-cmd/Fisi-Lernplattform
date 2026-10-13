@@ -54,18 +54,39 @@ jobs:
           VERSION=$(python -c "import build; print(build.app_version())")
           TAG="v$VERSION"
           NEU=ja
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
-            # Ab 0.63.2 (B-M-09): Tag gibt es - gibt es auch das Release?
-            if ANTWORT=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .tag_name 2>&1); then
-              echo "Tag und Release $TAG gibt es schon - nichts zu tun."
-              exit 0
+          # Ab 0.63.2 (B-M-02): Netzfehler bis zu 3 Versuche im Schritt.
+          # git ls-remote: 0 = Tag da, 2 = Tag fehlt, alles andere = Fehler.
+          for VERSUCH in 1 2 3; do
+            RC=0
+            git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null || RC=$?
+            if [ "$RC" = 0 ] || [ "$RC" = 2 ]; then break; fi
+            if [ "$VERSUCH" = 3 ]; then
+              echo "Tag $TAG laesst sich nicht pruefen (git ls-remote, Fehler $RC)"
+              exit 1
             fi
-            # Nur "nicht gefunden" heisst: Release fehlt. Jeder andere Fehler
-            # (Netz, Rechte) bricht ab, statt blind noch einmal zu bauen.
-            case "$ANTWORT" in
-              *"HTTP 404"*) ;;
-              *) echo "Release $TAG laesst sich nicht pruefen: $ANTWORT"; exit 1 ;;
-            esac
+            echo "Wiederholung wegen Netzfehler (git ls-remote, Fehler $RC)"
+            sleep 5
+          done
+          if [ "$RC" = 0 ]; then
+            # Ab 0.63.2 (B-M-09): Tag gibt es - gibt es auch das Release?
+            for VERSUCH in 1 2 3; do
+              if ANTWORT=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .tag_name 2>&1); then
+                echo "Tag und Release $TAG gibt es schon - nichts zu tun."
+                exit 0
+              fi
+              # Nur "nicht gefunden" heisst: Release fehlt. Jeder andere Fehler
+              # (Netz, Rechte) bricht nach 3 Versuchen ab, statt blind noch
+              # einmal zu bauen.
+              case "$ANTWORT" in
+                *"HTTP 404"*) break ;;
+              esac
+              if [ "$VERSUCH" = 3 ]; then
+                echo "Release $TAG laesst sich nicht pruefen: $ANTWORT"
+                exit 1
+              fi
+              echo "Wiederholung wegen Netzfehler (gh api): $ANTWORT"
+              sleep 5
+            done
             NEU=nein
             echo "Tag $TAG gibt es, das Release fehlt - der Bau wird fuer den vorhandenen Tag nachgeholt."
           fi

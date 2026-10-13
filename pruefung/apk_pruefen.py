@@ -14,6 +14,9 @@ Signaturzertifikat gleich bleiben. Dieses Skript prueft:
      (in der CI: die APK des letzten normalen Release)
   4. ab 0.62: LICENSE.txt, THIRD_PARTY_NOTICES.txt und fisi_rechtliches in
      der App (assets/app.zip)
+  5. ab 0.63.2 (B-H-09): keine Bytecode-Reste des PC-Pythons in der App
+     (__pycache__/*.cpython-312.pyc aus dem Selbsttest; auf dem Handy
+     unbenutzt, gut 2 MB)
 
 Nur Python, ohne apksigner/Android-SDK. keytool kann diese APKs nicht lesen,
 weil sie keine v1-Signatur haben.
@@ -31,6 +34,12 @@ PACKAGE = "io.github.papst2142cmd.fisi_lernplattform"
 APP_FILES = ("LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "fisi_rechtliches.pyc")
 LABEL = "FI Lernplattform"
 SIGNATURE_IDS = {0x7109871A: "v2", 0xF05368C0: "v3"}
+
+
+def bytecode_reste(namen):
+    """Eintraege aus __pycache__ oder mit Python-Kennung (*.cpython-312.pyc)."""
+    return [n for n in namen
+            if "__pycache__/" in n or n.startswith("__pycache__") or ".cpython-" in n]
 
 
 def manifest_strings(apk_path):
@@ -111,6 +120,11 @@ def check(new_apk, old_apk=None, label=LABEL):
         lines.append("%s in app.zip: %s" % (name, "ja" if present else "NEIN"))
         if not present:
             errors.append("%s fehlt in der App (mobile/vorbereiten.py)" % name)
+    reste = bytecode_reste(app.namelist())
+    lines.append("Bytecode-Reste (__pycache__) in app.zip: %d" % len(reste))
+    if reste:
+        errors.append("%d Bytecode-Reste in der App (z.B. %s) - Selbsttest ohne "
+                      "PYTHONDONTWRITEBYTECODE=1?" % (len(reste), reste[0]))
     new_certs = certificates(new_apk)
     lines.append("Zertifikat neu: %s" % (new_certs or "keins"))
     if not new_certs:
