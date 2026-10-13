@@ -1750,9 +1750,12 @@ class ExamPanel(ft.Column):
 
 def _paint_page_buttons(prev, forward, page, pages):
     """Ab 0.63.2 (B-E-03): Blaetterpfeile auf Seite 1 bzw. der letzten Seite
-    sperren (page zaehlt ab 0, pages ist mindestens 1)."""
-    prev.disabled = page <= 0
-    forward.disabled = page >= pages - 1
+    sperren (page zaehlt ab 0, pages ist mindestens 1). Nacharbeit: Die
+    Fotoprobe zeigte, dass Flet gesperrte Knoepfe mit icon_color weiter in der
+    Akzentfarbe zeichnet; gesperrt darum in der gedaempften Farbe C["muted"]."""
+    for button, locked in ((prev, page <= 0), (forward, page >= pages - 1)):
+        button.disabled = locked
+        button.icon_color = C["muted"] if locked else C["accent"]
 
 
 class PagedListBox:
@@ -1791,7 +1794,7 @@ class PagedListBox:
         self.rows = ft.Column(spacing=8, tight=True)
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
-        # Seite gesperrt (Flutter zeichnet sie dann blass)
+        # Seite gesperrt und gedaempft (siehe _paint_page_buttons)
         self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
                                       tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
         self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
@@ -2605,7 +2608,7 @@ class NotebookScreen(Screen):
         self.list_card = ui.Card("Zu üben", [self.rows], accent=C["red"])
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
-        # Seite gesperrt (Flutter zeichnet sie dann blass)
+        # Seite gesperrt und gedaempft (siehe _paint_page_buttons)
         self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
                                       tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
         self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],

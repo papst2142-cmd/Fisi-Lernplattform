@@ -363,6 +363,10 @@ class BlaetternTest(HandyBasis):
     def assert_buttons(self, box, prev, forward, name):
         self.assertEqual((bool(box.btn_prev.disabled), bool(box.btn_next.disabled)),
                          (prev, forward), name)
+        # Nacharbeit (Fotoprobe): gesperrt = gedaempfte Farbe, sonst Akzent
+        C = self.main.C
+        for button, locked in ((box.btn_prev, prev), (box.btn_next, forward)):
+            self.assertEqual(button.icon_color, C["muted"] if locked else C["accent"], name)
 
     def test_liste(self):
         size = self.main.fc.LIST_PAGE_SIZE
