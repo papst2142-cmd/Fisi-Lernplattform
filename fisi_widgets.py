@@ -1031,7 +1031,7 @@ class FoldCard(Card):
     Farbwechsel neu gebaut wird.
 
     Ab 0.59 (Optionen, marker=True): grosser Pfeil links in der Akzentfarbe,
-    rechts gut lesbar "aufklappen"/"einklappen", Kopfzeile hebt sich beim
+    rechts gut lesbar "aufklappen"/"zuklappen", Kopfzeile hebt sich beim
     Darueberfahren ab. Die Optionen setzen den gemerkten Zustand beim
     Oeffnen zurueck (reset_states).
 
@@ -1102,7 +1102,7 @@ class FoldCard(Card):
     @classmethod
     def reset_states(cls, prefix):
         """Ab 0.59 (E4): gemerkte Zustaende mit diesem Schluessel-Anfang
-        vergessen (die Optionen starten dann wieder eingeklappt, ab 0.62.2
+        vergessen (die Optionen starten dann wieder zugeklappt, ab 0.62.2
         bis auf "Über das Programm")."""
         for key in [key for key in cls._open_state if key.startswith(prefix)]:
             del cls._open_state[key]
@@ -1112,7 +1112,7 @@ class FoldCard(Card):
 
     def accessible_name(self):
         """Ab 0.59: Beschriftung fuer Tastatur und Screenreader, z.B.
-        "Optische Anpassungen, eingeklappt" (gleich wie am Handy)."""
+        "Optische Anpassungen, zugeklappt" (gleich wie am Handy)."""
         return fold_label(self.fold_title, self.opened)
 
     def _hover_in(self, _event=None):
@@ -1144,7 +1144,7 @@ class FoldCard(Card):
 
     def ensure_built(self):
         """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
-        (auch eingeklappt, z.B. fuer den Selbsttest)."""
+        (auch zugeklappt, z.B. fuer den Selbsttest)."""
         while self._builder is not None and not self._building:
             self.build_part()
 

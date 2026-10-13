@@ -167,10 +167,10 @@ class AufbauTest(unittest.TestCase):
 
     def test_beschriftung_bereich_und_zustand(self):
         self.assertEqual(th.fold_label("Optische Anpassungen", False),
-                         "Optische Anpassungen, eingeklappt")
+                         "Optische Anpassungen, zugeklappt")
         self.assertEqual(th.fold_label("Optische Anpassungen", True),
                          "Optische Anpassungen, aufgeklappt")
-        self.assertEqual((th.FOLD_OPEN_TEXT, th.FOLD_CLOSE_TEXT), ("aufklappen", "einklappen"))
+        self.assertEqual((th.FOLD_OPEN_TEXT, th.FOLD_CLOSE_TEXT), ("aufklappen", "zuklappen"))
 
     def test_keine_neue_einstellung(self):
         """E4: Der Klappzustand wird nirgends gespeichert."""
@@ -559,7 +559,7 @@ class OptionenPcTest(unittest.TestCase):
         view = self.open_settings()
         fold = view.folds["optik"]
         self.assertEqual(fold.arrow.cget("text"), "aufklappen")
-        self.assertEqual(fold.accessible_name(), "Optische Anpassungen, eingeklappt")
+        self.assertEqual(fold.accessible_name(), "Optische Anpassungen, zugeklappt")
         self.assertEqual(fold.pointer.winfo_x() < fold.title_label.winfo_x(), True)
         for widget in fold.head.winfo_children():
             self.assertEqual(widget.cget("cursor"), "hand2")
@@ -567,7 +567,7 @@ class OptionenPcTest(unittest.TestCase):
         fold.subtitle_label._label.event_generate("<Button-1>")
         self.pump()
         self.assertTrue(fold.opened)
-        self.assertEqual(fold.arrow.cget("text"), "einklappen")
+        self.assertEqual(fold.arrow.cget("text"), "zuklappen")
         self.assertEqual(fold.accessible_name(), "Optische Anpassungen, aufgeklappt")
         fold.toggle()
 
@@ -852,7 +852,7 @@ class OptionenHandyTest(unittest.TestCase):
     def test_talkback_beschriftung_und_ansage(self):
         screen = self.screen()
         fold = screen.folds["optik"]
-        self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, eingeklappt")
+        self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, zugeklappt")
         self.assertTrue(fold.header_semantics.button)
         self.assertTrue(fold.header_semantics.live_region)
         self.assertFalse(fold.header_semantics.expanded)
@@ -860,7 +860,7 @@ class OptionenHandyTest(unittest.TestCase):
         fold.toggle()
         self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, aufgeklappt")
         self.assertTrue(fold.header_semantics.expanded)
-        self.assertEqual(fold.arrow_text.value, "einklappen")
+        self.assertEqual(fold.arrow_text.value, "zuklappen")
 
     def test_ganze_kopfzeile_mindestens_48_dp(self):
         fold = self.screen().folds["tagesziel"]

@@ -6302,7 +6302,12 @@ class SettingsView(View):
         if not self.built(fo.DIAGNOSE_ID):
             return
         log_key = []
-        for path in (error_log_path(), fisi_update.update_log_path()):
+        # Ab 0.63.2 (B-L-06): auch haenger.log und laeuft.info, die stehen
+        # ebenfalls im Bericht (fisi_diagnose.build_report)
+        folder = os.path.dirname(error_log_path())
+        for path in (error_log_path(), fisi_update.update_log_path(),
+                     os.path.join(folder, fdg.HANG_LOG_NAME),
+                     os.path.join(folder, fdg.INFO_NAME)):
             try:
                 log = os.stat(path)
                 log_key.append((log.st_size, log.st_mtime))
@@ -8256,6 +8261,8 @@ class FISIApp:
         self.preloader.start(origin=self._started)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
+        # Ab 0.63.2 (B-K-07): Strg+F auch mit Feststelltaste (Tk liefert dann "F")
+        root.bind("<Control-F>", lambda _e: self.header.search_entry.focus_set())
         # Ab 0.59.2: Herzschlag fuer die Haenger-Diagnose (fisi_haenger),
         # laeuft immer; on_close bricht ihn wie alle Zeitgeber ab
         root.after(fhg.BEAT_MS, self._heartbeat)
