@@ -28,7 +28,9 @@ import unittest
 from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-os.environ.setdefault("FISI_DB_PATH", os.path.join(tempfile.mkdtemp(), "handy_0632.db"))
+# Fest (nicht setdefault): Der Test loescht die Historie und schreibt
+# einstellungen.json neben der Datenbank, nie in echte Lerndaten
+os.environ["FISI_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "handy_0632.db")
 
 WISO_TEXT = "Die Zeit ist um, die Prüfung wurde abgegeben und ausgewertet."
 SEARCH_HINT = "Gib oben einen Suchbegriff ein und tippe auf die Lupe."
@@ -258,6 +260,36 @@ class PruefungZeitTest(HandyBasis):
                                  "die Bewertung."])
 
 
+class PruefungZeitOeffnenTest(HandyBasis):
+    """Nacharbeit M1: Zeit lief ausserhalb des Pruefungstrainers ab, dann
+    Lernen -> Pruefungstrainer (app.open). push schliesst offene Hinweise;
+    der Hinweis muss danach trotzdem offen sein."""
+
+    def run_open(self, art, text):
+        fp, app = self.fp, self.app
+        quiz = app.screens["quiz"]
+        quiz.mode_pills.select_value("uebung", notify=False)
+        self.addCleanup(quiz.mode_pills.select_value, "uebung", False)
+        self.addCleanup(setattr, quiz.exam, "state", None)
+        fp.save_running(fp.new_exam(art, [], seed=5, now=_past()))
+        self.addCleanup(fp.clear_running)
+        app.show_tab("learn")
+        self.addCleanup(app.show_tab, "dashboard")
+        app.open("quiz")
+        snack = getattr(app, "_toast", None)
+        self.assertIsNotNone(snack, self.events)
+        self.assertEqual(snack.content.value, text)
+        self.assertTrue(snack.open, "Hinweis nach dem Oeffnen sofort geschlossen")
+        self.assertEqual([e[1] for e in self.events if e[0] == "toast"], [text])
+
+    def test_wiso_ueber_oeffnen(self):
+        self.run_open(self.fp.WISO, WISO_TEXT)
+
+    def test_andere_pruefung_ueber_oeffnen(self):
+        self.run_open(self.fp.NETZWERKE, "Die Zeit ist um, die Prüfung wurde abgegeben. "
+                                         "Jetzt folgt die Bewertung.")
+
+
 class PruefungZeitPcTest(unittest.TestCase):
     """PC: ExamPanel._submit ohne Fenster (Attrappe fuer self)."""
 
@@ -414,6 +446,9 @@ class UsvBildTest(HandyBasis):
         nan_bar = self.main.ui.UpsPicture._bar(math.nan, "#ff0000")
         self.assertEqual(nan_bar.content.controls[0].bgcolor, self.main.C["ring_bg"])
         self.assertEqual(self.bar_parts(0.5), [500, 500])
+        # +inf = voll: der eine Teil hat die Balkenfarbe, nicht ring_bg
+        inf_bar = self.main.ui.UpsPicture._bar(math.inf, "#ff0000")
+        self.assertEqual(inf_bar.content.controls[0].bgcolor, "#ff0000")
 
     def test_bild_mit_nan(self):
         picture = {"last": "1 W", "last_detail": "", "usv": "", "usv_detail": "",
@@ -458,8 +493,21 @@ class HistorieLoeschenTest(HandyBasis):
             toasts = self.toasts()
             self.assertEqual(len(toasts), 1, (name, toasts))
             self.assertTrue(toasts[0].startswith("Es wurde nichts gelöscht."), toasts)
-            self.assertIn(DB_TEXT, toasts[0])
+            self.assertEqual(toasts[0], "Es wurde nichts gelöscht.\n\n" + DB_TEXT,
+                             "Leerzeile vor dem Datenbanktext (PC = Handy)")
             self.assertIs(db.error_handler, handler, "Meldeweg nicht zurueckgesetzt")
+
+    def test_meldeweg_zurueck_auch_bei_ausnahme(self):
+        db = self.app.db
+        handler = db.error_handler
+
+        def crash():
+            db.error_handler(DB_TEXT)
+            raise RuntimeError("Test")
+        with mock.patch.object(db, "clear_history", crash):
+            with self.assertRaises(RuntimeError):
+                self.settings.clear_history()
+        self.assertIs(db.error_handler, handler, "finally fehlt")
 
     def test_fehler_schreibgeschuetzt(self):
         """Echter Fehlerweg: Datenbank nimmt nichts mehr an (wie nach einer
@@ -499,6 +547,18 @@ class SchreibfehlerZeichnenTest(HandyBasis):
             with self.db_error("log_card"):
                 event()
             self.assert_drawn_after_toast(cards.root, name=name)
+
+    def test_karteikarten_leere_auswahl(self):
+        """Leer-Zweig von update_ui (keine Karte in der Auswahl)."""
+        cards = self.cards()
+        saved = cards.filtered
+        self.addCleanup(setattr, cards, "filtered", saved)
+        cards.pending = cards.filtered[0]
+        cards.filtered = []
+        with self.db_error("log_card"):
+            cards.update_ui()
+        self.assertEqual(cards.lbl_counter.value, "0 / 0")
+        self.assert_drawn_after_toast(cards.root, name="update_ui leer")
 
     def test_karteikarten_bewerten_und_pruefen(self):
         cards = self.cards()
@@ -604,6 +664,18 @@ class SchreibfehlerZeichnenTest(HandyBasis):
         with self.db_error("log_trainer"):
             trainer.check()
         self.assert_drawn_after_toast(trainer, name="Trainer check")
+
+    def test_abschlussprojekt_vorlage(self):
+        """H1: Vorlage uebernehmen zeigt einen eigenen Hinweis; vorher wird
+        das neu geladene Projekt gezeichnet (Ende von _on_tab)."""
+        screen = self.app.screens["abschluss"]
+        screen._on_tab("uebersicht")
+        self.events.clear()
+        screen.use_template(0)
+        index = next(i for i, e in enumerate(self.events) if e[0] == "toast")
+        before = [e for e in self.events[:index]
+                  if e[0] == "redraw" and id(screen.root) in e[1]]
+        self.assertTrue(before, self.events)
 
     def test_app_geht_in_den_hintergrund(self):
         screen = self.app.screens["abschluss"]

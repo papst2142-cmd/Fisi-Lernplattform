@@ -895,6 +895,23 @@ class QuizScreen(Screen):
         self._update_pool()
 
     def on_show(self):
+        # Ab 0.63.2 (B-G-23, Nacharbeit M1): on_show laeuft beim Oeffnen vor
+        # app.push, und push schliesst offene Hinweise. "Zeit abgelaufen" wird
+        # darum hier nur vorgemerkt und erst in after_open gezeigt.
+        self.exam.defer_notice = True
+        try:
+            self._show()
+        finally:
+            self.exam.defer_notice = False
+
+    def after_open(self):
+        """Nach app.push (ab 0.63.2, Nacharbeit M1): vorgemerkten Hinweis zeigen."""
+        notice, self.exam.notice = self.exam.notice, None
+        if notice:
+            self.toast(notice)
+            self.app.page.update()
+
+    def _show(self):
         # Ab 0.51: eine laufende Pruefung geht vor
         if fp.load_running() is not None and self.mode_pills.get() != "pruefung":
             self.mode_pills.select_value("pruefung")
@@ -1315,6 +1332,7 @@ class ExamPanel(ft.Column):
         self.result = None
         self.timer_token = 0
         self.dirty = False
+        self.defer_notice, self.notice = False, None   # ab 0.63.2 (Nacharbeit M1)
 
     # -- Allgemein ----------------------------------------------------------
 
@@ -1573,8 +1591,8 @@ class ExamPanel(ft.Column):
             if auto:
                 # Ab 0.63.2 (B-G-23): auch bei WiSo melden, nach dem Auswerten
                 # (gleicher Text wie am PC)
-                self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben und "
-                               "ausgewertet.")
+                self._time_up("Die Zeit ist um, die Prüfung wurde abgegeben und "
+                              "ausgewertet.")
             return
         fp.save_running(self.state)
         self.task_no = 0
@@ -1582,8 +1600,16 @@ class ExamPanel(ft.Column):
         # Ab 0.63.2 (A12): erst die Bewertung zeichnen, dann der Hinweis
         _redraw(self)
         if auto:
-            self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
-                           "Bewertung.")
+            self._time_up("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
+                          "Bewertung.")
+
+    def _time_up(self, text):
+        """Hinweis "Zeit abgelaufen" (ab 0.63.2, Nacharbeit M1): beim Oeffnen
+        des Pruefungstrainers vormerken (QuizScreen.after_open), sonst sofort."""
+        if self.defer_notice:
+            self.notice = text
+        else:
+            self.app.toast(text)
 
     # -- Bewertung ----------------------------------------------------------
 
@@ -5330,6 +5356,10 @@ class FISIMobileApp:
         screen = self.screens[key]
         screen.on_show()
         self.push(screen.crumbs, screen.root)
+        # Ab 0.63.2 (B-G-23, Nacharbeit M1): Hinweis aus on_show nach push zeigen
+        after_open = getattr(screen, "after_open", None)
+        if after_open is not None:
+            after_open()
         perf = getattr(self, "perf", None)
         if perf is not None:
             perf.page(self.tab, key, started)
