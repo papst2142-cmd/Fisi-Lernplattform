@@ -1303,8 +1303,6 @@ class UpsPicture(ft.Semantics):
 
     def _load_bar(self, share, limit):
         """Auslastung mit Strich bei der Grenze (80 %)."""
-        if math.isnan(share):
-            share = 0.0   # ab 0.63.2 (B-E-10): NaN wie ein leerer Balken
         good = share <= limit
         bar = self._bar(min(share, 100) / 100.0, C["green"] if good else C["red"], 6)
         mark = ft.Row([ft.Container(expand=int(limit)),
