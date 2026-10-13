@@ -15,6 +15,10 @@
   * B-D-12  "Historie löschen": Bestaetigung bzw. genau ein Fehlerfenster
   * Z1      Punkte abrunden ohne Gleitkommafehler (49,95 -> 49,9)
   * Z6      PC-Listenpfeile auf der ersten/letzten Seite gesperrt
+  * Nacharbeit M2: eigene Farben (3.780 Reglerstellungen) ohne Rueckschritt
+            gegenueber 14b3bd4, Farbwelten unveraendert neue Farbe
+  * Nacharbeit M3: gesperrter Pfeil ohne Wirkung beim Klick, Fehler-Handler
+            nach dem Loeschen zurueck, Unteransicht im Menue ins Bild gerollt
 
 Die Oberflaechen-Teile laufen je Schriftgroesse in einem eigenen Prozess.
 Gegenprobe gegen einen anderen Code-Stand (z.B. 14b3bd4):
@@ -124,6 +128,18 @@ class PunkteTest(unittest.TestCase):
         self.assertTrue(hasattr(fp, "punkte_text"), "fisi_pruefung.punkte_text fehlt")
         for value, want in self.FAELLE:
             self.assertEqual(fp.punkte_text(value), want, repr(value))
+
+    def test_randwerte(self):
+        """Nacharbeit L2: -0,0 und winzige negative Reste ergeben "0" (nicht
+        "-0"); unendlich und keine Zahl ergeben "-" und stuerzen nicht ab."""
+        import fisi_pruefung as fp
+        for value, want in ((-0.0, "0"), (-1e-12, "0"), (float("inf"), "-"),
+                            (float("-inf"), "-"), (float("nan"), "-"), (-1.25, "-1,3")):
+            try:
+                got = fp.punkte_text(value)
+            except Exception as exc:   # vorher decimal.InvalidOperation
+                self.fail("%r: %s %s" % (value, type(exc).__name__, exc))
+            self.assertEqual(got, want, repr(value))
 
     def test_alle_zehntel_ohne_kippen(self):
         import fisi_pruefung as fp
@@ -358,10 +374,29 @@ def worker(faktor, breite, hoehe):
     left, right = sorted(arrows(pager), key=lambda w: w.winfo_rootx())
     if state(left) or not state(right):
         fail("pfeile", "Seite 1: links %s, rechts %s" % (state(left), state(right)))
+    # Nacharbeit M3 (G5): Ein Klick auf den gesperrten Pfeil wirkt nicht, auf
+    # den freien schon (Gegenprobe, dass der Klick ueberhaupt ankommt)
+    def clicks(button):
+        hits = []
+        command = button.command
+        button.command = lambda: hits.append(1)
+        try:
+            button.event_generate("<Button-1>", x=2, y=2)
+            button.event_generate("<ButtonRelease-1>", x=2, y=2)
+            pump(0.1)
+        finally:
+            button.command = command
+        return len(hits)
+    if clicks(left) != 0:
+        fail("pfeil_klick", "Seite 1: gesperrter Pfeil links reagiert auf Klick")
+    if clicks(right) != 1:
+        fail("pfeil_klick", "Seite 1: freier Pfeil rechts reagiert nicht")
     paged.turn(99)
     pump(0.2)
     if not state(left) or state(right):
         fail("pfeile", "letzte Seite: links %s, rechts %s" % (state(left), state(right)))
+    if clicks(right) != 0:
+        fail("pfeil_klick", "letzte Seite: gesperrter Pfeil rechts reagiert auf Klick")
     paged.turn(-99)
     pump(0.2)
     app.show_view("ap1scenarios")
@@ -465,6 +500,27 @@ def worker(faktor, breite, hoehe):
         if not fully_visible(sidebar.rows[key]):
             fail("menue_aktiv", "%s nicht ganz sichtbar (Spiel offen)" % key)
     rows = getattr(sidebar, "sub_rows", {})
+    # Nacharbeit M3 (G7): Eine Unteransicht (z.B. Spiel > Buero) wird beim
+    # Oeffnen ganz ins Bild gerollt, auch wenn das Menue oben steht
+    if not rows:
+        fail("menue_unter", "keine Unteransichten (sub_rows) gefunden")
+    # Ohne gewaehlten Spielstand fuehrt jede Spiel-Unteransicht zur Auswahl
+    # ("game") - deshalb erst einen Spielstand waehlen (wie test_spiel.py)
+    app.show_view("game")
+    pump(0.6)
+    game = app.views["game"].game
+    if game.state.profile is None:
+        game.set_profile("Test", {})
+    if not app.slot_chosen:
+        app.views["game"]._enter_slot()
+    pump(0.3)
+    for key, row in rows.items():
+        sidebar.menu_area.canvas.yview_moveto(0.0)
+        pump(0.15)
+        app.show_view(key)
+        pump(0.6)
+        if not fully_visible(row):
+            fail("menue_unter", "%s nicht ganz sichtbar" % key)
     status_tops = [child.winfo_rooty() for child in sidebar.winfo_children()
                    if child.winfo_manager() == "pack"
                    and child.pack_info().get("side") == "bottom"]
@@ -488,6 +544,9 @@ def worker(faktor, breite, hoehe):
     pump(0.2)
     if [b[0] for b in boxes] != ["info"] or "Die Historie wurde gelöscht." not in boxes[0][2]:
         fail("historie", "Erfolg: %s" % boxes)
+    # Nacharbeit M3 (G6): danach gilt wieder der allgemeine Fehler-Handler
+    if app.db.error_handler != app._db_error:
+        fail("fehler_handler", "nach Erfolg: %r" % (app.db.error_handler,))
     boxes.clear()
     real = app.db.get_connection
 
@@ -501,6 +560,26 @@ def worker(faktor, breite, hoehe):
         app.db.get_connection = real
     if len(boxes) != 1 or "Es wurde nichts gelöscht." not in boxes[0][2]:
         fail("historie", "Fehler: %s" % boxes)
+    # Nacharbeit M3 (G6): Ein spaeterer Datenbankfehler ausserhalb des Loeschens
+    # zeigt wieder das Fenster "Datenbankfehler" (Handler zurueckgesetzt).
+    # Zaehler und Schreibschutz-Merker zuruecksetzen, damit die Meldung nicht
+    # wegen "nur einmal je Fehlerart" ausbleibt.
+    if app.db.error_handler != app._db_error:
+        fail("fehler_handler", "nach Fehler: %r" % (app.db.error_handler,))
+    boxes.clear()
+    app.db.error_counts = {}
+    app.db.read_only_reason = None
+
+    def broken_io():
+        raise sqlite3.OperationalError("disk I/O error")
+    app.db.get_connection = broken_io
+    try:
+        app.db.clear_history()
+        pump(0.2)
+    finally:
+        app.db.get_connection = real
+    if [(b[0], b[1]) for b in boxes] != [("error", "Datenbankfehler")]:
+        fail("fehler_handler", "spaeterer Datenbankfehler: %s" % boxes)
 
     print("ERG " + json.dumps({"fehler": errors}), flush=True)
     os._exit(0)
@@ -556,6 +635,11 @@ def farben_worker():
         if ratio < minimum:
             fail(key, "%s: %s auf %s = %.2f:1" % (name, fore, back, ratio))
 
+    def same(name, got, want):
+        # Nacharbeit M2: In den Farbwelten gilt die neue Farbe unveraendert
+        if str(got).upper() != str(want).upper():
+            fail("farbwelt", "%s: %s statt %s" % (name, got, want))
+
     pump(0.8)
     for mode in (fisi_theme.MODE_DARK, fisi_theme.MODE_LIGHT):
         for background in fisi_theme.BACKGROUND_IDS:
@@ -568,12 +652,14 @@ def farben_worker():
             inner = box._textbox
             check("b_j_01", name + " Textfeld", inner.cget("selectforeground"),
                   inner.cget("selectbackground"), MIN_TEXT)
+            same("%s Textfeld" % name, inner.cget("selectforeground"), C["card"])
             box.destroy()
             dialog = app_gui.LegalDialog(app, "fremd")
             pump(0.3)
             if dialog.listbox is not None:
                 check("b_j_01", name + " Liste", dialog.listbox.cget("selectforeground"),
                       dialog.listbox.cget("selectbackground"), MIN_TEXT)
+                same("%s Liste" % name, dialog.listbox.cget("selectforeground"), C["card"])
             else:
                 fail("b_j_01", "%s: keine Liste im Fenster" % name)
             dialog.destroy()
@@ -588,6 +674,7 @@ def farben_worker():
                 if "selected" in state_back[:-1]:
                     back = state_back[-1]
             check("b_j_02", name, str(fore), str(back), MIN_TEXT)
+            same("%s Tabelle" % name, str(fore), C["text"])
             # B-J-03: Kalenderzahl auf Lila
             app.show_view("dashboard")
             pump(0.4)
@@ -600,6 +687,7 @@ def farben_worker():
                 fail("b_j_03", "%s: Tag %s nicht gefunden" % (name, day))
             for color in colors:
                 check("b_j_03", name, color, C["purple"], MIN_TEXT)
+                same("%s Kalender" % name, color, C["card"])
             # B-D-11: Rahmen der Aufklappliste und Spur der Schalter
             menu = app.views["abschluss"].menu_project
             parts = menu._canvas.find_withtag("border_parts")
@@ -620,6 +708,126 @@ def farben_worker():
     os._exit(0)
 
 
+# Bis 0.63.1 (14b3bd4) galten diese Schriftfarben: B-J-01 und B-J-02 Weiss,
+# B-J-03 #12071F
+ALT_SCHRIFT = {"b_j_01": "#FFFFFF", "b_j_02": "#FFFFFF", "b_j_03": "#12071F"}
+
+
+def raster():
+    """Alle Reglerstellungen wie in der Gegenpruefung gp_s1b: Hintergrund h 0-340
+    in 20er-Schritten, s 0/25/50/75/100, l 0-100 in 5er-Schritten, je dunkel
+    und hell (3.780)."""
+    for mode in ("dunkel", "hell"):
+        for hue in range(0, 341, 20):
+            for sat in (0, 25, 50, 75, 100):
+                for lig in range(0, 101, 5):
+                    yield mode, (hue, sat, lig)
+
+
+def eigene_worker():
+    """Nacharbeit M2: Eigene Farben (apply_custom) ueber alle 3.780 Reglerstellungen.
+    Gegenueber 14b3bd4 darf keine Schrift (B-J-01 Textfeld und Liste, B-J-02
+    Auswahlzeile, B-J-03 Kalenderzahl) schlechter lesbar werden: entweder
+    >= 4,5:1 oder mindestens so gut wie die alte Farbe. Gelesen wird an der
+    Oberflaeche (Tabellenstil, frisches Textfeld, Kalender neu gezeichnet,
+    Liste im Fenster "Rechtliches" an jeder Stellung, an der die Wahl zaehlt)."""
+    home = tempfile.mkdtemp(prefix="fisi_eigene_")
+    os.environ.update(HOME=home, APPDATA=home, FISI_DB_PATH=os.path.join(home, "t.db"),
+                      FISI_SELFTEST=os.path.join(home, "log.txt"))
+    os.chdir(CODE)
+    import datetime
+    from tkinter import ttk
+    import customtkinter as ctk
+    import app_gui
+    import fisi_core as fc
+    import fisi_theme
+    import fisi_widgets
+    from fisi_theme import C
+    app_gui.UpdateController.auto_check = lambda self: None
+    app_gui.SyncController.auto_start = lambda self: None
+    app_gui.FISIApp.maybe_start_tour = lambda self: None
+    db = fc.DBManager()
+    db.log_card(fc.KARTEIKARTEN[0]["cat"], fc.KARTEIKARTEN[0]["q"], "lernen", True)
+    root = ctk.CTk()
+    root.geometry("1360x900+0+0")
+    app = app_gui.FISIApp(root)
+    errors = {}
+    zahl = {"stellungen": 0, "listen": 0, "kritisch_b_j_01": 0}
+
+    def fail(key, text):
+        errors.setdefault(key, []).append(text)
+
+    def pump(seconds=0.3):
+        end = time.time() + seconds
+        while time.time() < end:
+            root.update()
+            time.sleep(0.01)
+
+    def check(key, name, fore, back):
+        ratio = fisi_theme.contrast(fore, back)
+        before = fisi_theme.contrast(ALT_SCHRIFT[key], back)
+        if ratio < min(MIN_TEXT, before) - 1e-9:
+            zahl[key] = zahl.get(key, 0) + 1
+            if len(errors.get(key, [])) < 8:
+                fail(key, "%s: %s auf %s = %.2f:1, bis 0.63.1 %s = %.2f:1"
+                     % (name, fore, back, ratio, ALT_SCHRIFT[key], before))
+
+    pump(0.8)
+    app.show_view("dashboard")
+    pump(0.6)
+    calendar = app.views["dashboard"].calendar
+    day = str(datetime.date.today().day)
+    style = ttk.Style(root)
+    for mode, ground in raster():
+        fisi_theme.apply_mode(mode)
+        start = fisi_theme.custom_start(mode)
+        fisi_theme.apply_custom(mode, dict(start, hintergrund=ground))
+        name = "%s h%d s%d l%d" % ((mode,) + ground)
+        zahl["stellungen"] += 1
+        # B-J-02: Tabellenstil wie nach einem Farbwechsel
+        app._setup_ttk_style()
+        fore = back = None
+        for entry in style.map("Dash.Treeview", "foreground"):
+            if "selected" in entry[:-1]:
+                fore = str(entry[-1])
+        for entry in style.map("Dash.Treeview", "background"):
+            if "selected" in entry[:-1]:
+                back = str(entry[-1])
+        check("b_j_02", name, fore, back)
+        # B-J-01: Textfeld (make_text)
+        box = fisi_widgets.make_text(root)
+        check("b_j_01", name + " Textfeld", box._textbox.cget("selectforeground"),
+              box._textbox.cget("selectbackground"))
+        box.destroy()
+        # B-J-01: Liste "Rechtliches" - an jeder fuenften Stellung, an der die
+        # neue Farbe C["card"] schlechter waere als Weiss (dort zaehlt die
+        # Wahl; das Fenster ist teuer, das Textfeld oben deckt alle ab)
+        kritisch = (fisi_theme.contrast(C["card"], C["purple"])
+                    < min(MIN_TEXT, fisi_theme.contrast("#FFFFFF", C["purple"])))
+        if kritisch:
+            zahl["kritisch_b_j_01"] += 1
+        if kritisch and zahl["kritisch_b_j_01"] % 5 == 1:
+            zahl["listen"] += 1
+            dialog = app_gui.LegalDialog(app, "fremd")
+            if dialog.listbox is not None:
+                check("b_j_01", name + " Liste", dialog.listbox.cget("selectforeground"),
+                      dialog.listbox.cget("selectbackground"))
+            dialog.destroy()
+        # B-J-03: Kalender neu zeichnen, Zahl des heutigen (aktiven) Tags
+        calendar.refresh()
+        canvas = calendar.canvas
+        colors = [canvas.itemcget(item, "fill") for item in canvas.find_all()
+                  if canvas.type(item) == "text" and canvas.itemcget(item, "text") == day]
+        if not colors:
+            fail("b_j_03", "%s: Tag %s nicht gefunden" % (name, day))
+        for color in colors:
+            check("b_j_03", name, color, C["purple"])
+        if zahl["stellungen"] % 200 == 0:
+            root.update()
+    print("ERG " + json.dumps({"fehler": errors, "zahl": zahl}), flush=True)
+    os._exit(0)
+
+
 def _tk_ok():
     try:
         import tkinter
@@ -632,9 +840,9 @@ def _tk_ok():
 HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 
 
-def _run(args):
+def _run(args, timeout=900):
     done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall"] + args,
-                          capture_output=True, text=True, timeout=900, cwd=HERE,
+                          capture_output=True, text=True, timeout=timeout, cwd=HERE,
                           env=dict(os.environ, ANZEIGE_CODE=CODE))
     lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
     if not lines:
@@ -653,7 +861,8 @@ def _result(faktor, breite, hoehe):
 
 
 CHECKS = ("tausender", "ring", "count_text", "komma", "kundenauftraege", "pfeile",
-          "tab_projekt", "tab_rundgang", "menue_aktiv", "menue_erreichbar", "historie")
+          "tab_projekt", "tab_rundgang", "menue_aktiv", "menue_erreichbar", "historie",
+          "pfeil_klick", "menue_unter", "fehler_handler")
 FENSTER = {1.0: (1360, 900), 1.15: (1120, 720), 1.3: (1120, 720)}
 
 
@@ -697,11 +906,40 @@ class FarbenTest(unittest.TestCase):
     def test_b_d_11_rahmen_und_spur(self):
         self.assertEqual(self.result["fehler"].get("b_d_11", []), [])
 
+    def test_farbwelten_neue_farbe(self):
+        """Nacharbeit M2: in den Farbwelten gilt weiter die neue Farbe."""
+        self.assertEqual(self.result["fehler"].get("farbwelt", []), [])
+
+
+@unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
+class EigeneFarbenTest(unittest.TestCase):
+    """Nacharbeit M2: eigene Farben, 3.780 Reglerstellungen, kein Rueckschritt
+    gegenueber 14b3bd4 (B-J-01, B-J-02, B-J-03)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.result = _run(["eigene"], timeout=1800)   # 3.780 Stellungen
+        print("\n  Eigene Farben: %s" % cls.result.get("zahl"))
+
+    def test_alle_stellungen(self):
+        self.assertEqual(self.result["zahl"]["stellungen"], 3780)
+
+    def test_b_j_01_ohne_rueckschritt(self):
+        self.assertEqual(self.result["fehler"].get("b_j_01", []), [])
+
+    def test_b_j_02_ohne_rueckschritt(self):
+        self.assertEqual(self.result["fehler"].get("b_j_02", []), [])
+
+    def test_b_j_03_ohne_rueckschritt(self):
+        self.assertEqual(self.result["fehler"].get("b_j_03", []), [])
+
 
 if __name__ == "__main__":
     if len(sys.argv) >= 3 and sys.argv[1] == "--fall":
         if sys.argv[2] == "anzeige":
             worker(float(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]))
+        elif sys.argv[2] == "eigene":
+            eigene_worker()
         else:
             farben_worker()
     unittest.main(verbosity=2)
