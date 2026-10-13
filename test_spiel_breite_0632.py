@@ -66,6 +66,9 @@ ZUSTAENDE = {
 # gewaehlte Schrift; weicht sie ab, ist der SchriftwechselTest rot)
 SCHRIFTEN = ["Segoe UI", "Inter", "Ubuntu", "Noto Sans", "DejaVu Sans",
              "Helvetica Neue", "Helvetica", "Arial"]
+BREIT = (1920, 1080)
+# Hin und her (schmal -> breit -> schmal -> breit) bei diesen Faktoren
+HIN_HER = (1.15, 1.3)
 SCHRIFTWECHSEL = ((1.0, 1120, 720), (1.0, 1360, 900), (1.15, 1120, 720), (1.3, 1120, 720))
 BEDIEN = ("NeoButton", "IconButton", "CTkOptionMenu", "CTkEntry", "EntryBox",
           "CTkCheckBox", "CTkSwitch", "CTkTextbox")
@@ -159,7 +162,54 @@ class Ctx:
             "geaendert": getattr(view, "_fit_changed", None),
             # Ueberstand so, wie gebaut (vor dem Zurechtruecken)
             "gebaut": getattr(view, "_fit_built", None),
+            "raster": _raster(view),
             "fehler": fehler}
+
+
+def _raster(view):
+    """Anordnung wie gebaut: je sichtbarem Teil (Pfad aus Positionen unter
+    den sichtbaren Kindern) Geometrie-Angaben (Abstaende padx/pady, Zeile,
+    Spalte, Seite), Spaltengewichte der Raster und Umbruchbreiten der Texte.
+    "umgestellt" zaehlt Kachelraster mit weniger Spalten als gebaut."""
+    eintraege = {}
+    umgestellt = 0
+    stack = [(view.inner, "0")]
+    while stack:
+        widget, pfad = stack.pop()
+        kinder = []
+        for child in widget.winfo_children():
+            try:
+                if child.winfo_ismapped():
+                    kinder.append(child)
+            except Exception:  # noqa: BLE001
+                continue
+        for index, child in enumerate(kinder):
+            name = "%s.%d" % (pfad, index)
+            angaben = [type(child).__name__, child.winfo_manager()]
+            try:
+                if child.winfo_manager() == "grid":
+                    info = child.grid_info()
+                    angaben += [str(info.get(k)) for k in
+                                ("row", "column", "columnspan", "padx", "pady", "sticky")]
+                elif child.winfo_manager() == "pack":
+                    info = child.pack_info()
+                    angaben += [str(info.get(k)) for k in
+                                ("side", "fill", "expand", "anchor", "padx", "pady")]
+                if child.grid_slaves():
+                    angaben.append("spalten " + " ".join(
+                        "%s/%s/%s" % tuple(child.grid_columnconfigure(column).get(k)
+                                           for k in ("weight", "uniform", "minsize"))
+                        for column in range(child.grid_size()[0])))
+                if type(child).__name__ == "CTkLabel":
+                    angaben.append("umbruch %s" % child.cget("wraplength"))
+            except Exception as error:  # noqa: BLE001
+                angaben.append("?%r" % error)
+            columns = child.__dict__.get("_fit_columns")
+            if columns and child.__dict__.get("_fit_cols_now", columns) < columns:
+                umgestellt += 1
+            eintraege[name] = " ".join(angaben)
+            stack.append((child, name))
+    return {"eintraege": eintraege, "umgestellt": umgestellt}
 
 
 def _text(widget):
@@ -242,6 +292,20 @@ def _wechsel(ctx):
     ctx.prefix = "wechsel/"
     _firma(ctx)
     _reise(ctx)
+    ctx.prefix = ""
+
+
+def _hin_her(ctx):
+    """Vom schmalen Start aus: breit, schmal, breit - jedes Mal alles pruefen
+    (breit muss genau wie ein frischer Start breit aussehen, schmal genau wie
+    der schmale Start)."""
+    for prefix, (breite, hoehe) in (("breit1/", BREIT), ("schmal2/", (1120, 720)),
+                                    ("breit2/", BREIT)):
+        ctx.root.geometry("%dx%d+0+0" % (breite, hoehe))
+        ctx.pump(1.5)
+        ctx.prefix = prefix
+        _firma(ctx)
+        _reise(ctx)
     ctx.prefix = ""
 
 
@@ -330,7 +394,7 @@ def worker(faktor, breite, hoehe, teile):
     ctx.pump(0.8)
     for teil in teile:
         try:
-            {"firma": _firma, "reise": _reise, "wechsel": _wechsel,
+            {"firma": _firma, "reise": _reise, "wechsel": _wechsel, "hin_her": _hin_her,
              "plaene": _plaene}[teil](ctx)
         except Exception as error:  # noqa: BLE001
             import traceback
@@ -376,17 +440,19 @@ def _standardschrift():
 
 
 def _fc_ohne(family):
-    """fontconfig-Datei, die die System-Einstellungen nutzt, aber family (und
-    ihre Display-Variante) ablehnt."""
+    """fontconfig-Datei, die die Einstellungen des eigenen Prozesses nutzt
+    (ein gesetztes FONTCONFIG_FILE, sonst die des Systems), aber zusaetzlich
+    family (und ihre Display-Variante) ablehnt."""
     path = os.path.join(tempfile.mkdtemp(prefix="fisi_fc_"), "fonts.conf")
+    basis = os.path.abspath(os.environ.get("FONTCONFIG_FILE") or "/etc/fonts/fonts.conf")
     patterns = "".join(
         "<pattern><patelt name=\"family\"><string>%s</string></patelt></pattern>" % name
         for name in (family, family + " Display"))
     with open(path, "w", encoding="utf-8") as handle:
         handle.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
-                     '<fontconfig><include ignore_missing="yes">/etc/fonts/fonts.conf'
-                     '</include><selectfont><rejectfont>%s</rejectfont></selectfont>'
-                     '</fontconfig>\n' % patterns)
+                     '<fontconfig><include ignore_missing="yes">%s</include>'
+                     '<selectfont><rejectfont>%s</rejectfont></selectfont>'
+                     '</fontconfig>\n' % (basis, patterns))
     return path
 
 
@@ -394,6 +460,8 @@ def _teile(faktor, breite, hoehe):
     teile = ["firma", "reise"]
     if (faktor, breite, hoehe) == (1.0, 1120, 720):
         teile.append("wechsel")
+    if faktor in HIN_HER and (breite, hoehe) == (1120, 720):
+        teile.append("hin_her")
     return tuple(teile)
 
 
@@ -415,8 +483,12 @@ def ergebnis(faktor, breite, hoehe, teile=None, ohne=None):
                                 "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:],
                                                             done.stderr[-4000:]))
         except subprocess.TimeoutExpired as error:
+            # TimeoutExpired liefert die Ausgabe als Bytes (auch mit text=True)
+            stderr = error.stderr or b""
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode("utf-8", "replace")
             _ERGEBNISSE[key] = "kein Ergebnis nach %d s (haengt?):\n%s" % (
-                ZEITGRENZE, (error.stderr or b"")[-4000:])
+                ZEITGRENZE, stderr[-4000:])
     return _ERGEBNISSE[key]
 
 
@@ -510,10 +582,66 @@ class WechselTest(BreiteBasis):
         unterschiede = {}
         for key in namen:
             nach = klein["wechsel/" + key]
-            for feld in ("sicht", "inhalt", "hoehe", "geaendert", "texte"):
-                if nach[feld] != frisch[key][feld]:
-                    unterschiede.setdefault(key, {})[feld] = (nach[feld], frisch[key][feld])
+            unterschiede.update(_unterschiede(key, nach, frisch[key]))
         self.assertEqual(unterschiede, {})
+
+
+VERGLEICH = ("sicht", "inhalt", "hoehe", "geaendert", "texte")
+
+
+def _unterschiede(key, nach, soll):
+    """Felder, in denen nach von soll abweicht (Anordnung je Teil einzeln)."""
+    found = {}
+    for feld in VERGLEICH:
+        if nach[feld] != soll[feld]:
+            found[feld] = (nach[feld], soll[feld])
+    ist, erwartet = nach["raster"]["eintraege"], soll["raster"]["eintraege"]
+    for name in sorted(set(ist) | set(erwartet)):
+        if ist.get(name) != erwartet.get(name):
+            found["raster " + name] = (ist.get(name), erwartet.get(name))
+    return {key: found} if found else {}
+
+
+class HinHerTest(BreiteBasis):
+    """Gross und Sehr gross: schmal (1120 x 720) -> breit (1920 x 1080) ->
+    schmal -> breit. Breit muss genau wie ein frischer Start breit aussehen,
+    schmal genau wie der schmale Start: Hoehen, Breiten, Knopftexte und die
+    Anordnung (Abstaende padx/pady, Spaltengewichte, Umbruchbreiten) jedes
+    sichtbaren Teils. Die Kachelraster muessen schmal tatsaechlich
+    umgestellt sein (sonst prueft der Fall das Zuruecksetzen nicht)."""
+
+    def _hin_her(self, faktor):
+        hin = ergebnis(faktor, 1120, 720)
+        frisch = ergebnis(faktor, BREIT[0], BREIT[1], teile=("firma", "reise"))
+        self.assertIsInstance(hin, dict, hin)
+        self.assertIsInstance(frisch, dict, frisch)
+        namen = sorted(k for k in hin if k.startswith(("firma/", "reise/")))
+        self.assertEqual(sorted(k for k in frisch if k.startswith(("firma/", "reise/"))),
+                         namen)
+        umgestellt = sum(hin[k]["raster"]["umgestellt"] for k in namen)
+        self.assertGreater(umgestellt, 0, "schmal kein Kachelraster umgestellt")
+        unterschiede = {}
+        for prefix, soll in (("breit1/", frisch), ("schmal2/", None), ("breit2/", frisch)):
+            for key in namen:
+                self.assertIn(prefix + key, hin)
+                vergleich = hin[key] if soll is None else soll[key]
+                unterschiede.update(_unterschiede(prefix + key, hin[prefix + key],
+                                                  vergleich))
+        fehler = {k: v["fehler"] for k, v in frisch.items() if v.get("fehler")}
+        self.assertEqual(fehler, {})
+        print("\n  %s: %d Zustaende, schmal %d Raster umgestellt, %d Unterschiede" % (
+            STUFEN[faktor], len(namen), umgestellt, len(unterschiede)))
+        if unterschiede:
+            self.fail("%s: nach dem Wechsel anders als frisch gebaut (ist, soll), je "
+                      "Zustand hoechstens 5 Teile:\n%s" % (STUFEN[faktor], "\n".join(
+                          "  %s (%d): %s" % (key, len(found), sorted(found.items())[:5])
+                          for key, found in sorted(unterschiede.items()))))
+
+    def test_gross(self):
+        self._hin_her(1.15)
+
+    def test_sehr_gross(self):
+        self._hin_her(1.3)
 
 
 class FitWidthEinzelTest(unittest.TestCase):
@@ -539,13 +667,75 @@ class FitWidthEinzelTest(unittest.TestCase):
             stripe = tkinter.Frame(row, width=6, height=20)
             stripe.pack(side="left", padx=(10, 0))
             tkinter.Label(row, text="Kandidat " * 6).pack(side="left")
+            label = row.pack_slaves()[1]
             root.update_idletasks()
             fit = gg.FitWidth()
             self.assertEqual(stripe.winfo_reqwidth(), 6)
             self.assertEqual(fit._fit_hard(stripe), 6)
-            self.assertGreaterEqual(fit._fit_hard(row), 16)
+            # Streifen samt Abstand (10 + 6) plus der Text daneben (tk.Label
+            # bricht nicht um: ganz)
+            self.assertEqual(fit._fit_hard(row), 16 + label.winfo_reqwidth())
         finally:
             root.destroy()
+
+    def _probe(self, breite):
+        """Kleinste Ansicht mit FitWidth: Leinwand breite px, Inhalt inner."""
+        import tkinter
+        os.environ.setdefault("FISI_DB_PATH", os.path.join(tempfile.mkdtemp(), "t.db"))
+        import fisi_game_gui as gg
+        root = tkinter.Tk()
+        self.addCleanup(root.destroy)
+        view = gg.FitWidth()
+        view.canvas = tkinter.Canvas(root, width=breite, height=300, highlightthickness=0,
+                                     bd=0)
+        view.canvas.pack()
+        view.inner = tkinter.Frame(view.canvas)
+        view.canvas.create_window(0, 0, window=view.inner, anchor="nw")
+        view.after = lambda _ms, _func: None
+        view.after_idle = lambda _func: None
+        view._refit_width = lambda: None     # (ScrollArea)
+        view.update_idletasks = root.update_idletasks
+        view._fit_init()
+        return root, view
+
+    def test_balken_wird_schmaler_und_zurueck(self):
+        import customtkinter as ctk
+        root, view = self._probe(300)
+        bar = ctk.CTkProgressBar(view.inner, width=600, height=6)
+        bar.pack(fill="x")
+        root.update()
+        view._fit_now()
+        root.update()
+        self.assertEqual(view._fit_built, 300)
+        self.assertEqual(bar.cget("width"), 300)
+        self.assertEqual(view._fit_changed, 1)
+        self.assertLessEqual(view.inner.winfo_reqwidth(), 300)
+        # breiter: genau wie gebaut
+        view.canvas.configure(width=800)
+        root.update()
+        view._fit_now()
+        root.update()
+        self.assertEqual(bar.cget("width"), 600)
+        self.assertEqual((view._fit_built, view._fit_changed), (0, 0))
+
+    def test_rest_durchgang(self):
+        # Ein Rahmen mit eigenem Innenabstand (tk.Frame padx) ist breiter, als
+        # FitWidth beim Verteilen annimmt: die Hauptrunden lassen einen Rest,
+        # erst der Rest-Durchgang rechnet mit entsprechend weniger Platz
+        import tkinter
+        import customtkinter as ctk
+        root, view = self._probe(400)
+        box = tkinter.Frame(view.inner, padx=40)
+        box.pack(fill="x")
+        label = ctk.CTkLabel(box, text="Wort " * 60)
+        label.pack(anchor="w")
+        root.update()
+        view._fit_now()
+        root.update()
+        self.assertGreater(view._fit_built, 0)
+        self.assertNotEqual(label.cget("wraplength"), 396)   # nicht nur Hauptrunde
+        self.assertLessEqual(view.inner.winfo_reqwidth(), 400)
+        self.assertEqual(view._fit_overflow, 0)
 
 
 class PlanWaechstTest(unittest.TestCase):
