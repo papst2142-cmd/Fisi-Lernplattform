@@ -395,9 +395,14 @@ def punkte_text(wert):
     deutsches Komma, ",0" entfaellt ("50"). Gerechnet mit Decimal aus der
     kuerzesten Darstellung der Zahl, damit kein Gleitkomma-Rest kippt;
     Reste wie 49,99999999999999 (aus Summen) vorher auf 9 Stellen runden
-    (wie _abrunden)."""
-    zahl = Decimal(repr(round(float(wert), 9))).quantize(Decimal("0.1"),
-                                                         rounding=ROUND_FLOOR)
+    (wie _abrunden). Nacharbeit L2: -0,0 ergibt "0"; unendlich oder keine
+    Zahl (inf, nan) ergibt "-" wie andere leere Werte, statt abzustuerzen."""
+    wert = float(wert)
+    if not math.isfinite(wert):
+        return "-"
+    zahl = Decimal(repr(round(wert, 9))).quantize(Decimal("0.1"), rounding=ROUND_FLOOR)
+    if zahl.is_zero():
+        zahl = abs(zahl)     # -0,0 (auch -1e-12) -> "0", nicht "-0"
     text = format(zahl, "f").replace(".", ",")
     return text[:-2] if text.endswith(",0") else text
 
