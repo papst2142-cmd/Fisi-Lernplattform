@@ -3456,15 +3456,21 @@ def _fit_prose(line, zeichen):
     """Ab 0.63.2 (A5, "(Nibble):" / "/44 ..."): Ein Satz mit Doppelpunkt
     ("An der ... (Nibble): /44 = 4.096 Subnetze. In der") ist keine Zeile
     "Beschriftung : Wert": vor dem Doppelpunkt stehen mindestens vier Woerter
-    und kein Leerzeichen, und die Zeile hat keine Spalten. Er bricht wie ein
-    Satz um, damit Beschriftung und Wert in einer Zeile bleiben, wenn sie
-    zusammen passen. None, wenn das keine solche Zeile ist oder nicht einmal
-    die Beschriftung mit dem ersten Wort des Wertes passt (dann Regel F-8 b:
-    "Beschriftung:" und darunter der Wert)."""
+    und kein Leerzeichen, die Beschriftung endet auf "(Nibble)", der Wert
+    beginnt mit einer Praefixlaenge ("/44"), und die Zeile hat keine
+    Spalten. Er bricht wie ein Satz um, damit Beschriftung und Wert in einer
+    Zeile bleiben, wenn sie zusammen passen. Nur dieser Fall (Plan 0.63.2,
+    3.6); fuer alle anderen Zeilen gilt Regel F-8 b unveraendert
+    (Gegenpruefung S1a M1, F17 (a)). None, wenn das
+    keine solche Zeile ist oder nicht einmal die Beschriftung mit dem ersten
+    Wort des Wertes passt (dann Regel F-8 b: "Beschriftung:" und darunter
+    der Wert)."""
     pos = line.find(": ")
     if pos <= 0 or line[pos - 1] == " " or "  " in line.strip():
         return None
     if len(line[:pos].split()) < 4:
+        return None
+    if not line[:pos].endswith("(Nibble)") or not re.match(r"/[0-9]", line[pos + 2:]):
         return None
     if " " not in line[pos + 2:].strip():
         return None
