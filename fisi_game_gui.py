@@ -2148,6 +2148,11 @@ class TabCache:
         self._tab_base = None
         self._parked = []           # vorgebaute Reiter (ab 0.56, prepare_tab)
 
+    # Ab 0.63.2 (B-N-01): Meldung, wenn ein Reiter nicht aufgebaut werden kann
+    TAB_ERROR_TITLE = "Reiter nicht geöffnet"
+    TAB_ERROR_TEXT = ("Der Reiter „%s“ ließ sich wegen eines Programmfehlers nicht "
+                      "öffnen. Der Fehler steht in fehler.log.")
+
     def _tab_build(self, build):
         outer = self.content
         body = _frame(outer)
@@ -2155,10 +2160,47 @@ class TabCache:
         self.content = body
         try:
             build()
+        except Exception as exc:
+            # Ab 0.63.2 (B-N-01): den halb gebauten Inhalt nicht stehen lassen
+            # (er lag sonst ueber jedem anderen Reiter). Beim Vorladen meldet
+            # der Vorlader selbst (fehler.log, still), sonst Meldung und
+            # zurueck auf den zuletzt funktionierenden Reiter.
+            self.content = outer
+            body.destroy()
+            if getattr(self.app, "preloading", False):
+                raise
+            self._tab_failed(build, (type(exc), exc, exc.__traceback__))
+            return
         finally:
             self.content = outer
         self._tab_body = body
         self._tab_frames[self.tab] = (self._render_key(), body)
+        self._tab_ok = self.tab
+
+    def _tab_failed(self, build, exc_info):
+        """Ab 0.63.2 (B-N-01): Fehler wie jeden unerwarteten Fehler melden
+        (report_callback_exception: fehler.log), dazu ein Fenster. Reiterzeile
+        und Inhalt zeigen danach wieder den zuletzt funktionierenden Reiter."""
+        failed = self.tab
+        names = dict(self._tab_list())
+        self._tab_frames.pop(failed, None)
+        self.app.root.report_callback_exception(*exc_info)
+        messagebox.showerror(self.TAB_ERROR_TITLE,
+                             self.TAB_ERROR_TEXT % names.get(failed, failed))
+        back = getattr(self, "_tab_ok", None)
+        if back is None or back == failed or back not in names:
+            return
+        self.tab = back
+        cached = self._tab_frames.get(back)
+        if cached is not None and cached[1].winfo_exists():
+            cached[1].pack(fill="x")
+            self._tab_body = cached[1]
+        else:
+            self._tab_build(build)
+        row = getattr(self, "_tab_row", None)
+        if row is not None and row.value != self.tab:
+            row.value = self.tab
+            row._paint()
 
     def _tabs_done(self):
         self._tab_base = _base_key(self._render_key())
@@ -2258,7 +2300,9 @@ class TabCache:
             self._tab_build(build)
         # Ab 0.62.3: ein vorgebauter Reiter liegt unter der Hintergrundflaeche
         # (prepare_tab legt ihn mit lower() nach unten) - nach vorn holen
-        self._tab_body.lift()
+        # Ab 0.63.2 (B-N-01): nach einem Fehler im Aufbau kann der Rahmen fehlen
+        if self._tab_body is not None and self._tab_body.winfo_exists():
+            self._tab_body.lift()
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()

@@ -210,5 +210,180 @@ class TicketListeTest(unittest.TestCase):
         self.assertEqual(report["pages"], [])
 
 
+# ============================================================================
+#  B-N-01: Fehler beim Aufbau eines Reiters
+# ============================================================================
+
+def _texts(widget, out=None):
+    import tkinter
+    import customtkinter as ctk
+    out = [] if out is None else out
+    for child in widget.winfo_children():
+        if isinstance(child, tkinter.Label) and isinstance(child.master, ctk.CTkBaseClass):
+            continue   # innerer Label eines CTkLabel (Text sonst doppelt)
+        try:
+            out.append(str(child.cget("text")))
+        except Exception:   # noqa: BLE001 - Rahmen ohne Text
+            pass
+        _texts(child, out)
+    return out
+
+
+class ReiterFehlerTest(AppCase):
+    profile = True
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        super().setUp()
+        import fisi_game_gui
+        self.gui = fisi_game_gui
+        self.shown = []
+        self._saved_showerror = fisi_game_gui.messagebox.showerror
+        fisi_game_gui.messagebox.showerror = lambda title, text, **_k: self.shown.append(
+            (title, text))
+        self.stop_preloader()
+        self.app.slot_chosen = True
+
+    def tearDown(self):
+        self.gui.messagebox.showerror = self._saved_showerror
+        super().tearDown()
+
+    def _click(self, row, key):
+        # wie ein echter Klick: ueber die Ereignisschleife (Fehler landen dann
+        # in report_callback_exception, nicht im Test)
+        self.root.after(0, lambda: row.select(key))
+        self.pump(0.3)
+
+    def _packed(self, view):
+        return [child for child in view.content.winfo_children()
+                if child.winfo_manager() == "pack"]
+
+    def _broken(self, view, name):
+        original = getattr(type(view), name)
+
+        def broken(self_, *args, **kwargs):
+            original(self_, *args, **kwargs)
+            raise RuntimeError("kuenstlicher Fehler im Reiter")
+        setattr(view, name, lambda *a, **k: broken(view, *a, **k))
+        return lambda: delattr(view, name)
+
+    def test_reise_klick_auf_kaputten_reiter(self):
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        self.assertEqual(view.tab, "rueckblick")
+        good = view._tab_body
+        before = self._packed(view)
+        # "Erfolge" baut die Bestwerte (halb gebaut) und scheitert dann
+        restore = self._broken(view, "_build_records")
+        self._click(view._tab_row, "erfolge")
+        # Meldung: Fenster und report_callback_exception (fehler.log)
+        self.assertEqual(len(self.shown), 1, self.shown)
+        self.assertEqual(self.shown[0][0], self.gui.TabCache.TAB_ERROR_TITLE)
+        self.assertIn("„Erfolge“", self.shown[0][1])
+        self.assertEqual(len(self.errors), 1)
+        self.assertIn("kuenstlicher Fehler", self.errors[0])
+        # Zurueck auf dem funktionierenden Reiter, nichts Halbes sichtbar
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        self.assertEqual(self._packed(view), before)
+        self.assertTrue(good.winfo_ismapped())
+        self.assertNotIn("BESTWERTE", _texts(view.content))
+        self.assertNotIn("erfolge", view._tab_frames)
+        # Ohne Fehler geht der Reiter danach wieder auf
+        restore()
+        self._click(view._tab_row, "erfolge")
+        self.assertEqual(view.tab, "erfolge")
+        self.assertIn("BESTWERTE", _texts(view._tab_body))
+        self.assertEqual(len(self._packed(view)), len(before))
+        self.assertEqual(len(self.shown), 1)
+        self.assertEqual(len(self.errors), 1)
+
+    def test_reise_neuaufbau_mit_kaputtem_reiter(self):
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        normal = len(self._packed(view))
+        restore = self._broken(view, "_build_records")
+        view.tab = "erfolge"
+        self.root.after(0, view.render)
+        self.pump(0.3)
+        self.assertEqual(len(self.shown), 1)
+        self.assertEqual(len(self.errors), 1)
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        self.assertEqual(len(self._packed(view)), normal)
+        self.assertTrue(view._tab_body.winfo_ismapped())
+        self.assertNotIn("BESTWERTE", _texts(view.content))
+        restore()
+
+
+class FirmaReiterFehlerTest(ReiterFehlerTest):
+    """Wie ReiterFehlerTest, aber mit gegruendeter Firma (alle Reiter)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import traceback
+        from test_reiter_sichtbar import _firma_spielstand
+        self.folder = tempfile.mkdtemp(prefix="fisi reiterfehler ")
+        os.environ["FISI_DB_PATH"] = os.path.join(self.folder, "test.db")
+        os.environ["FISI_SELFTEST"] = os.path.join(self.folder, "log.txt")  # kein Netz
+        os.environ["HOME"] = self.folder
+        import customtkinter as ctk
+        import app_gui
+        import fisi_game_gui
+        import fisi_widgets
+        self.app_gui = app_gui
+        fisi_widgets.FoldCard._open_state.clear()
+        fisi_widgets._PHOTO_CACHE.clear()
+        fisi_widgets._IMAGE_CACHE.clear()
+        _firma_spielstand(os.environ["FISI_DB_PATH"])
+        app_gui.apply_appearance()
+        self.errors = []
+        self.root = ctk.CTk()
+        self.root.report_callback_exception = lambda *exc: self.errors.append(
+            "".join(traceback.format_exception(*exc)))
+        self.app = app_gui.FISIApp(self.root)
+        self.root.geometry("1360x900+0+0")
+        self.pump(0.2)
+        self.gui = fisi_game_gui
+        self.shown = []
+        self._saved_showerror = fisi_game_gui.messagebox.showerror
+        fisi_game_gui.messagebox.showerror = lambda title, text, **_k: self.shown.append(
+            (title, text))
+        self.stop_preloader()
+        self.app.slot_chosen = True
+
+    # die Reise-Tests laufen schon in ReiterFehlerTest
+    test_reise_klick_auf_kaputten_reiter = None
+    test_reise_neuaufbau_mit_kaputtem_reiter = None
+
+    def test_firma_klick_auf_kaputten_reiter(self):
+        view = self.app.views["firma"]
+        self.app.show_view("firma")
+        self.pump(0.3)
+        tabs = [key for key, _name in self.gui.fg.firm_tabs(view.game.state)]
+        self.assertGreater(len(tabs), 1, tabs)
+        first = view.tab
+        names = dict(self.gui.fg.firm_tabs(view.game.state))
+        good = view._tab_body
+        before = self._packed(view)
+        for other in [key for key in tabs if key != first]:
+            restore = self._broken(view, "_build_" + other)
+            self._click(view._tab_row, other)
+            self.assertIn("„%s“" % names[other], self.shown[-1][1])
+            self.assertEqual(view.tab, first, other)
+            self.assertEqual(view._tab_row.value, first, other)
+            self.assertEqual(self._packed(view), before, other)
+            self.assertTrue(good.winfo_ismapped(), other)
+            restore()
+        self.assertEqual(len(self.shown), len(tabs) - 1, self.shown)
+        self.assertEqual(len(self.errors), len(tabs) - 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
