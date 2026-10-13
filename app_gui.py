@@ -392,10 +392,32 @@ def bind_click(widgets, callback):
         make_focusable(widgets[0], lambda: callback(None))
 
 
+class FramedOptionMenu(ctk.CTkOptionMenu):
+    """Ab 0.63.2 (B-D-11): Aufklappliste mit 1 px Rahmen in C["field_border"].
+    CTkOptionMenu kennt keinen Rahmen; die Zeichenhilfe von CustomTkinter
+    kann ihn aber (border_parts), wie bei CTkButton. Im hellen Modus hob sich
+    die Liste vorher kaum von der Karte ab (card_alt/card 1,1:1)."""
+
+    def _draw(self, no_color_updates=False):
+        super()._draw(no_color_updates)
+        try:
+            self._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                self._apply_widget_scaling(self._current_width),
+                self._apply_widget_scaling(self._current_height),
+                self._apply_widget_scaling(self._corner_radius),
+                self._apply_widget_scaling(1),
+                self._apply_widget_scaling(self._current_width - self._current_height))
+            self._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                    fill=C["field_border"])
+            self._canvas.tag_lower("border_parts")
+        except (tk.TclError, AttributeError):
+            pass    # ohne Rahmen wie bis 0.63.1
+
+
 def option_menu(parent, values, command=None, width=None):
     """Aufklappliste im Stil der Filter (z.B. Thema)."""
     options = {} if width is None else {"width": width}
-    menu = ctk.CTkOptionMenu(
+    menu = FramedOptionMenu(
         parent, values=values, command=command,
         height=32, corner_radius=10, dynamic_resizing=False,
         fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -499,7 +521,7 @@ class PagedList:
         for key, label, values in filters:
             make_label(parent, label, font=F["label"], fg=C["muted"]).pack(
                 anchor="w", pady=(10, 4))
-            menu = ctk.CTkOptionMenu(
+            menu = FramedOptionMenu(   # ab 0.63.2 (B-D-11) mit Rahmen
                 parent, values=values, command=lambda _v: self.refresh(),
                 height=32, corner_radius=10, dynamic_resizing=False,
                 fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -5530,7 +5552,7 @@ class SettingsView(View):
         ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
                       variable=self.var_auto, command=self._toggle_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         # Ab 0.59 (8b): Desktop-Verknuepfung, nur unter Linux
@@ -5703,7 +5725,7 @@ class SettingsView(View):
             ctk.CTkSwitch(goal.body, text=text, variable=var,
                           command=lambda k=key: self._save_goal(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         row = transparent_frame(goal.body)
@@ -5746,7 +5768,7 @@ class SettingsView(View):
             ctk.CTkSwitch(plan.body, text=text, variable=var,
                           command=lambda k=key: self._save_rp(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         make_label(plan.body, frp.WEIGHT_OPTION_HINT, font=F["tiny"], fg=C["muted"],
@@ -5802,7 +5824,7 @@ class SettingsView(View):
                                       "Lernen und beim Beenden)",
                       variable=self.var_sync_auto, command=self._toggle_sync_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         make_label(sync.body,
@@ -5961,7 +5983,7 @@ class SettingsView(View):
         ctk.CTkSwitch(body, text=fle.SWITCH, variable=self.var_perf,
                       command=self._toggle_perf,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(12, 0))
         self.lbl_perf = make_label(body, "", font=F["small"], fg=C["muted"],
@@ -7312,7 +7334,7 @@ class TourOverlay(tk.Frame):
                 value=self.draft["abschnitte"][section])
             switch = ctk.CTkSwitch(form, text=frp.SECTION_OPTION_TEXT[section], variable=var,
                                    font=F["small"], text_color=C["text_dim"],
-                                   fg_color=C["card_alt"], progress_color=C["violet"],
+                                   fg_color=C["field_border"], progress_color=C["violet"],
                                    button_color=C["text"], button_hover_color="#FFFFFF")
             switch.pack(anchor="w", pady=(6, 0))
             switches.append(switch)
