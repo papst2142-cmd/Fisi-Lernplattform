@@ -2681,6 +2681,214 @@ class ScrollArea(tk.Frame):
 
 
 # ============================================================================
+#  AB 0.63.2 (D2): ZEILEN, DIE BEI ZU WENIG BREITE UMBRECHEN
+# ============================================================================
+
+class FlowRow:
+    """Ab 0.63.2 (D2, grosse Schrift): Zeile aus Knoepfen, Auswahllisten,
+    Feldern und Beschriftungen, die mit pack(side="left"/"right")
+    nebeneinander liegen. Reicht die Breite (fit(room), echte Pixel) fuer
+    alle Teile nebeneinander, bleibt die Zeile genau wie gepackt (das
+    abgenommene Aussehen). Sonst:
+    * ein Feld, das die Zeile fuellt (fill="x"), wird schmaler, hoechstens
+      bis SHRINK_MIN (logische px) - dann bleibt alles in einer Zeile;
+    * reicht auch das nicht, verteilen sich die Teile in der sichtbaren
+      Reihenfolge (links -> rechts) auf mehrere Zeilen: erste Zeile so voll
+      wie moeglich, Abstand wie vorher (mindestens 8 px), Zeilenabstand
+      8 px. Links gepackte Teile bleiben links-, rechts gepackte
+      rechtsbuendig; die rechts gepackten bleiben beisammen (eigene Zeile,
+      wenn sie nicht mehr daneben passen). Ein fuellendes Feld fuellt den
+      Rest seiner Zeile.
+    Es entstehen keine neuen Elemente; nur die Lage aendert sich (place
+    statt pack, wie PillGroup(umbrechen=True)). Die Entscheidung haengt nur
+    von room und den gewuenschten Breiten der Teile ab, nie von der Lage
+    selbst (keine Schleife)."""
+
+    GAP = 8            # logische px, Mindestabstand und Zeilenabstand
+    SHRINK_MIN = 240   # logische px, so schmal darf ein fuellendes Feld werden
+
+    def __init__(self, frame):
+        self.frame = frame
+        self.items = None      # [(widget, pack_info)] in Packreihenfolge
+        self.wrapped = False
+        self.shape = None
+        self.room = None
+        self._relayout_pending = False
+        frame._fisi_flow = self
+
+    @classmethod
+    def of(cls, frame):
+        """Die FlowRow eines Rahmens (wird beim ersten Mal angelegt)."""
+        return frame.__dict__.get("_fisi_flow") or cls(frame)
+
+    def _capture(self):
+        if not self.wrapped:
+            self.items = []
+            for widget in self.frame.pack_slaves():
+                info = widget.pack_info()
+                info.pop("in", None)
+                self.items.append((widget, info))
+        return self.items
+
+    @staticmethod
+    def _pad(info):
+        padx = info.get("padx", 0)
+        if isinstance(padx, (tuple, list)):
+            return int(padx[0]), int(padx[-1])
+        return int(padx), int(padx)
+
+    @staticmethod
+    def _fills(info):
+        return info.get("fill") in ("x", "both")
+
+    def _need(self, widget, info):
+        """Kleinste Breite eines Teils (fuellende Felder: SHRINK_MIN)."""
+        width = widget.winfo_reqwidth()
+        if self._fills(info):
+            return min(width, px(self.SHRINK_MIN))
+        return width
+
+    def natural_width(self):
+        """Breite (echte Pixel), die alle Teile nebeneinander brauchen."""
+        return sum(widget.winfo_reqwidth() + sum(self._pad(info))
+                   for widget, info in self._capture())
+
+    def min_width(self):
+        """Breite des breitesten Teils (je Teil eine eigene Zeile)."""
+        return max([self._need(widget, info) for widget, info in self._capture()] or [0])
+
+    def _space(self, info_before, info):
+        return max(px(self.GAP), self._pad(info_before)[1], self._pad(info)[0])
+
+    def _width(self, line):
+        width = 0
+        for index, (widget, info) in enumerate(line):
+            if index:
+                width += self._space(line[index - 1][1], info)
+            width += self._need(widget, info)
+        return width
+
+    def _plan(self, room):
+        """Zeilen (Listen von (widget, pack_info)) fuer die Breite room."""
+        items = self._capture()
+        left = [item for item in items if item[1].get("side") != "right"]
+        right = [item for item in items if item[1].get("side") == "right"][::-1]
+        lines, line = [], []
+        for item in left:
+            if line and self._width(line + [item]) > room:
+                lines.append(line)
+                line = []
+            line.append(item)
+        if right:
+            if line and self._width(line + right) > room:
+                lines.append(line)
+                line = []
+            for item in right:
+                if line and self._width(line + [item]) > room:
+                    lines.append(line)
+                    line = []
+                line.append(item)
+        if line:
+            lines.append(line)
+        return lines
+
+    def fit(self, room):
+        """Nebeneinander, wenn alles in room passt, sonst schmaler bzw.
+        umbrechen. True, wenn sich die Anordnung geaendert hat."""
+        try:
+            if not self._capture():
+                return False
+            self.room = room
+            if self.natural_width() <= room:
+                return self._unwrap()
+            return self._wrap(self._plan(room), room)
+        except tk.TclError:
+            return False
+
+    def _child_resized(self, _event=None):
+        """Ein Teil hat seine Groesse geaendert (z. B. neuer Knopftext): im
+        umgebrochenen Zustand neu verteilen (place folgt nicht von selbst)."""
+        if self.wrapped and not self._relayout_pending:
+            self._relayout_pending = True
+            self.frame.after_idle(self._relayout)
+
+    def _relayout(self):
+        self._relayout_pending = False
+        if self.wrapped and self.room is not None:
+            self.shape = None
+            self.fit(self.room)
+
+    def _unwrap(self):
+        if not self.wrapped:
+            return False
+        for widget, _info in self.items:
+            tk.Place.place_forget(widget)
+        for widget, info in self.items:
+            # tk.Pack direkt: pack_info liefert schon Bildschirmpixel
+            tk.Pack.pack_configure(widget, in_=self.frame, **info)
+        self.wrapped = False
+        self.shape = None
+        return True
+
+    def _wrap(self, lines, room):
+        shape = ([[str(widget) for widget, _info in line] for line in lines], room)
+        if self.wrapped and shape == self.shape:
+            return False
+        if not self.wrapped:
+            for widget, _info in self.items:
+                tk.Pack.pack_forget(widget)
+                if "_fisi_flow_bound" not in widget.__dict__:
+                    widget._fisi_flow_bound = True
+                    tk.Misc.bind(widget, "<Configure>", self._child_resized, "+")
+        y = 0
+        widest = 1
+        for line in lines:
+            height = max(widget.winfo_reqheight() for widget, _info in line)
+            right = [item for item in line if item[1].get("side") == "right"]
+            left = line[:len(line) - len(right)]
+            # rechts gepackte Teile rechtsbuendig (wie vorher)
+            offset = 0
+            for index, (widget, info) in enumerate(reversed(right)):
+                if index:
+                    offset += self._space(info, right[len(right) - index][1])
+                tk.Place.place_configure(
+                    widget, relx=1.0, x=-offset, anchor="ne", relwidth="", width="",
+                    y=y + (height - widget.winfo_reqheight()) // 2)
+                offset += widget.winfo_reqwidth()
+            right_part = offset + (self._space(left[-1][1], right[0][1])
+                                   if left and right else 0)
+            x = 0
+            for index, (widget, info) in enumerate(left):
+                if index:
+                    x += self._space(left[index - 1][1], info)
+                # tk.Place direkt: x/y sind schon Bildschirmpixel
+                options = dict(x=x, y=y + (height - widget.winfo_reqheight()) // 2,
+                               relx=0.0, anchor="nw", relwidth="", width="")
+                rest = sum(self._need(*item) + self._space(left[i][1], item[1])
+                           for i, item in enumerate(left[index + 1:], start=index))
+                if self._fills(info):
+                    # fuellt den Rest der Zeile (bis zu den folgenden Teilen)
+                    options.update(relwidth=1.0, width=-(x + rest + right_part))
+                    x += max(self._need(widget, info),
+                             min(widget.winfo_reqwidth(), room - x - rest - right_part))
+                else:
+                    x += widget.winfo_reqwidth()
+                tk.Place.place_configure(widget, **options)
+            widest = max(widest, x + right_part)
+            y += height + px(self.GAP)
+        frame = self.frame
+        scale = getattr(frame, "_reverse_widget_scaling", None)
+        width, height = widest, max(1, y - px(self.GAP))
+        if scale is not None:
+            frame.configure(width=scale(float(width)), height=scale(float(height)))
+        else:
+            frame.configure(width=width, height=height)
+        self.wrapped = True
+        self.shape = shape
+        return True
+
+
+# ============================================================================
 #  KLEINE HILFSBAUSTEINE
 # ============================================================================
 
