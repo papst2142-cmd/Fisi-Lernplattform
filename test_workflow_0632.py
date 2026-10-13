@@ -193,7 +193,9 @@ class IbusTeilTest(unittest.TestCase):
 
     def test_werkzeuge_fuer_ibus(self):
         schritt = "\n".join(_schritt(_lesen(BUILD), "Werkzeuge fuer die Tests"))
-        self.assertIn("sudo apt-get install -y ibus dbus-x11", schritt)
+        # Ab FG-90: python3-tk fuer den Diagnose-Versuch mit System-Python;
+        # ganze Zeile pruefen (vorher nur der Anfang "... ibus dbus-x11")
+        self.assertIn("\n            sudo apt-get install -y ibus dbus-x11 python3-tk\n", schritt + "\n")
 
     def test_ci_tests_kennt_teil_ibus(self):
         text = _lesen(CI_TESTS)

@@ -128,6 +128,147 @@ for DATEI in $DATEIEN; do
   fi
 done
 
+# Ab 0.63.2 (FG-90, dritter IBus-Diagnose-Lauf): nur Diagnose, erst NACH den
+# Tests. Kein -e, kein Abbruch: jeder Rueckgabewert wird nur ausgegeben, ROT
+# und der Exit-Code am Ende kommen allein aus den Tests oben.
+# Zeitgrenzen je Versuch (timeout): (1) Python pruefen 30 s, venv 120 s,
+# Pakete 600 s, Test 180 s; (2) 30 s + 180 s; (3) 90 s; dazu je 10 s
+# Nachfrist (-k 10). Das sind hoechstens rund 22 min zusaetzlich; der Teil
+# selbst braucht bisher rund 1 min, die 30 min des Jobs reichen also.
+# Erwartete Zusatzdauer: rund 2 min (Pakete laden, 2 x Nachstellung je rund
+# 25 s, Versuch 3 rund 5 s; im Container ohne Versuch 1 gemessen: rund 30 s).
+# Ausgaben gehen erst in eine Datei und werden dann mit "~" fuer das
+# Heimatverzeichnis gezeigt.
+if [ "$TEIL" = "ibus" ]; then
+  echo "::group::Diagnose, ohne Einfluss auf das Ergebnis"
+  DIAG=$(mktemp -d /tmp/fg90.XXXXXX)
+  zeige() { sed "s#$HOME#~#g" "$1"; }
+  echo "Heimatverzeichnis: $HOME" | sed "s#$HOME#~#g"
+  echo "Bedeutung: OK = Tk haengt ohne Umgehung (wie im Container);"
+  echo "           FAIL 'True is not false' = Tk haengt nicht (wie bisher auf GitHub)"
+
+  echo "--- Versuch 1: System-Python /usr/bin/python3 mit python3-tk, eigene venv"
+  timeout -k 10 30 /usr/bin/python3 -c "import sys, tkinter; print('System-Python', sys.version.split()[0], 'Tk', tkinter.Tcl().eval('info patchlevel'))" > "$DIAG/1a.log" 2>&1
+  RC1=$?
+  echo "Rueckgabe Python/Tk pruefen: $RC1"; zeige "$DIAG/1a.log"
+  if [ "$RC1" -ne 0 ]; then
+    echo "Versuch 1 endet hier: System-Python ohne tkinter (python3-tk fehlt?)"
+  else
+    # --without-pip: braucht kein ensurepip, also kein Paket python3.12-venv;
+    # die Pakete installiert das pip des normalen Python in die venv (--python)
+    timeout -k 10 120 /usr/bin/python3 -m venv --without-pip "$DIAG/venv" > "$DIAG/1b.log" 2>&1
+    echo "Rueckgabe venv anlegen: $?"; zeige "$DIAG/1b.log"
+    timeout -k 10 600 "$PY" -m pip --python "$DIAG/venv/bin/python" install -q \
+      -r requirements.txt psutil > "$DIAG/1c.log" 2>&1
+    echo "Rueckgabe Pakete: $?"; tail -n 20 "$DIAG/1c.log" | sed "s#$HOME#~#g"
+    timeout -k 10 180 "$DIAG/venv/bin/python" test_eingabe.py \
+      NachstellungTest.test_ohne_umgehung_haengt_tk > "$DIAG/1d.log" 2>&1
+    echo "Rueckgabe Test ohne Umgehung (System-Python): $?"
+    tail -n 25 "$DIAG/1d.log" | sed "s#$HOME#~#g"
+  fi
+
+  # Hinweis: Bei leerem LANG setzt Python 3.12 selbst LC_CTYPE=C.UTF-8 (PEP 538)
+  # und gibt das an das Tk-Fenster weiter; die Zeile "LC_CTYPE" zeigt das.
+  echo "--- Versuch 2: normales Python ohne LD_LIBRARY_PATH, LANG leer"
+  timeout -k 10 30 env -u LD_LIBRARY_PATH LANG= "$PY" -c "import sys, locale; print('Python', sys.version.split()[0], 'LC_CTYPE', locale.setlocale(locale.LC_CTYPE, ''))" > "$DIAG/2a.log" 2>&1
+  echo "Rueckgabe Python-Start: $?"; zeige "$DIAG/2a.log"
+  timeout -k 10 180 env -u LD_LIBRARY_PATH LANG= "$PY" test_eingabe.py \
+    NachstellungTest.test_ohne_umgehung_haengt_tk > "$DIAG/2b.log" 2>&1
+  echo "Rueckgabe Test ohne Umgehung (ohne LD_LIBRARY_PATH, LANG leer): $?"
+  tail -n 25 "$DIAG/2b.log" | sed "s#$HOME#~#g"
+
+  echo "--- Versuch 3: IBus-Prozesse und Bus der Fensteranbindung (ibus-x11)"
+  timeout -k 10 90 "$PY" - > "$DIAG/3.log" 2>&1 <<'BUS'
+import glob, os, re, shutil, signal, subprocess, time
+
+def prozesse():
+    liste = []
+    for d in glob.glob("/proc/[0-9]*"):
+        try:
+            name = open(d + "/comm").read().strip()
+            argv = open(d + "/cmdline", "rb").read().split(b"\0")
+            stat = open(d + "/stat").read().rsplit(")", 1)[1].split()
+        except OSError:
+            continue
+        if "ibus" in name or "dbus" in name:
+            args = [os.path.basename(a.decode(errors="replace")) if i == 0
+                    else a.decode(errors="replace") for i, a in enumerate(argv) if a]
+            liste.append((int(d[6:]), name, stat[0], int(stat[2]), " ".join(args) or name))
+    return sorted(liste)
+
+def zeigen(titel):
+    print(titel)
+    for pid, name, zustand, gruppe, args in prozesse():
+        print("  pid %d Gruppe %d Zustand %s  %s" % (pid, gruppe, zustand, args))
+
+zeigen("IBus/DBus-Prozesse vor dem Start:")
+env = dict(os.environ)
+aus = subprocess.run(["dbus-launch", "--sh-syntax"], capture_output=True, text=True).stdout
+for key, value in re.findall(r"(DBUS_SESSION_BUS_\w+)='?([^';]+)'?;", aus):
+    env[key] = value
+daemon = subprocess.Popen(["ibus-daemon", "--xim", "--replace"], env=env,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                          process_group=0)
+try:
+    for _ in range(150):
+        if "@server=ibus" in subprocess.run(["xprop", "-root", "XIM_SERVERS"],
+                                            capture_output=True, text=True).stdout:
+            break
+        time.sleep(0.1)
+    print("ibus-daemon pid %d, XIM-Server da: %s" % (daemon.pid, "@server=ibus" in subprocess.run(
+        ["xprop", "-root", "XIM_SERVERS"], capture_output=True, text=True).stdout))
+    zeigen("IBus/DBus-Prozesse mit eigenem ibus-daemon:")
+    x11 = [p for p in prozesse() if p[1] == "ibus-x11" and p[2] != "Z"]
+    for pid, *_ in x11:
+        try:
+            umg = dict(z.split("=", 1) for z in open("/proc/%d/environ" % pid).read().split("\0") if "=" in z)
+        except OSError as fehler:
+            umg = {}
+            print("ibus-x11 pid %d: Umgebung nicht lesbar (%s)" % (pid, fehler))
+        for key in ("IBUS_ADDRESS", "DBUS_SESSION_BUS_ADDRESS", "DISPLAY"):
+            print("ibus-x11 pid %d %s=%s" % (pid, key, umg.get(key, "(nicht gesetzt)")))
+    print("Sitzungsbus dieses Versuchs:", env.get("DBUS_SESSION_BUS_ADDRESS"))
+    for datei in sorted(glob.glob(os.path.expanduser("~/.config/ibus/bus/*"))):
+        inhalt = [z for z in open(datei).read().splitlines() if z.startswith("IBUS_")]
+        print("Bus-Datei", datei, "->", "; ".join(inhalt))
+    if shutil.which("ss"):
+        try:
+            zeilen = subprocess.run(["ss", "-xpn"], capture_output=True,
+                                    text=True).stdout.splitlines()[1:]
+            knoten = {}
+            for z in zeilen:
+                t = z.split()
+                if len(t) < 8:
+                    continue
+                m = re.search(r'\(\("([^"]+)",pid=(\d+)', z)
+                knoten[t[5]] = (t[4], t[7], m.group(1) if m else "?",
+                                int(m.group(2)) if m else 0)
+            for inode, (pfad, gegen, name, pid) in sorted(knoten.items()):
+                if name == "ibus-x11":
+                    g = knoten.get(gegen, ("?", "?", "(unbekannt)", 0))
+                    print("ibus-x11 pid %d verbunden mit %s pid %d %s" % (pid, g[2], g[3], g[0]))
+        except Exception as fehler:
+            print("ss nicht auswertbar:", type(fehler).__name__, fehler)
+    else:
+        print("ss fehlt: Verbindungen von ibus-x11 nicht ermittelt")
+    os.kill(daemon.pid, signal.SIGSTOP)
+    time.sleep(1)
+    zeigen("Zustand nach SIGSTOP des eigenen ibus-daemon (T = angehalten):")
+finally:
+    os.kill(daemon.pid, signal.SIGCONT)
+    subprocess.run(["pkill", "-g", str(daemon.pid), "-x", "ibus-x11"], check=False)
+    daemon.terminate()
+    try:
+        daemon.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        daemon.kill()
+    if env.get("DBUS_SESSION_BUS_PID"):
+        os.kill(int(env["DBUS_SESSION_BUS_PID"]), signal.SIGTERM)
+BUS
+  echo "Rueckgabe Versuch 3: $?"; zeige "$DIAG/3.log"
+  echo "::endgroup::"
+fi
+
 echo "Teil $TEIL: zusammen ${ZUSAMMEN} s"
 if [ -n "$ROT" ]; then
   echo "Rote Testdateien:$ROT"
