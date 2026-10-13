@@ -4418,15 +4418,13 @@ class SubnetCalc:
                   kind="accent").pack(anchor="w")
         # Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Die Kaesten brechen selbst um
         # (fit_lines, _fit_box); wrap="none", damit Tabellen Tabellen bleiben
-        if key == "netzdaten" and mode == "ipv4":
-            box = make_text(frame, height=9, readonly=True, font=F["mono_small"],
-                            wrap="none")
-        else:
-            # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
-            # um; der Kasten waechst mit, statt Zeilen zu verstecken
-            box = make_autogrow_text(frame, min_height=9, max_height=40,
-                                     font=F["mono_small"], wrap="none")
-            box.configure(state="disabled")
+        # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
+        # um; der Kasten waechst mit, statt Zeilen zu verstecken. Ab 0.63.2
+        # (A7) auch die IPv4-Netzdaten: 9 feste Zeilen zeigten die letzte
+        # Zeile ("Präfixlänge") nur teilweise bzw. erst nach Rollen
+        box = make_autogrow_text(frame, min_height=9, max_height=40,
+                                 font=F["mono_small"], wrap="none")
+        box.configure(state="disabled")
         box.pack(fill="both", expand=True, pady=(14, 0))
         self._fit_box(box)
         view["box"] = box
