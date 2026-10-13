@@ -2763,10 +2763,14 @@ class FitWidth:
 
     @staticmethod
     def _fit_gridded(item):
-        """Grid-Angaben eines Teils so, wie sie beim Einordnen angegeben waren."""
+        """Grid-Angaben eines Teils so, wie sie beim Einordnen angegeben waren
+        (CustomTkinter merkt sich den Aufruf als super().grid, dessen Name
+        grid_configure ist, und rechnet Abstaende beim Einordnen selbst um;
+        grid_info() liefert dagegen echte px, die CustomTkinter beim erneuten
+        Einordnen noch einmal umrechnen wuerde)."""
         call = item.__dict__.get("_last_geometry_manager_call")
         if call and call.get("function") is not None and \
-                getattr(call["function"], "__name__", "") == "grid" and \
+                getattr(call["function"], "__name__", "") in ("grid", "grid_configure") and \
                 call.get("kwargs") is not None:
             return dict(call["kwargs"])
         info = dict(item.grid_info())
