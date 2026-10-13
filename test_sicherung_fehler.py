@@ -218,10 +218,11 @@ class KernTest(Base):
 
     def test_b_g_08_warntext_nennt_eigene_loeschungen(self):
         # Ab 0.63.2 (FG-81, nur zusammen mit B-G-08): volle neue Saetze statt
-        # Teilstuecke. Endfassung (Antwort Meldung 35 B.2, Saetze 2, 3, 4 und 6
-        # gegenueber Meldung 31 B.3 geaendert): jeder Satz ist in
+        # Teilstuecke. Endfassung (Weisung zu Meldung 37, Abschnitt 3: Satz 6
+        # neu gefasst, Satz 7 zu Spielstaenden/Projekten neu; die anderen
+        # Saetze wie Antwort Meldung 35 B.2): jeder Satz ist in
         # test_abgleich_0632.py BG08Ersetzen per Verhaltenstest belegt (Liste:
-        # bau_0.63.2/s6b/texte_endfassung/ergebnis.md)
+        # bau_0.63.2/s6b/texte_m37/ergebnis.md)
         backup = self.backup_of(self.learned(self.db()))
         text = fs.replace_question(backup)
         erster, zweiter = text.split("\n\n")
@@ -247,10 +248,13 @@ class KernTest(Base):
             "erhalten, wenn es sich erst nach dem Ersetzen wieder abgleicht und alle deine "
             "Geräte schon beim Ersetzen mindestens Version 0.63.2 hatten. "
             "Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt gelöscht. "
-            "Löschungen, die erst nach der letzten Löschung auf diesem Gerät kamen und die "
-            "es noch nicht kennt, gelten weiter; eine unbekannte frühere Löschung derselben "
-            "Art (zum Beispiel ebenfalls „Alle Lerndaten löschen“) eines anderen Geräts "
-            "wird dagegen aufgehoben. "
+            "Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, gelten "
+            "weiter – außer sie kamen vor der letzten Löschung derselben Art, die dieses "
+            "Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ oder "
+            "beide „Bestenliste löschen“); solche werden aufgehoben. "
+            "Bei Spielständen und Projekten ist das anders: Ein zurückgesetzter oder "
+            "gelöschter Spielstand und ein gelöschtes Projekt bleiben gelöscht, wenn die "
+            "Löschung von einem anderen Gerät kam oder schon abgeglichen war. "
             "Bewahre die Sicherungsdatei deshalb auf."))
         self.assertNotIn("ist nach dem nächsten Abgleich wieder weg", text)
         # die beiden Saetze der ersten Fassung, die gp_s6b_nacharbeit (M1, M2) widerlegt hat
@@ -269,6 +273,17 @@ class KernTest(Base):
         self.assertNotIn("sobald alle deine Geräte mindestens Version 0.63.2 haben", text)
         self.assertNotIn("alle deine Geräte mindestens Version 0.63.2 haben", text)
         self.assertEqual(text.count("schon beim Ersetzen mindestens Version 0.63.2 hatten"), 2)
+        # Fassung von dd0c2a0 (Antwort Meldung 35 B.2), Satz 6: von f2g "nach"
+        # (Bauer) und gp_meldung_37 (S1, S2, S1b, S2b: Spielstaende/Projekte)
+        # widerlegt; ersetzt durch Weisung zu Meldung 37, Abschnitt 3
+        self.assertNotIn("Löschungen, die erst nach der letzten Löschung auf diesem Gerät",
+                         text)
+        self.assertNotIn("kamen und die es noch nicht kennt, gelten weiter", text)
+        self.assertNotIn("eine unbekannte frühere Löschung derselben Art", text)
+        self.assertNotIn("(zum Beispiel ebenfalls „Alle Lerndaten löschen“)", text)
+        self.assertNotIn("wird dagegen aufgehoben", text)
+        self.assertEqual(zweiter.count(". "), 7)          # 8 Saetze
+        self.assertEqual(text.count("beide „"), 3)
 
     def test_b_g_11_volle_platte_keine_leere_sicherheitskopie(self):
         target = self.learned(self.db(), tag="alt")

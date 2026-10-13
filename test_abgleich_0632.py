@@ -35,7 +35,7 @@ Abgleich-Kern 0.63.2 (Plan 0.63.2, Bauauftrag S6a; Teilplan S6 1.1, 1.7, 1.8, 2)
           loeschen": Der naechste Abgleich loescht den eingespielten Stand
           nicht mehr (Feld "aufgehoben"); BG08Kern im Testprozess,
           BG08Ersetzen mit Geraeten inkl. T-b/T-c und Geraet v0.63.1.
-  FG-81/  (S6b, Antwort Meldung 31 und 35) Verhaltenstests je Satz der Texte vor
+  FG-81/  (S6b, Antwort Meldung 31, 35 und 37) Verhaltenstests je Satz der Texte vor
   FG-92   "Alles ersetzen" und "Zusammenfuehren" (test_fg81_*, test_fg92_*).
 
 Geraete wie in test_abgleich.py (eigene Prozesse, Attrappe der GitHub-API,
@@ -1560,6 +1560,367 @@ class BG08Ersetzen(unittest.TestCase):
             self.assertEqual(verlauf(device), {}, device.name)
         self.assertTrue(ta.datei()["markers"].get("reset_at"))
         self.assertNotIn("reset_at", ta.datei().get("aufgehoben") or {})
+        self.stabil([a, b])
+
+    # ------------------------------------------------------------ FG-81 Weisung zu Meldung 37
+    # Satz 6 neu ("Loeschungen eines anderen Geraets, die dieses Geraet noch
+    # nicht kennt, gelten weiter - ausser sie kamen vor der letzten Loeschung
+    # derselben Art, die dieses Geraet kennt ...; solche werden aufgehoben.")
+    # und Satz 7 neu ("Bei Spielstaenden und Projekten ist das anders: ...
+    # bleiben geloescht, wenn die Loeschung von einem anderen Geraet kam oder
+    # schon abgeglichen war."). Einer je Ablauf; Vorlagen: s6b/texte_endfassung
+    # skripte/zusatz_ablaeufe.py f2g, gp_meldung_37 skripte/ablaeufe_m37.py
+    # S1-S5, S1b, S2b; neuer Fall: s6b/texte_m37 skripte/neuer_fall.py.
+    # Ohne Uhrverstellung. Satz 6 ausserdem: f2b, f2c, f2e, f2f (oben).
+    def _f2g(self, variante):
+        """f2g: A kennt eine spaetere Loeschung "Alle Lerndaten" von C (t2),
+        nicht die von B (t1); As eigene letzte Loeschung ist "Historie
+        loeschen" (tA). vor: t1 < t2 < tA; nach: tA < t1 < t2; ohne_c: tA <
+        t1, ohne C (A kennt keine Loeschung dieser Art). Liefert Marken und
+        Endstaende (Karten, Verlauf) von A, B, C."""
+        a = self.voll("A")
+        b = self.voll("B", tz="UTC")
+        c = self.voll("C", tz="Asia/Tokyo")
+        a("lerne", 2, "vorher")
+        a("fuelle", "vl")
+        b("lerne", 2, "vorher")
+        b("fuelle", "vl")
+        c("lerne", 2, "vorher")
+        self.alle_sync([a, b, c], 2)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        if variante in ("nach", "ohne_c"):
+            self.assertTrue(a("clear_history")["ok"])    # tA, ohne Abgleich
+            ta.pause()
+        b("lerne", 1, "zw")
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])            # t1, A kennt das nicht
+        b.sync()
+        ta.pause()
+        stand = {"t1": b.marke(), "t2": None}
+        if variante != "ohne_c":
+            c.sync()
+            ta.pause()
+            c("lerne", 1, "zw")
+            ta.pause()
+            self.assertTrue(c("reset_all")["ok"])        # t2, spaeter
+            c.sync()
+            ta.pause()
+            stand["t2"] = c.marke()
+            a.sync()                                     # A kennt t2 (nicht t1)
+            ta.pause()
+        if variante == "vor":
+            self.assertTrue(a("clear_history")["ok"])    # tA nach t2
+            ta.pause()
+        stand["reset_at_A"] = a.marke()
+        stand["tA"] = a.marke("history_cleared_at")
+        a("sicherung_ersetzen", self.pfad(a))
+        stand["A_direkt"] = a.namen()
+        self.alle_sync([a, b, c], 3)
+        stand["karten"] = {d.name: d.namen() for d in (a, b, c)}
+        stand["verlauf"] = {d.name: verlauf(d) for d in (a, b, c)}
+        stand["aufgehoben_A"] = {k: v for k, v in a("meta")["meta"].items()
+                                 if k.startswith("aufgehoben:")}
+        stand["geraete"] = (a, b, c)
+        return stand
+
+    _F2G_ALLES = {"a-vorher": 2, "a-vl": 1, "b-vorher": 2, "b-vl": 1, "c-vorher": 2}
+
+    def _vor(self, frueher, spaeter):
+        # Zeitpunkt in UTC (Marken der Geraete in verschiedenen Zeitzonen)
+        self.assertLess(fisi_sync.parse_marker(frueher)[1], fisi_sync.parse_marker(spaeter)[1],
+                        (frueher, spaeter))
+
+    def test_fg81_satz6_f2g_vor_bekannte_spaetere_gleicher_art_hebt_frueher_auf(self):
+        """FG-81 Satz 6 (Weisung zu Meldung 37), f2g "vor", alle 0.63.2:
+        t1 (B, unbekannt) < t2 (C, bekannt) < tA (A "Historie loeschen"). t1
+        kam vor der letzten Loeschung derselben Art, die A kennt (t2) -> wird
+        aufgehoben: Karten und Verlauf aus der Sicherung bleiben auf A, B, C."""
+        stand = self._f2g("vor")
+        bericht("FG-81 f2g vor: %s" % {k: v for k, v in stand.items() if k != "geraete"})
+        self._vor(stand["t1"], stand["t2"])
+        self._vor(stand["t2"], stand["tA"])
+        self.assertEqual(stand["reset_at_A"], stand["t2"])
+        self.assertEqual(stand["A_direkt"], self._F2G_ALLES)
+        for name in "ABC":
+            self.assertEqual(stand["karten"][name], self._F2G_ALLES, name)
+            self.assertEqual(stand["verlauf"][name], {"a-vl": 1, "b-vl": 1}, name)
+        self.assertIn("aufgehoben:reset_at", stand["aufgehoben_A"])
+        self.stabil(list(stand["geraete"]))
+
+    def test_fg81_satz6_f2g_nach_unbekannte_nach_eigener_loeschung_aufgehoben(self):
+        """FG-81 Satz 6 (Weisung zu Meldung 37), f2g "nach", alle 0.63.2:
+        tA (A "Historie loeschen") < t1 (B, unbekannt) < t2 (C, bekannt). t1
+        kam nach As eigener Loeschung, aber vor der letzten Loeschung
+        derselben Art, die A kennt (t2) -> wird aufgehoben (die Fassung von
+        dd0c2a0 sagte hier "gelten weiter")."""
+        stand = self._f2g("nach")
+        bericht("FG-81 f2g nach: %s" % {k: v for k, v in stand.items() if k != "geraete"})
+        self._vor(stand["tA"], stand["t1"])
+        self._vor(stand["t1"], stand["t2"])
+        self.assertEqual(stand["reset_at_A"], stand["t2"])
+        self.assertEqual(stand["A_direkt"], self._F2G_ALLES)
+        for name in "ABC":
+            self.assertEqual(stand["karten"][name], self._F2G_ALLES, name)
+            self.assertEqual(stand["verlauf"][name], {"a-vl": 1, "b-vl": 1}, name)
+        self.assertIn("aufgehoben:reset_at", stand["aufgehoben_A"])
+        self.stabil(list(stand["geraete"]))
+
+    def test_fg81_satz6_f2g_ohne_c_keine_bekannte_gleicher_art_gilt_weiter(self):
+        """FG-81 Satz 6 (Weisung zu Meldung 37), f2g "ohne C", alle 0.63.2:
+        tA (A "Historie loeschen") < t1 (B "Alle Lerndaten", unbekannt); A
+        kennt keine Loeschung dieser Art -> t1 gilt weiter: Karten und Verlauf
+        sind auf A, B, C weg, "reset_at" wird nicht aufgehoben."""
+        stand = self._f2g("ohne_c")
+        bericht("FG-81 f2g ohne C: %s" % {k: v for k, v in stand.items() if k != "geraete"})
+        self._vor(stand["tA"], stand["t1"])
+        self.assertFalse(stand["reset_at_A"])
+        self.assertEqual(stand["A_direkt"], self._F2G_ALLES)
+        for name in "ABC":
+            self.assertEqual(stand["karten"][name], {}, name)
+            self.assertEqual(stand["verlauf"][name], {}, name)
+        self.assertNotIn("aufgehoben:reset_at", stand["aufgehoben_A"])
+        self.assertEqual(ta.datei()["markers"].get("reset_at"), stand["t1"])
+        self.stabil(list(stand["geraete"]))
+
+    def test_fg81_satz6_s3_bestenliste_unbekannte_fruehere_aufgehoben(self):
+        """FG-81 Satz 6 (beide "Bestenliste loeschen"), gp_meldung_37 S3,
+        alle 0.63.2: B loescht die Bestenliste (t1, A kennt es nicht), A
+        loescht sie spaeter selbst (tA) und ersetzt -> t1 wird aufgehoben, der
+        Eintrag aus der Sicherung bleibt auf A und B."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("bestenliste", "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("reset_records")["ok"])        # t1, A kennt das nicht
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("reset_records")["ok"])        # tA, spaeter, ohne Abgleich
+        ta.pause()
+        t1, ta_ = b.marke("bestenliste_reset_at"), a.marke("bestenliste_reset_at")
+        self._vor(t1, ta_)
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a("bestenzahl")["besten"], ["a-vorher"])
+        self.alle_sync([a, b], 3)
+        bericht("FG-81 S3 Bestenliste: A %s, B %s, Feld %s"
+                % (a("bestenzahl")["besten"], b("bestenzahl")["besten"],
+                   ta.datei().get("aufgehoben")))
+        for device in (a, b):
+            self.assertEqual(device("bestenzahl")["besten"], ["a-vorher"], device.name)
+        self.assertIn("bestenliste_reset_at", ta.datei().get("aufgehoben") or {})
+        self.stabil([a, b])
+
+    def test_fg81_satz6_s4_mehrere_fremde_spaetere_gilt_weiter(self):
+        """FG-81 Satz 6, mehrere fremde Loeschungen, gp_meldung_37 S4, alle
+        0.63.2: B "Alle Lerndaten" (t1) < A selbst (tA) < C (t3); A kennt weder
+        t1 noch t3. t1 kam vor As Loeschung derselben Art (aufgehoben), t3
+        danach und unbekannt -> gilt weiter: alles von vor t3 ist auf A, B, C
+        weg, Cs Eintrag danach bleibt."""
+        a, b, c = self.voll("A"), self.voll("B", tz="UTC"), self.voll("C", tz="Asia/Tokyo")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b, c, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        b("lerne", 1, "zw")
+        self.assertTrue(b("reset_all")["ok"])            # t1
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])            # tA, ohne Abgleich
+        ta.pause()
+        c.sync()
+        c("lerne", 1, "zw")
+        ta.pause()
+        self.assertTrue(c("reset_all")["ok"])            # t3
+        c.sync()
+        ta.pause()
+        c("lerne", 1, "nach")
+        c.sync()
+        ta.pause()
+        t3 = c.marke()
+        self._vor(a.marke(), t3)
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a.namen(), {"a-vorher": 2})
+        self.alle_sync([a, b, c], 3)
+        bericht("FG-81 S4: %s, Datei %s" % ({d.name: d.namen() for d in (a, b, c)},
+                                            ta.datei().get("markers")))
+        for device in (a, b, c):
+            self.assertEqual(device.namen(), {"c-nach": 1}, device.name)
+        self.assertEqual(ta.datei()["markers"].get("reset_at"), t3)
+        self.stabil([a, b, c])
+
+    def test_fg81_satz6_s5_mehrere_fremde_beide_frueher_aufgehoben(self):
+        """FG-81 Satz 6, mehrere fremde Loeschungen, gp_meldung_37 S5, alle
+        0.63.2: B (t1) < C (t2) < A selbst (tA), alle "Alle Lerndaten"; A
+        kennt weder t1 noch t2 -> beide aufgehoben, das Eingespielte bleibt
+        auf A, B, C."""
+        a, b, c = self.voll("A"), self.voll("B", tz="UTC"), self.voll("C", tz="Asia/Tokyo")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b, c, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])            # t1
+        b.sync()
+        ta.pause()
+        c.sync()
+        self.assertTrue(c("reset_all")["ok"])            # t2
+        c.sync()
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])            # tA, ohne Abgleich
+        ta.pause()
+        self._vor(c.marke(), a.marke())
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, b, c], 3)
+        for device in (a, b, c):
+            self.assertEqual(device.namen(), {"a-vorher": 2}, device.name)
+        self.assertEqual(sorted(ta.datei().get("aufgehoben", {})), ["reset_at"])
+        self.stabil([a, b, c])
+
+    def _spiel_projekt_start(self):
+        """A mit Spielstaenden lx, ly (je 3 Ereignisse), Projekten p1, p2 und
+        2 Karten; A und B gleichen ab; A erstellt eine Sicherung."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("spiel_anlegen", 1, "lx", 3)
+        a("spiel_anlegen", 2, "ly", 3)
+        a("projekt_anlegen", "p1")
+        a("projekt_anlegen", "p2")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        self.assertEqual(b("spielzahl")["spiel"], {"lx": 3, "ly": 3})
+        self.assertEqual(b("projekte")["projekte"], ["p1", "p2"])
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        return a, b
+
+    def _ende(self, a, b):
+        return {d.name: {"spiel": d("spielzahl")["spiel"], "projekte": d("projekte")["projekte"],
+                         "karten": d.namen()} for d in (a, b)}
+
+    def test_fg81_satz7_s1_spielstand_anderes_geraet_bleibt_geloescht(self):
+        """FG-81 Satz 7 (Weisung zu Meldung 37), gp_meldung_37 S1, alle
+        0.63.2: B setzt Spielstand lx zurueck (delete_run, wie "Spielstand
+        zuruecksetzen") und gleicht ab, A kennt das nicht; A loescht danach
+        ly selbst (ohne Abgleich) und ersetzt -> lx bleibt auf A und B
+        geloescht (keine Aufhebung, anders als Satz 6), ly kommt zurueck
+        (eigene, nicht abgeglichene Loeschung)."""
+        a, b = self._spiel_projekt_start()
+        self.assertTrue(b("spiel_loeschen", 1, "lx")["ok"])
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("spiel_loeschen", 2, "ly")["ok"])
+        ta.pause()
+        self.assertEqual(a("spielzahl")["spiel"], {"lx": 3})
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a("spielzahl")["spiel"], {"lx": 3, "ly": 3})
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 S1 Spielstand: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["spiel"], {"ly": 3}, name)
+            self.assertEqual(ende[name]["karten"], {"a-vorher": 2}, name)
+        self.stabil([a, b])
+
+    def test_fg81_satz7_s2_projekt_anderes_geraet_bleibt_geloescht(self):
+        """FG-81 Satz 7 (Weisung zu Meldung 37), gp_meldung_37 S2, alle
+        0.63.2: B loescht Projekt p1 und gleicht ab, A kennt das nicht; A
+        loescht danach p2 selbst (ohne Abgleich) und ersetzt -> p1 bleibt auf
+        A und B geloescht, p2 kommt zurueck."""
+        a, b = self._spiel_projekt_start()
+        b("projekt_loeschen", "p1")
+        b.sync()
+        ta.pause()
+        a("projekt_loeschen", "p2")
+        ta.pause()
+        self.assertEqual(a("projekte")["projekte"], ["p1"])
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a("projekte")["projekte"], ["p1", "p2"])
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 S2 Projekt: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["projekte"], ["p2"], name)
+        self.stabil([a, b])
+
+    def test_fg81_satz7_s1b_spielstand_schon_abgeglichen_bleibt_geloescht(self):
+        """FG-81 Satz 7 (grenzt Satz 2 ein), gp_meldung_37 S1b, alle 0.63.2:
+        A setzt Spielstand ly zurueck und gleicht ab (bekannte, abgeglichene
+        Loeschung); A ersetzt -> direkt danach ist ly da, nach dem Abgleich
+        auf A und B wieder weg (bleibt geloescht); die Karten bleiben."""
+        a, b = self._spiel_projekt_start()
+        self.assertTrue(a("spiel_loeschen", 2, "ly")["ok"])
+        a.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a("spielzahl")["spiel"], {"lx": 3, "ly": 3})
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 S1b Spielstand: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["spiel"], {"lx": 3}, name)
+            self.assertEqual(ende[name]["karten"], {"a-vorher": 2}, name)
+        self.stabil([a, b])
+
+    def test_fg81_satz7_s2b_projekt_schon_abgeglichen_bleibt_geloescht(self):
+        """FG-81 Satz 7 (grenzt Satz 2 ein), gp_meldung_37 S2b, alle 0.63.2:
+        A loescht Projekt p2 und gleicht ab; A ersetzt -> direkt danach ist
+        p2 da, nach dem Abgleich auf A und B wieder weg."""
+        a, b = self._spiel_projekt_start()
+        a("projekt_loeschen", "p2")
+        a.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a("projekte")["projekte"], ["p1", "p2"])
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 S2b Projekt: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["projekte"], ["p1"], name)
+        self.stabil([a, b])
+
+    def test_fg81_satz7_neu_spielstand_anderes_geraet_offline_gleicht_nach_dem_ersetzen_ab(self):
+        """FG-81 Satz 7, Pflicht-Beleg Weisung zu Meldung 37 Abschnitt 2, alle
+        0.63.2: B setzt Spielstand lx OHNE Verbindung zurueck; A ersetzt und
+        gleicht ab (lx noch da); B gleicht erst danach ab -> lx bleibt auf A
+        und B geloescht."""
+        a, b = self._spiel_projekt_start()
+        self.assertTrue(b("spiel_loeschen", 1, "lx")["ok"])     # ohne Verbindung
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.assertEqual(a("spielzahl")["spiel"], {"lx": 3, "ly": 3})
+        ta.pause()
+        b.sync()                                                # erst nach dem Ersetzen
+        self.assertEqual(b("spielzahl")["spiel"], {"ly": 3})
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 neuer Fall Spielstand: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["spiel"], {"ly": 3}, name)
+            self.assertEqual(ende[name]["projekte"], ["p1", "p2"], name)
+            self.assertEqual(ende[name]["karten"], {"a-vorher": 2}, name)
+        self.stabil([a, b])
+
+    def test_fg81_satz7_neu_projekt_anderes_geraet_offline_gleicht_nach_dem_ersetzen_ab(self):
+        """FG-81 Satz 7, Pflicht-Beleg Weisung zu Meldung 37 Abschnitt 2, alle
+        0.63.2: B loescht Projekt p1 OHNE Verbindung; A ersetzt und gleicht ab
+        (p1 noch da); B gleicht erst danach ab -> p1 bleibt auf A und B
+        geloescht."""
+        a, b = self._spiel_projekt_start()
+        b("projekt_loeschen", "p1")                             # ohne Verbindung
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.assertEqual(a("projekte")["projekte"], ["p1", "p2"])
+        ta.pause()
+        b.sync()                                                # erst nach dem Ersetzen
+        self.assertEqual(b("projekte")["projekte"], ["p2"])
+        self.alle_sync([a, b], 3)
+        ende = self._ende(a, b)
+        bericht("FG-81 neuer Fall Projekt: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name]["projekte"], ["p2"], name)
+            self.assertEqual(ende[name]["spiel"], {"lx": 3, "ly": 3}, name)
+            self.assertEqual(ende[name]["karten"], {"a-vorher": 2}, name)
         self.stabil([a, b])
 
     def _f9_bis_zum_ersetzen(self):
