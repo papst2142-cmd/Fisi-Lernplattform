@@ -56,6 +56,48 @@ if [ "$(uname -s)" = "Linux" ] && [ -z "${DISPLAY:-}" ]; then
   trap 'kill $XVFB 2>/dev/null' EXIT
 fi
 
+# Ab 0.63.2 (CI-Befund ibus, nur Diagnose): Werkzeugstand fuer den Teil
+# "ibus" ausgeben. Keine Zugangsdaten, kein Pfad einer virtuellen Umgebung;
+# das Heimatverzeichnis erscheint als "~". Bricht nichts ab (kein -e).
+# "useinputmethods" zeigt, ob Tk Eingabemethoden eingeschaltet hat (ohne IBus
+# gemessen), nicht ob Tk im Test eine oeffnet. ldd zeigt, womit _tkinter
+# verknuepft ist, nicht was geladen wird.
+if [ "$TEIL" = "ibus" ]; then
+  echo "::group::Diagnose ibus"
+  echo "LANG=${LANG:-} LC_ALL=${LC_ALL:-} LC_CTYPE=${LC_CTYPE:-}"
+  ibus version 2>&1 | head -1
+  "$PY" - <<'DIAG' 2>&1 | sed "s#$HOME#~#g"
+import os, subprocess, sys, locale, tkinter, _tkinter
+print("python", sys.version.split()[0], "Basis", sys.base_prefix)
+print("locale", locale.setlocale(locale.LC_CTYPE, ""), locale.getpreferredencoding(False))
+print("tk", tkinter.Tcl().eval("info patchlevel"), _tkinter.__file__)
+for zeile in subprocess.run(["ldd", _tkinter.__file__], capture_output=True,
+                            text=True).stdout.splitlines():
+    if any(n in zeile for n in ("libtk", "libtcl", "libX11")):
+        print("  verknuepft:", zeile.strip())
+root = tkinter.Tk()
+print("tk useinputmethods (eingeschaltet, ohne IBus gemessen)",
+      root.tk.call("tk", "useinputmethods"))
+root.destroy()
+DIAG
+  # Gibt es ein System-Python mit Tk? (nur Befund, der Test laeuft mit $PY)
+  if [ -x /usr/bin/python3 ]; then
+    echo "System-Python: /usr/bin/python3 -> $(readlink -f /usr/bin/python3)"
+    /usr/bin/python3 - <<'SYSPY' 2>&1 | sed "s#$HOME#~#g"
+import sys
+print("System-Python Version", sys.version.split()[0])
+try:
+    import tkinter
+    print("System-Python import tkinter: ja, Tk", tkinter.Tcl().eval("info patchlevel"))
+except Exception as fehler:
+    print("System-Python import tkinter: nein,", type(fehler).__name__, fehler)
+SYSPY
+  else
+    echo "System-Python: /usr/bin/python3 fehlt"
+  fi
+  echo "::endgroup::"
+fi
+
 ROT=""
 ZUSAMMEN=0
 for DATEI in $DATEIEN; do
