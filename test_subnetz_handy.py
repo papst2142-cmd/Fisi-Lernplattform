@@ -621,9 +621,12 @@ class SchnittstelleTest(unittest.TestCase):
         for made in ergebnis:
             self.assertEqual(boxes[id(made)].get("fit", False), handy.UI_FIT)
             self.assertTrue(boxes[id(made)].get("scroll"))
-        # Rechenwege und Aufgaben bleiben ohne fit (Test 6)
+        # Ab 0.63.2 (A3, Meldung S2c, FG-Antrag): Rechenwege setzen sich wie
+        # die Ergebnisse auf die Breite (sonst bei Sehr gross abgeschnitten),
+        # bleiben aber wischbar (Test 6); Aufgaben bleiben ohne fit
         for panel in screen.subnet_panels.values():
-            self.assertNotIn("fit", boxes[id(panel["explain"][1])])
+            self.assertEqual(boxes[id(panel["explain"][1])].get("fit", False), handy.UI_FIT)
+            self.assertTrue(boxes[id(panel["explain"][1])].get("scroll"))
         self.assertNotIn("fit", boxes[id(screen.out_ups_task)])
         umbrechend = [screen.raid_pills, screen.depth_pills, screen.mode_pills,
                       *screen.view_pills.values()]
