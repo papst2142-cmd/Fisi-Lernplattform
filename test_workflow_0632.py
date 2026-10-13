@@ -927,6 +927,19 @@ class BytecodeTest(unittest.TestCase):
             ["a/__pycache__/b.cpython-314.pyc", "__pycache__/c.cpython-312.pyc",
              "d.cpython-312.pyc"])
 
+    def test_bytecode_reste_jede_regel_einzeln(self):
+        # GP N10 L3 (Mutation G5): jede der drei Erkennungen allein wirksam -
+        # __pycache__-Eintraege ohne Python-Kennung (Ordner, andere Endung)
+        # und Kennung ausserhalb von __pycache__
+        modul = self._apk_pruefen()
+        for name in ("__pycache__/", "__pycache__/x.pyc", "a/__pycache__/",
+                     "a/__pycache__/b.opt-1.pyc", "d.cpython-312.pyc"):
+            self.assertEqual(modul.bytecode_reste([name, "main.pyc", "e.py"]), [name], name)
+        fehler, zeilen = self._check(["main.pyc", "fisi_rechtliches.pyc", "LICENSE.txt",
+                                      "THIRD_PARTY_NOTICES.txt", "__pycache__/x.pyc"])
+        self.assertEqual(len(fehler), 1, fehler)
+        self.assertIn("Bytecode-Reste (__pycache__) in app.zip: 1", zeilen)
+
 
 # ============================================================================
 #  N10: B-M-02  Wiederholung nur innerhalb von Netz-Schritten
