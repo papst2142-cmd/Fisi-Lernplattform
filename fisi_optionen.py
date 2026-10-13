@@ -73,6 +73,21 @@ ABOUT_ID = "ueber"
 SAVE_FAILED_TITLE = "Speichern fehlgeschlagen"
 SAVE_FAILED = ("Die Einstellung ließ sich nicht speichern. Ist der Datenordner "
                "schreibgeschützt oder die Platte voll? Die bisherige Einstellung gilt weiter.")
+# Ab 0.63.2 (B-G-16): ein Text fuer "Alle Lerndaten löschen" an PC und Handy.
+# Geloescht werden alle Tabellen aus fisi_core.EVENT_TABLES; das
+# Abschlussprojekt, die Einstellungen und der Spielstand nicht. Das Wissen im
+# Spiel wird aus Karteikarten und Pruefungsfragen berechnet (fisi_game.knowledge)
+RESET_ALL_TEXT = ("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                  "Klausursimulationen, Karteikarten-Verlauf, Antworten im "
+                  "Prüfungstrainer, Aufgaben im Subnetting-Trainer und bearbeitete "
+                  "Szenarien und Testprojekte. Erhalten bleiben das Abschlussprojekt, "
+                  "deine Einstellungen (z. B. das Tagesziel) und der Spielstand des "
+                  "Lernspiels; das Wissen im Spiel beginnt aber wieder bei 0. Mit "
+                  "eingerichtetem Abgleich gilt das Zurücksetzen auf allen abgeglichenen "
+                  "Geräten. Dieser Schritt lässt sich nicht rückgängig machen.")
+# Ab 0.63.2 (B-D-12): Rueckmeldung nach "Historie löschen" (PC und Handy)
+DELETE_HISTORY_DONE = "Die Historie wurde gelöscht."
+DELETE_NOTHING = "Es wurde nichts gelöscht."
 SECTIONS = {
     OPTIK_ID: [{"id": "schrift", "titel": fisi_theme.FONT_TITLE},
                {"id": "farben", "titel": COLORS_TITLE}],

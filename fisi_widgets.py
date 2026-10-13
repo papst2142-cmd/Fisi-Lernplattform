@@ -864,6 +864,7 @@ class IconButton(tk.Canvas):
         self.press_color = press_color
         self._hover = False
         self._pressed = False
+        self._enabled = True     # ab 0.63.2 (Z6): set_enabled
         self._photos = {}
         super().__init__(parent, width=px(size), height=px(size),
                          bg=self.parent_bg, highlightthickness=0, bd=0,
@@ -876,13 +877,27 @@ class IconButton(tk.Canvas):
         self._draw()
 
     def _on_key(self):
-        if self.command:
+        if self.command and self._enabled:
             self.command()
 
     def _on_press(self, _event=None):
+        if not self._enabled:
+            return
         self._set_pressed(True)
         if self.command:
             self.command()
+
+    def set_enabled(self, flag):
+        """Ab 0.63.2 (Z6): Gesperrt (z.B. Blaettern auf der ersten Seite) ist
+        das Symbol blass, ein Klick wirkt nicht und Tab ueberspringt den
+        Knopf - wie NeoButton.set_enabled."""
+        flag = bool(flag)
+        if flag == self._enabled:
+            return
+        self._enabled = flag
+        self.configure(cursor="hand2" if flag else "arrow")
+        set_takefocus(self, flag)
+        self._draw()
 
     def _set_pressed(self, flag):
         if self.press_color:
@@ -898,13 +913,15 @@ class IconButton(tk.Canvas):
     def _draw(self):
         self.delete("all")
         size = px(self.size)
-        fill = C["card_hi"] if self._hover else C["card_alt"]
+        fill = C["card_hi"] if self._hover and self._enabled else C["card_alt"]
         photo = self._photos.get(fill)
         if photo is None:
             photo = tk_photo(circle_image(self.size, fill=fill), size, size)
             self._photos[fill] = photo
         self.create_image(size / 2, size / 2, image=photo)
-        if self._pressed:
+        if not self._enabled:
+            icon_color = C["muted"]
+        elif self._pressed:
             icon_color = self.press_color
         elif self._hover:
             icon_color = C["accent"]
@@ -1387,7 +1404,8 @@ class MiniRing(tk.Canvas):
                            C["ring_bg"])
         self._photo = tk_photo(image, size, size)
         self.create_image(size / 2, size / 2, image=self._photo)
-        self.create_text(size / 2, size / 2, text="%d%%" % round(self._pct),
+        # Ab 0.63.2 (B-D-07): "0 %" mit geschuetztem Leerzeichen
+        self.create_text(size / 2, size / 2, text="%d\u00a0%%" % round(self._pct),
                          fill=C["text"], font=tk_font(F["small_bold"]))
 
 
@@ -2200,7 +2218,7 @@ class CalendarPanel(ctk.CTkFrame):
                     self.canvas.create_image(cx, cy, image=self._circle(
                         diameter, outline=C["accent"], outline_width=2))
                 if active:
-                    color = "#12071F"
+                    color = C["card"]   # ab 0.63.2 (B-J-03): >= 4,5:1 auf Lila
                 elif col >= 5:
                     color = C["accent2"]
                 else:
@@ -2256,7 +2274,7 @@ class ThemeTimeline(tk.Canvas):
             photo = tk_photo(image, diameter, diameter)
             self._photos.append(photo)
             self.create_image(cx, ring_cy, image=photo)
-            self.create_text(cx, ring_cy, text="%d%%" % round(pct), fill=C["text"],
+            self.create_text(cx, ring_cy, text="%d\u00a0%%" % round(pct), fill=C["text"],
                              font=tk_font(F["small_bold"]))
             dot = px(12) if pct > 0 else px(10)
             dot_photo = tk_photo(circle_image(
@@ -2782,7 +2800,7 @@ def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
                             padx=6, pady=6, insertofftime=0)
     widget._textbox.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"],
-                              selectforeground="#FFFFFF")
+                              selectforeground=C["card"])   # ab 0.63.2 (B-J-01)
     if readonly:
         widget.configure(state="disabled")
     # Ab 0.56: Tab springt wie in Eingabefeldern zum naechsten Bedienelement
