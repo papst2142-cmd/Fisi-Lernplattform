@@ -88,6 +88,12 @@ def gradient(kind, begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT
 class Card(ft.Container):
     """Abgerundete Karte mit farbigem Strich und Titel in Grossbuchstaben."""
 
+    # Ab 0.63.2 (B-E-05 e): Ab diesem Schriftfaktor (Sehr gross) steht die
+    # Unterschrift unter dem Titel statt daneben (wie bei FoldCard): in der
+    # schmalen rechten Spalte stand sonst oft ein Wort allein in einer Zeile
+    # ("zum", "Linie")
+    STACK_FACTOR = 1.3
+
     def __init__(self, title=None, controls=None, accent=None, subtitle=None,
                  padding=16, spacing=10, expand=None, action=None):
         self.body = ft.Column(controls or [], spacing=spacing, tight=True,
@@ -100,17 +106,22 @@ class Card(ft.Container):
                                      expand=2 if subtitle else None)
         self.title_text = None
         self.tick = None
+        self.stacked = False
         column = [self.body]
         if title:
             accent = accent or C["accent"]
             self.tick = ft.Container(width=4, height=14, border_radius=2, bgcolor=accent)
             self.title_text = ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD,
                                       color=accent, expand=3)
-            header = ft.Row([
-                self.tick, self.title_text,
-                self.subtitle_text,
-            ] + ([action] if action is not None else []),
-                spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+            middle = [self.title_text, self.subtitle_text]
+            self.stacked = FONT_FACTOR[0] >= self.STACK_FACTOR
+            if self.stacked:
+                self.title_text.expand = self.subtitle_text.expand = None
+                self.subtitle_text.text_align = ft.TextAlign.LEFT
+                self.subtitle_text.visible = bool(subtitle)
+                middle = [ft.Column(middle, spacing=2, tight=True, expand=True)]
+            header = ft.Row([self.tick] + middle + ([action] if action is not None else []),
+                            spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             column = [header, self.body]
         super().__init__(
             content=ft.Column(column, spacing=12, tight=True),
@@ -119,7 +130,10 @@ class Card(ft.Container):
 
     def set_subtitle(self, value, color=None):
         self.subtitle_text.value = value
-        self.subtitle_text.expand = 2 if value else None
+        if self.stacked:
+            self.subtitle_text.visible = bool(value)
+        else:
+            self.subtitle_text.expand = 2 if value else None
         self.subtitle_text.color = color or C["muted"]
 
     def set_title(self, value, color=None):
@@ -142,6 +156,7 @@ class FoldCard(Card):
     (reset_states)."""
 
     _open_state = {}
+    ACTION_GAP = 8
 
     def __init__(self, title, controls=None, accent=None, subtitle=None, key=None,
                  opened=False, open_text="aufklappen", close_text="zuklappen",
@@ -183,6 +198,10 @@ class FoldCard(Card):
                                ft.Column([self.title_text, self.subtitle_text], spacing=2,
                                          tight=True, expand=True),
                                header.controls[-1]]
+        # Ab 0.63.2 (B-E-05 c): mehr Luft vor "aufklappen" - bei Sehr gross
+        # stiess ein umbrochener Titel sonst fast an die Aktion
+        header.controls[-1] = ft.Container(content=header.controls[-1],
+                                           padding=ft.Padding.only(left=self.ACTION_GAP))
         # Ab 0.59 (marker): Touch-Ziel mindestens 48 dp - Pfeil 28 + 2 x 10
         self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
                                           border_radius=8, padding=ft.Padding.symmetric(
@@ -588,6 +607,9 @@ class Stepper(ft.Row):
         return self.value
 
 
+HINT_MAX_LINES = 2
+
+
 def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
           max_lines=None, mono=False, keyboard=None, on_change=None, expand=None):
     """Dunkles, abgerundetes Eingabefeld. Bei password=True gibt es ab 0.48
@@ -600,6 +622,9 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
         border_color=C["field_border"], focused_border_color=C["purple"],
         border_radius=12, color=C["text"], cursor_color=C["accent"],
         hint_style=ft.TextStyle(color=C["muted"]),
+        # Ab 0.63.2 (B-E-05 e): ein langer Platzhalter bricht um statt mit "..."
+        # gekuerzt zu werden (Sehr gross)
+        hint_max_lines=HINT_MAX_LINES,
         text_style=ft.TextStyle(font_family=MONO if mono else None, size=fs(14)),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
         expand=expand)
@@ -811,6 +836,20 @@ def dot(color, size=9):
 #  BANNER, RINGE, BALKEN
 # ============================================================================
 
+def keep_last_words(value):
+    """Ab 0.63.2 (B-E-05 e): Das letzte Wort bleibt mit dem Wort davor in einer
+    Zeile (geschuetztes Leerzeichen), ein Zeichen wie "%" dazu mit seiner Zahl
+    ("0 % richtig") - sonst stand z.B. "richtig" bei Sehr gross allein in der
+    letzten Zeile. Der Wortlaut bleibt gleich."""
+    words = (value or "").split(" ")
+    if len(words) < 3:
+        return value
+    keep = 2
+    while keep < len(words) - 1 and words[-keep] and not words[-keep][0].isalnum():
+        keep += 1
+    return " ".join(words[:-keep]) + " " + "\u00a0".join(words[-keep:])
+
+
 class HeroPanel(ft.Container):
     """Farbverlaufs-Banner oben im Dashboard."""
 
@@ -830,7 +869,7 @@ class HeroPanel(ft.Container):
 
     def set_data(self, title, sub, big, big_sub):
         self.title.value = title
-        self.sub.value = sub
+        self.sub.value = keep_last_words(sub)
         self.big.value = big
         self.big_sub.value = big_sub
 
@@ -838,7 +877,12 @@ class HeroPanel(ft.Container):
 class Ring(ft.Stack):
     """Fortschrittsring mit Farbverlauf und Text in der Mitte."""
 
-    def __init__(self, size=120, thickness=11, big_size=22, small_size=11):
+    def __init__(self, size=120, thickness=11, big_size=22, small_size=11, mitwachsen=True):
+        # Ab 0.63.2 (B-E-05 a): Der Ring waechst mit der Schrift (grow), sonst
+        # ragte der Text in der Mitte bei Sehr gross ueber den Ring. Ohne Text
+        # (Logo in der Kopfzeile) bleibt er mit mitwachsen=False fest.
+        if mitwachsen:
+            size = grow(size)
         self.size = size
         self.thickness = thickness
         self.canvas = cv.Canvas(width=size, height=size)

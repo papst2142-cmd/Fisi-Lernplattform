@@ -129,6 +129,12 @@ def screen_list(controls, spacing=14):
                        padding=ft.Padding.only(left=16, right=16, top=4, bottom=24))
 
 
+# Ab 0.63.2 (B-E-05 d): Kacheln nebeneinander gleich hoch (bricht ein Titel bei
+# Sehr gross in zwei Zeilen um, wuchs sonst nur diese Kachel)
+SAME_HEIGHT = {"intrinsic_height": True,
+               "vertical_alignment": ft.CrossAxisAlignment.STRETCH}
+
+
 def safe_content(content):
     """Ab 0.62.1: Inhalt einer Ansicht mit Abstand zu den Systemleisten von
     Android (Bedienleiste unten, im Querformat auch seitlich). Die App zeichnet
@@ -229,6 +235,9 @@ class DashboardScreen(Screen):
     crumbs = ("DASHBOARD", "HOME")
     DAYS = 14
     ACTIVITIES = 7
+    # Ab 0.63.2 (B-E-05 a): Innenbreite einer Ringkarte ohne Rand bei 384 dp
+    # ((384 - 2 x 16 Seitenrand - 12 Abstand) / 2 - 2 x 1 Rahmen)
+    RING_CARD_INNER = 168
 
     # -- Reinzoom in die Themen eines Fachbereichs --------------------------
 
@@ -290,9 +299,15 @@ class DashboardScreen(Screen):
         self.ring_ap1 = ui.Ring(size=112)
         self.ring_scen = ui.Ring(size=112)
 
+        # Ab 0.63.2 (B-E-05 a): Die Ringe wachsen mit der Schrift (ui.Ring); damit
+        # zwei Karten nebeneinander bei 384 dp Breite passen, wird der Rand
+        # seitlich enger (Normal und Gross unveraendert 14)
+        side = min(14, max(6, (self.RING_CARD_INNER - self.ring_cards.size) // 2))
+
         def ring_card(title, ring):
             return ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
-                           expand=True, padding=14)
+                           expand=True,
+                           padding=ft.Padding.symmetric(horizontal=side, vertical=14))
 
         self.lbl_quote = ui.text("0 %", size=34, color=C["accent"], weight=ft.FontWeight.BOLD)
         self.lbl_quote_sub = ui.text(DASH_QUOTE_EMPTY, size=13, color=C["muted"])
@@ -375,9 +390,9 @@ class DashboardScreen(Screen):
             self.hero,
             self.today_card,
             ft.Row([ring_card(DASH_RING_CARDS, self.ring_cards),
-                    ring_card(DASH_RING_QUIZ, self.ring_quiz)], spacing=12),
+                    ring_card(DASH_RING_QUIZ, self.ring_quiz)], spacing=12, **SAME_HEIGHT),
             ft.Row([ring_card(DASH_RING_AP1, self.ring_ap1),
-                    ring_card(DASH_RING_AP2, self.ring_scen)], spacing=12),
+                    ring_card(DASH_RING_AP2, self.ring_scen)], spacing=12, **SAME_HEIGHT),
             ui.Card(DASH_QUOTE_TITLE, [self.lbl_quote, self.lbl_quote_sub],
                     accent=C["accent2"], subtitle=DASH_QUOTE_SUBTITLE),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
@@ -1739,8 +1754,11 @@ class PagedListBox:
             ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
                           tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-05 f): STRETCH - das Suchfeld endete sonst etwa 40 px
+        # vor dem Kartenrand
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
-                              spacing=10, tight=True)
+                              spacing=10, tight=True,
+                              horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
 
     def _search(self, event):
         self.query = event.control.value or ""
@@ -3353,8 +3371,9 @@ class ProgressScreen(Screen):
             # Ab 0.60 (K-A): drei Kacheln, "Bestes Ergebnis" allein ueber die volle
             # Breite; die Lernserie steht nur noch im Banner der Startseite.
             # Namen wie am PC (vorher "Sessions" und "Bestes")
+            # Ab 0.63.2 (B-E-05 d): beide Kacheln gleich hoch (Sehr gross)
             ft.Row([stat("tests", "Test-Sessions", C["accent"]),
-                    stat("avg", "Durchschnitt", C["purple"])], spacing=12),
+                    stat("avg", "Durchschnitt", C["purple"])], spacing=12, **SAME_HEIGHT),
             ft.Row([stat("best", "Bestes Ergebnis", C["accent2"])], spacing=12),
             ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
                                       ft.Container(height=6),
@@ -5155,20 +5174,30 @@ class FISIMobileApp:
 
     # -- Kopfzeile und Navigation ------------------------------------------
 
+    # Ab 0.63.2 (B-E-05 b): sichtbarer Abstand zum Hilfe-Symbol = CRUMB_GAP +
+    # 12 Innenrand des Knopfs. Bei Sehr gross ragte die Zeile vorher ueber
+    # ihren Platz hinaus (auch "AUSWERTUNG / FORTSCHRITT", gemessen mit Abstand
+    # 0); jetzt bricht sie um
+    CRUMB_WRAP = {"wrap": True, "run_spacing": 1}
+    CRUMB_GAP = 12
+
     def _appbar(self, root, crumbs=None):
         if crumbs:
             title = ft.Row([ft.Text(crumbs[0], size=12, weight=ft.FontWeight.BOLD,
                                     color=C["text"]),
                             ft.Text("/", size=12, color=C["muted"]),
                             ft.Text(crumbs[1], size=12, weight=ft.FontWeight.BOLD,
-                                    color=C["accent"])], spacing=7)
+                                    color=C["accent"])], spacing=7, **self.CRUMB_WRAP)
         else:
             title = ft.Column([ft.Row([self.crumb_main, ft.Text("/", size=12, color=C["muted"]),
-                                       self.crumb_sub], spacing=7),
+                                       self.crumb_sub], spacing=7, **self.CRUMB_WRAP),
                                self.lbl_version], spacing=1, tight=True)
+        # Ab 0.63.2 (B-E-05 b): Abstand rechts vor dem Hilfe-Symbol; die Krumen
+        # brechen bei Sehr gross in die naechste Zeile um statt anzustossen
+        title = ft.Container(content=title, padding=ft.Padding.only(right=self.CRUMB_GAP))
         leading = None
         if root:
-            logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1)
+            logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1, mitwachsen=False)
             logo.set(1.0, C["accent"], C["accent2"])
             logo.controls[1] = ft.Container(content=ui.dot(C["accent2"], 10), width=30,
                                             height=30, alignment=ft.Alignment.CENTER)
