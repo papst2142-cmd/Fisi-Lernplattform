@@ -35,6 +35,8 @@ Abgleich-Kern 0.63.2 (Plan 0.63.2, Bauauftrag S6a; Teilplan S6 1.1, 1.7, 1.8, 2)
           loeschen": Der naechste Abgleich loescht den eingespielten Stand
           nicht mehr (Feld "aufgehoben"); BG08Kern im Testprozess,
           BG08Ersetzen mit Geraeten inkl. T-b/T-c und Geraet v0.63.1.
+  FG-81/  (S6b, Antwort Meldung 31) Verhaltenstests je Satz der Texte vor
+  FG-92   "Alles ersetzen" und "Zusammenfuehren" (test_fg81_*, test_fg92_*).
 
 Geraete wie in test_abgleich.py (eigene Prozesse, Attrappe der GitHub-API,
 Wegwerf-HOME); fuer vollen Inhalt pruefung/abgleich_geraet_voll.py. Der Code
@@ -1172,6 +1174,279 @@ class BG08Ersetzen(unittest.TestCase):
         self.assertEqual(alt, {"A": {}, "C": {}})
         for name in ("A", "C"):
             self.assertEqual(neu[name], {"a-vorher": 2, "c-offline": 3}, name)
+
+    # ------------------------------------------------------------ FG-81 Neufassung / FG-92
+    # Verhaltenstests je Satz der Texte aus der Antwort auf Meldung 31 (B.3
+    # Warntext "Alles ersetzen", B.4 PREVIEW_HINT). Vorlagen: gp_s6b_nacharbeit
+    # skripte/gezielt.py f2b, f2c, f4b, f4c, f5, f6, f7, f9 (Ablaeufe gleich,
+    # Geraete hier mit vollem Lernstand). Zuordnung Satz -> Test:
+    # bau_0.63.2/s6b/ergebnis_texte_fg81_fg92.md. Ohne Uhrverstellung.
+    def _offline_drei(self, codes):
+        """f4b/f4c bis vor den ersten Abgleich von C: A, B, C gleichen ab, A
+        erstellt eine Sicherung, C lernt offline, A loescht alles und gleicht
+        ab, B gleicht ab (kennt die Loeschung), A ersetzt, A und B gleichen
+        ab. codes: Code von A, B, C."""
+        a = self.voll("A", code=codes[0])
+        b = self.voll("B", tz="America/New_York", code=codes[1])
+        c = self.voll("C", tz="UTC", code=codes[2])
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b, c, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        b.sync()
+        self.assertEqual(karten(b, "-vorher"), 0)
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        b.sync()
+        return a, b, c
+
+    def test_fg81_satz4_offline_guenstiger_fall_alle_0632(self):
+        """FG-81 Satz 4, guenstiger Fall (gezielt.py f4b mit NEU, NEU, NEU):
+        Alle Geraete, die die Loeschung kennen (A, B), haben 0.63.2, C gleicht
+        erst nach dem Ersetzen wieder ab -> Cs Offline-Eintraege bleiben auf
+        allen Geraeten erhalten, ebenso das Eingespielte."""
+        a, b, c = self._offline_drei((CODE, CODE, CODE))
+        self.assertIn("aufgehoben", ta.datei())
+        c.sync()
+        self.assertEqual(c.namen(), {"a-vorher": 2, "c-offline": 3})
+        self.alle_sync([c, a, b], 3)
+        for device in (a, b, c):
+            self.assertEqual(device.namen(), {"a-vorher": 2, "c-offline": 3}, device.name)
+        self.stabil([a, b, c])
+
+    def test_fg81_satz4_f4b_altes_geraet_kennt_loeschung(self):
+        """FG-81 Satz 4 (Bedingung "alle Geraete, die die Loeschung kennen,
+        mindestens 0.63.2") und Satz 3, gezielt.py f4b (NEU, ALT, NEU): B mit
+        v0.63.1 kennt die Loeschung und laedt seine Marke ohne das Feld wieder
+        hoch, bevor C zurueckkommt -> C (0.63.2) verliert seine
+        Offline-Eintraege (wie in v0.63.1); A behaelt das Eingespielte, B
+        (alt, kennt die Loeschung) loescht es bei sich weiterhin."""
+        a, b, c = self._offline_drei((CODE, self.alter_code(ALT), CODE))
+        datei = ta.datei()
+        self.assertTrue(datei["markers"].get("reset_at"))
+        self.assertNotIn("aufgehoben", datei)
+        c.sync()
+        c_direkt = c.namen()
+        self.alle_sync([c, a, b], 3)
+        stand = {d.name: d.namen() for d in (a, b, c)}
+        bericht("FG-81 f4b (NEU, ALT, NEU): C nach erstem Abgleich %s, Ende (Reihenfolge "
+                "C, A, B) %s" % (c_direkt, stand))
+        self.assertEqual(c_direkt, {})
+        for device in (a, b, c):
+            self.assertNotIn("c-offline", device.namen(), device.name)
+        self.assertEqual(karten(a, "-vorher"), 2)
+        self.assertEqual(karten(b, "-vorher"), 0)
+
+    def test_fg81_satz2_satz3_f4c_neues_geraet_nach_abgleich_hinter_neuem(self):
+        """FG-81 Satz 2 ("sobald sie mindestens Version 0.63.2 haben und sich
+        einmal abgeglichen haben") und Satz 3, gezielt.py f4c (NEU, ALT, NEU):
+        C (0.63.2) loescht das Eingespielte beim ersten Abgleich direkt nach B
+        (v0.63.1) voruebergehend; gleicht C einmal nach A (0.63.2) ab, hat es
+        die Aufhebung und behaelt das Eingespielte dauerhaft, obwohl B die
+        alte Marke immer wieder hochlaedt. B (alt, kennt die Loeschung)
+        loescht es bei sich weiterhin."""
+        a, b, c = self._offline_drei((CODE, self.alter_code(ALT), CODE))
+        c.sync()
+        self.assertEqual(c.namen(), {})                 # voruebergehend
+        verlauf = []
+        for _ in range(3):
+            for device in (a, c, b):
+                device.sync()
+                verlauf.append((device.name, device.namen()))
+                if device is c:
+                    self.assertEqual(c.namen(), {"a-vorher": 2}, verlauf)
+                if device is b:
+                    self.assertEqual(b.namen(), {}, verlauf)
+                    self.assertNotIn("aufgehoben", ta.datei())
+        bericht("FG-81 f4c (NEU, ALT, NEU): %s" % verlauf)
+        self.assertTrue(c("meta")["meta"].get("aufgehoben:reset_at"))
+        self.assertEqual(a.namen(), {"a-vorher": 2})
+
+    def test_fg81_satz4_f5_offline_geraet_gleicht_vor_dem_ersetzen_ab(self):
+        """FG-81 Satz 4 (Bedingung "erst nach dem Ersetzen wieder abgleicht"),
+        gezielt.py f5, alle 0.63.2: C gleicht zwischen As Loeschung und dem
+        Ersetzen ab -> Cs Offline-Eintraege sind weg, nur das Eingespielte
+        kommt."""
+        a, c = self.voll("A"), self.voll("C", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, c], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        ta.pause()
+        c.sync()                                     # vor dem Ersetzen
+        self.assertEqual(c.namen(), {})
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.alle_sync([c, a], 3)
+        for device in (a, c):
+            self.assertEqual(device.namen(), {"a-vorher": 2}, device.name)
+        self.stabil([a, c])
+
+    def test_fg81_satz4_f6_sicherung_kennt_fruehere_loeschung(self):
+        """FG-81 Satz 4 ("in der Regel"), gezielt.py f6, alle 0.63.2: Cs
+        Offline-Eintraege liegen vor einer frueheren Loeschung, die die
+        Sicherung schon kennt -> sie bleiben weg, obwohl C erst nach dem
+        Ersetzen abgleicht (Ausnahme, die "in der Regel" traegt)."""
+        a, c = self.voll("A"), self.voll("C", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, c], 1)
+        ta.pause()
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        ta.pause()
+        a("lerne", 2, "danach")
+        a.sync()
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.alle_sync([c, a], 3)
+        for device in (a, c):
+            self.assertEqual(device.namen(), {"a-danach": 2}, device.name)
+        self.stabil([a, c])
+
+    def test_fg81_satz5_f7_schon_abgeglichenes_bleibt_geloescht(self):
+        """FG-81 Satz 5, gezielt.py f7, alle 0.63.2: B lernt nach dem Erstellen
+        der Sicherung und gleicht vor der Loeschung ab -> "b-zwischen" bleibt
+        auf A und B geloescht; das Eingespielte kommt."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        b("lerne", 2, "zwischen")
+        b.sync()
+        a.sync()
+        self.assertEqual(karten(a, "-zwischen"), 2)
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        b.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.alle_sync([a, b], 3)
+        for device in (a, b):
+            self.assertEqual(device.namen(), {"a-vorher": 2}, device.name)
+        self.stabil([a, b])
+
+    def test_fg81_satz6_f2c_unbekannte_spaetere_loeschung_gilt(self):
+        """FG-81 Satz 6, erster Teil, gezielt.py f2c, alle 0.63.2: B loescht
+        NACH As Loeschung, A kennt das nicht und ersetzt -> Bs spaetere
+        Loeschung gilt weiter, auch fuer das Eingespielte (A {}, B {})."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])         # ohne Abgleich
+        ta.pause()
+        b("lerne", 1, "spaet")
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])         # spaeter als As Loeschung
+        b.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(karten(a, "-vorher"), 4)
+        self.alle_sync([a, b], 3)
+        for device in (a, b):
+            self.assertEqual(device.namen(), {}, device.name)
+        self.stabil([a, b])
+
+    def test_fg81_satz6_f2b_unbekannte_fruehere_loeschung_aufgehoben(self):
+        """FG-81 Satz 6, zweiter Teil, gezielt.py f2b, alle 0.63.2: B loescht
+        VOR As Loeschung, A kennt das nicht, loescht spaeter selbst und
+        ersetzt -> Bs fruehere Loeschung ist aufgehoben: A und B haben
+        "a-vorher" und "b-vorher" (v0.63.1 haette A {}, B {})."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        b("lerne", 1, "spaet")
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])         # A kennt diese Loeschung nicht
+        b.sync()
+        ta.pause()
+        a("lerne", 1, "zw")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])         # spaeter, ohne Abgleich
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, b], 3)
+        for device in (a, b):
+            self.assertEqual(device.namen(), {"a-vorher": 2, "b-vorher": 2}, device.name)
+        self.assertEqual(sorted(ta.datei().get("aufgehoben", {})), ["reset_at"])
+        self.stabil([a, b])
+
+    def _f9_bis_zum_ersetzen(self):
+        """gezielt.py f9 bis nach dem Ersetzen: A, B lernen und gleichen ab,
+        A erstellt Sicherung S, B loescht selbst und gleicht ab, A gleicht ab
+        (kennt die Loeschung) und erstellt Sicherung Q (vor dem Ersetzen),
+        dann ersetzt A mit S."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])
+        b.sync()
+        a.sync()
+        self.assertEqual(a.namen(), {})
+        a("sicherung_erstellen", self.pfad(a, "q.fisisicherung"))
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a.namen(), {"a-vorher": 2, "b-vorher": 2})
+        return a, b
+
+    def test_fg92_f9_sicherung_nach_dem_ersetzen_bringt_stand_zurueck(self):
+        """FG-92 PREVIEW_HINT ("ausser die Sicherung wurde auf einem Geraet
+        erstellt, nachdem es nach dieser Loeschung mit "Alles ersetzen" einen
+        aelteren Stand eingespielt hatte; dann kommt dieser Stand zurueck"),
+        gezielt.py f9: A erstellt NACH dem Ersetzen die Sicherung P, B fuehrt
+        P ohne Abgleich zusammen -> Bs eigene Loeschung ist aufgehoben."""
+        a, b = self._f9_bis_zum_ersetzen()
+        ta.pause()
+        a("sicherung_erstellen", self.pfad(a, "p.fisisicherung"))
+        self.assertEqual(b.namen(), {})
+        b("sicherung_zusammen", self.pfad(a, "p.fisisicherung"))
+        bericht("FG-92 f9: B nach Zusammenfuehren von P %s" % b.namen())
+        self.assertEqual(b.namen(), {"a-vorher": 2, "b-vorher": 2})
+
+    def test_fg92_sicherung_von_vor_dem_ersetzen_bringt_nichts_zurueck(self):
+        """FG-92 PREVIEW_HINT ("Was auf diesem Geraet geloescht wurde ...,
+        bleibt geloescht"), Gegenstueck zu f9: Sicherungen desselben Geraets A
+        von VOR dem Ersetzen (S vor der Loeschung, Q nach der Loeschung)
+        bringen auf B nichts zurueck; erst P (nach dem Ersetzen) tut es
+        (Gegenprobe im selben Ablauf)."""
+        a, b = self._f9_bis_zum_ersetzen()
+        ta.pause()
+        a("sicherung_erstellen", self.pfad(a, "p.fisisicherung"))
+        meldungen = []
+        for name in ("sicherung.fisisicherung", "q.fisisicherung"):
+            meldungen.append(b("sicherung_zusammen", self.pfad(a, name))["meldung"])
+            self.assertEqual(b.namen(), {}, name)
+        self.assertIn("bleiben gelöscht", meldungen[0])
+        b("sicherung_zusammen", self.pfad(a, "p.fisisicherung"))       # Gegenprobe
+        bericht("FG-92 vor dem Ersetzen: Meldungen %s; danach P: %s" % (meldungen, b.namen()))
+        self.assertEqual(b.namen(), {"a-vorher": 2, "b-vorher": 2})
 
     # ------------------------------------------------------------ A1 (gp_s6b M1)
     def _zukunft(self, code, uhr, abgleich_vorher=False, ordner=None):
