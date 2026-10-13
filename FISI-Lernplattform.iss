@@ -25,6 +25,8 @@
 #define MyAppExeName "FISI-Lernplattform.exe"
 
 [Setup]
+; AppId: Das doppelte "}}" am Ende ist ein alter Schreibfehler, aber Teil des
+; Deinstallations-Schluessels (..._is1). NIE AENDERN, sonst zweite Installation beim Update.
 AppId={{6B2E7B7B-6C1E-4E59-9C55-FISI-LERNPLATTFORM}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}

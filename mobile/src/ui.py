@@ -136,8 +136,8 @@ class FoldCard(Card):
     bleibt fuer die Laufzeit der App erhalten (key).
 
     Ab 0.59 (Optionen, marker=True, wie am PC): Pfeil links in der
-    Akzentfarbe, rechts "aufklappen"/"einklappen", ganze Kopfzeile mindestens
-    48 dp hoch, TalkBack liest "Optische Anpassungen, eingeklappt" und sagt
+    Akzentfarbe, rechts "aufklappen"/"zuklappen", ganze Kopfzeile mindestens
+    48 dp hoch, TalkBack liest "Optische Anpassungen, zugeklappt" und sagt
     Wechsel an (live_region). Die Optionen vergessen den Zustand beim Oeffnen
     (reset_states)."""
 

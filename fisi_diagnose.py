@@ -15,8 +15,9 @@ Datenschutz wie bei der Sicherung (fisi_sicherung.py): Von den Einstellungen
 kommt nur Unbedenkliches in den Bericht (Tagesziel, ob der Abgleich
 eingerichtet ist). Zugangsschluessel und Passwoerter werden zusaetzlich aus
 dem ganzen Text entfernt (scrub) - auch wenn sie in fehler.log stehen, z.B.
-in einer Fehlermeldung mit Adresse oder Kopfzeile. Persoenliche Inhalte
-(Antworten, Projekttexte) stehen nie darin.
+in einer Fehlermeldung mit Adresse oder Kopfzeile. Andere Angaben aus
+Fehlermeldungen (z.B. der Rechnername) koennen darin stehen; deshalb bittet
+HELP darum, den Bericht vor dem Weitergeben anzusehen (ab 0.63.2, B-L-04).
 
 Ablauf:
   text = build_report(db, "0.54", geraet="PC")   -> fertiger, gefilterter Text
@@ -37,10 +38,11 @@ TITLE = "Problem melden"
 SUBTITLE = "Angaben für die Fehlersuche"
 HELP = ("Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. "
         "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
-        "entfernt, deine Antworten und "
-        "Projekttexte stehen nicht darin. Speichere den Bericht als Datei (oder "
-        "kopiere ihn) und gib ihn mit deiner Beschreibung des Problems an die "
-        "Person weiter, von der du das Programm hast.")
+        "entfernt. Andere Angaben aus Fehlermeldungen, zum Beispiel der Name "
+        "deines Rechners, können darin stehen. Sieh dir den Bericht vor dem "
+        "Weitergeben an. Speichere ihn als Datei (oder kopiere ihn) und gib ihn "
+        "mit deiner Beschreibung des Problems an die Person weiter, von der du "
+        "das Programm hast.")
 BTN_COPY = "Kopieren"
 BTN_SAVE = "Als Datei speichern"
 BTN_FOLDER = "Datenordner öffnen"

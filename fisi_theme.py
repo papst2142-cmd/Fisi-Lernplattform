@@ -505,8 +505,8 @@ CUSTOM_CHANNELS = (("h", "Farbton", 0, 359, "°", "Grad"),
 # Texte (PC und Handy gleich)
 # Ab 0.59: Woerter und Beschriftung der Klappbereiche (PC und Handy gleich)
 FOLD_OPEN_TEXT = "aufklappen"
-FOLD_CLOSE_TEXT = "einklappen"
-FOLD_STATE_CLOSED = "eingeklappt"
+FOLD_CLOSE_TEXT = "zuklappen"
+FOLD_STATE_CLOSED = "zugeklappt"
 FOLD_STATE_OPEN = "aufgeklappt"
 
 
