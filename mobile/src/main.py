@@ -4727,7 +4727,7 @@ class SettingsScreen(Screen):
 
     def _nothing_deleted(self, messages):
         """B-D-12: ein Hinweis "Es wurde nichts geloescht." (+ Datenbanktext)."""
-        self.toast("\n\n".join(["Es wurde nichts gelöscht."] + messages), C["red"])
+        self.toast("\n\n".join([fo.DELETE_NOTHING] + messages), C["red"])
 
     def clear_history(self, _event=None):
         """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert. Ab 0.63.2
@@ -4735,7 +4735,7 @@ class SettingsScreen(Screen):
         def confirmed():
             done, messages = self._delete_quietly(lambda: self.db.clear_history())
             if done:
-                self.toast(self._with_clock_fix("Die Historie wurde gelöscht."), C["green"])
+                self.toast(self._with_clock_fix(fo.DELETE_HISTORY_DONE), C["green"])
                 self.app.notify_progress()
             else:
                 self._nothing_deleted(messages)
