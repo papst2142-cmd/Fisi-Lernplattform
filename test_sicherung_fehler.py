@@ -218,9 +218,10 @@ class KernTest(Base):
 
     def test_b_g_08_warntext_nennt_eigene_loeschungen(self):
         # Ab 0.63.2 (FG-81, nur zusammen mit B-G-08): volle neue Saetze statt
-        # Teilstuecke. Neufassung (Antwort Meldung 31 B.3): jeder Satz ist in
+        # Teilstuecke. Endfassung (Antwort Meldung 35 B.2, Saetze 2, 3, 4 und 6
+        # gegenueber Meldung 31 B.3 geaendert): jeder Satz ist in
         # test_abgleich_0632.py BG08Ersetzen per Verhaltenstest belegt (Liste:
-        # bau_0.63.2/s6b/ergebnis_texte_fg81_fg92.md)
+        # bau_0.63.2/s6b/texte_endfassung/ergebnis.md)
         backup = self.backup_of(self.learned(self.db()))
         text = fs.replace_question(backup)
         erster, zweiter = text.split("\n\n")
@@ -236,22 +237,38 @@ class KernTest(Base):
             "dem Repository wieder dazu. "
             "Löschungen, die dieses Gerät schon kennt (zum Beispiel „Alle Lerndaten "
             "löschen“), löschen das Eingespielte nicht noch einmal; das gilt auch für "
-            "deine anderen Geräte, sobald sie mindestens Version 0.63.2 haben und sich "
-            "einmal abgeglichen haben. "
-            "Ein Gerät mit einer älteren Version, das die Löschung kennt, löscht das "
-            "Eingespielte bei sich weiterhin; aktualisiere deine anderen Geräte deshalb bald. "
+            "deine anderen Geräte, wenn alle deine Geräte schon beim Ersetzen mindestens "
+            "Version 0.63.2 hatten. "
+            "Solange ein Gerät noch eine ältere Version hat, kann das Eingespielte auf "
+            "deinen anderen Geräten zeitweise wieder fehlen, und ein Gerät mit einer "
+            "älteren Version, das die Löschung kennt, löscht es bei sich weiterhin; "
+            "aktualisiere deine anderen Geräte deshalb bald. "
             "Was ein anderes Gerät ohne Verbindung gelernt hat, bleibt in der Regel "
-            "erhalten, wenn es sich erst nach dem Ersetzen wieder abgleicht und alle "
-            "Geräte, die die Löschung kennen, mindestens Version 0.63.2 haben. "
+            "erhalten, wenn es sich erst nach dem Ersetzen wieder abgleicht und alle deine "
+            "Geräte schon beim Ersetzen mindestens Version 0.63.2 hatten. "
             "Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt gelöscht. "
             "Löschungen, die erst nach der letzten Löschung auf diesem Gerät kamen und die "
-            "es noch nicht kennt, gelten weiter; eine unbekannte frühere Löschung eines "
-            "anderen Geräts wird dagegen aufgehoben. "
+            "es noch nicht kennt, gelten weiter; eine unbekannte frühere Löschung derselben "
+            "Art (zum Beispiel ebenfalls „Alle Lerndaten löschen“) eines anderen Geräts "
+            "wird dagegen aufgehoben. "
             "Bewahre die Sicherungsdatei deshalb auf."))
         self.assertNotIn("ist nach dem nächsten Abgleich wieder weg", text)
         # die beiden Saetze der ersten Fassung, die gp_s6b_nacharbeit (M1, M2) widerlegt hat
         self.assertNotIn("Auch was ein anderes Gerät ohne Verbindung gelernt hat", text)
         self.assertNotIn("Löschungen, die dieses Gerät noch nicht kennt, gelten weiter.", text)
+        # Fassung von 31b539c (Meldung 31 B.3), Saetze 2, 3, 4 und 6, von
+        # gp_s6b_texte (M1, M2, M3) widerlegt (Ablaeufe f4b, f4f, f2e, f2f)
+        self.assertNotIn("sobald sie mindestens Version 0.63.2 haben und sich einmal "
+                         "abgeglichen haben", text)
+        self.assertNotIn("alle Geräte, die die Löschung kennen, mindestens Version 0.63.2",
+                         text)
+        self.assertNotIn("löscht das Eingespielte bei sich weiterhin", text)
+        self.assertNotIn("eine unbekannte frühere Löschung eines anderen Geräts", text)
+        # Vorschlag der Pruefung (gp_s6b_texte), Saetze 2 und 4: zeitlich zu weit
+        # (Antwort Meldung 35 B.1, Ablauf f4f/f4h) - nur "schon beim Ersetzen"
+        self.assertNotIn("sobald alle deine Geräte mindestens Version 0.63.2 haben", text)
+        self.assertNotIn("alle deine Geräte mindestens Version 0.63.2 haben", text)
+        self.assertEqual(text.count("schon beim Ersetzen mindestens Version 0.63.2 hatten"), 2)
 
     def test_b_g_11_volle_platte_keine_leere_sicherheitskopie(self):
         target = self.learned(self.db(), tag="alt")

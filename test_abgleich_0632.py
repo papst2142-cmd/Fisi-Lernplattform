@@ -35,7 +35,7 @@ Abgleich-Kern 0.63.2 (Plan 0.63.2, Bauauftrag S6a; Teilplan S6 1.1, 1.7, 1.8, 2)
           loeschen": Der naechste Abgleich loescht den eingespielten Stand
           nicht mehr (Feld "aufgehoben"); BG08Kern im Testprozess,
           BG08Ersetzen mit Geraeten inkl. T-b/T-c und Geraet v0.63.1.
-  FG-81/  (S6b, Antwort Meldung 31) Verhaltenstests je Satz der Texte vor
+  FG-81/  (S6b, Antwort Meldung 31 und 35) Verhaltenstests je Satz der Texte vor
   FG-92   "Alles ersetzen" und "Zusammenfuehren" (test_fg81_*, test_fg92_*).
 
 Geraete wie in test_abgleich.py (eigene Prozesse, Attrappe der GitHub-API,
@@ -945,6 +945,18 @@ def karten(device, endung):
     return sum(n for k, n in device.namen().items() if k.endswith(endung))
 
 
+def verlauf(device):
+    """Verlauf (Klausuren aus "fuelle", Tabelle pruefungen) auf dem Geraet:
+    {etikett: anzahl}, direkt aus der Datenbank des Geraets gelesen."""
+    result = {}
+    for (raw,) in zeilen(os.path.join(device.home, "lern.db"), "SELECT daten FROM pruefungen"):
+        data = json.loads(raw)
+        if isinstance(data, str):
+            data = json.loads(data)
+        result[data["etikett"]] = result.get(data["etikett"], 0) + 1
+    return result
+
+
 def fehlt_gegen(referenz, stand):
     """{tabelle: Inhalte, die in referenz stehen, in stand aber fehlen}."""
     result = {}
@@ -1206,10 +1218,10 @@ class BG08Ersetzen(unittest.TestCase):
         return a, b, c
 
     def test_fg81_satz4_offline_guenstiger_fall_alle_0632(self):
-        """FG-81 Satz 4, guenstiger Fall (gezielt.py f4b mit NEU, NEU, NEU):
-        Alle Geraete, die die Loeschung kennen (A, B), haben 0.63.2, C gleicht
-        erst nach dem Ersetzen wieder ab -> Cs Offline-Eintraege bleiben auf
-        allen Geraeten erhalten, ebenso das Eingespielte."""
+        """FG-81 Saetze 2 und 4, guenstiger Fall (gezielt.py f4b mit NEU, NEU,
+        NEU): alle Geraete hatten schon beim Ersetzen 0.63.2, C gleicht erst
+        nach dem Ersetzen wieder ab -> Cs Offline-Eintraege bleiben auf allen
+        Geraeten erhalten, ebenso das Eingespielte."""
         a, b, c = self._offline_drei((CODE, CODE, CODE))
         self.assertIn("aufgehoben", ta.datei())
         c.sync()
@@ -1220,7 +1232,7 @@ class BG08Ersetzen(unittest.TestCase):
         self.stabil([a, b, c])
 
     def test_fg81_satz4_f4b_altes_geraet_kennt_loeschung(self):
-        """FG-81 Satz 4 (Bedingung "alle Geraete, die die Loeschung kennen,
+        """FG-81 Satz 4 (Bedingung "alle deine Geraete schon beim Ersetzen
         mindestens 0.63.2") und Satz 3, gezielt.py f4b (NEU, ALT, NEU): B mit
         v0.63.1 kennt die Loeschung und laedt seine Marke ohne das Feld wieder
         hoch, bevor C zurueckkommt -> C (0.63.2) verliert seine
@@ -1243,8 +1255,9 @@ class BG08Ersetzen(unittest.TestCase):
         self.assertEqual(karten(b, "-vorher"), 0)
 
     def test_fg81_satz2_satz3_f4c_neues_geraet_nach_abgleich_hinter_neuem(self):
-        """FG-81 Satz 2 ("sobald sie mindestens Version 0.63.2 haben und sich
-        einmal abgeglichen haben") und Satz 3, gezielt.py f4c (NEU, ALT, NEU):
+        """FG-81 Satz 3 ("kann das Eingespielte auf deinen anderen Geraeten
+        zeitweise wieder fehlen", Endfassung Meldung 35 B.2), gezielt.py f4c
+        (NEU, ALT, NEU):
         C (0.63.2) loescht das Eingespielte beim ersten Abgleich direkt nach B
         (v0.63.1) voruebergehend; gleicht C einmal nach A (0.63.2) ab, hat es
         die Aufhebung und behaelt das Eingespielte dauerhaft, obwohl B die
@@ -1371,8 +1384,9 @@ class BG08Ersetzen(unittest.TestCase):
     def test_fg81_satz6_f2b_unbekannte_fruehere_loeschung_aufgehoben(self):
         """FG-81 Satz 6, zweiter Teil, gezielt.py f2b, alle 0.63.2: B loescht
         VOR As Loeschung, A kennt das nicht, loescht spaeter selbst und
-        ersetzt -> Bs fruehere Loeschung ist aufgehoben: A und B haben
-        "a-vorher" und "b-vorher" (v0.63.1 haette A {}, B {})."""
+        ersetzt -> Bs fruehere Loeschung DERSELBEN Art (beide "Alle Lerndaten
+        loeschen") ist aufgehoben: A und B haben "a-vorher" und "b-vorher"
+        (v0.63.1 haette A {}, B {}). Gegenstueck andere Art: f2e, f2f."""
         a, b = self.voll("A"), self.voll("B", tz="UTC")
         a("lerne", 2, "vorher")
         b("lerne", 2, "vorher")
@@ -1393,6 +1407,159 @@ class BG08Ersetzen(unittest.TestCase):
         for device in (a, b):
             self.assertEqual(device.namen(), {"a-vorher": 2, "b-vorher": 2}, device.name)
         self.assertEqual(sorted(ta.datei().get("aufgehoben", {})), ["reset_at"])
+        self.stabil([a, b])
+
+    # ------------------------------------------------------------ FG-81 Endfassung
+    # Antwort Meldung 35 B.2/B.3: Grenzen der Saetze 2 und 4 (f4f, Vorlage
+    # gp_s6b_texte skripte/texte_ablaeufe.py f4f) und von Satz 6 (f2e, f2f
+    # "andere Art", ebendort f2e_verlauf, f2f_verlauf). Ohne Uhrverstellung.
+    def _f4f(self, code_b):
+        """gp_s6b_texte f4f: A, B, C, D gleichen ab, A erstellt eine
+        Sicherung, C lernt offline, A loescht alles, A und D gleichen ab (D
+        kennt die Loeschung, B und C nicht), A ersetzt und gleicht ab. B (Code
+        code_b) lernt etwas und gleicht ab, danach D einmal, danach C einmal,
+        dann drei Runden A, D, C, B. Liefert die Zwischenstaende."""
+        a = self.voll("A")
+        b = self.voll("B", tz="America/New_York", code=code_b)
+        c = self.voll("C", tz="UTC")
+        d = self.voll("D", tz="Asia/Tokyo")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b, c, d, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        d.sync()
+        self.assertEqual(d.namen(), {})                  # D kennt die Loeschung
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        ta.pause()
+        b("lerne", 1, "neu")
+        ta.pause()
+        b.sync()                                         # nach dem Ersetzen
+        stand = {"datei_nach_B": ta.datei()}
+        ta.pause()
+        d.sync()
+        stand["D_erster_abgleich"] = d.namen()
+        stand["datei_nach_D"] = ta.datei()
+        ta.pause()
+        c.sync()
+        stand["C_erster_abgleich"] = c.namen()
+        stand["A_verlauf"] = []
+        for _ in range(3):
+            for device in (a, d, c, b):
+                device.sync()
+                if device is a:
+                    stand["A_verlauf"].append(a.namen())
+        stand["ende"] = {x.name: x.namen() for x in (a, b, c, d)}
+        stand["geraete"] = (a, b, c, d)
+        return stand
+
+    def test_fg81_satz2_satz4_f4f_grenze_altes_geraet_ohne_kenntnis_laedt_nach_dem_ersetzen_hoch(self):
+        """FG-81 Saetze 2 und 4, Grenze (gp_s6b_texte M1/M2, f4f mit NEU, ALT,
+        NEU, NEU): B hatte beim Ersetzen noch v0.63.1, kennt die Loeschung
+        NICHT, laedt aber nach dem Ersetzen hoch und laesst dabei das Feld
+        "aufgehoben" weg. Danach traegt D (0.63.2, kennt die Loeschung) seine
+        Marke neu ein: D verliert das Eingespielte zeitweise (Satz 2 gilt nur,
+        wenn alle schon beim Ersetzen 0.63.2 hatten; Satz 3 "zeitweise wieder
+        fehlen"), Cs Offline-Eintraege sind dauerhaft auf allen Geraeten weg
+        (Satz 4 nur mit derselben Bedingung). A behaelt das Eingespielte
+        immer, am Ende ist es ueberall zurueck."""
+        stand = self._f4f(self.alter_code(ALT))
+        bericht("FG-81 f4f (NEU, ALT, NEU, NEU): D %s, C %s, Ende %s"
+                % (stand["D_erster_abgleich"], stand["C_erster_abgleich"], stand["ende"]))
+        self.assertNotIn("aufgehoben", stand["datei_nach_B"])
+        self.assertFalse(stand["datei_nach_B"]["markers"].get("reset_at"))
+        self.assertEqual(stand["D_erster_abgleich"], {"b-neu": 1})
+        self.assertTrue(stand["datei_nach_D"]["markers"].get("reset_at"))
+        self.assertNotIn("aufgehoben", stand["datei_nach_D"])
+        self.assertEqual(stand["C_erster_abgleich"], {"b-neu": 1})
+        for namen in stand["A_verlauf"]:
+            self.assertEqual(namen, {"a-vorher": 2, "b-neu": 1})
+        for name, namen in stand["ende"].items():
+            self.assertEqual(namen, {"a-vorher": 2, "b-neu": 1}, name)
+
+    def test_fg81_satz2_satz4_f4f_guenstiger_fall_alle_schon_beim_ersetzen_0632(self):
+        """FG-81 Saetze 2 und 4, guenstiger Fall zu f4f (NEU, NEU, NEU, NEU):
+        derselbe Ablauf, aber alle Geraete hatten schon beim Ersetzen 0.63.2.
+        Bs Hochladung behaelt das Feld, D loescht das Eingespielte nicht noch
+        einmal, Cs Offline-Eintraege bleiben auf allen Geraeten erhalten."""
+        stand = self._f4f(CODE)
+        bericht("FG-81 f4f (NEU, NEU, NEU, NEU): D %s, C %s, Ende %s"
+                % (stand["D_erster_abgleich"], stand["C_erster_abgleich"], stand["ende"]))
+        self.assertEqual(sorted(stand["datei_nach_B"].get("aufgehoben", {})), ["reset_at"])
+        self.assertFalse(stand["datei_nach_D"]["markers"].get("reset_at"))
+        self.assertEqual(stand["D_erster_abgleich"], {"a-vorher": 2, "b-neu": 1})
+        self.assertEqual(stand["C_erster_abgleich"], {"a-vorher": 2, "b-neu": 1, "c-offline": 3})
+        for name, namen in stand["ende"].items():
+            self.assertEqual(namen, {"a-vorher": 2, "b-neu": 1, "c-offline": 3}, name)
+        self.stabil(list(stand["geraete"]))
+
+    def test_fg81_satz6_f2e_grenze_fruehere_loeschung_andere_art_verlauf_bleibt_weg(self):
+        """FG-81 Satz 6, Grenze "derselben Art" (gp_s6b_texte M3, f2e), alle
+        0.63.2: B loescht frueher nur den Verlauf ("Verlauf loeschen"), A kennt
+        das nicht, loescht spaeter "Alle Lerndaten" und ersetzt -> direkt nach
+        dem Ersetzen hat A den Verlauf beider Geraete, nach dem Abgleich ist
+        er auf A und B weg (Bs fruehere Loeschung anderer Art wird NICHT
+        aufgehoben); die Karten aus der Sicherung bleiben. Gegenstueck
+        gleiche Art: f2b."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        a("fuelle", "vl")
+        b("fuelle", "vl")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("clear_history")["ok"])     # A kennt diese Loeschung nicht
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])         # spaeter, andere Art, ohne Abgleich
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(verlauf(a), {"a-vl": 1, "b-vl": 1})
+        self.alle_sync([a, b], 3)
+        bericht("FG-81 f2e: Verlauf A %s, B %s; Karten A %s; Feld %s"
+                % (verlauf(a), verlauf(b), a.namen(), ta.datei().get("aufgehoben")))
+        for device in (a, b):
+            self.assertEqual(verlauf(device), {}, device.name)
+            self.assertEqual(device.namen(), {"a-vorher": 2, "a-vl": 1, "b-vl": 1}, device.name)
+        self.assertTrue(ta.datei()["markers"].get("history_cleared_at"))
+        self.assertNotIn("history_cleared_at", ta.datei().get("aufgehoben") or {})
+        self.stabil([a, b])
+
+    def test_fg81_satz6_f2f_grenze_fruehere_loeschung_andere_art_lerndaten_bleiben_weg(self):
+        """FG-81 Satz 6, Grenze "derselben Art" (gp_s6b_texte M3, f2f), alle
+        0.63.2, umgekehrt zu f2e: B loescht frueher "Alle Lerndaten", A kennt
+        das nicht, loescht spaeter nur den Verlauf und ersetzt -> direkt nach
+        dem Ersetzen hat A die Karten beider Geraete, nach dem Abgleich sind
+        sie auf A und B weg (nicht aufgehoben). Gegenstueck gleiche Art:
+        f2b."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        a("fuelle", "vl")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])         # A kennt diese Loeschung nicht
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("clear_history")["ok"])     # spaeter, andere Art, ohne Abgleich
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(a.namen(), {"a-vorher": 2, "a-vl": 1, "b-vorher": 2})
+        self.assertEqual(verlauf(a), {"a-vl": 1})
+        self.alle_sync([a, b], 3)
+        bericht("FG-81 f2f: Karten A %s, B %s; Verlauf A %s; Feld %s"
+                % (a.namen(), b.namen(), verlauf(a), ta.datei().get("aufgehoben")))
+        for device in (a, b):
+            self.assertEqual(device.namen(), {}, device.name)
+            self.assertEqual(verlauf(device), {}, device.name)
+        self.assertTrue(ta.datei()["markers"].get("reset_at"))
+        self.assertNotIn("reset_at", ta.datei().get("aufgehoben") or {})
         self.stabil([a, b])
 
     def _f9_bis_zum_ersetzen(self):
