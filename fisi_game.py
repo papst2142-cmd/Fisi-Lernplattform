@@ -5313,8 +5313,10 @@ class Game:
             marks = set(marks)
         try:
             day_before = state.day
-            state.apply_event(timestamp, kind, payload, marks)
-            state.note_handled(kind, payload, day_before)
+            # Ein uebersprungenes Doppel (E-5, False) kommt nicht in history
+            # und zaehlt deshalb auch nicht fuer die Tagestickets
+            if state.apply_event(timestamp, kind, payload, marks):
+                state.note_handled(kind, payload, day_before)
         except Exception:
             # Nicht (ganz) angewendet: neu rechnen (wirft dann wie bisher,
             # falls das Ereignis selbst den Fehler ausloest)

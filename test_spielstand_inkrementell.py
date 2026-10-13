@@ -36,6 +36,12 @@ Erwartung (rot/gruen):
                                           Spielstand, E-5 R6)
     test_alter_stand_bleibt               ein vorher gemerktes game.state bleibt
                                           unveraendert (neues Objekt wie bisher)
+    test_doppel_anderer_inhalt            E-5-Doppel mit ANDEREM Inhalt lokal
+                                          ueber _log (Ticket richtig, Doppel
+                                          falsch; Feierabend mit anderem
+                                          Gehalt): handled/status_of gleich
+                                          dem Neuaufbau (rot gegen 18aa2e2,
+                                          Gegenpruefung N4 H1)
     test_oeffnen_schreibt_nichts          Oeffnen eines Spielstands aendert die
                                           Datenbank nicht und schreibt kein
                                           fehler.log
@@ -152,10 +158,31 @@ def _try(fn, *args):
         return False
 
 
-def play(game, seed, days, step, fast_firm=True):
+def _local_double(game, kind, task_id=None):
+    """Eindeutiges Doppel (E-5) des juengsten eigenen Ereignisses mit ANDEREM
+    Inhalt direkt ueber _log (wie ein kuenftiger Aufrufer, z.B. N5): Ticket
+    mit umgedrehtem "richtig" und anderem Geld, Feierabend mit anderem
+    Gehalt. Es wird uebersprungen; der Spielstand muss gleich dem Neuaufbau
+    bleiben (auch handled/status_of)."""
+    for _timestamp, old_kind, data in reversed(game.state.history):
+        if old_kind != kind or (task_id is not None and data.get("aufgabe") != task_id):
+            continue
+        if kind == fg.EV_SOLVED:
+            other = dict(data, richtig=not data.get("richtig"), geld=0)
+        else:
+            other = dict(data, gehalt=int(data.get("gehalt") or 0) + 111)
+        game._log(kind, other)
+        return True
+    return False
+
+
+def play(game, seed, days, step, fast_firm=True, doubles=False):
     """Zufaelliger, aber fester Spielverlauf ueber die oeffentliche Spiel-API.
-    step(label) nach jeder Aktion."""
+    step(label) nach jeder Aktion. doubles: zusaetzlich gelegentlich ein
+    lokales Doppel mit anderem Inhalt (eigener Zufall, aendert den Ablauf
+    der uebrigen Aktionen nicht)."""
     rng = random.Random("bot|%s" % seed)
+    dbl = random.Random("doppel|%s" % seed) if doubles else None
     content = game.content
     game.set_profile("Bot%s" % seed, {"haut": "hell"},
                      rng.choice([fg.DIFF_EASY, fg.DIFF_NORMAL]))
@@ -166,6 +193,9 @@ def play(game, seed, days, step, fast_firm=True):
         for i, task in enumerate(tasks):
             game._log(fg.EV_SOLVED, {"aufgabe": task["id"], "tag": 1 + i // 3,
                                      "richtig": True, "geld": 60, "reputation": rep})
+            if dbl is not None and dbl.random() < 0.1 and \
+                    _local_double(game, fg.EV_SOLVED, task["id"]):
+                step("doppel ticket")
             if i % 3 == 2 or i == len(tasks) - 1:
                 game._log(fg.EV_DAY_END, {"tag": 1 + i // 3, "gehalt": 140})
             if i % 25 == 0:
@@ -193,6 +223,9 @@ def play(game, seed, days, step, fast_firm=True):
                 answer = [o for o in task["optionen"] if o != task["antwort"]][0]
             if _try(game.solve, task["id"], answer, rng.random() < 0.2):
                 step("ticket")
+                if dbl is not None and dbl.random() < 0.15 and \
+                        _local_double(game, fg.EV_SOLVED, task["id"]):
+                    step("doppel ticket")
         if rng.random() < 0.1:
             items = [i for i in fg.shop_items(content) if i.get("laden", True)]
             if _try(game.buy_furniture, rng.choice(items)["id"]):
@@ -212,6 +245,9 @@ def play(game, seed, days, step, fast_firm=True):
                 step("entscheidung")
         if _try(game.end_day):
             step("feierabend")
+            if dbl is not None and dbl.random() < 0.15 and \
+                    _local_double(game, fg.EV_DAY_END):
+                step("doppel feierabend")
 
 
 def _firm_day(game, rng, step):
@@ -268,10 +304,13 @@ class _Base(unittest.TestCase):
 
 class SchrittweiseTest(_Base):
     def test_bot_schritt_fuer_schritt(self):
-        """Nach JEDER Aktion: Spielstand feldweise = Neuaufbau (drei Startwerte,
-        drei Uhr-Arten, Gruendung, Personal, Angebote, Kundentickets, Kredite)."""
-        for seed, clock, days in (("a", "sekunde", 12), ("b", "gleich", 12),
-                                  ("c", "rueck", 12)):
+        """Nach JEDER Aktion: Spielstand feldweise = Neuaufbau (vier Startwerte,
+        drei Uhr-Arten, Gruendung, Personal, Angebote, Kundentickets, Kredite,
+        lokale E-5-Doppel mit anderem Inhalt fuer Tickets und Feierabende)."""
+        # Lauf "d" ohne Schnellstart: der Bot loest selbst Tickets (dort
+        # entstehen auch die lokalen Doppel mit anderem Inhalt aus dem Spiel)
+        for seed, clock, days, fast in (("a", "sekunde", 12, True), ("b", "gleich", 12, True),
+                                        ("c", "rueck", 12, True), ("d", "gleich", 16, False)):
             with self.subTest(seed=seed, clock=clock):
                 install(seed, clock)
                 db = core.DBManager(os.path.join(self.folder, "bot_%s.db" % seed))
@@ -281,8 +320,11 @@ class SchrittweiseTest(_Base):
                 def step(label):
                     steps.append(label)
                     self.assert_like_rebuild(game, "Schritt %d (%s)" % (len(steps), label))
-                play(game, seed, days, step)
-                self.assertTrue(game.state.firm)
+                play(game, seed, days, step, fast_firm=fast, doubles=True)
+                if fast:
+                    self.assertTrue(game.state.firm)
+                self.assertIn("doppel ticket", steps)
+                self.assertIn("doppel feierabend", steps)
                 self.assertGreater(len(steps), 60)
                 uninstall()
 
@@ -304,7 +346,7 @@ class SchrittweiseTest(_Base):
             game = fg.Game(db, "PC")
             if mode == "alt":
                 game._log = lambda kind, data, game=game: old_log(game, kind, data)
-            play(game, "e", 10, lambda label: None)
+            play(game, "e", 10, lambda label: None, doubles=True)
             rows = db._execute("SELECT timestamp, utc_offset, typ, daten, geraet, lauf"
                                " FROM spiel_ereignisse ORDER BY id", fetch="all")
             records = [row[2:] for row in db.records()]
@@ -388,6 +430,40 @@ class SchrittweiseTest(_Base):
         self.assert_like_rebuild(game, "lokales Doppel")
         self.assertEqual(game.state.money, money)
         self.assertEqual(game.state.tickets_done, 1)
+
+    def test_doppel_anderer_inhalt(self):
+        """E-5-Doppel mit ANDEREM Inhalt lokal ueber _log (Gegenpruefung N4,
+        H1): Ticket richtig geloest, dann dasselbe Ticket (gleicher Tag) mit
+        richtig=False. Das Doppel wird uebersprungen; Tagestickets (handled,
+        status_of) bleiben wie im Neuaufbau "richtig". Ebenso ein zweiter
+        Feierabend desselben Tages mit anderem Gehalt."""
+        install("x", "sekunde")
+        game = fg.Game(self.db, "PC")
+        game.set_profile("Doppel2", {})
+        game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": 5000})
+        # Abzeichen-Pruefung aus: ein neues Abzeichen rechnet ohnehin neu und
+        # wuerde einen Fehler im schrittweisen Weg verdecken
+        game.check_achievements = lambda *args, **kwargs: []
+        task = game.state.open_tickets()[0]
+        prepared = game.state.prepared_task(task)
+        payload = game.solve(task["id"], fg.find_solution(
+            prepared, game.state.available_parts(prepared)), False)
+        self.assertTrue(payload.get("richtig"))
+        self.assertEqual(game.state.handled.get(task["id"]), fg.ST_RIGHT)
+        money, done = game.state.money, game.state.tickets_done
+        game._log(fg.EV_SOLVED, dict(payload, richtig=False, geld=0))
+        rebuilt = rebuilt_state(game)
+        self.assertEqual(rebuilt.handled.get(task["id"]), fg.ST_RIGHT)
+        self.assertEqual(game.state.handled.get(task["id"]), fg.ST_RIGHT)
+        self.assertEqual(game.state.status_of(task["id"]), rebuilt.status_of(task["id"]))
+        self.assertEqual((game.state.money, game.state.tickets_done), (money, done))
+        self.assert_like_rebuild(game, "lokales Doppel mit anderem Inhalt")
+        end = [data for _t, kind, data in game.state.history if kind == fg.EV_DAY_END][-1]
+        days = game.state.days_done
+        game._log(fg.EV_DAY_END, dict(end, gehalt=int(end.get("gehalt") or 0) + 111))
+        self.assertEqual(game.state.days_done, days)
+        self.assert_like_rebuild(game, "Feierabend-Doppel mit anderem Gehalt")
+        self.assertFalse(os.path.exists(os.path.join(self.folder, core.ERROR_LOG_NAME)))
 
     def test_oeffnen_schreibt_nichts(self):
         install("o", "sekunde")
