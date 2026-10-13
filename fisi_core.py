@@ -3065,28 +3065,34 @@ def split_report(result, page=1, schmal=False):
                          "" if entry["status"] == SUBNET_STATE_USED else "*")
                for entry in data["eintraege"]]
     width = max(2, max(len(number) for number in numbers))
+    table = []
     if version == 4:
+        # Ab 0.63.2 (A9, G-10): Spalten mit zwei Leerzeichen getrennt (so
+        # erkennt fit_lines die Tabelle) und die Tabelle nicht auf 75 Zeichen
+        # umbrochen: jede Zeile bleibt eine Zeile, der Kasten schiebt seitlich
         cells = [[subnet_net_text(4, entry["netz"], entry["praefix"]),
                   ipv4_text(entry["erste"]), ipv4_text(entry["letzte"]),
                   ipv4_text(entry["broadcast"]) if entry["broadcast"] is not None
                   else "keine"] for entry in data["eintraege"]]
         heads = ["Netzadresse", "Erster Host", "Letzter Host", "Broadcast"]
         sizes = [max(len(heads[c]), max(len(row[c]) for row in cells)) for c in range(4)]
-        lines.append(" ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
-                                                    for c in range(4)]).rstrip())
+        table.append("  ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
+                                                     for c in range(4)]).rstrip())
         for number, row in zip(numbers, cells):
-            lines.append(" ".join([number.ljust(width)] + [row[c].ljust(sizes[c])
-                                                         for c in range(4)]).rstrip())
+            table.append("  ".join([number.ljust(width)] + [row[c].ljust(sizes[c])
+                                                          for c in range(4)]).rstrip())
     else:
         lines.append("%s Subnetz und letzte Adresse" % "Nr".ljust(width))
         for number, entry in zip(numbers, data["eintraege"]):
             lines.append("%s %s" % (number.ljust(width),
                                     subnet_net_text(6, entry["netz"], entry["praefix"])))
             lines.append("%s bis %s" % (" " * width, ipv6_text(entry["ende"])))
+    tail = []
     if any(number.endswith("*") for number in numbers):
-        lines.append("* frei, Reserve")
-    lines.append(data["text"])
-    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH))
+        tail.append("* frei, Reserve")
+    tail.append(data["text"])
+    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH) + table
+                     + _fit_lines(tail, CALC_EXPLAIN_PC_WIDTH))
 
 
 _HOST_NUMBER_WORD = re.compile(r"-?[0-9.]+")     # Wort, das wie eine Zahl aussieht

@@ -8,13 +8,19 @@ A7: Der Kasten "Netzdaten" IPv4 zeigt nach "Berechnen" alle Zeilen (bisher
     Fenster 1120 x 720 und 1120 x 800: Anzeigezeilen <= sichtbare Zeilen, der
     Kasten ist nicht gerollt und die letzte Zeile ("Präfixlänge") sichtbar.
     Je Schriftgroesse ein eigener Prozess.
-(A9 folgt im eigenen Commit.)
+A9 (G-10): "Netz aufteilen" IPv4, Tabelle mit siebenstelligen Nummern
+    (100.0.0.0/8 in 4.000.000 Subnetze): jede Tabellenzeile ist genau eine
+    Zeile mit 5 Spalten (Broadcast in derselben Zeile wie die Nummer), die
+    Spalten sind durch mindestens zwei Leerzeichen getrennt, und fit_lines
+    laesst jede Tabellenzeile unveraendert (Breite 40 bis 75). Reine
+    Textfunktionen.
 
 Gegen 14b3bd4 rot. Start:  xvfb-run -a python test_rechner_pc_0632.py
 """
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -24,9 +30,66 @@ import unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import fisi_core as fc  # noqa: E402
 
 FAKTOREN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 FENSTER = ((1120, 720), (1120, 800))
+A9_FAELLE = (("100.0.0.0/8", "4000000"), ("10.0.0.0/8", "4000000"),
+             ("192.168.0.0/16", "1000"), ("172.16.0.0/12", "300000"))
+
+
+def table_rows(text):
+    """Tabellenzeilen der IPv4-Ausgabe: Kopf "Nr ..." bis vor "* frei"/"Seite"."""
+    lines = text.split("\n")
+    start = next(i for i, line in enumerate(lines) if line.startswith("Nr"))
+    rows = []
+    for line in lines[start:]:
+        if line.startswith(("* frei", "Seite")) or not line.strip():
+            break
+        rows.append(line)
+    return rows
+
+
+class A9TabelleTest(unittest.TestCase):
+
+    def check(self, net, count, page):
+        result = fc.split_network(net, count, version=4)
+        text = fc.split_report(result, page)
+        data = fc.split_page(result, page)
+        rows = table_rows(text)
+        self.assertEqual(len(rows), 1 + len(data["eintraege"]), (net, page, rows[:3]))
+        for row, entry in zip(rows[1:], data["eintraege"]):
+            cells = re.split(r" {2,}", row.strip())
+            self.assertEqual(len(cells), 5, (net, page, row))
+            self.assertEqual(cells[0].rstrip("*"), fc.de_int(entry["nr"]), row)
+            want = ("keine" if entry["broadcast"] is None
+                    else fc.ipv4_text(entry["broadcast"]))
+            self.assertEqual(cells[4], want, row)
+        self.assertEqual(re.split(r" {2,}", rows[0].strip()),
+                         ["Nr", "Netzadresse", "Erster Host", "Letzter Host", "Broadcast"])
+        for zeichen in range(40, 76):
+            shown = fc.fit_lines(text, zeichen).split("\n")
+            for row in rows:
+                self.assertIn(row, shown, (net, page, zeichen, row))
+        return rows
+
+    def test_siebenstellig_letzte_seite(self):
+        for net, count in A9_FAELLE:
+            pages = fc.split_page(fc.split_network(net, count, version=4), 1)["seiten"]
+            for page in sorted({1, pages}):
+                self.check(net, count, page)
+        rows = self.check("100.0.0.0/8", "4000000", 10 ** 9)
+        self.assertTrue(any(len(row) > fc.CALC_EXPLAIN_PC_WIDTH for row in rows), rows[-1])
+
+    def test_ipv6_und_handy_unveraendert(self):
+        """IPv6-Ausgabe und Handy-Fassung (schmal) unberuehrt (Plan A9)."""
+        result = fc.split_network("2001:db8::/32", "300", version=6)
+        text = fc.split_report(result, 1)
+        self.assertIn("\nNr Subnetz und letzte Adresse\n", text)
+        handy = fc.split_report(fc.split_network("100.0.0.0/8", "4000000", version=4), 1,
+                                schmal=True)
+        self.assertTrue(all(len(line) <= fc.CALC_EXPLAIN_HANDY_WIDTH
+                            for line in handy.split("\n")))
 
 
 def worker(faktor, breite, hoehe):
