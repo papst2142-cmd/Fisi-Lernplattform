@@ -1639,7 +1639,9 @@ class FitRowsMixin(FitWidthMixin):
     spaeter entstehen, z. B. die Pruefung). Jeder Teil bekommt die Breite,
     die er in einer eigenen Zeile haette - so haengt keine Entscheidung von
     der Lage ab, die sie selbst veraendert (keine Schleife).
-    Bei Normal bleibt alles genau wie bisher (Z3 gilt fuer Gross/Sehr gross)."""
+    Bei Normal bleibt alles genau wie bisher (Z3 gilt fuer Gross/Sehr gross),
+    ausser im Teil aus _z3_normal_part (ab 0.63.2 B-4b: Bewertung der
+    Pruefung im Pruefungstrainer)."""
 
     Z3_GAP = 6          # Abstand der Kacheln im Raster (wie bisher, logische px)
     Z3_CELL_PAD = 16    # Innenabstand einer Tabellenzelle links + rechts (logische px)
@@ -1660,11 +1662,19 @@ class FitRowsMixin(FitWidthMixin):
             setattr(self, name, refit)
 
     def _fit_width(self, avail):
+        inside = None
         if fisi_theme.current_font_size == fisi_theme.FONT_NORMAL:
-            return False
+            # ab 0.63.2 (B-4b): bei Normal nur der Teil aus _z3_normal_part
+            inside = self._z3_normal_part()
+            if inside is None:
+                return False
         found = {"rows": [], "cards": [], "tiles": [], "trees": [], "checks": [],
                  "labels": [], "texts": [], "entries": []}
         self._z3_scan(self.content, avail, 0, found)
+        if inside is not None:
+            prefix = str(inside) + "."
+            found = {kind: [item for item in items if str(item[0]).startswith(prefix)]
+                     for kind, items in found.items()}
         changed = False
         for label, room, frame, row in found["labels"]:
             changed |= self._z3_label(label, room, frame, row)
@@ -1683,6 +1693,12 @@ class FitRowsMixin(FitWidthMixin):
         for check, room in found["checks"]:
             changed |= self._z3_check(check, room)
         return changed
+
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Teil der Ansicht, der auch bei Normal nach den
+        gleichen Regeln angepasst wird (None: bei Normal bleibt alles wie
+        bisher)."""
+        return None
 
     # -- Teile finden ---------------------------------------------------------
 
@@ -2435,6 +2451,14 @@ class QuizView(FitRowsMixin, View):
         self._build_practice()
         self.content = outer
 
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Bewertung der Pruefung - lange Kriterien brechen
+        auch bei Normal um, statt die Seite breiter zu machen (1120 und 1360)."""
+        exam = self.exam
+        if exam.grading and exam.winfo_ismapped():
+            return exam.body
+        return None
+
     def _on_mode(self, mode):
         if mode == "pruefung":
             if self.running:
@@ -2786,12 +2810,14 @@ class ExamPanel(ctk.CTkFrame):
         self.timer_job = None
         self.save_job = None
         self.result = None
+        self.grading = False   # ab 0.63.2 (B-4b): Bewertung wird gezeigt
         self.body = transparent_frame(self)
         self.body.pack(fill="both", expand=True)
 
     # -- Allgemein ----------------------------------------------------------
 
     def _clear(self):
+        self.grading = False
         self._stop_timer()
         for child in self.body.winfo_children():
             child.destroy()
@@ -3077,6 +3103,7 @@ class ExamPanel(ctk.CTkFrame):
 
     def show_grading(self):
         self._clear()
+        self.grading = True
         state = self.state
         exam = fp.EXAM[state["art"]]
         head = Card(self.body, title="Bewertung", accent=C["green"], subtitle=exam["name"])

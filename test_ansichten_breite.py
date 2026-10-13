@@ -259,12 +259,13 @@ Z3_STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 # aufgeklappt ebenso (+6 px, Messung S1c2). Normal gehoert nicht zu Z3 und
 # bleibt unveraendert (Weisung Hauptstrang) - deshalb dort erwarteter
 # Fehlschlag, gemeldet in bau_0.63.2/s1c2/ergebnis.md.
-Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten",
-                          "pruefungstrainer")
-# Nacharbeit Gegenpruefung S1c2 (L1): Pruefungstrainer, Bewertung mit den
-# laengsten Kriterien (_pruefung_gezielt) - die Haken-Texte brechen bei Normal
-# nicht um; auf 14b3bd4 (0.63.1) gleich, auch bei 1360. Frage an Nico/Chat.
-Z3_NORMAL_1360_BEKANNT = ("pruefungstrainer",)
+# Pruefungstrainer (Bewertung) ab B-4b nicht mehr: Kriterien brechen auch bei
+# Normal um (Weisung Antwort Meldung 36, 3), Deckel 0 bei 1120 und 1360.
+Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten")
+# Nacharbeit Gegenpruefung S1c2 (L1) hatte hier den Pruefungstrainer (Bewertung
+# mit den laengsten Kriterien, schon auf 14b3bd4 zu breit); mit B-4b behoben,
+# die Lockerung N-L2 ist zurueckgenommen.
+Z3_NORMAL_1360_BEKANNT = ()
 # Bekannte Grenze bei Z3 (Nacharbeit Gegenpruefung M1): Fortschritt mit
 # gespeicherten Test-Sessions, Tabelle "Historie der Pruefungssessions" bei
 # Sehr gross 1120 (Spaltenkoepfe + Datum passen nicht, ohne Text zu kuerzen).
@@ -281,10 +282,6 @@ Z3_UEBERSTAND = {
     ("fortschritt", 1.0, 1120): {"start": 34},
     ("fortschritt_daten", 1.0, 1120): {"mit_daten": 34, "neue_zeile": 34},
     ("optionen", 1.0, 1120): {"alles_offen": 6},
-    ("pruefungstrainer", 1.0, 1120): {"pruefung_bewertung": 1494,
-                                      "pruefung_bewertung_laengstes": 2514},
-    ("pruefungstrainer", 1.0, 1360): {"pruefung_bewertung": 1254,
-                                      "pruefung_bewertung_laengstes": 2274},
     # N-M1: gemessen mit TESTZEIT (breitestes Datum), vorher 55 mit Uhrzeit des Laufs
     ("fortschritt_daten", 1.3, 1120): {"mit_daten": 70, "neue_zeile": 70},
 }
@@ -332,13 +329,31 @@ def _bekannt(name, faktor, breite):
             or (name, faktor, breite) in Z3_GRENZE_BEKANNT)
 
 
-def _normal_unveraendert(ctx):
-    """Bei Normal: keine Zeile umbrochen, keine Unterschrift verschoben."""
+# B-4b: Zustaende, in denen bei Normal der Pruefungstrainer (nur die Bewertung,
+# ExamPanel.body) nach den Z3-Regeln angepasst werden darf
+B4B_ZUSTAENDE = ("pruefung_bewertung", "pruefung_bewertung_laengstes")
+
+
+def _b4b_teil(ctx, zustand):
+    """Teil, der bei Normal angepasst werden darf (B-4b), sonst None
+    (auch die Aufgaben 2..n: Zustand mit Endung _a<n>)."""
+    if ctx.name == "pruefungstrainer" and zustand and \
+            re.sub(r"_a\d+$", "", zustand) in B4B_ZUSTAENDE:
+        return ctx.view.exam.body
+    return None
+
+
+def _normal_unveraendert(ctx, zustand=None):
+    """Bei Normal: keine Zeile umbrochen, keine Unterschrift verschoben.
+    Ausnahme B-4b: die Bewertung im Pruefungstrainer (_b4b_teil)."""
     if ctx.faktor != 1.0:
         return
+    frei = _b4b_teil(ctx, zustand)
     stack = [ctx.view.inner]
     while stack:
         widget = stack.pop()
+        if widget is frei:
+            continue
         flow = widget.__dict__.get("_fisi_flow")
         if flow is not None and flow.wrapped:
             ctx.fehler.append("%s: bei Normal umbrochen: %s" % (ctx.name, widget))
@@ -414,11 +429,63 @@ def _tabellen_lesbar(ctx, zustand):
                                       % (ctx.name, zustand, text, font.measure(text), breite))
 
 
+def px_tol(widget):
+    """Spielraum fuer Innenraender (Haken-Text, 8 logische px)."""
+    import fisi_widgets
+    return fisi_widgets.px(8)
+
+
+def _haken_nur_wo_noetig(ctx, zustand):
+    """B-4b (Normal, Bewertung): ein Haken-Text bricht nur um, wenn er
+    laenger ist als seine Umbruchbreite, nutzt dann den Platz im Rahmen und
+    steht auf mindestens zwei Zeilen. Gezaehlt werden die umbrochenen Haken (werte)."""
+    teil = _b4b_teil(ctx, zustand)
+    if ctx.faktor != 1.0 or teil is None:
+        return
+    import customtkinter as ctk
+    import tkinter.font as tkfont
+    umbrochen = 0
+    stack = [teil]
+    while stack:
+        widget = stack.pop()
+        stack.extend(widget.winfo_children())
+        if not isinstance(widget, ctk.CTkCheckBox):
+            continue
+        label = widget._text_label
+        text = label.cget("text")
+        wrap = int(float(str(label.cget("wraplength") or 0)))
+        if wrap:
+            # Breite des Textes ohne Umbruch, wie Tk sie zeichnet (ohne Innenrand);
+            # die Messung per Schriftart ist schmaler als Tk
+            label.configure(wraplength=0)
+            voll = label.winfo_reqwidth() - 2 * sum(
+                int(float(label.cget(name))) for name in ("padx", "borderwidth",
+                                                          "highlightthickness"))
+            label.configure(wraplength=wrap)
+            umbrochen += 1
+            if voll <= wrap:
+                ctx.fehler.append("%s/%s: Haken umbrochen, obwohl er passt (%d <= %d): %r"
+                                  % (ctx.name, zustand, voll, wrap, text[:40]))
+            # die Umbruchbreite nutzt den Platz im Rahmen (nicht unnoetig schmal)
+            platz = widget.master.winfo_width() - widget.winfo_x()
+            genutzt = widget.winfo_reqwidth() - label.winfo_reqwidth() + wrap
+            if genutzt < platz - px_tol(widget):
+                ctx.fehler.append("%s/%s: Haken schmaler umbrochen als Platz ist (%d < %d): %r"
+                                  % (ctx.name, zustand, genutzt, platz, text[:40]))
+            zeilen = max(1, round(label.winfo_reqheight()
+                                  / tkfont.Font(font=label.cget("font")).metrics("linespace")))
+            if zeilen < 2:
+                ctx.fehler.append("%s/%s: Haken mit Umbruch in einer Zeile: %r"
+                                  % (ctx.name, zustand, text[:40]))
+    ctx.werte["%s/%s" % (ctx.name, zustand)]["haken_umbrochen"] = umbrochen
+
+
 def _z3_pruefe(ctx, zustand):
     ctx.pruefe(zustand)
     _unterklassen_sichtbar(ctx, zustand)
     _tabellen_lesbar(ctx, zustand)
-    _normal_unveraendert(ctx)
+    _normal_unveraendert(ctx, zustand)
+    _haken_nur_wo_noetig(ctx, zustand)
 
 
 @ansicht("notizblock")
@@ -505,6 +572,17 @@ def _pruefung_gezielt(view, art):
     view.exam.show_running()
 
 
+def _bewertung_aufgaben(ctx, view, zustand):
+    """B-4b: Bewertung der Aufgaben 2..n (Zustand <zustand>_a<n>), danach
+    wieder Aufgabe 1."""
+    for nummer in range(1, len(view.exam.state["aufgaben"])):
+        view.exam._grade_task(nummer)
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "%s_a%d" % (zustand, nummer + 1))
+    view.exam._grade_task(0)
+    ctx.pump(0.3)
+
+
 @ansicht("pruefungstrainer")
 def pruefe_pruefungstrainer(ctx):
     import app_gui
@@ -533,6 +611,8 @@ def pruefe_pruefungstrainer(ctx):
         view.exam._submit()
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_bewertung")
+        # B-4b: auch die uebrigen Aufgaben (je Thema das laengste Kriterium)
+        _bewertung_aufgaben(ctx, view, "pruefung_bewertung")
         view.exam._finish()
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_ergebnis")
@@ -542,6 +622,7 @@ def pruefe_pruefungstrainer(ctx):
         view.exam._submit()
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_bewertung_laengstes")
+        _bewertung_aufgaben(ctx, view, "pruefung_bewertung_laengstes")
         view.exam.cancel()
         ctx.pump(0.4)
         view.exam.show_choice()
