@@ -19,7 +19,9 @@ Hostbedarf" (IPv4/IPv6, feste Netze) und alle Breiten 20 bis 75 Zeichen:
   (b) Wortlaut: Ausgabe ohne Leerraum = Eingabe ohne Leerraum
   (c) keine Zeile wird durch die Regel breiter als die Breite (verglichen
       mit dem Stand ohne Regel: nur Zeilen, die schon vorher zu breit waren)
-Reine Textfunktionen, kein Fenster. Gegen 14b3bd4 rot.
+Z9 (F17 (a)): Die abgenommene Tausenderpunkt-Regel (Plan 4.3) bleibt; ein
+Test haelt sie fest (test_z9_regel_bleibt, auch gegen 14b3bd4 gruen).
+Reine Textfunktionen, kein Fenster. Gegen 14b3bd4 rot (ausser Z9).
 
 Start:  python test_umbruch_bindung.py
 """
@@ -170,6 +172,35 @@ class BindungTest(unittest.TestCase):
                          "Adressen gesamt:\n  79.228.162.514.264.337.593.543.950\n  .336")
         table = "  1   000000000 0000 0000 0000 0000 = 0000  2001:db8::/41"
         self.assertEqual(fc.fit_lines(table, 30), table)
+
+    def test_z9_regel_bleibt(self):
+        """Z9 (F17 (a), Freigabe 0.63.2): Die abgenommene Regel aus Plan 4.3
+        (0.63) bleibt: Eine grosse Zahl, die nicht in die Zeile passt, bricht
+        VOR einem Tausenderpunkt um; die neue Zeile beginnt mit ".", die
+        obere endet nie auf ".". Gilt auch nach der A5-Bindungsregel."""
+        line = "Adressen gesamt       : 79.228.162.514.264.337.593.543.950.336"
+        for zeichen in (32, 33, 34, 35):
+            self.assertEqual(fc.fit_lines(line, zeichen).split("\n"),
+                             ["Adressen gesamt:", "  79.228.162.514.264.337.593.543",
+                              "  .950.336"], zeichen)
+        for net in ("::/0", "2001:db8::/32", "4000::/16"):
+            raw = fc.subnet_report(net)
+            value = next(l for l in raw.split("\n")
+                         if l.startswith("Adressen gesamt")).split(": ", 1)[1]
+            for zeichen in range(20, len(value) + 2):
+                rows = fc.fit_lines(raw, zeichen).split("\n")
+                start = rows.index("Adressen gesamt:")
+                parts = []
+                for row in rows[start + 1:]:
+                    if not row.startswith("  ") or row.startswith("   "):
+                        break
+                    parts.append(row[2:])
+                    if "".join(parts) == value:
+                        break
+                self.assertEqual("".join(parts), value, (net, zeichen, parts))
+                for upper, lower in zip(parts, parts[1:]):
+                    self.assertTrue(lower.startswith("."), (net, zeichen, parts))
+                    self.assertFalse(upper.endswith("."), (net, zeichen, parts))
 
     def test_hilfe_selbst(self):
         self.assertEqual(ends_bound("a = b ="), (["="], ["a", "=", "b"]))
