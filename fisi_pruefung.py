@@ -25,12 +25,14 @@ in der Tabelle pruefungen (wird abgeglichen).
 """
 
 import datetime
+import difflib
 import math
 import random
 import re
 import time
 
-from fisi_core import (AP1_SZENARIEN, QUIZ_QUESTIONS, SZENARIEN, ihk_note, plural)
+from fisi_core import (AP1_SZENARIEN, QUESTION_RENAMES, QUIZ_QUESTIONS, SZENARIEN, ihk_note,
+                       plural)
 
 TASK_POINTS = 25
 WISO_COUNT = 30
@@ -291,13 +293,17 @@ def suggested_points(max_points, checked):
 
 
 def wiso_result(state):
-    """[(frage, gewaehlt, richtig, ist_richtig)]."""
+    """[(frage, gewaehlt, richtig, ist_richtig)]. Ab 0.63.2: alte Fragetexte
+    (inhalte/umbenennungen.json) zaehlen beim neuen Text; eine Frage, die es
+    nicht mehr gibt, bleibt stehen und zaehlt als nicht richtig (vorher
+    KeyError, die Pruefung liess sich nicht abgeben)."""
     by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
     rows = []
     for question in state["fragen"]:
         chosen = state["antworten"].get(question, "")
-        right = by_question[question]["a"]
-        rows.append((question, chosen, right, chosen == right))
+        current = current_question(question)
+        right = by_question[current]["a"] if current in by_question else ""
+        rows.append((current, chosen, right, bool(right) and chosen == right))
     return rows
 
 
@@ -306,7 +312,14 @@ def evaluate(state):
     note, aufgaben/fragen und themen {thema: [erreicht, moeglich]}."""
     themes = {}
     if state["art"] == WISO:
-        rows = wiso_result(state)
+        # Ab 0.63.2 (Nacharbeit S4, L2): eine Frage, die es nicht mehr gibt
+        # (weder im Inhalt noch in umbenennungen.json), senkt die Punkte nicht:
+        # sie zaehlt weder im Nenner noch bei den Themen, bleibt aber unter
+        # "unbekannt" im gespeicherten Ergebnis stehen.
+        known = {q["q"] for q in QUIZ_QUESTIONS}
+        all_rows = wiso_result(state)
+        rows = [row for row in all_rows if row[0] in known]
+        unknown = [row[0] for row in all_rows if row[0] not in known]
         right = sum(1 for row in rows if row[3])
         points = round(100.0 * right / max(1, len(rows)), 1)
         topics = {q["q"]: q.get("thema") for q in QUIZ_QUESTIONS}
@@ -317,6 +330,8 @@ def evaluate(state):
             entry[1] += 1
         details = {"fragen": [{"q": q, "richtig": ok} for q, _c, _r, ok in rows],
                    "richtig": right}
+        if unknown:
+            details["unbekannt"] = unknown
     else:
         tasks, total = [], 0
         for number, task in enumerate(state["aufgaben"]):
@@ -460,12 +475,135 @@ RUNNING_KEY = "laufende_pruefung"
 
 
 def load_running():
-    """Die laufende bzw. noch nicht bewertete Pruefung dieses Geraets oder None."""
+    """Die laufende bzw. noch nicht bewertete Pruefung dieses Geraets oder None.
+    Ab 0.63.2 an korrigierte Lerninhalte angepasst (migrate_running)."""
     from fisi_update import load_settings
     state = load_settings().get(RUNNING_KEY)
     if not isinstance(state, dict) or state.get("art") not in EXAM:
         return None
+    return migrate_running(state)
+
+
+def current_question(question):
+    """Heutiger Fragetext einer Quizfrage (folgt inhalte/umbenennungen.json,
+    auch ueber mehrere Umbenennungen)."""
+    renames = QUESTION_RENAMES.get("quiz_answers") or {}
+    seen = set()
+    while question in renames and question not in seen:
+        seen.add(question)
+        question = renames[question]
+    return question
+
+
+def migrate_running(state):
+    """Ab 0.63.2 (Nacharbeit S4): Eine Pruefung, die beim Update lief, liegt
+    mit den Texten der alten Version in einstellungen.json. Hier wird sie an
+    die heutigen Inhalte angepasst, ohne etwas zu verwerfen:
+    WiSo - alte Fragetexte -> neue (umbenennungen.json) in fragen, antworten
+    und optionen; ist genau eine Antwortmoeglichkeit umformuliert, wird sie
+    (und eine gewaehlte Antwort) auf den neuen Text gesetzt. Unbekanntes
+    bleibt unveraendert stehen.
+    AP1/AP2 - hat eine Musterloesung jetzt mehr Kriterien, wird die Liste der
+    Haken mit "nicht abgehakt" verlaengert (vorher IndexError beim Abhaken);
+    gesetzte Haken und vergebene Punkte bleiben.
+    Gespeichert wird erst beim naechsten save_running (kein Schreiben hier)."""
+    try:
+        if state.get("art") == WISO:
+            _migrate_wiso(state)
+        else:
+            _migrate_tasks(state)
+    except Exception:        # im Zweifel die Pruefung so lassen, wie sie war
+        pass
     return state
+
+
+def _migrate_wiso(state):
+    by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
+    answers, options = state.get("antworten") or {}, state.get("optionen") or {}
+    questions = []
+    for old in state.get("fragen") or []:
+        new = current_question(old)
+        if new != old and new not in answers and old in answers:
+            answers[new] = answers.pop(old)
+        if new != old and new not in options and old in options:
+            options[new] = options.pop(old)
+        questions.append(new)
+        item = by_question.get(new)
+        stored = options.get(new)
+        if item is None or not isinstance(stored, list):
+            continue
+        gone = [text for text in stored if text not in item["options"]]
+        added = [text for text in item["options"] if text not in stored]
+        if len(gone) == 1 and len(added) == 1:
+            options[new] = [added[0] if text == gone[0] else text for text in stored]
+            if answers.get(new) == gone[0]:
+                answers[new] = added[0]
+    state["fragen"] = questions
+    state["antworten"], state["optionen"] = answers, options
+
+
+def _migrate_tasks(state):
+    marks = state.get("kriterien")
+    if not isinstance(marks, dict):
+        return
+    for number, task in enumerate(state.get("aufgaben") or []):
+        details = task_details(state, number)
+        if details is None:
+            continue
+        for part_number, part in enumerate(details["teile"]):
+            key = answer_key(number, part_number)
+            checked = marks.get(key)
+            if not isinstance(checked, list) or len(checked) >= len(part["kriterien"]):
+                continue
+            old = CRITERIA_BEFORE.get((task.get("quelle"), task.get("index"), part_number))
+            if old is not None and len(old) == len(checked):
+                marks[key] = align_marks(checked, old, part["kriterien"])
+            else:
+                # unbekannte Aenderung: Haken behalten, Rest "nicht abgehakt"
+                checked.extend([False] * (len(part["kriterien"]) - len(checked)))
+
+
+# Ab 0.63.2 (Nacharbeit S4, M1): Kriterien der Musterloesungen, die in 0.63.2
+# laenger wurden, im Stand 0.63.1 (Schluessel: Quelle, Index, Teilaufgabe).
+# Damit stehen die Haken einer beim Update laufenden Pruefung wieder beim
+# richtigen Kriterium (A2-135: neues Kriterium an Position 3, nicht hinten).
+CRITERIA_BEFORE = {
+    ("ap1", 4, 2): [
+        "Damit ein lokales Ereignis wie Brand, Diebstahl oder ein Wasserschaden nicht "
+        "gleichzeitig Originaldaten und alle Sicherungskopien vernichtet (Prinzip des Air Gap)."],
+    ("ap1", 58, 2): [
+        "Nach Arbeitsende gilt eine ununterbrochene Ruhezeit von mindestens 11 Stunden, also "
+        "frühestens am nächsten Tag um 7:00 Uhr."],
+    ("ap2", 134, 0): [
+        "Erste Meldung: 24 Stunden nach Kenntnis, also bis Samstag, 03.10.2026, 22:40 Uhr "
+        "(dass der 3.",
+        "Oktober ein Feiertag ist, spielt keine Rolle).",
+        "Meldung: 72 Stunden nach Kenntnis, bis Montag, 05.10.2026, 22:40 Uhr.",
+        "Die Meldung um 15:00 Uhr ist rechtzeitig.",
+        "Abschlussmeldung: einen Monat nach der Meldung, also bis 05.11.2026."],
+}
+
+
+def align_marks(checked, old, new):
+    """Haken (zu den Kriterien old) auf die Kriterien new uebertragen. Nur fuer
+    die von Hand geprueften Eintraege in CRITERIA_BEFORE gedacht: gleiche
+    Kriterien behalten ihren Haken, ein umformuliertes behaelt den Haken an
+    seiner Stelle, neu eingefuegte sind "nicht abgehakt". Grundsatz: nie einen
+    fremden Haken setzen. Der Haken eines weggefallenen Kriteriums faellt weg
+    (wandert nicht weiter); gesetzte Punkte und der Lernstand bleiben
+    unberuehrt."""
+    result = []
+    matcher = difflib.SequenceMatcher(None, old, new, autojunk=False)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "insert":
+            result.extend([False] * (j2 - j1))
+        elif tag in ("equal", "replace"):
+            # der Reihe nach; fehlende "nicht abgehakt", ueberzaehlige fallen weg
+            width = j2 - j1
+            block = list(checked[i1:i2])[:width]
+            result.extend(block + [False] * (width - len(block)))
+        # "delete": Haken des weggefallenen Kriteriums faellt weg
+    return result
 
 
 def save_running(state):
@@ -491,7 +629,8 @@ def finish(db, state):
     if state["art"] == WISO:
         by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
         for question, _chosen, _right, ok in wiso_result(state):
-            db.log_quiz_answer(by_question[question]["cat"], question, ok)
+            if question in by_question:     # ab 0.63.2: unbekannte Frage nicht loggen
+                db.log_quiz_answer(by_question[question]["cat"], question, ok)
     else:
         for task in result["daten"]["aufgaben"]:
             known = task["punkte"] * 2 >= task["max"]

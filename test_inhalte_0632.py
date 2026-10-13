@@ -642,7 +642,51 @@ if aufgabe == "export":
 if aufgabe == "merge":
     import fisi_sync
     fisi_sync.merge_into_local(db, daten)
-if aufgabe in ("anlegen", "merge", "lesen"):
+if aufgabe == "pruefung_anlegen":
+    import fisi_pruefung as fp
+    state = fp.new_exam(daten["art"], seed=1)
+    if daten["art"] == fp.WISO:
+        nach_text = {q["q"]: q for q in core.QUIZ_QUESTIONS}
+        vorne = daten["fragen"]
+        state["fragen"] = vorne + [q for q in state["fragen"] if q not in vorne][:len(state["fragen"]) - len(vorne)]
+        state["optionen"] = {q: list(reversed(nach_text[q]["options"])) for q in state["fragen"]}
+        state["antworten"] = {q: nach_text[q]["a"] for q in state["fragen"]}
+    else:
+        state["aufgaben"] = daten["aufgaben"]
+        for nummer in range(len(state["aufgaben"])):
+            for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+                key = fp.answer_key(nummer, teil)
+                state["antworten"][key] = "Antwort %s" % key
+                anzahl = len(part["kriterien"])
+                if daten.get("haken") == "wechsel":     # 1., 3., 5. ... abgehakt
+                    state["kriterien"][key] = [i % 2 == 0 for i in range(anzahl)]
+                else:
+                    state["kriterien"][key] = [True] * anzahl
+                state["punkte"][key] = part["punkte"]
+        fp.submit(state)
+    fp.save_running(state)
+    out["state"] = state
+if aufgabe == "pruefung_laden":
+    import fisi_pruefung as fp
+    out["geladen"] = fp.load_running()
+if aufgabe == "pruefung_abgeben":
+    import fisi_pruefung as fp
+    state = fp.load_running()
+    out["geladen"] = json.loads(json.dumps(state))
+    if state["art"] == fp.WISO:
+        fp.submit(state)
+    else:
+        # wie die Oberflaeche (Haken je Kriterium, PC app_gui.py/Handy main.py "toggled")
+        for nummer in range(len(state["aufgaben"])):
+            for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+                key = fp.answer_key(nummer, teil)
+                marks = state["kriterien"].setdefault(key, [False] * len(part["kriterien"]))
+                for index in range(len(part["kriterien"])):
+                    marks[index] = True
+                state["punkte"][key] = fp.suggested_points(part["punkte"], marks)
+    out["ergebnis"] = fp.finish(db, state)
+    out["laufend"] = fp.load_running()
+if aufgabe in ("anlegen", "merge", "lesen", "pruefung_abgeben"):
     out["ergebnisse"] = sorted([q, k, [[t, v] for t, v in werte]]
                                for (q, k), werte in db.question_results().items())
     out["kennzahlen"] = [db.distinct_cards_learned(), db.distinct_quiz_questions(),
@@ -799,6 +843,200 @@ class MigrationTest(unittest.TestCase):
         finally:
             conn.close()
         self.assertEqual(ergebnis["kennzahlen"], self.vorher["kennzahlen"])
+
+
+# ============================================================================
+#  Laufende Pruefung ueber das Update (Nacharbeit S4)
+# ============================================================================
+
+class LaufendePruefungTest(unittest.TestCase):
+    """Eine Pruefung, die beim Update auf 0.63.2 laeuft, liegt mit Frage- und
+    Antworttexten (WiSo) bzw. Kriterien-Haken (AP1/AP2) in einstellungen.json.
+    Angelegt mit dem Code v0.63.1, fortgesetzt und abgegeben mit diesem Stand:
+    nichts darf abbrechen oder verloren gehen."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.alt = code_stand(ALT_TAG)
+
+    def setUp(self):
+        if self.alt is None:
+            if IN_CI:
+                self.fail("Code aus %s nicht verfuegbar" % ALT_TAG)
+            self.skipTest("Code aus %s nicht verfuegbar (git archive)" % ALT_TAG)
+        self.ordner = tempfile.mkdtemp(prefix="laufend_", dir=_TMP)
+        self.db = os.path.join(self.ordner, "lernstand.db")
+
+    def test_wiso_mit_alten_fragetexten(self):
+        alte = {alt: neu for _art, alt, neu in neue_texte() if _art == "quiz"}
+        wiso = [UMBENANNT[i][2] for i in range(len(UMBENANNT))
+                if UMBENANNT[i][0] == "quiz" and UMBENANNT[i][1] in (1024, 1933, 2102)]
+        self.assertEqual(len(wiso), 3)
+        angelegt = lauf(self.alt, self.db, "pruefung_anlegen", {"art": "wiso", "fragen": wiso})
+        self.assertEqual(angelegt["state"]["fragen"][:3], wiso)
+        ergebnis = lauf(HERE, self.db, "pruefung_abgeben")
+        geladen = ergebnis["geladen"]
+        neu = [alte[q] for q in wiso]
+        self.assertEqual(geladen["fragen"][:3], neu)
+        self.assertEqual(len(geladen["fragen"]), len(angelegt["state"]["fragen"]))
+        for alt, frage in zip(wiso, neu):
+            self.assertEqual(geladen["antworten"][frage], angelegt["state"]["antworten"][alt])
+            self.assertEqual(geladen["optionen"][frage], angelegt["state"]["optionen"][alt])
+            self.assertNotIn(alt, geladen["antworten"])
+        # alle Antworten waren richtig -> 100 Punkte, gespeichert, nicht mehr laufend
+        self.assertEqual(ergebnis["ergebnis"]["punkte"], 100.0)
+        self.assertIsNone(ergebnis["laufend"])
+        antworten = {(q, k): v for q, k, v in ergebnis["ergebnisse"]}
+        for frage in neu:
+            self.assertEqual([w for _t, w in antworten[("quiz", frage)]], [True])
+        for alt in wiso:
+            self.assertNotIn(("quiz", alt), antworten)
+
+    def test_aufgaben_mit_mehr_kriterien(self):
+        # A1-005 (B-C-37) und A1-059 (B-C-34): Musterloesung hat jetzt mehr Kriterien
+        aufgaben = [{"quelle": "ap1", "index": 4}, {"quelle": "ap1", "index": 58}]
+        angelegt = lauf(self.alt, self.db, "pruefung_anlegen", {"art": "ap1", "aufgaben": aufgaben})
+        alt_haken = angelegt["state"]["kriterien"]
+        ergebnis = lauf(HERE, self.db, "pruefung_abgeben")
+        geladen = ergebnis["geladen"]
+        state = {"aufgaben": aufgaben}
+        for nummer in range(2):
+            for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+                key = fp.answer_key(nummer, teil)
+                haken = geladen["kriterien"][key]
+                self.assertEqual(len(haken), len(part["kriterien"]), key)
+                self.assertEqual(haken[:len(alt_haken[key])], alt_haken[key], key)
+        self.assertEqual(geladen["punkte"], angelegt["state"]["punkte"])
+        self.assertEqual(geladen["antworten"], angelegt["state"]["antworten"])
+        self.assertIsNone(ergebnis["laufend"])
+        # alle Kriterien abgehakt -> volle Punkte beider Aufgaben (2 x 25)
+        self.assertEqual(ergebnis["ergebnis"]["punkte"], 50.0)
+
+    def test_netzwerke_mit_mehr_kriterien(self):
+        # A2-135 (B-C-38): erste Teilaufgabe hat jetzt ein Kriterium mehr
+        aufgaben = [{"quelle": "ap2", "index": 134}]
+        angelegt = lauf(self.alt, self.db, "pruefung_anlegen",
+                        {"art": "netzwerke", "aufgaben": aufgaben})
+        ergebnis = lauf(HERE, self.db, "pruefung_abgeben")
+        self.assertEqual(len(ergebnis["geladen"]["kriterien"]["0-0"]),
+                         len(fp.task_details({"aufgaben": aufgaben}, 0)["teile"][0]["kriterien"]))
+        self.assertEqual(ergebnis["geladen"]["punkte"], angelegt["state"]["punkte"])
+        self.assertIsNone(ergebnis["laufend"])
+
+    def test_haken_an_richtiger_stelle(self):
+        # Nacharbeit 2 (M1): neue Kriterien stehen nicht immer hinten
+        # (A2-135: an Stelle 3). Abgehakt sind in 0.63.1 das 1., 3., 5. ...
+        # Kriterium; nach dem Update muss jeder Haken beim selben Kriterium
+        # stehen und jedes neue Kriterium "nicht abgehakt" sein.
+        faelle = [("ap1", [{"quelle": "ap1", "index": 4}, {"quelle": "ap1", "index": 58}],
+                   {"0-2": [True, False], "1-2": [True, False, False, False]}),
+                  ("netzwerke", [{"quelle": "ap2", "index": 134}],
+                   {"0-0": [True, False, False, True, False, True]})]
+        for art, aufgaben, erwartet in faelle:
+            with self.subTest(art=art):
+                angelegt = lauf(self.alt, self.db, "pruefung_anlegen",
+                                {"art": art, "aufgaben": aufgaben, "haken": "wechsel"})
+                alt_haken = angelegt["state"]["kriterien"]
+                geladen = lauf(HERE, self.db, "pruefung_laden")["geladen"]["kriterien"]
+                state = {"aufgaben": aufgaben}
+                for nummer in range(len(aufgaben)):
+                    for teil, part in enumerate(fp.task_details(state, nummer)["teile"]):
+                        key = fp.answer_key(nummer, teil)
+                        if key in erwartet:
+                            self.assertEqual(geladen[key], erwartet[key], key)
+                            alt = fp.CRITERIA_BEFORE[(aufgaben[nummer]["quelle"],
+                                                      aufgaben[nummer]["index"], teil)]
+                            # unveraenderte Kriterien: Haken wie vorher
+                            for i, text in enumerate(alt):
+                                if text in part["kriterien"]:
+                                    self.assertEqual(geladen[key][part["kriterien"].index(text)],
+                                                     alt_haken[key][i], (key, text))
+                        else:
+                            self.assertEqual(geladen[key], alt_haken[key], key)
+        self.assertEqual(fp.align_marks([True], ["a"], ["b", "c"]), [True, False])
+
+
+class PruefungRobustTest(unittest.TestCase):
+    """Zuordnung gespeicherter Texte ohne Umbenennungsliste (im Zweifel behalten)."""
+
+    def setUp(self):
+        self.quiz = [q for q in fp.QUIZ_QUESTIONS if q["q"] in set(fp.wiso_pool())]
+
+    def state(self, fragen, optionen, antworten):
+        return {"art": fp.WISO, "start": "2026-10-13 10:00:00", "start_utc": 0, "minuten": 60,
+                "phase": "laeuft", "fragen": fragen, "optionen": optionen,
+                "antworten": antworten, "punkte": {}, "kriterien": {}}
+
+    def test_geaenderter_antworttext_wird_zugeordnet(self):
+        frage = self.quiz[0]
+        alt = frage["a"] + " (alte Fassung)"
+        optionen = [alt if o == frage["a"] else o for o in frage["options"]]
+        state = fp.migrate_running(self.state([frage["q"]], {frage["q"]: optionen},
+                                              {frage["q"]: alt}))
+        self.assertEqual(state["antworten"][frage["q"]], frage["a"])
+        self.assertEqual(sorted(state["optionen"][frage["q"]]), sorted(frage["options"]))
+        self.assertTrue(fp.wiso_result(state)[0][3])
+
+    def test_unbekannte_frage_bleibt_und_bricht_nicht_ab(self):
+        bekannt = self.quiz[1]
+        fragen = ["Eine Frage, die es nicht mehr gibt?", bekannt["q"]]
+        state = fp.migrate_running(self.state(
+            fragen, {f: ["a", "b", "c", "d"] for f in fragen},
+            {fragen[0]: "a", bekannt["q"]: bekannt["a"]}))
+        self.assertEqual(state["fragen"], fragen)            # nichts verworfen
+        zeilen = fp.wiso_result(state)
+        self.assertEqual([z[3] for z in zeilen], [False, True])
+        # Nacharbeit 2 (L2): die unbekannte Frage senkt die Punkte nicht
+        # (bis c582094 hier 50.0, da sie im Nenner zaehlte)
+        self.assertEqual(fp.evaluate(fp.submit(state))["punkte"], 100.0)
+
+    def test_haken_wandert_nie_auf_fremdes_kriterium(self):
+        # Nacharbeit 3 (L4): nie einen fremden Haken setzen
+        # umgestellte Reihenfolge: difflib sieht "b" als neu eingefuegt und das
+        # alte "b" als weggefallen; dessen Haken darf nicht auf "a" landen
+        self.assertEqual(fp.align_marks([False, False, True], ["x", "a", "b"], ["x", "b", "a"]),
+                         [False, False, False])
+        # geloeschtes Kriterium: sein Haken faellt weg
+        self.assertEqual(fp.align_marks([False, True], ["a", "b"], ["a"]), [False])
+        self.assertEqual(fp.align_marks([False, True, False], ["a", "b", "c"], ["a", "c"]),
+                         [False, False])
+        # Ueberlauf (zwei alte Kriterien durch eines ersetzt): kein Haken aufs letzte
+        self.assertEqual(fp.align_marks([False, False, True], ["a", "b", "c"], ["a", "z"]),
+                         [False, False])
+        # eigene Haken bleiben dabei erhalten
+        self.assertEqual(fp.align_marks([True, True, False], ["x", "a", "b"], ["x", "b", "a"]),
+                         [True, False, True])
+        self.assertEqual(fp.align_marks([True, True], ["a", "b"], ["z"]), [True])
+
+    def test_abgabe_mit_unbekannter_frage(self):
+        # Nacharbeit 2 (L1/L2): finish schreibt fuer die unbekannte Frage nichts
+        # in den Lernstand, sie zaehlt nicht in den Punkten, bleibt aber im
+        # gespeicherten Ergebnis unter "unbekannt" sichtbar.
+        import fisi_core as core
+        bekannt = self.quiz[2]
+        unbekannt = "Eine Frage, die es nicht mehr gibt?"
+        fragen = [unbekannt, bekannt["q"]]
+        state = fp.migrate_running(self.state(
+            fragen, {f: ["a", "b", "c", "d"] for f in fragen},
+            {unbekannt: "a", bekannt["q"]: bekannt["a"]}))
+        pfad = os.path.join(tempfile.mkdtemp(prefix="abgabe_", dir=_TMP), "lernstand.db")
+        db = core.DBManager(pfad)
+        ergebnis = fp.finish(db, fp.submit(state))
+        self.assertEqual(ergebnis["punkte"], 100.0)
+        self.assertEqual(ergebnis["daten"]["richtig"], 1)
+        self.assertEqual([f["q"] for f in ergebnis["daten"]["fragen"]], [bekannt["q"]])
+        self.assertEqual(ergebnis["daten"]["unbekannt"], [unbekannt])
+        conn = sqlite3.connect(pfad)
+        try:
+            zeilen = conn.execute("SELECT question, correct FROM quiz_answers").fetchall()
+            gespeichert = conn.execute("SELECT punkte, daten FROM pruefungen").fetchall()
+        finally:
+            conn.close()
+        self.assertEqual([z[0] for z in zeilen], [bekannt["q"]])
+        self.assertEqual([bool(z[1]) for z in zeilen], [True])
+        self.assertEqual(len(gespeichert), 1)
+        self.assertEqual(gespeichert[0][0], 100.0)
+        self.assertEqual(json.loads(gespeichert[0][1])["unbekannt"], [unbekannt])
 
 
 if __name__ == "__main__":
