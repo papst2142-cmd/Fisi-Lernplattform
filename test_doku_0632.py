@@ -7,6 +7,8 @@ Tests fuer 0.63.2, Strang S5a: Doku-Befunde (Plan 5.9) und A11 (Attrappe).
                 STATE.lock herunterzaehlen (gleichzeitige PUTs)
   AbgleichText  B-L-01, B-L-02: was der Abgleich uebertraegt, Rechnername
   FehlerLog     B-L-03: fehler.log ohne Zugangsschluessel, scheitert nie
+  ScrubLaufzeit L1 (Nacharbeit): scrub laeuft auch bei langen Ketten ohne
+                Leerzeichen linear, gleiche Wirkung wie vorher
   Bericht       B-L-04: "Problem melden" verspricht nichts Falsches
   BerichtAnzeige B-L-06 (Tk): neue Zeile in haenger.log erscheint im Bericht
   Liesmich      B-K-01, B-K-02, B-K-03, B-K-04, B-K-06
@@ -26,6 +28,9 @@ Start:  xvfb-run -a python test_doku_0632.py
 import ast
 import json
 import os
+import random
+import re
+import subprocess
 import sys
 import tempfile
 import threading
@@ -110,15 +115,26 @@ class Attrappe(unittest.TestCase):
         self.assertEqual(schlecht, [])
 
     def test_gleichzeitige_puts_genau_n_mal(self):
-        """Schutz/Verhalten: 40 gleichzeitige PUTs, put_status=500,
-        put_status_n=10 -> genau 10 x 500 (auch auf 14b3bd4 meist gruen,
-        das Rennen ist mit GIL selten; das Rot belegt der AST-Test)."""
+        """Verhalten: 200 gleichzeitige PUTs, put_status=500,
+        put_status_n=50 -> genau 50 x 500. Das Lesen von put_status_n ist
+        kuenstlich verlangsamt (2 ms, LangsamesLesen), damit das Rennen
+        zwischen Lesen und Herunterzaehlen sicher sichtbar wird: auf
+        14b3bd4 (ohne Sperre) kommen deutlich mehr als 50 x 500 (Nacharbeit
+        L2, Gegenpruefung Punkt 3)."""
+        import time
         import abgleich_attrappe as att
         from http.server import ThreadingHTTPServer
 
         class Server(ThreadingHTTPServer):
-            request_queue_size = 128   # 40 Verbindungen auf einmal annehmen
+            request_queue_size = 256   # 200 Verbindungen auf einmal annehmen
             daemon_threads = True
+
+        class LangsamesLesen(dict):
+            def get(self, key, default=None):
+                wert = dict.get(self, key, default)
+                if key == "put_status_n":
+                    time.sleep(0.002)
+                return wert
 
         server = Server(("127.0.0.1", 0), att.Handler)
         port = server.server_address[1]
@@ -132,7 +148,9 @@ class Attrappe(unittest.TestCase):
                 urllib.request.urlopen(req, timeout=10).read()
 
             post({"reset": True})
-            post({"put_status": 500, "put_status_n": 10})
+            post({"put_status": 500, "put_status_n": 50})
+            with att.STATE.lock:
+                att.STATE.ctl = LangsamesLesen(att.STATE.ctl)
             codes = []
             sperre = threading.Lock()
             start = threading.Event()
@@ -155,20 +173,22 @@ class Attrappe(unittest.TestCase):
             alt = sys.getswitchinterval()
             sys.setswitchinterval(1e-6)
             try:
-                threads = [threading.Thread(target=put) for _ in range(40)]
+                threads = [threading.Thread(target=put) for _ in range(200)]
                 for t in threads:
                     t.start()
                 start.set()
                 for t in threads:
-                    t.join(30)
+                    t.join(60)
             finally:
                 sys.setswitchinterval(alt)
-            self.assertEqual(len(codes), 40)
+            self.assertEqual(len(codes), 200)
             self.assertTrue(all(isinstance(c, int) for c in codes), codes)
-            self.assertEqual(codes.count(500), 10, codes)
+            self.assertEqual(codes.count(500), 50, sorted(codes))
             with att.STATE.lock:
-                self.assertEqual(att.STATE.ctl.get("put_status_n"), 0)
+                self.assertEqual(dict.get(att.STATE.ctl, "put_status_n"), 0)
         finally:
+            with att.STATE.lock:
+                att.STATE.ctl = dict(att.STATE.ctl)
             server.shutdown()
             server.server_close()
 
@@ -359,6 +379,89 @@ class FehlerLog(unittest.TestCase):
         self.assertEqual(body[0].body[0].module, "fisi_diagnose")
 
 
+# Muster fuer "Schluessel = Wert" in fisi_diagnose bis 121321b (Vergleich,
+# quadratische Laufzeit bei langen Ketten ohne Leerzeichen)
+SCRUB_ALT = (r"(?i)([\"']?[\w-]*(?:token|passw\w*|kennwort|secret|api[_-]?key)[\"']?"
+             r"\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}]+)")
+
+# laeuft in einem eigenen Prozess (mit Zeitgrenze, damit ein quadratischer
+# Stand nicht minutenlang haengt) und gibt die Dauer je Kette aus
+SCRUB_ZEIT = """
+import sys, time
+sys.path.insert(0, sys.argv[1])
+import fisi_diagnose as fd
+for n in (20000, 100000):
+    for teil in ("A", "0123456789abcdef", "passw", "token", "a-", "ghp_", "bearer",
+                 "authorization", "https:", "http://a", "x@", '"', "="):
+        text = (teil * (n // len(teil) + 1))[:n]
+        t = time.perf_counter()
+        fd.scrub(text)
+        print("%d %r %.4f" % (n, teil, time.perf_counter() - t), flush=True)
+"""
+
+
+class ScrubLaufzeit(unittest.TestCase):
+    """L1 (Nacharbeit): scrub laeuft seit B-L-03 in jedem write_error_log.
+    Lange Ketten ohne Leerzeichen (z.B. eine Hex-Folge) duerfen den
+    aufrufenden Faden nicht sekundenlang blockieren; die Wirkung bleibt
+    gleich (ghp_, github_pat_, Bearer, token=, Token in Adressen)."""
+
+    GRENZE = 0.5     # Sekunden je Kette (gemessen linear: unter 0,1 s)
+
+    def test_lange_ketten_linear(self):
+        try:
+            lauf = subprocess.run([sys.executable, "-c", SCRUB_ZEIT, HERE],
+                                  capture_output=True, text=True, timeout=20)
+        except subprocess.TimeoutExpired as e:
+            self.fail("scrub zu langsam (Zeitgrenze 20 s), bis dahin: %r" % (e.stdout,))
+        self.assertEqual(lauf.returncode, 0, lauf.stderr)
+        zeilen = lauf.stdout.split("\n")[:-1]
+        self.assertEqual(len(zeilen), 26, lauf.stdout)
+        zu_lang = [z for z in zeilen if float(z.rsplit(" ", 1)[1]) > self.GRENZE]
+        self.assertEqual(zu_lang, [])
+
+    def _alt(self, text):
+        import fisi_diagnose as fd
+        alt = re.compile(SCRUB_ALT)
+        for pattern, replacement in fd._PATTERNS:
+            if "kennwort" in pattern.pattern:
+                pattern = alt
+            text = pattern.sub(replacement, text)
+        return text
+
+    def test_gleiche_wirkung_wie_vorher(self):
+        import fisi_diagnose as fd
+        self.assertEqual(sum("kennwort" in p.pattern for p, _r in fd._PATTERNS), 1)
+        korpus = [
+            "token=ghp_" + "a" * 36, "Authorization: Bearer abc.def-123456",
+            "https://x:y@github.com/a", "https://ghp_abc@github.com/o/r",
+            '{"token": "geheim123", "passwort": \'abc\', "api_key": "k"}',
+            "GITHUB_TOKEN=abc; next", "my-api-key: 123", "x-passwort-neu = 1",
+            "passwordHash: 7", "pw-token\t:\t'q'", '"Token" : "v"', 'abc"token=1',
+            "foo=token=abc", "secret:", "token=", 'Kennwort = ""', "apikey=1 api-key=2",
+            FehlerLog.GHP, FehlerLog.PAT, "Token " + FehlerLog.PAT,
+            "Datenordner: /home/nico/.local/share\nTagesziel: 20 Aufgaben",
+        ]
+        teile = ["token", "TOKEN", "passw", "Passwort", "kennwort", "Secret", "apikey",
+                 "api_key", "api-key", "api", "key", "-", "_", "a", "Z", "9", "ä", "=", ":",
+                 " ", '"', "'", ",", ";", "}", "pass", "tok", "en", "\n", "\t", "ghp_",
+                 "github_pat_", "A1b2C3d4E5f6G7h8", "bearer ", "https://", "@", "/"]
+        zufall = random.Random(632)
+        for _ in range(20000):
+            korpus.append("".join(zufall.choice(teile) for _ in range(zufall.randint(0, 12))))
+        anders = [(t, self._alt(t), fd.scrub(t)) for t in korpus if self._alt(t) != fd.scrub(t)]
+        self.assertEqual(anders[:5], [])
+        # Wirkung wie bisher: die bekannten Schluessel verschwinden
+        for geheim, text in (
+                (FehlerLog.GHP, "Fehler mit %s" % FehlerLog.GHP),
+                (FehlerLog.PAT, "PAT %s" % FehlerLog.PAT),
+                ("abcDEF123456", "Authorization: Bearer abcDEF123456"),
+                ("abcDEF123456", "bearer abcDEF123456"),
+                ("wert123", "token=wert123"),
+                ("ghp_kurz", "https://ghp_kurz@github.com/o/r")):
+            self.assertNotIn(geheim, fd.scrub(text), text)
+
+
 class Bericht(unittest.TestCase):
     """B-L-04: kein falsches Versprechen, Bitte um Ansehen vor dem Weitergeben."""
 
@@ -468,8 +571,11 @@ class Tastatur(unittest.TestCase):
         text = hilfe("tastatur")
         liesmich = liesmich_abschnitt("TASTENKUERZEL").replace(" + ", "+")
         for kuerzel in self.KUERZEL:
-            self.assertIn(kuerzel, text, kuerzel)
-            self.assertIn(kuerzel, liesmich, kuerzel)
+            # als eigenes Wort: "Tab" zaehlt nicht als Teil von "Umschalt+Tab"
+            # (Nacharbeit L4), "Strg+F" nicht als Teil von "Strg+Fx"
+            muster = r"(?<![\w+])%s(?![\w+])" % re.escape(kuerzel)
+            self.assertRegex(text, muster, kuerzel)
+            self.assertRegex(liesmich, muster, kuerzel)
 
 
 class Liesmich(unittest.TestCase):
@@ -527,11 +633,38 @@ class Klappen(unittest.TestCase):
         return [(n.lineno, n.value) for n in ast.walk(tree)
                 if isinstance(n, ast.Constant) and isinstance(n.value, str)]
 
+    def _fold_label_doc(self):
+        tree = ast.parse(lesen("fisi_theme.py"))
+        func = next(n for n in tree.body
+                    if isinstance(n, ast.FunctionDef) and n.name == "fold_label")
+        return func.body[0].value
+
     def test_ein_wort_in_widgets_und_handy(self):
         for name in ("fisi_widgets.py", os.path.join("mobile", "src", "ui.py")):
             alt = [(z, s) for z, s in self._strings(name)
                    if any(w in s.lower() for w in self.ALT)]
             self.assertEqual(alt, [], name)
+
+    def test_ein_wort_in_theme(self):
+        """fisi_theme.py mitpruefen (Nacharbeit L3). Ausgenommen ist nur der
+        Docstring von fold_label (fisi_theme.py:514), er liegt ausserhalb der
+        Freigabe 507-510 und wartet auf Freigabe, siehe den
+        expectedFailure-Test darunter."""
+        doc = self._fold_label_doc()
+        alt = [(z, s) for z, s in self._strings("fisi_theme.py")
+               if any(w in s.lower() for w in self.ALT)
+               and not (z == doc.lineno and s == doc.value)]
+        self.assertEqual(alt, [])
+
+    @unittest.expectedFailure
+    def test_theme_fold_label_docstring_wartet_auf_freigabe(self):
+        """WARTET AUF FREIGABE: Docstring fisi_theme.py:514 sagt noch
+        "Farben, eingeklappt" (geschuetzte Datei, ausserhalb 507-510, nicht
+        geaendert). Bleibt als "expected failure" im Lauf sichtbar; nach der
+        Aenderung meldet unittest "unexpected success", dann den Marker
+        entfernen."""
+        doc = self._fold_label_doc().value.lower()
+        self.assertFalse(any(w in doc for w in self.ALT), doc)
 
     def test_werte_und_beschriftung(self):
         import fisi_theme as th
