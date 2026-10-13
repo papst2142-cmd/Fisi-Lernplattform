@@ -2537,11 +2537,12 @@ class FitWidth:
                     stack.append(child)
 
     def _fit_now(self):
-        """Zurechtruecken. Waehrenddessen ist _fit_running gesetzt: Ansichten,
-        die selbst etwas an die Breite anpassen, warten damit bis danach
-        (_fit_done) - sonst kann sich beides in den update_idletasks-Aufrufen
-        hier gegenseitig aufschaukeln."""
-        self._fit_running = True
+        """Zurechtruecken. Waehrend der Runden (nur bei Ueberstand) ist
+        _fit_running gesetzt: Ansichten, die selbst etwas an die Breite
+        anpassen, warten damit bis danach (_fit_done) - sonst kann sich beides
+        in den update_idletasks-Aufrufen hier gegenseitig aufschaukeln.
+        Beim Zuruecksetzen und Messen passen sie sich wie gebaut an."""
+        self._fit_running = False
         try:
             self._fit_run()
         finally:
@@ -2566,6 +2567,7 @@ class FitWidth:
             self._fit_built = max(0, self.inner.winfo_reqwidth() - width)
             # dieselbe Schwelle wie der Rest-Durchgang unten: jeder Ueberstand
             overflow = self._fit_built > 0
+            self._fit_running = overflow
             for _round in range(4 if overflow else 0):
                 # jede Runde rechnet von aussen neu (auch nach weniger Spalten)
                 self._fit_grids = []
