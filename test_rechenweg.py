@@ -4,7 +4,8 @@
 Tests ab 0.62.3 (Plan 0.62.3, Teil E): Rechenwege am Handy und Pruefung aller
 Rechenwege und Rechner-Anzeigen.
 
-  Test 1   Handy-Fassungen: hoechstens 28 Zeichen je Zeile
+  Test 1   Handy-Fassungen: hoechstens 26 Zeichen je Zeile (bis 0.63.1: 28)
+  Test 1b  Handy-Fassungen: dieselben Woerter wie am PC (ab 0.63.2, FG-73)
   Test 2   Handy-Fassungen: dieselben Zahlen wie am PC (Zusatzzahlen nur aus
            einer ausdruecklichen Liste: Oktett-Nummern, Dezimalwert je Oktett)
   Test 2b  Ergebnisse in derselben Reihenfolge wie am PC
@@ -45,7 +46,13 @@ import fisi_core as fc            # noqa: E402
 import fisi_lernen as fl          # noqa: E402
 import rechenweg_texte as rt      # noqa: E402
 
-GRENZE = 28    # Freigabe 0.62.3 (F-P2): Anheben nur mit Freigabe
+# Ab 0.63.2 (Meldung 21 Frage 2 b, FG-73): 26 statt 28 (ein Zeichen Abstand
+# zum Kasten bei "Sehr gross"). Darf nur sinken, nie steigen.
+GRENZE = 26    # vorher 28 (Freigabe 0.62.3, F-P2)
+# Test 9: Schritt 3 des Trainers am Handy (fisi_lernen.py, nicht Teil von
+# FG-73) behaelt die bisherige Grenze 28; seine Zeile "3. UND-Verknuepfung je
+# Oktett" hat 28 Zeichen.
+GRENZE_TRAINER = 28
 
 PAARE = [("SUBNET", fc.CALC_EXPLAIN_SUBNET, fc.CALC_EXPLAIN_SUBNET_HANDY),
          ("RAID", fc.CALC_EXPLAIN_RAID, fc.CALC_EXPLAIN_RAID_HANDY),
@@ -315,6 +322,47 @@ def _zahlen(text):
     return _oktette(rt.zahlen(text, "de"))
 
 
+def _woerter(text):
+    """Woerter eines Rechenwegs; am Zeilenende getrennte Woerter ("Punkt-zu-
+    Punkt-" / "Verbindungen"), Tausendergruppen (".616") und IPv6-Adressen
+    nach ":" werden wieder zusammengesetzt."""
+    text = re.sub(r"(?<=[A-Za-zÄÖÜäöüß0-9])-\n\s*(?=[A-Za-zÄÖÜäöüß])", "-", text)
+    text = re.sub(r"(?<=\d)\n\s*(?=\.\d{3})", "", text)
+    text = re.sub(r"((?:^|\s)[0-9a-f]{1,4}(?::[0-9a-f]{0,4})*:)\n\s*(?=[0-9a-f]{4}:)",
+                  r"\1", text)
+    return text.split()
+
+
+# Test 1b: Unterschiede Handy/PC, die es schon vor dem Umbruch auf 26 gab
+# (Stand 208f80c); RAID, Bildschirm und USV sind Wort fuer Wort gleich
+WOERTER_ANDERS = {
+    "SUBNET": [
+        ("replace", ["/24", "=", "11111111.11111111.11111111.00000000"],
+         ["/24,", "Oktett", "für", "Oktett:", "1.", "Oktett", "11111111"]),
+        ("replace", ["."], ["2.", "Oktett", "11111111", "="]),
+        ("replace", ["."], ["3.", "Oktett", "11111111", "="]),
+        ("replace", ["."], ["4.", "Oktett", "00000000", "="]),
+        ("insert", [], ["UND", "255.255.255.0,", "Oktett", "für", "Oktett:", "1.", "Oktett",
+                        "192"]),
+        ("replace", ["11000000.10101000.00000001.00110010"], ["11000000"]),
+        ("replace", ["255.255.255.0"], ["255"]),
+        ("replace", ["11111111.11111111.11111111.00000000",
+                     "-------------------------------------------------------"],
+         ["11111111"]),
+        ("replace", ["11000000.10101000.00000001.00000000"],
+         ["11000000", "2.", "Oktett", "168", "=", "10101000", "UND", "255", "=", "11111111",
+          "Ergebnis", "=", "10101000", "3.", "Oktett", "1", "=", "00000001", "UND", "255",
+          "=", "11111111", "Ergebnis", "=", "00000001", "4.", "Oktett", "50", "=",
+          "00110010", "UND", "0", "=", "00000000", "Ergebnis", "=", "00000000"]),
+    ],
+    "SUBNET_V6": [
+        ("replace", ["Eine", "IPv6-Adresse"], ["IPv6"]),
+        ("delete", ["Präfixlänge", "(die"], []),
+        ("replace", ["/)"], ["/"]),
+    ],
+}
+
+
 def _ueberschriften(text):
     """Nicht eingerueckte Zeilen, Absatz fuer Absatz zusammengesetzt."""
     heads, current = [], []
@@ -336,6 +384,17 @@ class HandyFassungTest(unittest.TestCase):
             for number, line in enumerate(handy.split("\n"), 1):
                 self.assertLessEqual(len(line), GRENZE, "%s Zeile %d hat %d Zeichen: %r"
                                      % (name, number, len(line), line))
+
+    def test_1b_woerter_wie_pc(self):
+        # ab 0.63.2 (FG-73): der neue Umbruch aendert kein Wort. Handy-Inhalt =
+        # PC-Inhalt bis auf die festen Unterschiede, die schon vorher bestanden
+        # (Bitreihen Oktett fuer Oktett, kuerzere Saetze bei IPv6)
+        for name, pc, handy in PAARE + [("SUBNET_V6", fc.CALC_EXPLAIN_SUBNET_V6,
+                                         fc.CALC_EXPLAIN_SUBNET_V6_HANDY)]:
+            a, b = _woerter(pc), _woerter(handy)
+            ops = [(art, a[i1:i2], b[j1:j2]) for art, i1, i2, j1, j2
+                   in SequenceMatcher(a=a, b=b, autojunk=False).get_opcodes() if art != "equal"]
+            self.assertEqual(ops, WOERTER_ANDERS.get(name, []), name)
 
     def test_2_gleiche_zahlen(self):
         for name, pc, handy in PAARE:
@@ -772,7 +831,7 @@ class TrainerTest(unittest.TestCase):
                 block = handy.steps[start:start + 18]
                 self.assertEqual(handy.steps[:start] + handy.steps[start + 18:],
                                  pc.steps[:start] + pc.steps[start + 3:])
-                self.assertTrue(all(len(line) <= GRENZE for line in block), block)
+                self.assertTrue(all(len(line) <= GRENZE_TRAINER for line in block), block)
                 pc_z = Counter(_zahlen("\n".join(pc.steps[start:start + 3])))
                 handy_z = Counter(_zahlen("\n".join(block)))
                 self.assertEqual(pc_z - handy_z, Counter())
