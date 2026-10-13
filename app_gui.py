@@ -4099,6 +4099,8 @@ class TrainerPanel(ctk.CTkFrame):
         self.lbl_task.pack(anchor="w", pady=(4, 12))
         self.fields_box = transparent_frame(self.task_card.body)
         self.fields_box.pack(fill="x")
+        self._marks_pending = False
+        self.fields_box.bind("<Configure>", lambda _e: self._schedule_fit_marks(), add="+")
         self.lbl_feedback = make_label(self.task_card.body, "", font=F["body_bold"],
                                        fg=C["text"], anchor="w")
         self.lbl_feedback.pack(anchor="w", pady=(12, 0))
@@ -4141,13 +4143,17 @@ class TrainerPanel(ctk.CTkFrame):
             child.destroy()
         self.entries, self.marks = {}, {}
         for row, (key, label) in enumerate(task.fields):
+            # Vorschlag: Zeilen 0, 2, 4, ...; die ungerade Zeile darunter bleibt
+            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld
             make_label(self.fields_box, label, font=F["small"],
-                       fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+                       fg=C["text_dim"]).grid(row=2 * row, column=0, sticky="w", pady=4)
             entry = EntryBox(self.fields_box, width=26)
-            entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+            entry.grid(row=2 * row, column=1, sticky="w", padx=12, pady=4)
             entry.bind("<Return>", lambda _e: self.check())
-            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"])
-            mark.grid(row=row, column=2, sticky="w")
+            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"],
+                              justify="left")
+            mark.grid(row=2 * row, column=2, sticky="w")
+            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 2 * row, entry
             self.entries[key], self.marks[key] = entry, mark
         if task.fields:
             self.entries[task.fields[0][0]].focus_set()
@@ -4167,9 +4173,11 @@ class TrainerPanel(ctk.CTkFrame):
         answers = {key: entry.get() for key, entry in self.entries.items()}
         result = task.check(answers)
         for key, ok in result.items():
-            self.marks[key].configure(
-                text="richtig" if ok else "richtig wäre: %s" % task.solution[key],
-                text_color=C["green"] if ok else C["red"])
+            self.marks[key].fit_raw = ("richtig" if ok else
+                                       "richtig wäre: %s" % task.solution[key])
+            self.marks[key].configure(text=self.marks[key].fit_raw,
+                                      text_color=C["green"] if ok else C["red"])
+        self._fit_marks()
         correct = all(result.values())
         self.results.append(correct)
         self.db.log_trainer(task.kind, task.level, correct)
@@ -4182,6 +4190,64 @@ class TrainerPanel(ctk.CTkFrame):
         self.checked = True
         last = self.index >= len(self.tasks) - 1
         self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
+
+    # -- Vorschlag (Nebenbefund 0.63.1): "richtig wäre: <Wert>" umbrechen ------
+    # Passt die Rueckmeldung neben dem Feld nicht bis zum sichtbaren Rand der
+    # Seite, wird sie mit derselben Regel wie die Rechnerkaesten (fit_lines)
+    # umbrochen: "richtig wäre:" und darunter eingerueckt der Wert, eine
+    # IPv6-Adresse bei Bedarf nach einem Doppelpunkt. Wortlaut unveraendert.
+
+    def _schedule_fit_marks(self):
+        if not self._marks_pending:
+            self._marks_pending = True
+            self.after_idle(self._fit_marks)
+
+    def _fit_marks(self):
+        self._marks_pending = False
+        try:
+            canvas = self.fields_box.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is None:
+                return
+            self.update_idletasks()
+            # Abstand vom Feldbereich bis zum rechten Rand der Seite bleibt fest
+            inner = canvas.winfo_children()[0]
+            pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
+                      - (self.fields_box.winfo_rootx() + self.fields_box.winfo_width()))
+            right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+            for mark in self.marks.values():
+                raw = getattr(mark, "fit_raw", "")
+                if not raw:
+                    continue
+                font = mark._label.cget("font")
+
+                def breite(text, font=font):
+                    return max(int(self.tk.call("font", "measure", font, line))
+                               for line in text.split("\n"))
+                rand = mark.winfo_reqwidth() - breite(mark.cget("text"))
+                entry = mark.fit_entry
+                # neben dem Feld (Spalte 2) oder, wenn dort nicht einmal
+                # "richtig wäre:" passt (Schrift Sehr gross), unter dem Feld
+                neben = entry.winfo_rootx() + entry.winfo_width() + 12
+                unter = neben - 12 - entry.winfo_width()
+                if right - neben - rand >= breite("richtig wäre:"):
+                    room, ort = right - neben - rand, (mark.fit_row, 2, 1, 0)
+                else:
+                    room, ort = right - unter - rand, (mark.fit_row + 1, 1, 2, 12)
+                info = mark.grid_info()
+                if (int(info.get("row", -1)), int(info.get("column", -1))) != ort[:2]:
+                    mark.grid(row=ort[0], column=ort[1], columnspan=ort[2],
+                              padx=ort[3], sticky="w")
+                text = raw
+                for chars in range(len(raw), 9, -1):
+                    text = fit_lines(raw, chars)
+                    if breite(text) <= room:
+                        break
+                if mark.cget("text") != text:
+                    mark.configure(text=text)
+        except (tk.TclError, IndexError, KeyError):
+            pass
 
     def advance(self):
         if self.index < len(self.tasks) - 1:
