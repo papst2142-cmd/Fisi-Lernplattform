@@ -223,6 +223,18 @@ class KopfzeileTest(_Faktor):
         self.assertTrue(reihe.wrap)
         self.assertEqual([t.value for t in reihe.controls], ["LERNEN", "/", "ABSCHLUSSPROJEKT"])
 
+    def test_startseite_abstand_rechts(self):
+        """Nacharbeit L2: auch die Startseite (Krumen + Version, root=True) hat
+        den Abstand rechts vor dem Hilfe-Symbol."""
+        app = handy.FISIMobileApp.__new__(handy.FISIMobileApp)
+        app.crumb_main, app.crumb_sub = ft.Text("DASHBOARD"), ft.Text("HOME")
+        app.lbl_version = ft.Text("Version")
+        bar = app._appbar(root=True)
+        self.assertIsInstance(bar.title, ft.Container)
+        self.assertIsNotNone(bar.title.padding)
+        self.assertGreaterEqual(bar.title.padding.right, 12)
+        self.assertTrue(bar.title.content.controls[0].wrap)
+
 
 class FoldCardTest(_Faktor):
     """B-E-05 (c)"""
@@ -236,9 +248,11 @@ class FoldCardTest(_Faktor):
     def test_abstand_vor_aufklappen(self):
         hilfe = ui.FoldCard("Rechner (Subnetting, RAID, Bildschirm, USV)", [ft.Text("x")],
                             key="t_hilfe", marker=True)
-        self.assertGreaterEqual(self._abstand(hilfe), 12)
+        # Nacharbeit L2: Schwelle = gebauter Wert (marker: 6 + 8, sonst 8 + 8);
+        # vorher ">= 12" liess ACTION_GAP = 6 durch
+        self.assertGreaterEqual(self._abstand(hilfe), 14)
         optionen = ui.FoldCard("Farben", [ft.Text("x")], key="t_farben", subtitle="Akzent")
-        self.assertGreaterEqual(self._abstand(optionen), 12)
+        self.assertGreaterEqual(self._abstand(optionen), 16)
         hilfe.toggle()
         self.assertTrue(hilfe.body.visible)
 
