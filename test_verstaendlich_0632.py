@@ -310,6 +310,43 @@ class NacharbeitM21Test(unittest.TestCase):
         for name in namen:
             self.assertEqual(text.count("„%s“" % name), 1, name)
 
+    # Frage 27/28 (Nico a): "Rechen-Trainer" bleibt; der alte Name darf nur
+    # noch dort stehen, wo ihn niemand im Programm sieht oder wo er
+    # Geschichte ist (Abschnitte 0.63.1 und 0.51 in AENDERUNGEN.md, Kommentare
+    # in den geschuetzten Dateien fisi_core.py und fisi_lernen.py)
+    ALTER_NAME_ERLAUBT = {
+        ("AENDERUNGEN.md", "- **Subnetting-Trainer:** Zwei neue Aufgabenarten"),
+        ("AENDERUNGEN.md", "- **Neu: Subnetting-Trainer** im Rechner. Er übt IPv4-Subnetze, VLSM,"),
+        ("fisi_core.py", '# ab 0.51: Aufgaben des Subnetting-Trainers (art z.B. "ipv4", stufe 1-3)'),
+        ("fisi_core.py", '"""Eine geloeste Aufgabe des Subnetting-Trainers."""'),
+        ("fisi_lernen.py", "* Subnetting-Trainer (Zufallsaufgaben, Pruefung der Eingaben, Rechenweg)"),
+        ("fisi_lernen.py", "#  SUBNETTING-TRAINER"),
+    }
+
+    def test_alter_name_subnetting_trainer(self):
+        muster = re.compile(r"subnetting.{0,3}train|train.{0,12}subnetting|subnetz.{0,3}train",
+                            re.I)
+        dateien = [n for n in os.listdir(CODE) if os.path.isfile(os.path.join(CODE, n))
+                   and n.endswith((".py", ".txt", ".md", ".iss")) and not n.startswith("test_")]
+        dateien += [os.path.join("mobile", "src", n) for n in ("main.py", "spiel.py", "ui.py")]
+        for wurzel, _ordner, namen in os.walk(os.path.join(CODE, "inhalte")):
+            dateien += [os.path.relpath(os.path.join(wurzel, n), CODE) for n in namen
+                        if n.endswith(".json")]
+        self.assertIn("LIESMICH.txt", dateien)
+        gefunden = set()
+        for name in dateien:
+            for zeile in _quelle(name).split("\n"):
+                if muster.search(zeile):
+                    eintrag = next(((d, t) for d, t in self.ALTER_NAME_ERLAUBT
+                                    if d == name and t in zeile), (name, zeile.strip()))
+                    gefunden.add(eintrag)
+        self.assertEqual(gefunden, self.ALTER_NAME_ERLAUBT)
+        liesmich = _quelle("LIESMICH.txt")
+        self.assertIn("dazu ein\n                     Rechen-Trainer mit Zufallsaufgaben.",
+                      liesmich.replace("\r\n", "\n"))
+        self.assertIn("Lernserie und\n                        Rechen-Trainer\n",
+                      liesmich.replace("\r\n", "\n"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
