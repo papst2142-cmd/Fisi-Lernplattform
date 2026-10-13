@@ -959,8 +959,29 @@ class DBManager:
             columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
             if "uid" not in columns:
                 cur.execute("ALTER TABLE %s ADD COLUMN uid TEXT" % table)
-            cur.execute("UPDATE %s SET uid = lower(hex(randomblob(16))) "
-                        "WHERE uid IS NULL" % table)
+            # Ab 0.63.2 (B-G-29): Nur wenn es Eintraege ohne uid gibt (sehr
+            # alte Datenbank, vor v0.24), wird ueberhaupt geschrieben - sonst
+            # bleibt die Datei unberuehrt. Die uid kommt dann aus Tabelle, id
+            # und Inhalt: Zwei Kopien derselben alten Datei bekommen dieselben
+            # uids, der Abgleich zaehlt ihre Eintraege nicht doppelt. Ist die
+            # uid schon vergeben (Kollision), gilt wie bisher eine zufaellige.
+            if cur.execute("SELECT 1 FROM %s WHERE uid IS NULL LIMIT 1"
+                           % table).fetchone() is not None:
+                import hashlib
+                taken = {row[0] for row in cur.execute(
+                    "SELECT uid FROM %s WHERE uid IS NOT NULL" % table)}
+                cur.execute("SELECT rowid, * FROM %s WHERE uid IS NULL" % table)
+                names = [item[0] for item in cur.description][1:]
+                for row in cur.fetchall():
+                    content = json.dumps([table] + [[name, value] for name, value in
+                                                    zip(names, row[1:]) if name != "uid"],
+                                         ensure_ascii=True, default=repr)
+                    uid = hashlib.sha256(content.encode("utf-8")).hexdigest()[:32]
+                    if uid in taken:
+                        uid = uuid.uuid4().hex
+                    taken.add(uid)
+                    cur.execute("UPDATE %s SET uid = ? WHERE rowid = ?" % table,
+                                (uid, row[0]))
             cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s_uid ON %s (uid)"
                         % (table, table))
         for table, extra in OPTIONAL_COLUMNS.items():
