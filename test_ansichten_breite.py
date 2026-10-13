@@ -28,6 +28,7 @@ Start:  xvfb-run -a python test_ansichten_breite.py
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -268,6 +269,47 @@ Z3_NORMAL_1360_BEKANNT = ("pruefungstrainer",)
 # Sehr gross 1120 (Spaltenkoepfe + Datum passen nicht, ohne Text zu kuerzen).
 # Offene Designfrage an Nico (Varianten mit Fotos in ergebnis_nacharbeit_gp.md).
 Z3_GRENZE_BEKANNT = {("fortschritt_daten", 1.3, 1120)}
+
+
+# Nacharbeit Gegenpruefung S1c2 (L2): in bekannten Faellen nur der gemessene
+# Ueberstand je Zustand (px, Messung 14b3bd4/b5d12f7 bzw. Nacharbeit), nur
+# die Fehlerarten "seitlich verschiebbar", "Inhalt ... breiter" und
+# "... ausserhalb des sichtbaren Bereichs" (in einem ueberstehenden Zustand).
+Z3_UEBERSTAND = {
+    ("notizblock", 1.0, 1120): {"start": 99, "offen": 230, "musterantworten": 230},
+    ("fortschritt", 1.0, 1120): {"start": 34},
+    ("fortschritt_daten", 1.0, 1120): {"mit_daten": 34, "neue_zeile": 34},
+    ("optionen", 1.0, 1120): {"alles_offen": 6},
+    ("pruefungstrainer", 1.0, 1120): {"pruefung_bewertung": 1494,
+                                      "pruefung_bewertung_laengstes": 2514},
+    ("pruefungstrainer", 1.0, 1360): {"pruefung_bewertung": 1254,
+                                      "pruefung_bewertung_laengstes": 2274},
+    ("fortschritt_daten", 1.3, 1120): {"mit_daten": 55, "neue_zeile": 55},
+}
+_ZUSTAND = re.compile(r"^([a-z_]+)/([a-z_0-9]+): (.*)$", re.S)
+_INHALT = re.compile(r"^Inhalt (\d+) px breiter als sichtbar")
+
+
+def _bekannte_fehler(name, faktor, breite, fehler):
+    """Fehler, die im bekannten Fall NICHT erlaubt sind (leere Liste = ok)."""
+    deckel = Z3_UEBERSTAND.get((name, faktor, breite), {})
+    schlecht = []
+    for text in fehler:
+        treffer = _ZUSTAND.match(text)
+        if not treffer or treffer.group(1) != name:
+            schlecht.append(text)
+            continue
+        zustand, rest = treffer.group(2), treffer.group(3)
+        inhalt = _INHALT.match(rest)
+        if zustand not in deckel:
+            schlecht.append(text)
+        elif inhalt:
+            if int(inhalt.group(1)) > deckel[zustand]:
+                schlecht.append("%s (erlaubt hoechstens %d)" % (text, deckel[zustand]))
+        elif not (rest.startswith("seitlich verschiebbar")
+                  or "ausserhalb des sichtbaren Bereichs" in rest):
+            schlecht.append(text)
+    return schlecht
 
 
 def _bekannt(name, faktor, breite):
@@ -631,6 +673,9 @@ class AnsichtBreiteBasis(unittest.TestCase):
             # nichts darf bei Normal umgestellt sein (faengt eine fehlende Normal-Sperre).
             normal = [f for f in mine["fehler"] if "bei Normal" in f]
             self.assertEqual(normal, [], "%s Normal %dx%d umgestellt" % (self.NAME, breite, hoehe))
+            self.assertEqual(_bekannte_fehler(self.NAME, faktor, breite, mine["fehler"]), [],
+                             "%s %s %dx%d: mehr als der bekannte Ueberstand"
+                             % (self.NAME, Z3_STUFEN[faktor], breite, hoehe))
             self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
                             "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
         else:
