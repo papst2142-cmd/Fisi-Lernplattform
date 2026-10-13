@@ -475,8 +475,29 @@ def install(path, kind=None, version="", pid=None):
             if result.returncode != 0:
                 subprocess.Popen(["xdg-open", path])
                 return False, deb_cancel_message(path)
-            return False, ("Das Update ist installiert. Bitte das Programm "
-                           "schließen und neu starten.")
+            # Ab 0.63.2 (B-N-10): Neustart wie beim AppImage. Ein abgeloester
+            # Hilfsprozess wartet, bis dieses Programm beendet ist (hoechstens
+            # 30 s, danach uebernimmt die Sperre gegen Mehrfachstart das
+            # Warten), und startet dann die neu installierte Fassung.
+            # PYINSTALLER_RESET_ENVIRONMENT=1: Die neue Fassung richtet ihre
+            # Umgebung selbst ein, statt die des beendeten Programms zu erben.
+            # Laesst sich der Hilfsprozess nicht starten, bleibt es beim
+            # bisherigen Hinweis (das Paket ist ja installiert).
+            restart = ('i=0; while kill -0 "$1" 2>/dev/null && [ "$i" -lt 150 ]; '
+                       'do sleep 0.2; i=$((i+1)); done; exec "$2"')
+            try:
+                subprocess.Popen(["/bin/sh", "-c", restart, "fisi-update",
+                                  str(os.getpid() if pid is None else pid), sys.executable],
+                                 start_new_session=True,
+                                 env=dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT="1"))
+            except OSError as error:
+                write_update_log("Paket installiert, Neustart ließ sich nicht "
+                                 "vorbereiten: %s" % error)
+                return False, ("Das Update ist installiert. Bitte das Programm "
+                               "schließen und neu starten.")
+            write_update_log("Paket installiert. Das Programm startet nach dem "
+                             "Beenden neu.")
+            return True, "Das Update ist installiert. Das Programm startet neu."
 
         if kind == "macos":
             subprocess.Popen(["open", path])
