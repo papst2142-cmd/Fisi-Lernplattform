@@ -37,6 +37,7 @@ Nur unter Linux/macOS (Zeitzone je Prozess ueber TZ).
 
 import ast
 import datetime
+import itertools
 import json
 import os
 import random
@@ -423,6 +424,73 @@ class Restrisiko0632Test(unittest.TestCase):
             self.zeit(4.0, A=TWO_H)
             a.sync()
         self.assertEqual(self._weg_a(ablauf, "a-spaet"), {"A": 2, "B": 2})
+
+    # ------------------------------------------------ R-d Mischbetrieb (T-b)
+    def _rd_misch_ablauf(self, codes, lauf, uhr=TWO_H):
+        """Plan-Nachtrag 4.4 (Mischbetrieb T-b mit verstellter Uhr), uebernommen
+        aus gp_s6b skripte/rd_misch.py: A, B, C (C zeitweise offline) mit Code
+        codes; B loescht, A und B lernen danach, As Uhr geht 2 h vor, A lernt
+        nach dem Stellen, Abgleiche, C kommt zurueck."""
+        ta.server_reset()
+        for device in self.geraete:
+            device.close()
+        self.geraete, self.stand = [], {}
+        geraete = []
+        for name, tz, code in zip("ABC", ("Europe/Berlin", "UTC", "America/New_York"), codes):
+            device = ta.Geraet("rdm_" + lauf, name, tz, code)
+            self.geraete.append(device)
+            self.stand[name] = [tz, 0.0, 0.0]
+            geraete.append(device)
+        a, b, c = geraete
+        self.zeit(0)
+        for device in (a, b, c):
+            device("lerne", 2, "vorher")
+        for device in (a, b, c, a, b):
+            device.sync()
+        self.zeit(1)
+        c("lerne", 2, "offline")
+        self.zeit(2.5)
+        b("reset_all")
+        b.sync()
+        self.zeit(3)
+        a("lerne", 2, "spaet")
+        b("lerne", 2, "spaet")
+        self.zeit(3.5, A=uhr)
+        a("lerne", 2, "falsch")          # nach dem Stellen
+        self.zeit(4, A=uhr)
+        a.sync()
+        b.sync()
+        a.sync()
+        self.zeit(4.5, A=uhr)
+        c("lerne", 2, "zurueck")
+        for _ in range(3):
+            for device in (c, a, b):
+                device.sync()
+        return {device.name: device.namen() for device in (a, b, c)}
+
+    def test_rd_mischbetrieb_t_b(self):
+        """R-d im Mischbetrieb (Plan-Nachtrag 4.4, gp_s6b L3): alle 7
+        Mischungen aus v0.63.1 und 0.63.2 auf A, B, C gegen denselben Ablauf
+        nur mit v0.63.1 - kein Geraet hat weniger. Hat A 0.63.2 (A gleicht die
+        eigene Uhr nach), bleibt a-spaet (vor dem Stellen gelernt) ueberall."""
+        alt = ta.code_stand(BASIS)
+        self.assertTrue(alt)
+        stand_alt = self._rd_misch_ablauf((alt, alt, alt), "alt")
+        ta.bericht("R-d Mischbetrieb nur v0.63.1: %s" % stand_alt)
+        fehler = []
+        for codes in itertools.product((alt, ta.CODE), repeat=3):
+            if codes == (alt, alt, alt):
+                continue
+            name = "".join("n" if code == ta.CODE else "a" for code in codes)
+            stand = self._rd_misch_ablauf(codes, name)
+            ta.bericht("R-d Mischbetrieb %s (A,B,C; n=0.63.2): %s" % (name, stand))
+            for dev in "ABC":
+                fehlt = {k: n for k, n in stand_alt[dev].items() if stand[dev].get(k, 0) < n}
+                if fehlt:
+                    fehler.append((name, dev, fehlt))
+                if codes[0] == ta.CODE:
+                    self.assertEqual(stand[dev].get("a-spaet"), 2, (name, dev, stand[dev]))
+        self.assertEqual(fehler, [])
 
 
 class ZeitzoneTest(unittest.TestCase):
