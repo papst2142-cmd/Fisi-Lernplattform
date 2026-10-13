@@ -988,6 +988,11 @@ class View(ScrollArea):
 #  AB 0.63.2 (D2): ANSICHTEN PASSEN IN DIE SICHTBARE BREITE
 # ============================================================================
 
+# Formularzeilen (Bezeichnung + Feld/Betrag): umbrochene Teile einer Zeile
+# stehen enger beieinander als an der naechsten Zeile (logische px)
+FORM_FLOW = dict(line_gap=2, wrapped_pad=8)
+
+
 class FitWidthMixin:
     """Ab 0.63.2 (D2, B-D-01/B-D-02): AP1-/AP2-Szenarien, Testprojekt und
     Abschlussprojekt passen bei 1120 px und grosser Schrift ohne seitlichen
@@ -1079,10 +1084,16 @@ class FitWidthMixin:
                      + [self._head_min(card) for card in cards] + [text])
         if 7 * max(left_width / 2.0, natural / 5.0) + gap <= avail:
             mode, room = "breit", natural
+            column = avail * 5 // 7 - px(self.COLUMN_GAP // 2)
         elif avail - left_width - gap >= max(narrow, px(self.MIN_COLUMN)):
             mode, room = "frei", avail - left_width - gap
+            column = room
         else:
             mode, room = "gestapelt", avail
+            column = avail
+        # Spaltenbreite aus der sichtbaren Breite berechnet, nicht gemessen:
+        # die gemessene Breite enthaelt den Text selbst (sonst Schleife)
+        self._fit_texts(mode, column)
         changed = self._fit_flows(flows, room)
         changed |= self._fit_cards(cards, room)
         if mode != self.column_mode:
@@ -1099,6 +1110,54 @@ class FitWidthMixin:
                 right.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=0)
             changed = True
         return changed
+
+    @staticmethod
+    def own_wrap(label, cap=None):
+        """Umbruchbreite dieses Textes regelt die Ansicht (_fit_texts),
+        nicht ScrollArea._fit_wraplengths. cap: hoechstens so breit
+        (logische px), None = nur durch die Spalte begrenzt."""
+        label._fisi_wrap_own = True
+        label._fisi_wrap_cap = cap
+        return label
+
+    def _fit_text_labels(self):
+        """[(Label, Innenabstand links+rechts in echten px, immer)].
+        immer=True: Umbruchbreite stets an die Spalte gekoppelt (Texte, die
+        es vor 0.63.2 ohne Umbruch gab); sonst nur untereinander."""
+        return []
+
+    def _fit_texts(self, mode, column):
+        """Textbreiten an die Spalte koppeln (Plan D2: "Textbreiten
+        koppeln"). Untereinander ist die Spalte so breit wie die Ansicht;
+        ohne Kopplung braechen Ueberschrift, Meta-Zeile und Hinweis weiter
+        so schmal um wie neben der Liste (bis mitten im Wort). Sonst bleibt
+        die Ueberschrift bei ScrollArea._fit_wraplengths (wie bisher)."""
+        scale = px(1000) / 1000.0
+        release = False
+        for label, inset, always in self._fit_text_labels():
+            if not (always or mode == "gestapelt"):
+                if label.__dict__.get("_fisi_wrap_own"):
+                    label._fisi_wrap_own = False
+                    base = label.__dict__.get("_fisi_wrap")
+                    if base:
+                        label.configure(wraplength=base)
+                    release = True
+                continue
+            if not label.__dict__.get("_fisi_wrap_own"):
+                base = label.__dict__.get("_fisi_wrap")
+                if base is None:
+                    base = label._fisi_wrap = label.cget("wraplength") or 0
+                self.own_wrap(label, base or None)
+            wrap = max(self.MIN_TEXT, int((column - inset) / scale) - 4)
+            cap = label.__dict__.get("_fisi_wrap_cap")
+            if cap:
+                wrap = min(cap, wrap)
+            if wrap != label.cget("wraplength"):
+                label.configure(wraplength=wrap)
+        if release:
+            # zurueck an ScrollArea._fit_wraplengths (wie bisher)
+            self._wrap_width = None
+            self._schedule_wrap()
 
     def _show_detail(self, detail):
         """Untereinander (gestapelt): nach der Wahl eines Eintrags (Liste,
@@ -3088,11 +3147,13 @@ class ScenarioViewBase(FitWidthMixin, View):
                              subtitle="wächst automatisch mit dem Text")
         self.own_card.pack(fill="x", pady=(14, 0))
         # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
-        make_label(self.own_card.body,
-                   "Löse die Aufgabe hier schriftlich, bevor du die "
-                   "Musterlösung aufdeckst.",
-                   font=F["small"], fg=C["text_dim"], wraplength=760,
-                   justify="left", anchor="w").pack(anchor="w", pady=(0, 6))
+        self.lbl_own_hint = self.own_wrap(make_label(
+            self.own_card.body,
+            "Löse die Aufgabe hier schriftlich, bevor du die "
+            "Musterlösung aufdeckst.",
+            font=F["small"], fg=C["text_dim"], wraplength=760,
+            justify="left", anchor="w"))
+        self.lbl_own_hint.pack(anchor="w", pady=(0, 6))
         self.txt_own = make_autogrow_text(self.own_card.body, min_height=4,
                                           max_height=18)
         self.txt_own.pack(fill="x")
@@ -3122,6 +3183,10 @@ class ScenarioViewBase(FitWidthMixin, View):
         cards = (self.task_card, self.own_card, self.sol_card)
         flows = ((controls, 0), (self.rate_box, self.sol_card.frame_width()))
         return self._fit_columns(avail, layout, list_card, detail, flows, cards, "scen")
+
+    def _fit_text_labels(self):
+        return [(self.lbl_title, self.task_card.frame_width(), False),
+                (self.lbl_own_hint, self.own_card.frame_width(), True)]
 
     def _on_own_change(self, _event=None):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
@@ -3255,8 +3320,11 @@ class ProjectView(FitWidthMixin, View):
                                        wraplength=760, justify="left", anchor="w")
         self.header_label.pack(anchor="w")
         # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
-        self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"],
-                                     wraplength=760, justify="left", anchor="w")
+        # Umbruchbreite = Spaltenbreite (_fit_texts): bei breitem Fenster
+        # eine Zeile wie bisher
+        self.meta_label = self.own_wrap(make_label(
+            detail, "", font=F["small"], fg=C["muted"], wraplength=760,
+            justify="left", anchor="w"))
         self.meta_label.pack(anchor="w", pady=(2, 0))
         self.lbl_status = make_label(detail, "", font=F["small_bold"], fg=C["muted"],
                                      anchor="w")
@@ -3294,6 +3362,9 @@ class ProjectView(FitWidthMixin, View):
         cards = (self.task_card, self.hint_card)
         flows = ((controls, 0), (self.rate_box, self.hint_card.frame_width()))
         return self._fit_columns(avail, layout, list_card, detail, flows, cards, "proj")
+
+    def _fit_text_labels(self):
+        return [(self.header_label, 0, False), (self.meta_label, 0, True)]
 
     def on_show(self):
         self._highlight()
@@ -3662,7 +3733,7 @@ class FinalProjectView(FitWidthMixin, View):
     def _form_row(parent, label):
         row = transparent_frame(parent)
         row.pack(fill="x", pady=4)
-        FlowRow(row)              # ab 0.63.2 (D2): Feld bei Bedarf unter der Beschriftung
+        FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): Feld bei Bedarf unter der Beschriftung
         make_label(row, label, font=F["small"], fg=C["text_dim"], width=340,
                    anchor="w").pack(side="left")
         return row
@@ -3780,7 +3851,7 @@ class FinalProjectView(FitWidthMixin, View):
         for key, name, default in fpj.PHASES:
             row = transparent_frame(card.body)
             row.pack(fill="x", pady=4)
-            FlowRow(row)          # ab 0.63.2 (D2): bricht bei Bedarf um
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             if key.startswith("frei"):
                 self._entry(row, "phase_name_" + key, width=40).pack(side="left")
                 make_label(row, "  (weitere Phase, frei benennbar)", font=F["small"],
@@ -3816,7 +3887,7 @@ class FinalProjectView(FitWidthMixin, View):
         material.pack(fill="x", pady=(14, 0))
         head = transparent_frame(material.body)
         head.pack(fill="x")
-        FlowRow(head)             # ab 0.63.2 (D2): bricht bei Bedarf um
+        FlowRow(head, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
         make_label(head, "BEZEICHNUNG", font=F["label"], fg=C["muted"], width=388,
                    anchor="w").pack(side="left")
         make_label(head, "BETRAG", font=F["label"], fg=C["muted"]).pack(side="left",
@@ -3824,7 +3895,7 @@ class FinalProjectView(FitWidthMixin, View):
         for number in range(fpj.MATERIAL_ROWS):
             row = transparent_frame(material.body)
             row.pack(fill="x", pady=3)
-            FlowRow(row)          # ab 0.63.2 (D2): bricht bei Bedarf um
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             self._entry(row, "material_name_%d" % number, width=40).pack(side="left")
             self._entry(row, "material_betrag_%d" % number, width=10).pack(
                 side="left", padx=(8, 0))

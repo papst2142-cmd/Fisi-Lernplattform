@@ -2633,6 +2633,10 @@ class ScrollArea(tk.Frame):
                     if isinstance(child, (OptionList, NeoButton)):
                         continue
                     if isinstance(child, ctk.CTkLabel):
+                        if child.__dict__.get("_fisi_wrap_own"):
+                            # ab 0.63.2 (D2): Umbruchbreite regelt die Ansicht
+                            # selbst (an die Spaltenbreite gekoppelt)
+                            continue
                         base = child.__dict__.get("_fisi_wrap")
                         if base is None:
                             base = child.cget("wraplength") or 0
@@ -2695,7 +2699,7 @@ class FlowRow:
     * reicht auch das nicht, verteilen sich die Teile in der sichtbaren
       Reihenfolge (links -> rechts) auf mehrere Zeilen: erste Zeile so voll
       wie moeglich, Abstand wie vorher (mindestens 8 px), Zeilenabstand
-      8 px. Links gepackte Teile bleiben links-, rechts gepackte
+      8 px (line_gap). Links gepackte Teile bleiben links-, rechts gepackte
       rechtsbuendig; die rechts gepackten bleiben beisammen (eigene Zeile,
       wenn sie nicht mehr daneben passen). Ein fuellendes Feld fuellt den
       Rest seiner Zeile.
@@ -2707,8 +2711,15 @@ class FlowRow:
     GAP = 8            # logische px, Mindestabstand und Zeilenabstand
     SHRINK_MIN = 240   # logische px, so schmal darf ein fuellendes Feld werden
 
-    def __init__(self, frame):
+    def __init__(self, frame, line_gap=None, wrapped_pad=0):
+        """line_gap: Zeilenabstand beim Umbruch (logische px, sonst GAP);
+        wrapped_pad: zusaetzlicher Abstand unter der umbrochenen Zeile.
+        Formularzeilen (Bezeichnung + Betrag) nutzen einen kleinen
+        line_gap und etwas wrapped_pad, damit zusammengehoerige Teile
+        naeher beieinander stehen als an der naechsten Zeile."""
         self.frame = frame
+        self.line_gap = self.GAP if line_gap is None else line_gap
+        self.wrapped_pad = wrapped_pad
         self.items = None      # [(widget, pack_info)] in Packreihenfolge
         self.wrapped = False
         self.shape = None
@@ -2875,10 +2886,10 @@ class FlowRow:
                     x += widget.winfo_reqwidth()
                 tk.Place.place_configure(widget, **options)
             widest = max(widest, x + right_part)
-            y += height + px(self.GAP)
+            y += height + px(self.line_gap)
         frame = self.frame
         scale = getattr(frame, "_reverse_widget_scaling", None)
-        width, height = widest, max(1, y - px(self.GAP))
+        width, height = widest, max(1, y - px(self.line_gap)) + px(self.wrapped_pad)
         if scale is not None:
             frame.configure(width=scale(float(width)), height=scale(float(height)))
         else:

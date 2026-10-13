@@ -12,8 +12,14 @@ geprueften Ansicht, in jedem geprueften Zustand:
     liegt ganz im sichtbaren Bereich und ganz in seinem Rahmen (nicht
     abgeschnitten) und ueberlappt kein anderes
   * steht der Inhalt neben der Liste, ist er mindestens 440 logische px
-    breit; sonst stehen Liste und Inhalt untereinander, und der Inhalt
-    steht nach "Naechstes ..." oben im sichtbaren Bereich
+    breit; sonst stehen Liste und Inhalt untereinander (beide in voller
+    Breite), und der Inhalt steht nach "Naechstes ..." oben im sichtbaren
+    Bereich
+  * Ueberschrift, Meta-Zeile und Hinweis: passt der Text in die Spalte,
+    steht er in einer Zeile (1360 Normal wie 14b3bd4), sonst bricht er erst
+    an der Spaltenbreite um (untereinander nicht so schmal wie neben der
+    Liste, kein Umbruch mitten im Wort)
+  * Aufklapplisten zaehlen auch als abgeleitete Klasse (FramedOptionMenu)
   * bei 1360 x 900 Normal bleibt die Anordnung wie bisher (zwei Spalten im
     Raster mit gleich breiten Einheiten, Kopfzeilen nicht umbrochen)
 
@@ -62,6 +68,13 @@ def ansicht(name):
 
 BEDIEN_KLASSEN = ("NeoButton", "EntryBox", "CTkEntry", "CTkOptionMenu", "CTkCheckBox",
                   "CTkTextbox", "CTkSwitch", "IconButton")
+
+
+def ist_bedienelement(widget):
+    """Auch abgeleitete Klassen zaehlen (z. B. FramedOptionMenu aus
+    CTkOptionMenu): Vergleich ueber alle Basisklassen, nicht nur den
+    genauen Klassennamen."""
+    return any(klasse.__name__ in BEDIEN_KLASSEN for klasse in type(widget).__mro__)
 
 
 class Ctx:
@@ -123,7 +136,7 @@ class Ctx:
                         continue
                 except Exception:  # noqa: BLE001
                     continue
-                if type(child).__name__ in BEDIEN_KLASSEN:
+                if ist_bedienelement(child):
                     boxes.append(child)
                     continue
                 stack.append(child)
@@ -194,6 +207,21 @@ def _inhalt_breit_genug(ctx, detail):
                           % (ctx.name, breite))
 
 
+def _gestapelt_volle_breite(ctx, detail):
+    """Untereinander nutzen Liste und Inhalt die ganze Breite (Gegenpruefung
+    L5, Mutation G3: Gewichte 2 : 5 blieben, die leere Spalte 1 nahm dann
+    5/7 der Breite)."""
+    if getattr(ctx.view, "column_mode", None) != "gestapelt":
+        return
+    layout = detail.master
+    links = layout.grid_slaves(row=0, column=0)[0]
+    voll = layout.winfo_width()
+    for teil, name in ((links, "Liste"), (detail, "Inhalt")):
+        if teil.winfo_width() < voll - 2:
+            ctx.fehler.append("%s/gestapelt: %s nur %d von %d px breit"
+                              % (ctx.name, name, teil.winfo_width(), voll))
+
+
 def _inhalt_sichtbar(ctx, detail):
     """Untereinander (Teil b): nach "Naechstes ..." steht der Inhalt (unter
     der Liste) oben im sichtbaren Bereich."""
@@ -206,6 +234,57 @@ def _inhalt_sichtbar(ctx, detail):
         ctx.fehler.append("%s/naechstes: Inhalt nicht oben im Bild (y %d)" % (ctx.name, oben))
 
 
+def _umbruch_passend(ctx, label, detail, immer):
+    """Textbreiten an die Spalte gekoppelt: passt der Text in die Spalte,
+    steht er in einer Zeile (bei breitem Fenster wie 14b3bd4); sonst bricht
+    er erst an der Spaltenbreite um (nicht schmaler, nicht mitten im Wort).
+    immer=False: nur untereinander gefordert (sonst wie bisher)."""
+    import tkinter as tk
+    import tkinter.font as tkfont
+    if not immer and getattr(ctx.view, "column_mode", None) != "gestapelt":
+        return
+    text = str(label.cget("text"))
+    if not text or not label.winfo_ismapped():
+        return
+    inner = label._label
+    font = tkfont.Font(font=inner.cget("font"))
+    wort = max(font.measure(w) for w in text.split())
+    einzug = label.winfo_rootx() - detail.winfo_rootx()
+    spalte = detail.winfo_width() - 2 * einzug
+    toleranz = int(24 * ctx.faktor)
+    # Breite und Hoehe in einer Zeile so, wie Tk den Text setzt
+    # (font.measure liegt bei "  ·  " einige px darunter)
+    probe = tk.Label(inner.master, text=text, font=inner.cget("font"),
+                     padx=inner.cget("padx"), pady=inner.cget("pady"),
+                     borderwidth=inner.cget("borderwidth"))
+    natur = probe.winfo_reqwidth()
+    eine_zeile = probe.winfo_reqheight()
+    probe.destroy()
+    hoehe = inner.winfo_reqheight()
+    wrap = int(float(str(inner.cget("wraplength")) or 0))
+    name = "%s/%s" % (ctx.name, label.winfo_name())
+    if natur <= spalte - toleranz:
+        if hoehe > eine_zeile:
+            ctx.fehler.append("%s: Text bricht um, obwohl er in die Spalte passt "
+                              "(Text %d, Spalte %d, Hoehe %d statt %d)"
+                              % (name, natur, spalte, hoehe, eine_zeile))
+    elif wrap and wrap < spalte - toleranz:
+        ctx.fehler.append("%s: Umbruch bei %d px, Spalte %d px breit"
+                          % (name, wrap, spalte))
+    if wrap and wrap < wort:
+        ctx.fehler.append("%s: Wort breiter als die Umbruchbreite (%d > %d): "
+                          "Umbruch mitten im Wort" % (name, wort, wrap))
+
+
+def _laengste_titel(daten, anzahl=4):
+    """Die Titel mit den laengsten Woertern und die laengsten Titel (alle
+    330 AP2-Szenarien zu laden dauert zu lange)."""
+    wort = sorted(range(len(daten)), key=lambda i: -max(
+        len(w) for w in daten[i]["title"].split()))[:anzahl]
+    lang = sorted(range(len(daten)), key=lambda i: -len(daten[i]["title"]))[:anzahl]
+    return sorted(set(wort + lang))
+
+
 def _szenarien(ctx, key, gruppe):
     view = ctx.zeige(key)
     ctx.pruefe("start")
@@ -216,11 +295,19 @@ def _szenarien(ctx, key, gruppe):
     ctx.pruefe("naechstes")
     _inhalt_sichtbar(ctx, view.task_card.master)
     _inhalt_breit_genug(ctx, view.task_card.master)
+    _gestapelt_volle_breite(ctx, view.task_card.master)
+    detail = view.task_card.master
     if ctx.breit():
-        detail = view.task_card.master
         layout = detail.master
         _zwei_spalten_wie_bisher(ctx, layout, layout.grid_slaves(row=0, column=0)[0],
                                  detail, gruppe)
+    hinweis = getattr(view, "lbl_own_hint", None) or next(
+        w for w in view.own_card.body.winfo_children() if type(w).__name__ == "CTkLabel")
+    _umbruch_passend(ctx, hinweis, detail, True)
+    for nummer in _laengste_titel(view.DATA):
+        view.load_scenario(nummer)
+        ctx.pump(0.05)
+        _umbruch_passend(ctx, view.lbl_title, detail, False)
 
 
 @ansicht("ap1")
@@ -244,11 +331,20 @@ def pruefe_testprojekt(ctx):
     ctx.pruefe("naechstes")
     _inhalt_sichtbar(ctx, view.task_card.master)
     _inhalt_breit_genug(ctx, view.task_card.master)
+    _gestapelt_volle_breite(ctx, view.task_card.master)
+    detail = view.task_card.master
     if ctx.breit():
-        detail = view.task_card.master
         layout = detail.master
         _zwei_spalten_wie_bisher(ctx, layout, layout.grid_slaves(row=0, column=0)[0],
                                  detail, "proj")
+    # alle Projekte durchgehen: lange Titel ("Wirtschaftlichkeitsvergleich")
+    # und Meta-Zeilen (Normal 1360: eine Zeile wie 14b3bd4)
+    import app_gui
+    for nummer in range(len(app_gui.PROJEKTARBEITEN)):  # 50, alle
+        view.load_project(nummer)
+        ctx.pump(0.05)
+        _umbruch_passend(ctx, view.header_label, detail, False)
+        _umbruch_passend(ctx, view.meta_label, detail, True)
 
 
 @ansicht("abschlussprojekt")
