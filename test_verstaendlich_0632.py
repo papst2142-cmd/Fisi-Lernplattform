@@ -297,5 +297,19 @@ class NacharbeitM21Test(unittest.TestCase):
         self.assertEqual((str(netz.hostmask), str(netz.broadcast_address)),
                          ("0.0.0.15", "192.168.1.63"))
 
+    def test_hilfe_alle_trainer_arten(self):
+        # Frage 19 (a): der Hilfe-Satz nennt alle Arten aus TRAINER_KINDS in
+        # derselben Reihenfolge wie die Auswahlknoepfe
+        import fisi_hilfe as fh
+        namen = [name for _key, name in fl.TRAINER_KINDS]
+        self.assertEqual(len(namen), 6)
+        aufzaehlung = ("„" + "“, „".join(namen[:-1]) + "“ und „" + namen[-1] + "“")
+        text = next(s["text"] for s in fh.HELP_SECTIONS if s["id"] == "rechner")
+        self.assertIn("Oben unter „Trainer“ rechnest du selbst: " + aufzaehlung
+                      + ", jeweils „Leicht“, „Mittel“ oder „Schwer“.", text)
+        for name in namen:
+            self.assertEqual(text.count("„%s“" % name), 1, name)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
