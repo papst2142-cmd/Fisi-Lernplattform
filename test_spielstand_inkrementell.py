@@ -34,6 +34,8 @@ Erwartung (rot/gruen):
                                           dasselbe lokal): zaehlt einmal, auch
                                           schrittweise (Merker ohne Feld im
                                           Spielstand, E-5 R6)
+    test_alter_stand_bleibt               ein vorher gemerktes game.state bleibt
+                                          unveraendert (neues Objekt wie bisher)
     test_oeffnen_schreibt_nichts          Oeffnen eines Spielstands aendert die
                                           Datenbank nicht und schreibt kein
                                           fehler.log
@@ -434,6 +436,24 @@ class LeistungUndAbsicherungTest(_Base):
             fg.GameState.__init__ = original
         self.assertEqual(builds, [])
         self.assert_like_rebuild(game, "Ticket und Moebel")
+
+    def test_alter_stand_bleibt(self):
+        """Wie bis 0.63.1: Nach einer Aktion ist game.state ein neues Objekt;
+        wer den Stand vorher gemerkt hat, sieht ihn unveraendert."""
+        install("k", "sekunde")
+        game = fg.Game(self.db, "PC")
+        game.set_profile("Kopie", {})
+        game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": 5000})
+        before = game.state
+        snapshot = json.dumps(sorted((k, repr(v)) for k, v in vars(before).items()
+                                     if k != "content"))
+        task = game.state.open_tickets()[0]
+        game.solve(task["id"], fg.find_solution(game.state.prepared_task(task)), False)
+        self.assertIsNot(game.state, before)
+        self.assertEqual(json.dumps(sorted((k, repr(v)) for k, v in vars(before).items()
+                                           if k != "content")), snapshot)
+        self.assertNotEqual(game.state.handled, before.handled)
+        self.assert_like_rebuild(game, "Ticket")
 
     def test_feierabend_heilt_und_meldet(self):
         """Absicherung im Betrieb: Weicht der schrittweise Spielstand ab, gilt

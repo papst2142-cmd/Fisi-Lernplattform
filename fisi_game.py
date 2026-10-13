@@ -5254,6 +5254,12 @@ class Game:
         if kind != EV_ACHIEVEMENT:
             self.check_achievements(day_end=kind == EV_DAY_END)
 
+    # Ab 0.63.2 (B-F-02): Der schrittweise Weg rechnet auf einer Kopie des
+    # Spielstands (neues Objekt wie beim Neuaufbau). False: auf dem
+    # vorhandenen Objekt (schneller, aber ein vorher gemerktes game.state
+    # aendert sich dann mit).
+    STATE_COPY = True
+
     def _current_stamp(self):
         """Stempel des Protokolls, wenn der Spielstand genau dazu passt (sonst
         None: dann wird nach dem Schreiben voll neu gerechnet)."""
@@ -5299,18 +5305,24 @@ class Game:
             return False
         state = self.state
         once = getattr(self, "_once", None)
-        if once is None or once[0] is not state:
-            once = self._once = (state, state.counted_once())
+        marks = once[1] if once is not None and once[0] is state else state.counted_once()
+        if self.STATE_COPY:
+            # Wie bisher ein neues Spielstand-Objekt: wer das alte haelt (z.B.
+            # "state = game.state" vor einer Aktion), sieht weiter den alten Stand
+            state = copy.deepcopy(state, {id(state.content): state.content})
+            marks = set(marks)
         try:
             day_before = state.day
-            state.apply_event(timestamp, kind, payload, once[1])
+            state.apply_event(timestamp, kind, payload, marks)
             state.note_handled(kind, payload, day_before)
         except Exception:
-            # Halb angewendet: neu rechnen (wirft dann wie bisher, falls das
-            # Ereignis selbst den Fehler ausloest)
+            # Nicht (ganz) angewendet: neu rechnen (wirft dann wie bisher,
+            # falls das Ereignis selbst den Fehler ausloest)
             self._stamp = None
             self._once = None
             return False
+        self.state = state
+        self._once = (state, marks)
         self._stamp = (self.run, after)
         self._incremental = getattr(self, "_incremental", 0) + 1
         return True
