@@ -586,7 +586,7 @@ def replace_question(backup):
             "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
-            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Neufassung Antwort Meldung 31 B.3
+            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Weisung zu Meldung 37, Abschnitt 3
             "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
             "dem Repository wieder dazu. Löschungen, die dieses Gerät schon kennt (zum "
             "Beispiel „Alle Lerndaten löschen“), löschen das Eingespielte nicht noch "
