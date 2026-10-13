@@ -17,6 +17,11 @@ Tests ab 0.63.2 fuer die Spiel-Fehler am PC (Bauauftrag N2):
   B-I-05  Eingebaute Leistungsmessung: Seitenwechsel bis fertig gezeichnet,
           Zaehlen der Elemente ausserhalb der Dauer, Feld "messart" (2) und
           getrennte Auswertung alter und neuer Messart (fisi_leistung).
+  B-D-10  (Teil a) Spielansichten zurechtgerueckt: Name der Spielfigur nie
+          auf einer Wand, mind. 4,5:1 gegen den Boden (auch dunkel);
+          Ortsschilder der Karte bei jeder Schriftgroesse gleich; "Bahnsteig 1"
+          ueberdeckt keinen Automaten; "Platz wechseln" mit Abstand zum
+          Suchfeld.
 
 Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
 Start:  xvfb-run -a python test_spiel_pc_0632.py
@@ -531,6 +536,265 @@ class LeistungsMessartTest(AppCase):
         rows = fle.read_rows(old_path)
         self.assertEqual([fle.messart_of(row) for row in rows],
                          [fle.MESSART_ALT] * 3 + [fle.MESSART_GEZEICHNET])
+
+
+# ============================================================================
+#  B-D-10 (Teil a): Name der Spielfigur, Ortsschilder, Abstaende
+# ============================================================================
+
+def _wall_bands(content):
+    """Waende als Rechtecke in Gebaeude-Einheiten (wie building_shapes:
+    Aussenwand 0,3 breit, Raumwaende 0,16)."""
+    import fisi_game as fg
+    building = (content or fg.GAME)["gebaeude"]
+    wide, high = building["breite"], building["hoehe"]
+    bands = [(-0.15, -0.15, wide + 0.15, 0.15), (-0.15, high - 0.15, wide + 0.15, high + 0.15),
+             (-0.15, -0.15, 0.15, high + 0.15), (wide - 0.15, -0.15, wide + 0.15, high + 0.15)]
+    for room in building["raeume"]:
+        left, top = room["x"], room["y"]
+        right, bottom = left + room["w"], top + room["h"]
+        bands += [(left, top - 0.08, right, top + 0.08), (left, bottom - 0.08, right, bottom + 0.08),
+                  (left - 0.08, top, left + 0.08, bottom), (right - 0.08, top, right + 0.08, bottom)]
+    return bands
+
+
+def _name_box(shape):
+    """Geschaetzte Flaeche des Namens (0,22 je Zeichen, 0,4 hoch)."""
+    width = 0.22 * len(shape["text"])
+    left = shape["x"] if shape.get("anchor") == "w" else shape["x"] - width / 2
+    return (left, shape["y"] - 0.2, left + width, shape["y"] + 0.2)
+
+
+def _hits(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+class NamensschildTest(unittest.TestCase):
+    """B-D-10: Der Name der Spielfigur steht an jedem Standort auf Boden
+    (nicht auf einer Wand - die Wand ist in beiden Modi hell, dort ist
+    keine Farbe lesbar, die auch auf dunklem Boden lesbar ist) und hat
+    gegen diesen Boden mind. 4,5:1, in jedem Modus und jeder Kreisfarbe."""
+
+    # "Kim Talbahn" (11 Zeichen) passt noch in die schmalste Raumbreite
+    # (Kueche zuhause, 4 Einheiten); laengere Namen haben dort keinen Platz
+    # ohne Wand und bleiben unter der Figur (wie bisher)
+    NAMES = ("Kim Talbahn", "Du")
+
+    def setUp(self):
+        import fisi_theme
+        self.old_mode = fisi_theme.current_mode
+
+    def tearDown(self):
+        import fisi_theme
+        fisi_theme.apply_mode(self.old_mode)
+
+    def _contents(self):
+        import fisi_game as fg
+        state = fg.GameState([])
+        return [("Bitweiche", None), ("Zuhause", fg.site_content(fg.SITE_HOME, state)),
+                ("Buero", fg.site_content(fg.SITE_OFFICE, state)),
+                ("Bahnhof", fg.site_content("talheim", state))]
+
+    def _floor_at(self, content, x, y):
+        import fisi_game as fg
+        colors = fg._floor_colors(content)
+        building = (content or fg.GAME)["gebaeude"]
+        for index, room in enumerate(building["raeume"]):
+            if room["x"] <= x < room["x"] + room["w"] and room["y"] <= y < room["y"] + room["h"]:
+                return colors[index + 1]
+        return colors[0]
+
+    def _positions(self, content, step=0.5):
+        import fisi_game as fg
+        building = (content or fg.GAME)["gebaeude"]
+        y = 0.1
+        while y < building["hoehe"]:
+            x = 0.1
+            while x < building["breite"]:
+                if fg.can_stand(x, y, content=content):
+                    yield (x, y)
+                x += step
+            y += step
+
+    def test_name_nie_auf_der_wand_und_lesbar(self):
+        import fisi_game as fg
+        import fisi_theme
+        problems = []
+        for mode in (fisi_theme.MODE_DARK, fisi_theme.MODE_LIGHT):
+            fisi_theme.apply_mode(mode)
+            for site, content in self._contents():
+                bands = _wall_bands(content)
+                for position in self._positions(content):
+                    for name in self.NAMES:
+                        for number, key in enumerate(fg.RING_COLORS):
+                            shape = fg.player_shapes(position, (name, {"kreis": key}),
+                                                     content=content)[-1]
+                            box = _name_box(shape)
+                            if number == 0 and any(_hits(box, band) for band in bands):
+                                problems.append((mode, site, position, name, "Wand"))
+                                break
+                            for x in (box[0], (box[0] + box[2]) / 2, box[2]):
+                                floor = self._floor_at(content, x, shape["y"])
+                                if fisi_theme.contrast(shape["color"], floor) < 4.5:
+                                    problems.append((mode, site, position, name, key, floor))
+        self.assertEqual(problems[:12], [], "%d Faelle" % len(problems))
+
+    def test_dunkelmodus_name_hell_genug_auf_jedem_boden(self):
+        """Plan: Kontrastrechnung fuer jede Kreisfarbe, auch dunkel. Ein
+        mittelheller Boden zwingt die Aufhellung (Kreisfarbe allein < 4,5)."""
+        import copy
+        import fisi_game as fg
+        import fisi_theme
+        fisi_theme.apply_mode(fisi_theme.MODE_DARK)
+        content = copy.deepcopy(fg.site_content(fg.SITE_HOME, fg.GameState([])))
+        content["gebaeude"]["flur"]["bodenfarbe"] = "#5B4F86"
+        floors = fg._floor_colors(content)
+        weak = [key for key, ring in fg.RING_COLORS.items()
+                if min(fisi_theme.contrast(ring, floor) for floor in floors) < 4.5]
+        self.assertTrue(weak, "Testboden zu dunkel gewaehlt")
+        for key, ring in fg.RING_COLORS.items():
+            shapes = fg.player_shapes(fg.start_position(content), ("Kim", {"kreis": key}),
+                                      content=content)
+            self.assertEqual(shapes[0]["line"], ring)      # Kreis bleibt
+            for floor in floors:
+                self.assertGreaterEqual(fisi_theme.contrast(shapes[-1]["color"], floor), 4.5,
+                                        (key, shapes[-1]["color"], floor))
+
+
+_CHILD_ANSICHT = r"""
+import json, os, sys, time
+code, factor, width, height = sys.argv[1], float(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+sys.path.insert(0, code)
+os.chdir(code)
+import fisi_core, fisi_game as fg
+db = fisi_core.DBManager(os.environ["FISI_DB_PATH"])
+game = fg.Game(db, "PC")
+game.set_profile("Kim", {})
+# alle Auftraege geloest (wie fotos_n2.py): auch Lindenau mit dem langen
+# Ortsnamen "Talbahn-Verwaltung" steht auf der Karte
+for number, task in enumerate(game.content["aufgaben"]):
+    db.log_game_event(fg.EV_SOLVED, json.dumps({"aufgabe": task["id"], "tag": number + 1,
+                                                "richtig": True, "geld": 0, "reputation": {}}),
+                      "PC")
+    db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": number + 1, "gehalt": 0}), "PC")
+game.reload()
+import customtkinter as ctk
+import app_gui, fisi_widgets, fisi_theme
+app_gui.apply_appearance()
+if factor != 1.0:
+    fisi_theme.apply_font_size({1.15: "gross", 1.3: "sehr_gross"}[factor])
+    fisi_widgets.apply_ui_scale(factor)
+app_gui.UpdateController.auto_check = lambda self: None
+app_gui.SyncController.auto_start = lambda self: None
+errors = []
+root = ctk.CTk()
+root.report_callback_exception = lambda *exc: errors.append(repr(exc[1]))
+root.geometry("%dx%d+0+0" % (width, height))
+app = app_gui.FISIApp(root)
+def pump(seconds):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        root.update()
+        time.sleep(0.005)
+pump(0.5)
+app.show_view("game")
+pump(0.3)
+view = app.views["game"]
+run = [item for item in view.game.slots() if not item["extra"] and item.get("lauf")][0]["lauf"]
+view._choose(run)
+fg.set_map_list_mode(False)
+view.render()
+pump(1.0)
+world = view.world
+signs = sorted(world.itemcget(item, "text") for item in world.find_all()
+               if world.type(item) == "text" and world.itemcget(item, "text")
+               and not world.itemcget(item, "text").isdigit()   # Zahl offener Tickets
+               and world.itemcget(item, "text") != "Neu")
+view.place = "talheim"
+app.show_view("kunde")
+pump(1.0)
+plan = app.views["kunde"].plan
+sign = [item for item in plan.find_all()
+        if plan.type(item) == "text" and plan.itemcget(item, "text") == "Bahnsteig 1"]
+x1, y1, x2, y2 = plan.bbox(sign[0])
+pad_x, pad_y = fisi_widgets.px(8), fisi_widgets.px(3)
+room = [entry for entry in plan.content()["gebaeude"]["raeume"] if entry["name"] == "Bahnsteig 1"][0]
+machines = []
+for deco in room["deko"]:
+    if deco["typ"] == "automat":
+        left, top = plan._xy(deco["x"], deco["y"])
+        right, bottom = plan._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+        machines.append((left, top, right, bottom))
+app.show_view("zuhause")
+pump(0.5)
+header = app.header
+button = header.slot_box.winfo_children()[-1]
+gap = header.search_box.winfo_rootx() - (button.winfo_rootx() + button.winfo_width())
+report = {"signs": signs, "sign": [x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y],
+          "machines": machines, "gap": gap, "button": button.winfo_class(),
+          "errors": errors}
+print("ERGEBNIS " + json.dumps(report), flush=True)
+os._exit(0)
+"""
+
+
+class SpielansichtGeometrieTest(unittest.TestCase):
+    """B-D-10: Ortsschilder gleich bei allen Schriftgroessen, "Bahnsteig 1"
+    nicht ueber einem Automaten, "Platz wechseln" mit Abstand zum Suchfeld
+    (echtes Fenster, je Groesse ein eigener Prozess)."""
+
+    RUNS = ((1.0, 1360, 900), (1.15, 1360, 900), (1.3, 1360, 900), (1.3, 1120, 800))
+    reports = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.reports = {}
+        if not HAS_DISPLAY:
+            return
+        folder = tempfile.mkdtemp(prefix="fisi ansicht ")
+        try:
+            script = os.path.join(folder, "kind.py")
+            with open(script, "w", encoding="utf-8") as handle:
+                handle.write(_CHILD_ANSICHT)
+            for factor, width, height in cls.RUNS:
+                home = os.path.join(folder, "%s_%d" % (factor, width))
+                os.makedirs(home)
+                env = dict(os.environ, HOME=home, FISI_DB_PATH=os.path.join(home, "t.db"),
+                           FISI_SELFTEST=os.path.join(home, "log.txt"), FISI_VORLADEN="0",
+                           PYTHONDONTWRITEBYTECODE="1")
+                result = subprocess.run([sys.executable, script, HERE, str(factor), str(width),
+                                         str(height)], env=env, capture_output=True, text=True,
+                                        timeout=300)
+                lines = [line for line in result.stdout.splitlines()
+                         if line.startswith("ERGEBNIS ")]
+                cls.reports[(factor, width)] = (json.loads(lines[0][len("ERGEBNIS "):])
+                                                if lines else result.stderr[-1500:])
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        for key, report in self.reports.items():
+            self.assertIsInstance(report, dict, (key, report))
+            self.assertEqual(report["errors"], [], key)
+
+    def test_ortsschilder_bei_jeder_groesse_gleich(self):
+        normal = self.reports[(1.0, 1360)]["signs"]
+        self.assertIn("Talbahn-Verwaltung", normal)
+        for key, report in self.reports.items():
+            self.assertEqual(report["signs"], normal, key)
+
+    def test_bahnsteig_ueberdeckt_keinen_automaten(self):
+        for key, report in self.reports.items():
+            self.assertEqual(len(report["machines"]), 3, key)
+            for machine in report["machines"]:
+                self.assertFalse(_hits(report["sign"], machine), (key, report["sign"], machine))
+
+    def test_platz_wechseln_mit_abstand_zum_suchfeld(self):
+        for key, report in self.reports.items():
+            self.assertGreaterEqual(report["gap"], 8, (key, report["gap"], report["button"]))
 
 
 if __name__ == "__main__":

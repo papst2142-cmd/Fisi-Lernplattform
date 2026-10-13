@@ -384,12 +384,21 @@ class FloorPlan(tk.Canvas):
             font = tk_font(F["h3"])
         x, y = self._xy(shape["x"], shape["y"])
         text = shape["text"]
-        if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
+        if shape.get("maxw") and role == "ort":
+            # Ab 0.63.2 (B-D-10): Ortsschilder der Karte nach derselben Regel
+            # wie die Klickflaeche (fg.place_at, Massstab je Schriftgroesse) -
+            # so heisst ein Ort bei jeder Schriftgroesse gleich (bisher nur
+            # bei "Gross" mit Kurznamen, z. B. "Verwaltung")
+            if len(text) * fg.MAP_CHAR_PX > shape["maxw"] * self.scale / px(1):
+                text = shape["kurz"]
+        elif shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
                 shape["maxw"] * self.scale:
             text = shape["kurz"]
         item = self.create_text(x, y, text=text, fill=shape["color"], font=font,
                                 anchor="w" if shape["anchor"] == "w" else "center",
                                 tags=tags)
+        if shape.get("bg") and role == "raum":
+            self._clear_furniture(item, shape)
         if shape.get("bg"):
             x1, y1, x2, y2 = self.bbox(item)
             pad_x, pad_y = px(8), px(3)
@@ -397,6 +406,37 @@ class FloorPlan(tk.Canvas):
                                 (y2 - y1) / 2.0 + pad_y, fill=shape["bg"],
                                 outline=shape.get("border", ""), width=px(1), tags=tags)
             self.tag_lower(back, item)
+
+    def _clear_furniture(self, item, shape):
+        """Ab 0.63.2 (B-D-10): Ein Raumschild, das frei beginnt, aber mit der
+        Schriftgroesse in die Einrichtung hineinwaechst (z. B. "Bahnsteig 1"
+        ueber dem ersten Fahrkartenautomaten), rueckt unter diese
+        Einrichtung. Schilder, die schon immer auf einem Moebel stehen
+        (Kueche), bleiben, wo sie sind."""
+        try:
+            rooms = self.content()["gebaeude"]["raeume"]
+        except (AttributeError, KeyError, TypeError):
+            return
+        room = next((entry for entry in rooms if entry.get("name") == shape["text"]), None)
+        if room is None:
+            return
+        pad_x, pad_y = px(8), px(3)
+        x1, y1, x2, y2 = self.bbox(item)
+        boxes = []
+        for deco in room.get("deko", []):
+            left, top = self._xy(deco["x"], deco["y"])
+            right, bottom = self._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+            boxes.append((left, top, right, bottom))
+        start = (x1 - pad_x, y1 - pad_y, x1 + pad_x, y2 + pad_y)
+
+        def hits(a, b):
+            return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+        if any(hits(start, box) for box in boxes):
+            return
+        sign = (x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y)
+        hit = [box for box in boxes if hits(sign, box)]
+        if hit:
+            self.move(item, 0, max(box[3] for box in hit) + pad_y + px(4) - (y1 - pad_y))
 
     def to_building(self, event):
         return ((event.x - self.offset) / self.scale,
@@ -2776,9 +2816,10 @@ class GameView(ReusableView, ScrollArea):
                     subtitle="Ort anklicken, um hinzugehen")
         card.pack(fill="x")
         if card.head is not None:
+            # Ab 0.63.2 (B-D-10): Abstand auch rechts, zum Hinweistext
             NeoButton(card.head, "Karte" if as_list else "Liste",
                       lambda: self._toggle_map_list(not as_list), kind="ghost", height=28,
-                      font=F["small_bold"]).pack(side="right", padx=(10, 0))
+                      font=F["small_bold"]).pack(side="right", padx=(10, 10))
         if as_list:
             self._build_place_list(card.body, state)
             self.world = None

@@ -874,8 +874,10 @@ class Header(ctk.CTkFrame):
         self.slot_box = transparent_frame(left)
         self.slot_label = make_label(self.slot_box, "", font=F["small"], fg=C["muted"])
         self.slot_label.pack(side="left", padx=(16, 8))
+        # Ab 0.63.2 (B-D-10): Abstand zum Suchfeld (stiess bei "Sehr gross" an)
         NeoButton(self.slot_box, "Platz wechseln", lambda: self.app.open_slot_picker(),
-                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
+                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left",
+                                                                     padx=(0, 12))
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
                                        border_width=1, border_color=C["field_border"])
