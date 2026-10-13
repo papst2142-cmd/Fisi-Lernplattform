@@ -265,6 +265,11 @@ class DashboardScreen(Screen):
     def _ring_card_sized(self, event, card, ring):
         """Ab 0.63.2 (Nacharbeit M1): echte Kartenbreite nach dem Zeichnen -
         Ring und Rand passen sich an (z.B. Querformat, schmales Handy)."""
+        # Flet frischt nach jedem Ereignis sonst die ganze Seite auf - das
+        # Ereignis kommt oft gleich nach dem Start, waehrend schon eine andere
+        # Seite aufgebaut wird; im Behelf blieb dann einige Male die
+        # Startseite stehen. Daher nur die Karte selbst und nur bei Aenderung.
+        ft.context.disable_auto_update()
         width = getattr(event, "width", 0) or 0
         if width <= 2:
             return
@@ -273,6 +278,9 @@ class DashboardScreen(Screen):
             return
         ring.resize(size)
         card.padding = ft.Padding.symmetric(horizontal=side, vertical=14)
+        body = getattr(self.app, "body", None)
+        if body is not None and body.content is not self.root:
+            return   # Startseite nicht sichtbar: geht mit dem naechsten Anzeigen mit
         try:
             card.update()
         except RuntimeError:

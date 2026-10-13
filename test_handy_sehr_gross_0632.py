@@ -190,6 +190,33 @@ class RingBreiteTest(unittest.TestCase):
         karte.on_size_change(_Ereignis(_innen(384) + 2))
         self.assertEqual((ring.size, karte.padding.left), (146, 11))
 
+    def test_ereignis_ohne_seiten_auffrischung(self):
+        """Das Groessen-Ereignis frischt nie die ganze Seite auf (Flet-Auto-
+        Update aus) und schickt nichts, solange die Startseite nicht zu sehen
+        ist - die neuen Werte gehen mit dem naechsten Anzeigen mit."""
+        screen = self._screen(1.3, 384)
+        screen.app.body = ft.Container(content=ft.Text("andere Seite"))
+        karte = _ringkarte(screen, screen.ring_cards)
+        gesendet = []
+        karte.update = lambda: gesendet.append(karte)
+        ft.context.reset_auto_update()
+        try:
+            karte.on_size_change(_Ereignis(_innen(384) + 2))   # keine Aenderung
+            self.assertFalse(ft.context.auto_update_enabled())
+            ft.context.reset_auto_update()
+            karte.on_size_change(_Ereignis(_innen(360) + 2))   # Startseite verdeckt
+            self.assertFalse(ft.context.auto_update_enabled())
+        finally:
+            ft.context.reset_auto_update()
+        self._passt_eine(screen.ring_cards, karte, _innen(360))
+        self.assertEqual(gesendet, [])
+        # Startseite sichtbar: nur die Karte wird geschickt
+        screen.app.body.content = screen.root
+        karte.on_size_change(_Ereignis(_innen(384) + 2))
+        ft.context.reset_auto_update()
+        self.assertEqual(gesendet, [karte])
+        self.assertEqual(screen.ring_cards.size, 146)
+
     def _passt_eine(self, ring, karte, inner):
         self.assertLessEqual(ring.size + 2 * karte.padding.left, inner)
         self.assertEqual((ring.width, ring.canvas.width, ring.center.width),
