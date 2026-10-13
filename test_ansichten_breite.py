@@ -507,13 +507,22 @@ class AnsichtBreiteBasis(unittest.TestCase):
         mine = result[self.NAME]
         print("\n  %s %s %dx%d: %s" % (self.NAME, Z3_STUFEN[faktor], breite, hoehe,
                                       {k: v["inhalt"] for k, v in mine["werte"].items()}))
-        self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
-                                                             breite, hoehe))
+        if getattr(self, "_bekannt", False):
+            # Bekannte Luecke Normal 1120 (cfb32a9): nur Ueberstand erlaubt, aber
+            # nichts darf bei Normal umgestellt sein (faengt eine fehlende Normal-Sperre).
+            normal = [f for f in mine["fehler"] if "bei Normal" in f]
+            self.assertEqual(normal, [], "%s Normal %dx%d umgestellt" % (self.NAME, breite, hoehe))
+            self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
+                            "Z3_NORMAL_1120_BEKANNT anpassen" % (self.NAME, breite, hoehe))
+        else:
+            self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
+                                                                 breite, hoehe))
         self.assertTrue(mine["werte"], "keine Zustaende geprueft")
 
 
-def _make(faktor, breite, hoehe):
+def _make(faktor, breite, hoehe, bekannt=False):
     def test(self):
+        self._bekannt = bekannt
         self.run_case(faktor, breite, hoehe)
     return test
 
@@ -548,12 +557,11 @@ class AbschlussprojektBreiteTest(AnsichtBreiteBasis):
 
 def fuer_alle_stufen(cls):
     """Z3: je Schriftstufe (Normal, Gross, Sehr gross) und Fenster ein
-    Testfall. Normal 1120 bei Z3_NORMAL_1120_BEKANNT: erwarteter Fehlschlag."""
+    Testfall. Normal 1120 bei Z3_NORMAL_1120_BEKANNT: nur Ueberstand erlaubt, nichts umgestellt."""
     for faktor, stufe in Z3_STUFEN.items():
         for breite, hoehe in FENSTER:
-            test = _make(faktor, breite, hoehe)
-            if faktor == 1.0 and breite == 1120 and cls.NAME in Z3_NORMAL_1120_BEKANNT:
-                test = unittest.expectedFailure(test)
+            bekannt = faktor == 1.0 and breite == 1120 and cls.NAME in Z3_NORMAL_1120_BEKANNT
+            test = _make(faktor, breite, hoehe, bekannt)
             setattr(cls, "test_%s_%d" % (stufe, breite), test)
     return cls
 
