@@ -256,6 +256,7 @@ class Handler(BaseHTTPRequestHandler):
                 pass
             else:
                 STATE.store(base64.b64decode(body["content"]))
+                sha = STATE.sha  # unter der Sperre (Meldung 21, Frage 20)
                 if hang == "nach_speichern":
                     STATE.log.append(("PUT", self.path, "gespeichert_haengt"))
         if code:
@@ -263,7 +264,7 @@ class Handler(BaseHTTPRequestHandler):
                                      else "Invalid request. \"sha\" wasn't supplied."})
         if hang == "nach_speichern":
             time.sleep(600)
-        return self._json(200, {"content": {"sha": STATE.sha}})
+        return self._json(200, {"content": {"sha": sha}})
 
 
 def start_server(port=0):
