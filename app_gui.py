@@ -66,6 +66,11 @@ from fisi_core import (  # noqa: E402
 import fisi_core  # noqa: E402  (ab 0.63: neuere Kern-Teile ueber getattr)
 # ab 0.63.1 (Plan 0.63.1 Teil 1.3): Umbruch der Subnetting-Kaesten wie am Handy
 from fisi_core import fit_lines  # noqa: E402
+# ab 0.63.2 (B-N-07 4.2): Beschriftungen RAID/Bildschirm, PC = Handy
+from fisi_core import (RAID_FIELD_DISKS, RAID_FIELD_LEVEL, RAID_FIELD_SIZE,  # noqa: E402
+                       RAID_SUBTITLE, RAID_TITLE, SCREEN_FIELD_DEPTH,
+                       SCREEN_FIELD_FPS, SCREEN_FIELD_HEIGHT, SCREEN_FIELD_WIDTH,
+                       SCREEN_SUBTITLE, SCREEN_TITLE)
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -4623,10 +4628,10 @@ class CalcView(View):
         self.subnet = SubnetCalc(subnet)
 
         # --- RAID ---------------------------------------------------------
-        raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
-                    subtitle="Nutzkapazität, Verlust, Effizienz")
+        raid = Card(layout, title=RAID_TITLE, accent=C["purple"],
+                    subtitle=RAID_SUBTITLE)
         raid.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
-        make_label(raid.body, "RAID-Level", font=F["small"],
+        make_label(raid.body, RAID_FIELD_LEVEL, font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
         self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
                                     initial=2)
@@ -4634,11 +4639,11 @@ class CalcView(View):
 
         grid = transparent_frame(raid.body)
         grid.pack(anchor="w", fill="x")
-        make_label(grid, "Anzahl Festplatten", font=F["small"],
+        make_label(grid, RAID_FIELD_DISKS, font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_disks = EntryBox(grid, width=8, value="4")
         self.entry_disks.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(grid, "Kapazität je Festplatte (GB)", font=F["small"],
+        make_label(grid, RAID_FIELD_SIZE, font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_size = EntryBox(grid, width=8, value="1000")
         self.entry_size.grid(row=1, column=1, sticky="w", padx=12, pady=4)
@@ -4651,28 +4656,28 @@ class CalcView(View):
         self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
 
         # --- Bildschirm-Datenvolumen ---------------------------------------
-        screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
-                      subtitle="Pixel, Farbtiefe, Datenrate")
+        screen = Card(layout, title=SCREEN_TITLE, accent=C["green"],
+                      subtitle=SCREEN_SUBTITLE)
         screen.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
 
         screen_grid = transparent_frame(screen.body)
         screen_grid.pack(anchor="w", fill="x")
-        make_label(screen_grid, "Breite (Pixel)", font=F["small"],
+        make_label(screen_grid, SCREEN_FIELD_WIDTH, font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_width = EntryBox(screen_grid, width=8, value="1920")
         self.entry_width.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Höhe (Pixel)", font=F["small"],
+        make_label(screen_grid, SCREEN_FIELD_HEIGHT, font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_height = EntryBox(screen_grid, width=8, value="1080")
         self.entry_height.grid(row=1, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Bildrate (fps, optional)",
+        make_label(screen_grid, SCREEN_FIELD_FPS,
                    font=F["small"], fg=C["text_dim"]).grid(
                        row=0, column=2, sticky="w", padx=(24, 0), pady=4)
         self.entry_fps = EntryBox(screen_grid, width=8, value="30")
         self.entry_fps.grid(row=0, column=3, sticky="w", padx=12, pady=4)
         self.entry_fps.entry.bind("<Return>", lambda _e: self.calc_screen())
 
-        make_label(screen.body, "Farbtiefe", font=F["small"],
+        make_label(screen.body, SCREEN_FIELD_DEPTH, font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w", pady=(14, 0))
         self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2)
         self.depth_pills.pack(anchor="w", pady=(8, 12))

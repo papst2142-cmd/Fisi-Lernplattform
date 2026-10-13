@@ -2609,6 +2609,20 @@ COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
                 ("24", "24 Bit (True Color)"),
                 ("32", "32 Bit (True Color + Alpha)")]
 
+# Ab 0.63.2 (B-N-07 4.2): Karten- und Feldbeschriftungen von RAID und
+# Bildschirm aus einer Quelle fuer PC und Handy (wie UPS_FIELD_CAPTIONS)
+RAID_TITLE = "RAID-Kapazität"
+RAID_SUBTITLE = "Nutzkapazität, Verlust, Effizienz"
+RAID_FIELD_LEVEL = "RAID-Level"
+RAID_FIELD_DISKS = "Anzahl Festplatten"
+RAID_FIELD_SIZE = "Kapazität je Festplatte (GB)"
+SCREEN_TITLE = "Bildschirm-Datenvolumen"
+SCREEN_SUBTITLE = "Pixel, Farbtiefe, Datenrate"
+SCREEN_FIELD_WIDTH = "Breite (Pixel)"
+SCREEN_FIELD_HEIGHT = "Höhe (Pixel)"
+SCREEN_FIELD_FPS = "Bildrate (fps, optional)"
+SCREEN_FIELD_DEPTH = "Farbtiefe"
+
 
 def ipv4_values(network):
     """Kennwerte eines IPv4-Netzes (ipaddress.IPv4Network) als Woerterbuch.
@@ -3678,8 +3692,8 @@ def raid_tolerance_lines(level, disks, tolerance):
 def raid_report(level, disks_text, size_text):
     """Berechnet Nutzkapazitaet, Verlust und Effizienz eines RAID."""
     # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
-    disks = read_number(disks_text, "Anzahl Festplatten", ganz=True)
-    size = read_number(size_text, "Kapazität je Festplatte (GB)")
+    disks = read_number(disks_text, RAID_FIELD_DISKS, ganz=True)
+    size = read_number(size_text, RAID_FIELD_SIZE)
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
     # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
@@ -3722,8 +3736,8 @@ SCREEN_FPS_MAX = 1000
 def screen_report(width_text, height_text, depth, fps_text):
     """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
     # Ab 0.62.4: gemeinsame Leseregel (read_number); Bildrate leer = ohne
-    width = read_number(width_text, "Breite (Pixel)", ganz=True)
-    height = read_number(height_text, "Höhe (Pixel)", ganz=True)
+    width = read_number(width_text, SCREEN_FIELD_WIDTH, ganz=True)
+    height = read_number(height_text, SCREEN_FIELD_HEIGHT, ganz=True)
     try:
         depth = int(depth)
     except ValueError:
@@ -3837,7 +3851,6 @@ UPS_FIELDS = [
 ]
 UPS_FIELD_CAPTIONS = {key: caption for key, caption, _value in UPS_FIELDS}
 UPS_FIELD_DEFAULTS = {key: value for key, _caption, value in UPS_FIELDS}
-UPS_UNIT_CAPTION = "Einheit der Last"
 
 # Grenzen je Feld: (kleinster Wert, groesster Wert, ganze Zahl, 0 erlaubt)
 UPS_LIMITS = {
@@ -4060,7 +4073,8 @@ def ups_calculate(mode, fields, unit="W"):
             % (series, _de_short(block_v), _de_short(block_ah),
                plural(parallel, "Strang", "Stränge")),
             "Akku-Energie          : %s V x %s Ah x %s = %s Wh"
-            % (_de_short(string_v), _de_short(block_ah), parallel,
+            % (_de_short(string_v), _de_short(block_ah),
+               plural(parallel, "Strang", "Stränge"),       # ab 0.63.2 (B-N-07 5.8)
                de_number(battery_wh)),
             "",
             "Laufzeit (Akku neu)   : %s min" % de_number(runtime["neu"], 1),
@@ -4192,7 +4206,7 @@ def ups_task_solution(index):
         energy = ups_battery_energy(w["v"], w["ah"], w["reihe"], w["par"])
         runtime = ups_runtime(w["w"], w["eta"], energy, w["alt"])
         return ("Akku-Energie = %s x %s V x %s Ah = %s Wh\n"
-                "Laufzeit = %s Wh x %s / %s W x 60 = %s min\n"
+                "Laufzeit = (%s Wh x %s / %s W) x 60 min/h = %s min\n"
                 "Lebensende = %s min x 0,8 = %s min\n"
                 "Antwort: neu etwa %s min, am Lebensende etwa %s min."
                 % (w["reihe"], w["v"], w["ah"], de_number(energy, 0),
@@ -4253,6 +4267,7 @@ CALC_EXPLAIN_UPS = (
     "Akku 2 x 12 V in Reihe (24 V), Alterungszuschlag 25 %\n\n"
     "SCHRITT 1: VA und W\n"
     "   Wirkleistung P (W) = Scheinleistung S (VA) x Leistungsfaktor\n"
+    "   umgestellt nach S: S (VA) = P (W) / Leistungsfaktor\n"
     "   600 W / 0,9 = 667 VA (Leistungsfaktor 0,9 ist eine Annahme,\n"
     "   der echte Wert steht auf dem Typenschild).\n\n"
     "SCHRITT 2: Energie für die Last\n"
@@ -4268,7 +4283,7 @@ CALC_EXPLAIN_UPS = (
     "   Ah = Wh / Strangspannung = 234,38 Wh / 24 V = 9,77 Ah\n\n"
     "LAUFZEIT (umgekehrt)\n"
     "   Akku-Energie = 24 V x 12 Ah = 288 Wh\n"
-    "   Laufzeit = 288 Wh x 0,8 / 600 W x 60 = 23,04 min (neu)\n"
+    "   Laufzeit = (288 Wh x 0,8 / 600 W) x 60 min/h = 23,04 min (neu)\n"
     "   am Lebensende: 23,04 min x 0,8 = 18,43 min\n\n"
     "EMPFEHLUNG\n"
     "   Die Last soll höchstens 80 % der USV-Nennleistung betragen\n"
@@ -4700,6 +4715,9 @@ CALC_EXPLAIN_UPS_HANDY = (
     " Wirkleistung P (W) =\n"
     " Scheinleistung S (VA)\n"
     " x Leistungsfaktor\n"
+    " umgestellt nach S:\n"
+    " S (VA) = P (W)\n"
+    " / Leistungsfaktor\n"
     " 600 W / 0,9 = 667 VA\n"
     " (Leistungsfaktor 0,9 ist\n"
     " eine Annahme, der echte\n"
@@ -4735,7 +4753,8 @@ CALC_EXPLAIN_UPS_HANDY = (
     " Akku-Energie =\n"
     " 24 V x 12 Ah = 288 Wh\n"
     " Laufzeit =\n"
-    " 288 Wh x 0,8 / 600 W x 60\n"
+    " (288 Wh x 0,8 / 600 W)\n"
+    " x 60 min/h\n"
     " = 23,04 min (neu)\n"
     " am Lebensende:\n"
     " 23,04 min x 0,8\n"

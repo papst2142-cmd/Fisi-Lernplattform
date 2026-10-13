@@ -2898,27 +2898,27 @@ class CalcScreen(Screen):
         self.entry_disks = ui.entry("4", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_size = ui.entry("1000", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.out_raid = _result_box("Noch keine Berechnung durchgeführt.")
-        raid = ui.Card("RAID-Kapazität", [
-            ui.text("RAID-Level", size=13, color=C["text_dim"]), self.raid_pills,
-            self._field("Anzahl Festplatten", self.entry_disks),
-            self._field("Kapazität je Festplatte (GB)", self.entry_size),
+        raid = ui.Card(fc.RAID_TITLE, [
+            ui.text(fc.RAID_FIELD_LEVEL, size=13, color=C["text_dim"]), self.raid_pills,
+            self._field(fc.RAID_FIELD_DISKS, self.entry_disks),
+            self._field(fc.RAID_FIELD_SIZE, self.entry_size),
             ft.Row([ui.GradientButton("Berechnen", self.calc_raid)]),
             self.out_raid, *self._explain(CALC_EXPLAIN_RAID_HANDY),
-        ], accent=C["purple"], subtitle="Nutzkapazität, Verlust, Effizienz")
+        ], accent=C["purple"], subtitle=fc.RAID_SUBTITLE)
 
         self.entry_width = ui.entry("1920", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_height = ui.entry("1080", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_fps = ui.entry("30", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.depth_pills = _pills(COLOR_DEPTHS, initial=2)
         self.out_screen = _result_box("Noch keine Berechnung durchgeführt.")
-        screen = ui.Card("Bildschirm-Datenvolumen", [
-            self._field("Breite (Pixel)", self.entry_width),
-            self._field("Höhe (Pixel)", self.entry_height),
-            self._field("Bildrate (fps, optional)", self.entry_fps),
-            ui.text("Farbtiefe", size=13, color=C["text_dim"]), self.depth_pills,
+        screen = ui.Card(fc.SCREEN_TITLE, [
+            self._field(fc.SCREEN_FIELD_WIDTH, self.entry_width),
+            self._field(fc.SCREEN_FIELD_HEIGHT, self.entry_height),
+            self._field(fc.SCREEN_FIELD_FPS, self.entry_fps),
+            ui.text(fc.SCREEN_FIELD_DEPTH, size=13, color=C["text_dim"]), self.depth_pills,
             ft.Row([ui.GradientButton("Berechnen", self.calc_screen, kind="accent")]),
             self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN_HANDY),
-        ], accent=C["green"], subtitle="Pixel, Farbtiefe, Datenrate")
+        ], accent=C["green"], subtitle=fc.SCREEN_SUBTITLE)
         # Ab 0.51: Umschalter Rechner / Trainer
         self.calc_box = ft.Column([subnet, raid, screen, self._build_ups()], spacing=14,
                                   tight=True)
