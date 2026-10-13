@@ -1984,9 +1984,32 @@ class FitRowsMixin(FitWidthMixin):
             if widget is card.subtitle_label:
                 continue
             width += widget.winfo_reqwidth() + sum(FlowRow._pad(widget.pack_info()))
-        if card.subtitle_width():
-            width += card.subtitle_width() + px(12)
-        return max(width, card.head_width() - card.frame_width()) + card.frame_width()
+        sub = FitRowsMixin._z3_sub_width(card)
+        if sub:
+            width += sub + px(12)
+        return max(width, card.head_width() - card.subtitle_width()
+                   - card.frame_width() + sub) + card.frame_width()
+
+    @staticmethod
+    def _z3_sub_width(card):
+        """Breite der Unterschrift neben der Ueberschrift (echte Pixel), auch
+        wenn sie gerade darunter steht. Nacharbeit Gegenpruefung S1c2: die
+        Breite der frisch gestapelten Unterschrift meldet Tk erst spaeter
+        (vorher 1) - ohne den gemerkten Wert sprang der Kopf hin und her
+        (Endlosschleife bei langer Pruefungsueberschrift, Sehr gross 1120)."""
+        if card.subtitle_label is None:
+            return 0
+        text = card._sub_text[0]
+        if not text:
+            return 0
+        known = card.__dict__.get("_fisi_z3_subw")
+        if not card._sub_stacked and card.subtitle_label.winfo_reqwidth() > 1:
+            card._fisi_z3_subw = (text, card.subtitle_label.winfo_reqwidth())
+            return card._fisi_z3_subw[1]
+        if known and known[0] == text:
+            return known[1]
+        font = tkfont.Font(font=card.subtitle_label._label.cget("font"))
+        return font.measure(text) + px(6)
 
     @staticmethod
     def _z3_text(label, room):

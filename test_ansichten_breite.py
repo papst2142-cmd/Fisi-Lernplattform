@@ -257,7 +257,12 @@ Z3_STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 # aufgeklappt ebenso (+6 px, Messung S1c2). Normal gehoert nicht zu Z3 und
 # bleibt unveraendert (Weisung Hauptstrang) - deshalb dort erwarteter
 # Fehlschlag, gemeldet in bau_0.63.2/s1c2/ergebnis.md.
-Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten")
+Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten",
+                          "pruefungstrainer")
+# Nacharbeit Gegenpruefung S1c2 (L1): Pruefungstrainer, Bewertung mit den
+# laengsten Kriterien (_pruefung_gezielt) - die Haken-Texte brechen bei Normal
+# nicht um; auf 14b3bd4 (0.63.1) gleich, auch bei 1360. Frage an Nico/Chat.
+Z3_NORMAL_1360_BEKANNT = ("pruefungstrainer",)
 # Bekannte Grenze bei Z3 (Nacharbeit Gegenpruefung M1): Fortschritt mit
 # gespeicherten Test-Sessions, Tabelle "Historie der Pruefungssessions" bei
 # Sehr gross 1120 (Spaltenkoepfe + Datum passen nicht, ohne Text zu kuerzen).
@@ -267,6 +272,7 @@ Z3_GRENZE_BEKANNT = {("fortschritt_daten", 1.3, 1120)}
 
 def _bekannt(name, faktor, breite):
     return ((faktor == 1.0 and breite == 1120 and name in Z3_NORMAL_1120_BEKANNT)
+            or (faktor == 1.0 and breite == 1360 and name in Z3_NORMAL_1360_BEKANNT)
             or (name, faktor, breite) in Z3_GRENZE_BEKANNT)
 
 
@@ -408,12 +414,47 @@ def pruefe_karteikarten(ctx):
     ctx.pump(0.3)
 
 
+def _laengstes_kriterium(quelle, index):
+    import fisi_pruefung as fp
+    teile = fp.scenario_parts(fp.source_data(quelle)[index])["teile"]
+    return max(len(k) for teil in teile for k in teil["kriterien"])
+
+
+def _pruefung_gezielt(view, art):
+    """Pruefung ohne Zufall (Nacharbeit Gegenpruefung S1c2, L1): je Thema
+    die Aufgabe mit dem laengsten Bewertungskriterium (Haken-Text); bei
+    Konzeption (Themen aus dem Pool) steht die Aufgabe mit dem laengsten
+    Kriterium aller AP2-Aufgaben vorn. Startet wie view.exam.start(art),
+    nur ohne Rueckfrage und ohne Zufall."""
+    import fisi_pruefung as fp
+    state = fp.new_exam(art, seed=0)
+    aufgaben, genommen = [], set()
+    for aufgabe in state["aufgaben"]:
+        quelle = aufgabe["quelle"]
+        thema = fp.source_data(quelle)[aufgabe["index"]]["theme"]
+        frei = [i for i in fp.usable_indices(quelle, thema) if i not in genommen]
+        beste = max(frei, key=lambda i: (_laengstes_kriterium(quelle, i), -i))
+        genommen.add(beste)
+        aufgaben.append({"quelle": quelle, "index": beste})
+    if fp.EXAM[art]["themen"] == "4ausPool":
+        quelle = fp.EXAM[art]["quelle"]
+        alle = [i for thema in fp.EXAM[art]["pool"] for i in fp.usable_indices(quelle, thema)]
+        beste = max(alle, key=lambda i: (_laengstes_kriterium(quelle, i), -i))
+        aufgaben = [{"quelle": quelle, "index": beste}] + \
+            [a for a in aufgaben if a["index"] != beste][:len(aufgaben) - 1]
+    state["aufgaben"] = aufgaben
+    view.exam.state = state
+    view.exam.task_no = 0
+    view.exam.wiso_page = 0
+    view.exam.show_running()
+
+
 @ansicht("pruefungstrainer")
 def pruefe_pruefungstrainer(ctx):
     import app_gui
     import random
     import fisi_pruefung as fp
-    random.seed(6302)    # immer dieselben Pruefungsaufgaben
+    random.seed(6302)    # Uebungsfragen und WiSo fest; Bewertung gezielt (_pruefung_gezielt)
     view = ctx.zeige("quiz")
     _z3_pruefe(ctx, "start")
     view.start_quiz()
@@ -430,7 +471,7 @@ def pruefe_pruefungstrainer(ctx):
         view.mode_pills.select_value("pruefung")
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_auswahl")
-        view.exam.start(fp.AP1)
+        _pruefung_gezielt(view, fp.AP1)
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_laeuft")
         view.exam._submit()
@@ -439,6 +480,14 @@ def pruefe_pruefungstrainer(ctx):
         view.exam._finish()
         ctx.pump(0.6)
         _z3_pruefe(ctx, "pruefung_ergebnis")
+        view.exam.show_choice()
+        _pruefung_gezielt(view, fp.KONZEPTION)
+        ctx.pump(0.6)
+        view.exam._submit()
+        ctx.pump(0.6)
+        _z3_pruefe(ctx, "pruefung_bewertung_laengstes")
+        view.exam.cancel()
+        ctx.pump(0.4)
         view.exam.show_choice()
         view.exam.start(fp.WISO)
         ctx.pump(0.6)
@@ -583,7 +632,7 @@ class AnsichtBreiteBasis(unittest.TestCase):
             normal = [f for f in mine["fehler"] if "bei Normal" in f]
             self.assertEqual(normal, [], "%s Normal %dx%d umgestellt" % (self.NAME, breite, hoehe))
             self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
-                            "Z3_NORMAL_1120_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
+                            "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
         else:
             self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
                                                                  breite, hoehe))
