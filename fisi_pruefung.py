@@ -585,25 +585,24 @@ CRITERIA_BEFORE = {
 
 
 def align_marks(checked, old, new):
-    """Haken (zu den Kriterien old) auf die Kriterien new uebertragen: gleiche
+    """Haken (zu den Kriterien old) auf die Kriterien new uebertragen. Nur fuer
+    die von Hand geprueften Eintraege in CRITERIA_BEFORE gedacht: gleiche
     Kriterien behalten ihren Haken, ein umformuliertes behaelt den Haken an
-    seiner Stelle, neu eingefuegte sind "nicht abgehakt". Nichts geht verloren:
-    faellt ein altes Kriterium weg, wandert sein Haken ans Ende der Gruppe."""
+    seiner Stelle, neu eingefuegte sind "nicht abgehakt". Grundsatz: nie einen
+    fremden Haken setzen. Der Haken eines weggefallenen Kriteriums faellt weg
+    (wandert nicht weiter); gesetzte Punkte und der Lernstand bleiben
+    unberuehrt."""
     result = []
     matcher = difflib.SequenceMatcher(None, old, new, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        block = list(checked[i1:i2])
         if tag == "insert":
             result.extend([False] * (j2 - j1))
-        elif tag == "delete":
-            if result and any(block):
-                result[-1] = result[-1] or True
-        else:   # equal, replace: der Reihe nach, Rest "nicht abgehakt"
+        elif tag in ("equal", "replace"):
+            # der Reihe nach; fehlende "nicht abgehakt", ueberzaehlige fallen weg
             width = j2 - j1
-            part = block[:width] + [False] * max(0, width - len(block))
-            if len(block) > width and any(block[width:]) and part:
-                part[-1] = True
-            result.extend(part)
+            block = list(checked[i1:i2])[:width]
+            result.extend(block + [False] * (width - len(block)))
+        # "delete": Haken des weggefallenen Kriteriums faellt weg
     return result
 
 

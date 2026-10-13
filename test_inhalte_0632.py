@@ -954,8 +954,6 @@ class LaufendePruefungTest(unittest.TestCase):
                         else:
                             self.assertEqual(geladen[key], alt_haken[key], key)
         self.assertEqual(fp.align_marks([True], ["a"], ["b", "c"]), [True, False])
-        # faellt ein Kriterium weg, geht sein Haken nicht verloren
-        self.assertEqual(fp.align_marks([False, True], ["a", "b"], ["a"]), [True])
 
 
 class PruefungRobustTest(unittest.TestCase):
@@ -991,6 +989,24 @@ class PruefungRobustTest(unittest.TestCase):
         # Nacharbeit 2 (L2): die unbekannte Frage senkt die Punkte nicht
         # (bis c582094 hier 50.0, da sie im Nenner zaehlte)
         self.assertEqual(fp.evaluate(fp.submit(state))["punkte"], 100.0)
+
+    def test_haken_wandert_nie_auf_fremdes_kriterium(self):
+        # Nacharbeit 3 (L4): nie einen fremden Haken setzen
+        # umgestellte Reihenfolge: difflib sieht "b" als neu eingefuegt und das
+        # alte "b" als weggefallen; dessen Haken darf nicht auf "a" landen
+        self.assertEqual(fp.align_marks([False, False, True], ["x", "a", "b"], ["x", "b", "a"]),
+                         [False, False, False])
+        # geloeschtes Kriterium: sein Haken faellt weg
+        self.assertEqual(fp.align_marks([False, True], ["a", "b"], ["a"]), [False])
+        self.assertEqual(fp.align_marks([False, True, False], ["a", "b", "c"], ["a", "c"]),
+                         [False, False])
+        # Ueberlauf (zwei alte Kriterien durch eines ersetzt): kein Haken aufs letzte
+        self.assertEqual(fp.align_marks([False, False, True], ["a", "b", "c"], ["a", "z"]),
+                         [False, False])
+        # eigene Haken bleiben dabei erhalten
+        self.assertEqual(fp.align_marks([True, True, False], ["x", "a", "b"], ["x", "b", "a"]),
+                         [True, False, True])
+        self.assertEqual(fp.align_marks([True, True], ["a", "b"], ["z"]), [True])
 
     def test_abgabe_mit_unbekannter_frage(self):
         # Nacharbeit 2 (L1/L2): finish schreibt fuer die unbekannte Frage nichts
