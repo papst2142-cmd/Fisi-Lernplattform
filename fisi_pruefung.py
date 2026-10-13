@@ -30,7 +30,8 @@ import random
 import re
 import time
 
-from fisi_core import (AP1_SZENARIEN, QUIZ_QUESTIONS, SZENARIEN, ihk_note, plural)
+from fisi_core import (AP1_SZENARIEN, QUESTION_RENAMES, QUIZ_QUESTIONS, SZENARIEN, ihk_note,
+                       plural)
 
 TASK_POINTS = 25
 WISO_COUNT = 30
@@ -291,13 +292,17 @@ def suggested_points(max_points, checked):
 
 
 def wiso_result(state):
-    """[(frage, gewaehlt, richtig, ist_richtig)]."""
+    """[(frage, gewaehlt, richtig, ist_richtig)]. Ab 0.63.2: alte Fragetexte
+    (inhalte/umbenennungen.json) zaehlen beim neuen Text; eine Frage, die es
+    nicht mehr gibt, bleibt stehen und zaehlt als nicht richtig (vorher
+    KeyError, die Pruefung liess sich nicht abgeben)."""
     by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
     rows = []
     for question in state["fragen"]:
         chosen = state["antworten"].get(question, "")
-        right = by_question[question]["a"]
-        rows.append((question, chosen, right, chosen == right))
+        current = current_question(question)
+        right = by_question[current]["a"] if current in by_question else ""
+        rows.append((current, chosen, right, bool(right) and chosen == right))
     return rows
 
 
@@ -460,12 +465,85 @@ RUNNING_KEY = "laufende_pruefung"
 
 
 def load_running():
-    """Die laufende bzw. noch nicht bewertete Pruefung dieses Geraets oder None."""
+    """Die laufende bzw. noch nicht bewertete Pruefung dieses Geraets oder None.
+    Ab 0.63.2 an korrigierte Lerninhalte angepasst (migrate_running)."""
     from fisi_update import load_settings
     state = load_settings().get(RUNNING_KEY)
     if not isinstance(state, dict) or state.get("art") not in EXAM:
         return None
+    return migrate_running(state)
+
+
+def current_question(question):
+    """Heutiger Fragetext einer Quizfrage (folgt inhalte/umbenennungen.json,
+    auch ueber mehrere Umbenennungen)."""
+    renames = QUESTION_RENAMES.get("quiz_answers") or {}
+    seen = set()
+    while question in renames and question not in seen:
+        seen.add(question)
+        question = renames[question]
+    return question
+
+
+def migrate_running(state):
+    """Ab 0.63.2 (Nacharbeit S4): Eine Pruefung, die beim Update lief, liegt
+    mit den Texten der alten Version in einstellungen.json. Hier wird sie an
+    die heutigen Inhalte angepasst, ohne etwas zu verwerfen:
+    WiSo - alte Fragetexte -> neue (umbenennungen.json) in fragen, antworten
+    und optionen; ist genau eine Antwortmoeglichkeit umformuliert, wird sie
+    (und eine gewaehlte Antwort) auf den neuen Text gesetzt. Unbekanntes
+    bleibt unveraendert stehen.
+    AP1/AP2 - hat eine Musterloesung jetzt mehr Kriterien, wird die Liste der
+    Haken mit "nicht abgehakt" verlaengert (vorher IndexError beim Abhaken);
+    gesetzte Haken und vergebene Punkte bleiben.
+    Gespeichert wird erst beim naechsten save_running (kein Schreiben hier)."""
+    try:
+        if state.get("art") == WISO:
+            _migrate_wiso(state)
+        else:
+            _migrate_tasks(state)
+    except Exception:        # im Zweifel die Pruefung so lassen, wie sie war
+        pass
     return state
+
+
+def _migrate_wiso(state):
+    by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
+    answers, options = state.get("antworten") or {}, state.get("optionen") or {}
+    questions = []
+    for old in state.get("fragen") or []:
+        new = current_question(old)
+        if new != old and new not in answers and old in answers:
+            answers[new] = answers.pop(old)
+        if new != old and new not in options and old in options:
+            options[new] = options.pop(old)
+        questions.append(new)
+        item = by_question.get(new)
+        stored = options.get(new)
+        if item is None or not isinstance(stored, list):
+            continue
+        gone = [text for text in stored if text not in item["options"]]
+        added = [text for text in item["options"] if text not in stored]
+        if len(gone) == 1 and len(added) == 1:
+            options[new] = [added[0] if text == gone[0] else text for text in stored]
+            if answers.get(new) == gone[0]:
+                answers[new] = added[0]
+    state["fragen"] = questions
+    state["antworten"], state["optionen"] = answers, options
+
+
+def _migrate_tasks(state):
+    marks = state.get("kriterien")
+    if not isinstance(marks, dict):
+        return
+    for number in range(len(state.get("aufgaben") or [])):
+        details = task_details(state, number)
+        if details is None:
+            continue
+        for part_number, part in enumerate(details["teile"]):
+            checked = marks.get(answer_key(number, part_number))
+            if isinstance(checked, list) and len(checked) < len(part["kriterien"]):
+                checked.extend([False] * (len(part["kriterien"]) - len(checked)))
 
 
 def save_running(state):
@@ -491,7 +569,8 @@ def finish(db, state):
     if state["art"] == WISO:
         by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
         for question, _chosen, _right, ok in wiso_result(state):
-            db.log_quiz_answer(by_question[question]["cat"], question, ok)
+            if question in by_question:     # ab 0.63.2: unbekannte Frage nicht loggen
+                db.log_quiz_answer(by_question[question]["cat"], question, ok)
     else:
         for task in result["daten"]["aufgaben"]:
             known = task["punkte"] * 2 >= task["max"]
