@@ -1302,6 +1302,12 @@ class UpsPicture(ft.Semantics):
 
     @staticmethod
     def _bar(share, color, height=12):
+        # Ab 0.63.2 (B-E-10): nicht endliche Werte nicht abbrechen lassen,
+        # unendlich = voll, NaN = leer (wie am PC, fisi_widgets UpsDiagram)
+        if math.isnan(share):
+            share = 0.0
+        elif math.isinf(share):
+            share = 1.0 if share > 0 else 0.0
         filled = max(0, min(1000, int(round(share * 1000))))
         parts = []
         if filled:
