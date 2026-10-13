@@ -21,6 +21,18 @@ Fuer Normal/Gross/Sehr gross (Faktor 1,00/1,15/1,30), Fenster 1120 x 800 und
     (USV-Empfehlung, Bildschirm mit jeder Farbtiefe)
 Gegen 14b3bd4 rot.
 
+Ab CI Welle 3b (0.63.2): Auf GitHub fehlt die Schrift Inter, dort waehlt die
+App DejaVu Sans (breiter); bei Sehr gross und 1120 px war die Seite dann
+29 px breiter als sichtbar (RAID-Auswahl und USV-Knopfzeile ohne Umbruch).
+Deshalb zusaetzlich:
+  * auch RAID-Level-Knoepfe und alle Knoepfe der USV-Karte liegen im
+    sichtbaren Bereich und ueberlappen sich nicht, auch mit aufgedeckter
+    Loesung der Uebungsaufgabe (laengerer Knopftext)
+  * SchriftwechselTest: dasselbe mit einer anderen Schrift - die
+    Standardschrift wird per fontconfig abgelehnt (im Container DejaVu Sans
+    statt Inter wie auf GitHub, auf GitHub eine dritte Schrift); der Test
+    prueft, dass wirklich eine andere Schrift gewaehlt wurde.
+
 Start:  xvfb-run -a python test_rechner_seite_breite.py
 """
 
@@ -102,6 +114,10 @@ def worker(faktor):
             widgets = [("USV " + key, entry) for key, entry in view.ups_entries.items()]
             widgets += [("Farbtiefe %d" % i, button)
                         for i, button in enumerate(view.depth_pills.buttons)]
+            widgets += [("RAID %d" % i, button)
+                        for i, button in enumerate(view.raid_pills.buttons)]
+            widgets += [("USV-Knopf %r" % str(button.cget("text"))[:24], button)
+                        for row in view.ups_button_rows for button in row.winfo_children()]
             boxes = []
             for label, widget in widgets:
                 if not widget.winfo_ismapped():
@@ -140,9 +156,37 @@ def worker(faktor):
                         view.txt_screen.get("1.0", "end-1c") != want:
                     found.append("%s: Bildschirm-Text Farbtiefe %r weicht ab" % (name, value))
             view.depth_pills.select(2)
+            # Loesung der Uebungsaufgabe aufdecken: laengerer Knopftext
+            view.toggle_ups_solution()
+            pump(0.6)
+            name_l = name + " Loesung"
+            if tuple(canvas.xview()) != (0.0, 1.0) or \
+                    view.inner.winfo_reqwidth() > canvas.winfo_width():
+                found.append("%s: seitlicher Rollbalken (xview %r, Seite %d > %d px)"
+                             % (name_l, canvas.xview(), view.inner.winfo_reqwidth(),
+                                canvas.winfo_width()))
+            boxes = []
+            for row in view.ups_button_rows:
+                for button in row.winfo_children():
+                    b = box(button)
+                    label = "USV-Knopf %r" % str(button.cget("text"))[:24]
+                    if b[2] > right or b[0] < canvas.winfo_rootx():
+                        found.append("%s: %s ausserhalb des sichtbaren Bereichs (%r, rechts %d)"
+                                     % (name_l, label, b, right))
+                    if button.winfo_width() < button.winfo_reqwidth() - 2:
+                        found.append("%s: %s schmaler als verlangt (%d < %d)"
+                                     % (name_l, label, button.winfo_width(),
+                                        button.winfo_reqwidth()))
+                    for other_label, other in boxes:
+                        if overlap(b, other):
+                            found.append("%s: %s ueberlappt %s" % (name_l, label, other_label))
+                    boxes.append((label, b))
+            view.toggle_ups_solution()
+            pump(0.4)
     if errors:
         found.append("Fehlermeldungen: %r" % errors)
-    print("ERG " + json.dumps({"fehler": found, "werte": werte}, ensure_ascii=False))
+    print("ERG " + json.dumps({"fehler": found, "werte": werte,
+                               "schrift": fisi_widgets.F.get("family")}, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)
 
@@ -160,22 +204,59 @@ def _tk_ok():
 HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 
 
+def _fc_ohne(family):
+    """fontconfig-Datei, die die Einstellungen des eigenen Prozesses nutzt
+    (ein gesetztes FONTCONFIG_FILE, sonst die des Systems), aber zusaetzlich
+    family (und ihre Display-Variante) ablehnt (Muster aus N5,
+    test_spiel_breite_0632)."""
+    path = os.path.join(tempfile.mkdtemp(prefix="fisi_fc_"), "fonts.conf")
+    basis = os.path.abspath(os.environ.get("FONTCONFIG_FILE") or "/etc/fonts/fonts.conf")
+    patterns = "".join(
+        "<pattern><patelt name=\"family\"><string>%s</string></patelt></pattern>" % name
+        for name in (family, family + " Display"))
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
+                     '<fontconfig><include ignore_missing="yes">%s</include>'
+                     '<selectfont><rejectfont>%s</rejectfont></selectfont>'
+                     '</fontconfig>\n' % (basis, patterns))
+    return path
+
+
+_ERGEBNISSE = {}
+
+
+def ergebnis(faktor, ohne=None):
+    """Ergebnis eines Kindprozesses (zwischengespeichert); ohne = abgelehnte
+    Schrift."""
+    key = (faktor, ohne)
+    if key not in _ERGEBNISSE:
+        env = dict(os.environ)
+        if ohne:
+            env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
+        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
+                               str(faktor)],
+                              capture_output=True, text=True, timeout=900, cwd=HERE, env=env)
+        lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
+        _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
+                            "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:],
+                                                        done.stderr[-4000:]))
+    return _ERGEBNISSE[key]
+
+
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
 class RechnerSeiteBreiteTest(unittest.TestCase):
 
-    def run_case(self, faktor):
-        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
-                               str(faktor)],
-                              capture_output=True, text=True, timeout=900, cwd=HERE)
-        lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
-        self.assertTrue(lines, "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:],
-                                                           done.stderr[-4000:]))
-        result = json.loads(lines[-1][4:])
+    def run_case(self, faktor, ohne=None):
+        result = ergebnis(faktor, ohne)
+        self.assertIsInstance(result, dict, result)
+        print("\n  Schrift: %s" % result["schrift"], end="")
         for name, werte in sorted(result["werte"].items()):
             print("\n  %s: %s" % (name, werte), end="")
         print()
-        self.assertEqual(result["fehler"], [], FAKTOREN[faktor])
+        self.assertEqual(result["fehler"], [], "%s (Schrift %s)" % (FAKTOREN[faktor],
+                                                                   result["schrift"]))
         self.assertEqual(len(result["werte"]), 2 * len(FENSTER))
+        return result
 
 
 def _make(faktor):
@@ -186,6 +267,26 @@ def _make(faktor):
 
 for _faktor in FAKTOREN:
     setattr(RechnerSeiteBreiteTest, "test_%s" % FAKTOREN[_faktor], _make(_faktor))
+
+
+class SchriftwechselTest(RechnerSeiteBreiteTest):
+    """Dasselbe mit einer anderen Schrift (andere Schriftmetrik): die
+    Standardschrift wird abgelehnt - im Container DejaVu Sans statt Inter,
+    genau die Schrift des GitHub-Rechners."""
+
+
+def _make_ohne(faktor):
+    def test(self):
+        standard = ergebnis(faktor)
+        self.assertIsInstance(standard, dict, standard)
+        result = self.run_case(faktor, ohne=standard["schrift"])
+        self.assertNotEqual(result["schrift"], standard["schrift"],
+                            "Schrift nicht gewechselt")
+    return test
+
+
+for _faktor in FAKTOREN:
+    setattr(SchriftwechselTest, "test_%s" % FAKTOREN[_faktor], _make_ohne(_faktor))
 
 
 if __name__ == "__main__":
