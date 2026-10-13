@@ -4754,8 +4754,10 @@ class CalcView(View):
 
         make_label(screen.body, "Farbtiefe", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w", pady=(14, 0))
-        self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2)
-        self.depth_pills.pack(anchor="w", pady=(8, 12))
+        # Ab 0.63.2 (A6): bei Bedarf zweizeilig, damit die Seite nicht
+        # breiter wird als das Fenster (wie die Aufgabenart im Trainer)
+        self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2, umbrechen=True)
+        self.depth_pills.pack(anchor="w", fill="x", pady=(8, 12))
 
         NeoButton(screen.body, "Berechnen", self.calc_screen,
                   kind="accent").pack(anchor="w")
@@ -4810,8 +4812,27 @@ class CalcView(View):
                 self.subnet_gap = gap
                 card.grid_configure(padx=(0, gap))
             card.stack_subtitle(card.head_width() > avail)
+            self._fit_ups(avail)
         except tk.TclError:
             return
+
+    def _fit_ups(self, avail):
+        """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
+        untereinander, wenn sie nebeneinander breiter waeren als der
+        sichtbare Bereich. Entschieden wird nur aus der Breite beider Spalten
+        nebeneinander (haengt nicht von der Anordnung ab) und der sichtbaren
+        Breite - so entsteht keine Schleife."""
+        load, battery = self.ups_boxes
+        card = self.ups_card
+        side = (load.winfo_reqwidth() + battery.winfo_reqwidth()
+                + card._apply_widget_scaling(32 + 2 * card.pad))
+        stacked = side > avail
+        if stacked != self.ups_stacked:
+            self.ups_stacked = stacked
+            if stacked:
+                battery.grid_configure(row=1, column=0, pady=(14, 0))
+            else:
+                battery.grid_configure(row=0, column=1, pady=0)
 
     def _build_ups(self, layout):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
@@ -4820,6 +4841,7 @@ class CalcView(View):
         ups.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         columns = transparent_frame(ups.body)
         columns.pack(anchor="w", fill="x")
+        self.ups_card, self.ups_boxes, self.ups_stacked = ups, [], False
         self.ups_entries = {}
         groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
                   (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
@@ -4827,6 +4849,7 @@ class CalcView(View):
         for column, (caption, keys) in enumerate(groups):
             box = transparent_frame(columns)
             box.grid(row=0, column=column, sticky="nw", padx=(0, 32) if column == 0 else 0)
+            self.ups_boxes.append(box)
             make_label(box, caption, font=F["label"], fg=C["muted"]).grid(
                 row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
             for row, key in enumerate(keys, start=1):
