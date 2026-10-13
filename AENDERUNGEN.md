@@ -4,6 +4,15 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.63.1
+
+- **Subnetting-Trainer:** Zwei neue Aufgabenarten „Netz aufteilen“ (IPv4 und IPv6) und „Nach Hostbedarf“ (IPv4), jeweils mit Rechenweg Schritt für Schritt. Beim Feld für die Netzadresse steht „(ohne Präfix)“, damit klar ist, was eingegeben wird. Bekannte Einschränkung: Im kleinsten Fenster bei sehr großer Schrift kann die Zeile „richtig wäre: …“ am rechten Rand abgeschnitten sein; die richtigen Werte stehen im Rechenweg darunter. Das kommt in einer Folgeversion.
+- **Trainer am PC:** Die Knöpfe „Aufgabenart“ verteilen sich bei Bedarf auf zwei Zeilen, wie am Handy. So passen sie auch bei großer Schrift ins Fenster.
+- **Subnetting-Rechner am PC:** Lange Zeilen brechen jetzt um, und die Subnetting-Karte passt bei jeder Schriftgröße ins Fenster. Damit ist die bekannte Einschränkung aus 0.63 behoben. Bei sehr großer Schrift im kleinen Fenster lassen sich breite Tabellen im Rechenweg-Kasten seitlich schieben. Die ganze Rechner-Seite kann bei großer Schrift weiter seitlich schiebbar sein, weil die USV-Karte so breit ist; das kommt in einer Folgeversion.
+- **Rechner öffnen:** Das erste Öffnen direkt nach dem Programmstart ist wieder etwas schneller als in 0.63, aber noch etwas langsamer als in 0.62.5 (etwa 0,2 bis 0,3 Sekunden). „Netz aufteilen“ und „Nach Hostbedarf“ werden erst beim ersten Antippen aufgebaut; das dauert einen Augenblick (höchstens etwa 0,2 Sekunden).
+- Subnetting am Handy: „RFC“ und die Nummer dahinter stehen immer in einer Zeile.
+- **Lerninhalte:** Neun Korrekturen in Karteikarten, Testprojekten und Prüfungsszenarien (RAID 5 und 6, Ausbildungsvertrag, WLAN-Kalkulation, PoE-Leistung, Testquote, Mängelrüge, Archivkosten, Bandbreite). Die Kachel „Gesamtergebnis“ rundet jetzt ab und zeigt damit nie mehr Punkte, als für Note und Bestehen zählen.
+
 ## 0.63
 
 - **Subnetting-Rechner neu:** Schalter IPv4/IPv6. Ein Netz lässt sich in gleich große Teilnetze aufteilen (IPv4 und IPv6) oder nach Hostbedarf (IPv4). Jede Rechnung hat einen Rechenweg Schritt für Schritt. Bei IPv6 zeigt „Netzdaten“ zusätzlich die ausgeschriebene Adresse und den Adresstyp. Am PC geht die Karte über die ganze Breite, RAID steht darunter.
