@@ -858,6 +858,23 @@ class BeschriftungTest(unittest.TestCase):
         self.assertTrue(fc.subnet_by_hosts(netz, bedarf, 4)["passt"])
 
 
+def _ipv4_tabelle(r, seite):
+    """Erwartete IPv4-Tabellenzeilen (PC) aus split_page: Kopf + je Subnetz
+    eine Zeile "Nr  Netz  Erster  Letzter  Broadcast" (ab 0.63.2, A9)."""
+    data = fc.split_page(r, seite)
+    zellen = [["Nr", "Netzadresse", "Erster Host", "Letzter Host", "Broadcast"]]
+    for e in data["eintraege"]:
+        zellen.append(["%s%s" % (fc.de_int(e["nr"]),
+                                 "" if e["status"] == fc.SUBNET_STATE_USED else "*"),
+                       fc.subnet_net_text(4, e["netz"], e["praefix"]),
+                       fc.ipv4_text(e["erste"]), fc.ipv4_text(e["letzte"]),
+                       fc.ipv4_text(e["broadcast"]) if e["broadcast"] is not None
+                       else "keine"])
+    breiten = [max(len(z[c]) for z in zellen) for c in range(5)]
+    breiten[0] = max(2, breiten[0])
+    return ["  ".join(z[c].ljust(breiten[c]) for c in range(5)).rstrip() for z in zellen]
+
+
 class ErgebnisTextTest(unittest.TestCase):
     """Ergebnistexte: Handy hoechstens 28 Zeichen, PC hoechstens 75."""
 
@@ -878,8 +895,23 @@ class ErgebnisTextTest(unittest.TestCase):
             for seite in (1, r["seiten"]):
                 for zeile in fc.split_report(r, seite, schmal=True).split("\n"):
                     self.assertLessEqual(len(zeile), GRENZE, (netz, anzahl, zeile))
-                for zeile in fc.split_report(r, seite).split("\n"):
+                # ab 0.63.2 (A9, G-10): die IPv4-Tabelle wird nicht mehr auf
+                # 75 Zeichen umgebrochen (der Kasten schiebt seitlich). Jede
+                # Tabellenzeile ist genau eine Zeile mit 5 Spalten (Abstand
+                # mind. zwei Leerzeichen), Nummer und Broadcast wie im Kern;
+                # alle anderen Zeilen bleiben <= 75 Zeichen
+                text = fc.split_report(r, seite)
+                tabelle = _ipv4_tabelle(r, seite) if r["version"] == 4 else []
+                for zeile in text.split("\n"):
+                    if zeile in tabelle:
+                        continue
                     self.assertLessEqual(len(zeile), PC_BREITE, (netz, anzahl, zeile))
+                if r["version"] == 4:
+                    zeilen = text.split("\n")
+                    self.assertIn(tabelle[0], zeilen, (netz, anzahl, seite))
+                    start = zeilen.index(tabelle[0])
+                    self.assertEqual(zeilen[start:start + len(tabelle)], tabelle,
+                                     (netz, anzahl, seite))
         for bedarf in ("A 50\nB 20\nC 10\nD 2", "Geschaeftsleitun 4294967\nB 2",
                        "\n".join("Vertrieb Nord %d: %d" % (i, i) for i in range(1, 13))):
             for netz in ("0.0.0.0/0", "192.168.10.0/24", "10.0.0.0/8"):
