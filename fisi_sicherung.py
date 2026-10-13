@@ -599,10 +599,13 @@ def replace_question(backup):
             "bleibt in der Regel erhalten, wenn es sich erst nach dem Ersetzen wieder "
             "abgleicht und alle deine Geräte schon beim Ersetzen mindestens Version 0.63.2 "
             "hatten. Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt "
-            "gelöscht. Löschungen, die erst nach der letzten Löschung auf diesem Gerät "
-            "kamen und die es noch nicht kennt, gelten weiter; eine unbekannte frühere "
-            "Löschung derselben Art (zum Beispiel ebenfalls „Alle Lerndaten löschen“) "
-            "eines anderen Geräts wird dagegen aufgehoben. Bewahre die Sicherungsdatei "
+            "gelöscht. Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, "
+            "gelten weiter – außer sie kamen vor der letzten Löschung derselben Art, die "
+            "dieses Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ "
+            "oder beide „Bestenliste löschen“); solche werden aufgehoben. Bei Spielständen "
+            "und Projekten ist das anders: Ein zurückgesetzter oder gelöschter Spielstand "
+            "und ein gelöschtes Projekt bleiben gelöscht, wenn die Löschung von einem "
+            "anderen Gerät kam oder schon abgeglichen war. Bewahre die Sicherungsdatei "
             "deshalb auf."
             % backup_summary(backup)["erstellt"])
 
