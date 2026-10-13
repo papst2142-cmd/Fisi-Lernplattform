@@ -2515,9 +2515,13 @@ class FitWidth:
             widget = stack.pop()
             for child in widget.winfo_children():
                 if self._fit_label(child):
-                    base = child.__dict__.get("_fit_base")
-                    if base is not None and child.cget("wraplength") != base:
-                        child.configure(wraplength=base)
+                    # nur zuruecknehmen, was FitWidth selbst gesetzt hat: hat
+                    # die Ansicht die Umbruchbreite seitdem selbst angepasst
+                    # (z. B. _wrap_to an die Kachelbreite), bleibt ihr Wert
+                    before = child.__dict__.pop("_fit_before", None)
+                    if before is not None and \
+                            child.cget("wraplength") == child.__dict__.get("_fit_set"):
+                        child.configure(wraplength=before)
                     continue
                 width = child.__dict__.get("_fit_min")
                 if width is not None and child.cget("width") != width:
@@ -2712,6 +2716,9 @@ class FitWidth:
                 natural = label._fit_natural = label.winfo_reqwidth()
             wrap = limit if natural > room else 0
         if wrap != label.cget("wraplength"):
+            if label.__dict__.get("_fit_before") is None:
+                label._fit_before = label.cget("wraplength")
+            label._fit_set = wrap
             label.configure(wraplength=wrap, justify="left")
             self._fit_changed += 1
 
