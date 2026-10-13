@@ -2714,7 +2714,9 @@ class TrainerPanel(ft.Column):
         self.app = app
         self.db = app.db
         self.tasks, self.index, self.results, self.checked = [], 0, [], False
-        self.kind_pills = ui.PillGroup(TRAINER_KINDS)
+        # Ab 0.63.2 (A4): sechs Arten brechen um wie die Rechner-Pillen (ohne
+        # Pfeil, der bei Sehr gross den ersten Tipp auf die letzte Art abfing)
+        self.kind_pills = _pills(TRAINER_KINDS)
         self.level_pills = ui.PillGroup(TRAINER_LEVELS)
         self.lbl_stats = ui.text("", size=12, color=C["muted"])
         self.lbl_head = ui.text("", size=12, color=C["muted"])
@@ -2723,7 +2725,9 @@ class TrainerPanel(ft.Column):
                                 color=C["text_soft"], weight=ft.FontWeight.BOLD)
         self.fields_box = ft.Column(spacing=10, tight=True)
         self.lbl_feedback = ui.text("", size=14, weight=ft.FontWeight.BOLD)
-        self.steps = ui.read_box("", mono=True)
+        # Ab 0.63.2 (A3): Rechenweg im Kasten der Rechner-Ergebnisse (fit_lines,
+        # Fortsetzung mit Einzug statt freiem Umbruch ab Spalte 0)
+        self.steps = ui.read_box("", mono=True, scroll=True, fit=True)
         self.steps.visible = False
         self.btn_check = ui.GradientButton("Prüfen", lambda _e: self.check())
         self.btn_check.visible = False
@@ -2767,7 +2771,9 @@ class TrainerPanel(ft.Column):
         self.lbl_task.value = task.text
         self.entries, self.marks, rows = {}, {}, []
         for key, label in task.fields:
-            field = ui.entry("", hint=label,
+            # Ab 0.63.2 (A2): kein Hinweistext im Feld (wurde mit "…" gekuerzt);
+            # die Beschriftung steht ganz ueber dem Feld, wie am PC
+            field = ui.entry("", hint=None,
                              keyboard=ft.KeyboardType.TEXT
                              if task.kind in ("ipv6", "zahlen", "teilen", "bedarf")
                              else ft.KeyboardType.NUMBER if key == "hosts"
@@ -2806,7 +2812,7 @@ class TrainerPanel(ft.Column):
         self.lbl_feedback.color = C["green"] if correct else C["yellow"]
         # Ab 0.63.1 (F-63-18 = S1): die neuen Arten bringen die Handy-Fassung
         # des Rechenwegs als steps_schmal mit, alle anderen nur steps
-        self.steps.content.value = "\n".join(getattr(task, "steps_schmal", None) or task.steps)
+        ui.set_box(self.steps, "\n".join(getattr(task, "steps_schmal", None) or task.steps))
         self.steps.visible = True
         self.checked = True
         last = self.index >= len(self.tasks) - 1
@@ -2844,6 +2850,16 @@ def _accepts(func, name):
 # ui.py die Schluesselwoerter kennt (paralleler Arbeitsbaum "Anzeige Handy").
 UI_FIT = _accepts(ui.read_box, "fit")
 UI_UMBRECHEN = _accepts(ui.PillGroup.__init__, "umbrechen")
+
+# Ab 0.63.2 (A5-c): unsichtbares Wortverbindungszeichen (U+2060) nach jedem
+# "/" - Flutter bricht die Feldbeschriftung sonst nach "/" um
+# ("…abcd::/" / "48)"); sichtbar bleibt der Wortlaut wie am PC
+WORD_JOINER = "\u2060"
+
+
+def _kein_umbruch_nach_schraegstrich(text):
+    return text.replace("/", "/" + WORD_JOINER)
+
 
 # Vorgaben der Ansicht "Netzdaten" (passen zu den festen Rechenwegen)
 SUBNET_NETZDATEN_VORGABE = {"ipv4": "192.168.1.50/24", "ipv6": "2001:db8:abcd:12::1/64"}
@@ -3085,7 +3101,8 @@ class CalcScreen(Screen):
         else:
             net, other = fc.SUBNET_DEFAULTS[(mode, view)]
         panel["net"] = ui.entry(net)
-        controls = [ui.text(fc.SUBNET_FIELD_NET[mode], size=13, color=C["text_dim"]),
+        controls = [ui.text(_kein_umbruch_nach_schraegstrich(fc.SUBNET_FIELD_NET[mode]),
+                            size=13, color=C["text_dim"]),
                     panel["net"]]
         if view == "aufteilen":
             panel["count"] = ui.entry(other, keyboard=ft.KeyboardType.NUMBER, expand=True)
@@ -3797,8 +3814,16 @@ class SettingsScreen(Screen):
 
         # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie am PC. Der
         # Bericht wird erst beim Anzeigen der Seite eingetragen (on_show).
-        self.report_text = ui.text("", size=11, color=C["text_dim"], font_family=ui.MONO,
-                                   selectable=True)
+        # Ab 0.63.2 (B-N-05): Bericht im Kasten der Rechner-Ergebnisse (Saetze
+        # brechen mit Einzug um, Unteilbares wischt, "→ wischen"); Schrift 11
+        # wie bisher, senkrecht rollbar mit Hoehe 240. report_text bleibt das
+        # Text-Element (Selbsttest), gesetzt wird ueber ui.set_box.
+        self.report_box = ui.read_box("", mono=True, scroll=True, fit=True)
+        self.report_box.text.size = 11
+        self.report_box.box.height = 240
+        self.report_box.box.content = ft.Column([self.report_box.content],
+                                                scroll=ft.ScrollMode.AUTO, tight=True)
+        self.report_text = self.report_box.text
         self._report_key = None
         # Ab 0.59.2 (U): Problem melden und Leistungsmessung stehen als
         # Zwischenueberschriften im Bereich "Diagnose und Werkzeuge" (bis 0.62.1
@@ -3807,10 +3832,7 @@ class SettingsScreen(Screen):
         report_controls = [
             ui.label(sections["problem"]),
             ui.text(fdg.HELP, size=13, color=C["text_dim"]),
-            ft.Container(content=ft.Column([self.report_text], scroll=ft.ScrollMode.AUTO,
-                                           tight=True),
-                         height=240, bgcolor=C["card_alt"], border_radius=12, padding=12,
-                         border=ft.Border.all(1, C["border"])),
+            self.report_box,
             ft.Row([ui.GradientButton(fdg.BTN_COPY, self.copy_report, expand=True)]),
             ft.Row([ui.GradientButton(fdg.BTN_SAVE, self.save_report, kind="ghost",
                                       expand=True)]),
@@ -4316,7 +4338,7 @@ class SettingsScreen(Screen):
         key = (log_key, self.db.change_stamp())
         if key != self._report_key:
             self._report_key = key
-            self.report_text.value = self._report_text()
+            ui.set_box(self.report_box, self._report_text())
 
     def copy_report(self, _event=None):
         text = self._report_text()

@@ -3549,7 +3549,7 @@ def _fit_value(value, room):
     return rows
 
 
-def fit_lines(text, zeichen):
+def fit_lines(text, zeichen, einheitlich=False):
     """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
     Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
     "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
@@ -3564,10 +3564,43 @@ def fit_lines(text, zeichen):
     Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
     Spalten (zwei Leerzeichen hintereinander, z.B. Tabellen) bleiben, wie
     sie sind. zeichen None/0: Text unveraendert. Reine Textfunktion ohne
-    Flet."""
+    Flet.
+    Ab 0.63.2 (A5-a, nur Handy): einheitlich=True - muss in einem Abschnitt
+    (aufeinanderfolgende Zeilen "Beschriftung : Wert" mit ": " an derselben
+    Stelle) eine Zeile umbrechen, stehen alle Zeilen dieses Abschnitts
+    zweizeilig ("Beschriftung:" / "  Wert"). Standard False: wie bisher (PC)."""
     if not text or not zeichen or zeichen <= 0:
         return text
     lines = text.split("\n")
+    forced = set()
+    if einheitlich:
+        # Abschnitte suchen: Bloecke (Kopfzeile + Folgezeilen) mit ": " an
+        # derselben Stelle; bricht einer davon nach F-8 b um, alle zweizeilig
+        sections, pos_now, index = [], None, 0
+        while index < len(lines):
+            parts = _fit_parts(lines[index])
+            if parts is None or not parts[1]:
+                pos_now = None
+                index += 1
+                continue
+            start, block = index, [lines[index]]
+            index += 1
+            while index < len(lines):
+                follow = _fit_parts(lines[index])
+                if follow is None or follow[1]:
+                    break
+                block.append(lines[index])
+                index += 1
+            pos = lines[start].find(": ")
+            if pos != pos_now:
+                sections.append([])
+                pos_now = pos
+            wraps = (not all(len(item) <= zeichen for item in block)
+                     and not (len(block) == 1 and _fit_prose(lines[start], zeichen)))
+            sections[-1].append((start, wraps))
+        for section in sections:
+            if len(section) > 1 and any(wraps for _start, wraps in section):
+                forced.update(start for start, _wraps in section)
     out = []
     index = 0
     while index < len(lines):
@@ -3583,6 +3616,7 @@ def fit_lines(text, zeichen):
                 out.append(line)
             index += 1
             continue
+        start = index
         block = [(line, parts)]
         index += 1
         while index < len(lines):
@@ -3591,7 +3625,7 @@ def fit_lines(text, zeichen):
                 break
             block.append((lines[index], follow))
             index += 1
-        if all(len(item) <= zeichen for item, _parts in block):
+        if start not in forced and all(len(item) <= zeichen for item, _parts in block):
             out.extend(item for item, _parts in block)
             continue
         prose = _fit_prose(line, zeichen) if len(block) == 1 else None

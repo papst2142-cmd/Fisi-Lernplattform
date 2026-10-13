@@ -133,8 +133,11 @@ class AufbauTest(unittest.TestCase):
 
     def test_beschriftungen_aus_fisi_core(self):
         captions = _texts(self.screen.subnet_card)
+        # Ab 0.63.2 (A5-c, FG-27): nach "/" steht in der Handy-Anzeige ein
+        # unsichtbares U+2060; sichtbar gleich -> vor dem Vergleich entfernen
+        sichtbar = [text.replace("\u2060", "") for text in captions]
         for mode in ("ipv4", "ipv6"):
-            self.assertIn(fc.SUBNET_FIELD_NET[mode], captions)
+            self.assertIn(fc.SUBNET_FIELD_NET[mode], sichtbar)
         self.assertIn(fc.SUBNET_FIELD_COUNT, captions)
         self.assertIn(fc.SUBNET_FIELD_NEEDS, captions)
         # Kein eigener Text mehr am Handy (alte Beschriftungen weg)
