@@ -117,15 +117,22 @@ class BindungTest(unittest.TestCase):
         self.assertEqual(found[:20], [], "%d Funde" % len(found))
 
     def test_c_nicht_breiter(self):
+        """Ab Gegenpruefung S1a (L2) Zeile fuer Zeile: jede Zeile ueber der
+        Breite gab es genau so (ohne Einzug) schon ohne die Regel. Die
+        Ausnahme in _fit_unbind (Bindewort und Folgewort passen zusammen
+        nicht) verhindert neue ueberlange Zeilen."""
         found = []
         for name, raw in texte():
             for zeichen in BREITEN:
-                old = max(len(line) for line in _old_line_lengths(raw, zeichen))
+                old = [line.strip() for line in _old_line_lengths(raw, zeichen)
+                       if len(line) > zeichen]
                 new = fc.fit_lines(raw, zeichen).split("\n")
                 for line in new:
-                    if len(line) > zeichen and len(line) > old:
-                        found.append("%s @%d: %r (%d > %d, vorher max %d)"
-                                     % (name, zeichen, line, len(line), zeichen, old))
+                    if len(line) > zeichen and line.strip() not in old:
+                        found.append("%s @%d: %r (%d > %d)"
+                                     % (name, zeichen, line, len(line), zeichen))
+                self.assertLessEqual(sum(len(line) > zeichen for line in new),
+                                     len(old), (name, zeichen))
         self.assertEqual(found[:20], [], "%d Funde" % len(found))
 
     def test_beispiele_nebenbefund_13(self):
@@ -161,6 +168,53 @@ class BindungTest(unittest.TestCase):
         lines = fc.fit_lines(raw, 41).split("\n")
         self.assertIn("   An der nächsten 4-Bit-Grenze (Nibble):", lines)
         self.assertIn("     /44 = 4.096 Subnetze. In der", lines)
+
+    def test_nibble_grenze(self):
+        """Gegenpruefung S1a (M1): Die Satzregel fuer "(Nibble):" gilt nur
+        fuer die enge Klasse aus Plan 3.6 (mindestens vier Woerter vor dem
+        Doppelpunkt, Wert beginnt mit "/" und Zahl). Sonst bleibt Regel
+        F-8 b ("Beschriftung:" und darunter eingerueckt der Wert) wie auf
+        14b3bd4 (F17 (a))."""
+        # drei Woerter vor dem Doppelpunkt: F-8 b
+        line = "Nächste 4-Bit-Grenze (Nibble): /44 = 4.096 Subnetze. In der"
+        self.assertEqual(fc.fit_lines(line, 45).split("\n"),
+                         ["Nächste 4-Bit-Grenze (Nibble):",
+                          "  /44 = 4.096 Subnetze. In der"])
+        # vier Woerter, Wert ohne "/": F-8 b (Beispiele der Gegenpruefung)
+        for line, zeichen, soll in (
+                ("Netz 2 (300 Hosts): 2^8 - 2 = 254 < 300, 2^9 - 2 = 510 >= 300", 58,
+                 ["Netz 2 (300 Hosts):",
+                  "  2^8 - 2 = 254 < 300, 2^9 - 2 = 510 >= 300"]),
+                ("Jede Gruppe ist eine Hex-Ziffer: 1111=F 0001=1 1011=B", 46,
+                 ["Jede Gruppe ist eine Hex-Ziffer:", "  1111=F 0001=1 1011=B"]),
+                ("Die 10 Subnetz-Bits (Bit 13 bis 22): 4 im 2. und 6 im 3. Oktett.", 61,
+                 ["Die 10 Subnetz-Bits (Bit 13 bis 22):",
+                  "  4 im 2. und 6 im 3. Oktett."]),
+                ("Aufgabe 1 von 6: Scheinleistung und Wirkleistung", 40,
+                 ["Aufgabe 1 von 6:", "  Scheinleistung und Wirkleistung"])):
+            self.assertEqual(fc.fit_lines(line, zeichen).split("\n"), soll, line)
+        # alle Zeilen der Rechenwege, Ergebnisse und Trainer-Aufgaben: die
+        # Satzregel greift nur bei "(Nibble):"
+        zeilen = set()
+        for _name, raw in texte():
+            zeilen.update(raw.split("\n"))
+        import fisi_lernen as fl
+        for kind, _title in fl.TRAINER_KINDS:
+            for stufe in (1, 2, 3):
+                for start in range(5):
+                    for schmal in (False, True):
+                        task = fl.trainer_task(kind, stufe, start, schmal)
+                        for teil in [task.text] + list(task.steps) + list(task.solution.values()):
+                            teil = teil if isinstance(teil, str) else "\n".join(teil)
+                            zeilen.update(teil.split("\n"))
+        treffer = set()
+        for line in zeilen:
+            for zeichen in range(10, 81):
+                if fc._fit_prose(line, zeichen):
+                    treffer.add(line)
+                    break
+        self.assertTrue(treffer)
+        self.assertEqual([line for line in treffer if "(Nibble): /" not in line], [])
 
     def test_spalten_unveraendert(self):
         """Zeilen "Beschriftung : Wert" (Leerzeichen vor dem Doppelpunkt)
