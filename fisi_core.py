@@ -1371,6 +1371,14 @@ class DBManager:
             for table in RECORD_TABLES:
                 cur.execute("DELETE FROM " + table)
             marker, self.last_clock_fix = self._marker_now(cur)
+            # Ab 0.63.2 (B-G-17): Marke eine Sekunde frueher (Zone bleibt).
+            # Das Spiel traegt den laufenden Spielstand gleich danach neu ein,
+            # oft in derselben Sekunde - mit "nicht nach der Marke = weg"
+            # entfernte der naechste Abgleich ihn sonst wieder (auch auf
+            # Geraeten mit aelterer Version, die die Marke so uebernehmen).
+            marker = (datetime.datetime.strptime(marker[:19], "%Y-%m-%d %H:%M:%S")
+                      - datetime.timedelta(seconds=1)).strftime(
+                          "%Y-%m-%d %H:%M:%S") + marker[19:]
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         ("bestenliste_reset_at", marker))
             conn.commit()
