@@ -1444,7 +1444,7 @@ class ThemeProgress(ft.Column):
         for name, percent, color in items:
             ring = Ring(size=46, thickness=5, big_size=11, small_size=1)
             ring.set(percent / 100.0, color, mix(color, C["text"], 0.25),
-                     "%d%%" % round(percent), "")
+                     "%d\u00a0%%" % round(percent), "")   # ab 0.63.2 (B-D-07)
             ring.small.visible = False
             self.controls.append(ft.Row([
                 ring, ft.Text(name, size=13, color=C["text_dim"], expand=True)],

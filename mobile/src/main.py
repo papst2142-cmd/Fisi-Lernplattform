@@ -153,8 +153,9 @@ def status_color(key):
 
 
 def count_text(counts):
-    return "Offen %d · Zu üben %d · Abgeschlossen %d" % (
-        counts[Q_OPEN], counts[Q_PRACTICE], counts[Q_DONE])
+    # Ab 0.63.2 (B-D-07, wie am PC): Tausenderpunkt, geschuetztes Leerzeichen
+    return "Offen\u00a0%s · Zu üben\u00a0%s · Abgeschlossen\u00a0%s" % (
+        fc.de_int(counts[Q_OPEN]), fc.de_int(counts[Q_PRACTICE]), fc.de_int(counts[Q_DONE]))
 
 
 class TopicPills:
@@ -407,7 +408,7 @@ class DashboardScreen(Screen):
         self.goal_row.visible = settings["ziel_an"]
         self.goal_ring.visible = self.lbl_goal.visible = settings["ziel_an"]
         self.goal_ring.set(goal.fraction, C["green"] if goal.reached else C["accent"],
-                           big="%d%%" % round(goal.fraction * 100))
+                           big="%d\u00a0%%" % round(goal.fraction * 100))   # ab 0.63.2
         self.lbl_goal.value = goal.text()
         plan = ReviewPlan.from_db(self.db)
         self.lbl_due.value = due_text(plan)
@@ -429,29 +430,32 @@ class DashboardScreen(Screen):
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             ("%s" + DASH_LEARNED + "  ·  " + DASH_RATE)
-            % (streak, learned, self.total_content, round(rate)),
+            % (streak, fc.de_int(learned), fc.de_int(self.total_content), round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             DASH_TOTAL)
         # Ab 0.60 (K-B): grosse Zahl "Pruefungstrainer" = verschiedene Fragen (wie am PC)
+        # Ab 0.63.2 (B-D-07): alle Zahlen mit Tausenderpunkt (wie am PC)
+        de_int = fc.de_int
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"], C["purple"],
-                            str(learned_cards), DASH_CARDS_SUB % total_cards)
+                            de_int(learned_cards), DASH_CARDS_SUB % de_int(total_cards))
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"], C["accent2"],
-                           str(quiz_distinct), DASH_QUIZ_SUB % total_quiz)
+                           de_int(quiz_distinct), DASH_QUIZ_SUB % de_int(total_quiz))
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"], C["accent"],
-                          str(ap1_done), DASH_SCEN_SUB % total_ap1)
+                          de_int(ap1_done), DASH_SCEN_SUB % de_int(total_ap1))
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"], C["orange"],
-                           str(scen_done), DASH_SCEN_SUB % total_scen)
+                           de_int(scen_done), DASH_SCEN_SUB % de_int(total_scen))
 
         self.lbl_quote.value = "%d %%" % round(rate)
         self.lbl_quote_sub.value = dash_quote_text(correct, answered)
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
-                           "%d / %d" % (learned_cards, total_cards))
+                           "%s / %s" % (de_int(learned_cards), de_int(total_cards)))
         self.bar_quiz.set(quiz_distinct / max(1, total_quiz) * 100,
-                          "%d / %d" % (quiz_distinct, total_quiz))
-        self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100, "%d / %d" % (ap1_done, total_ap1))
+                          "%s / %s" % (de_int(quiz_distinct), de_int(total_quiz)))
+        self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100,
+                         "%s / %s" % (de_int(ap1_done), de_int(total_ap1)))
         self.bar_scen.set(scen_done / max(1, total_scen) * 100,
-                          "%d / %d" % (scen_done, total_scen))
+                          "%s / %s" % (de_int(scen_done), de_int(total_scen)))
 
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
@@ -467,7 +471,8 @@ class DashboardScreen(Screen):
             name.color = (CATEGORY_COLOR[category] if category == self.zoom_category
                           else C["text"])
             share = coverage.get(category, 0.0)
-            ring.set(share / 100.0, CATEGORY_COLOR[category], None, "%d%%" % round(share))
+            ring.set(share / 100.0, CATEGORY_COLOR[category], None,
+                     "%d\u00a0%%" % round(share))   # ab 0.63.2 (B-D-07)
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
                 detail.value = "%s\n%d %% richtig" % (
@@ -505,10 +510,11 @@ class LearnScreen(Screen):
 
     ENTRIES = [
         ("cards", ft.Icons.STYLE_ROUNDED, "Karteikarten",
-         "%d Karten in %s Fachbereichen" % (len(KARTEIKARTEN), count_word(len(CATEGORIES))),
+         "%s Karten in %s Fachbereichen" % (fc.de_int(len(KARTEIKARTEN)),
+                                            count_word(len(CATEGORIES))),
          "accent"),
         ("quiz", ft.Icons.TRACK_CHANGES_ROUNDED, "Prüfungstrainer",
-         "%d Aufgaben, mit %s" % (len(QUIZ_QUESTIONS), fr.NOTE_KURZ), "primary"),
+         "%s Aufgaben, mit %s" % (fc.de_int(len(QUIZ_QUESTIONS)), fr.NOTE_KURZ), "primary"),
         ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1-Szenarien",
          "%d Aufgaben der Grundlagenprüfung" % len(AP1_SZENARIEN), ("#2563EB", "#22D3EE")),
         ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2-Szenarien",
@@ -720,7 +726,8 @@ class CardsScreen(Screen):
         card = self.filtered[self.index]
         self.lbl_question.value = card["q"]
         self._show_status()
-        self.lbl_counter.value = "Karte %d / %d" % (self.index + 1, len(self.filtered))
+        self.lbl_counter.value = "Karte %s / %s" % (fc.de_int(self.index + 1),   # ab 0.63.2
+                                                    fc.de_int(len(self.filtered)))
         self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
                                                      TOPIC_SHORT[card["thema"]]),
                                         CATEGORY_COLOR[card["cat"]])
@@ -835,7 +842,7 @@ class QuizScreen(Screen):
             ft.Row([ui.text("Fragenanzahl", size=13, color=C["text_dim"], expand=True),
                     self.stepper]),
             self.lbl_pool, ft.Row([self.btn_start]),
-        ], subtitle="%d Aufgaben im Katalog" % len(self.questions))
+        ], subtitle="%s Aufgaben im Katalog" % fc.de_int(len(self.questions)))
 
         self.lbl_progress = ui.text("Frage 0 / 0", size=14, color=C["text_dim"],
                                     weight=ft.FontWeight.BOLD)
@@ -1042,9 +1049,10 @@ class QuizScreen(Screen):
         hint = ("Das Ergebnis wurde gespeichert." if saved
                 else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
         self.lbl_question.value = (
-            "Session beendet\n\nErgebnis: %d von %d richtig (%.1f %%)\n%s: %s\n"
+            "Session beendet\n\nErgebnis: %d von %d richtig (%s %%)\n%s: %s\n"
             "Dauer: %02d:%02d Minuten\n\n%s"
-            % (self.score, total, percentage, fr.NOTE_LANG, note, elapsed // 60,
+            % (self.score, total, fc.de_number(percentage, 1), fr.NOTE_LANG, note,
+               elapsed // 60,
                elapsed % 60, hint))
         self.app.notify_progress()
         follow_up, self.follow_up = self.follow_up, None
@@ -1085,7 +1093,10 @@ WISO_PAGE = 5
 
 
 def points_text(value):
-    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis (gleiche Hilfe wie am PC).
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def note_color(points):
@@ -1704,8 +1715,9 @@ class PagedListBox:
     on_select erhaelt die Position in der Gesamtliste."""
 
     def __init__(self, items, on_select, subtitle, status_source,
-                 category_filter=False, group_field=None):
+                 category_filter=False, group_field=None, count_noun="Aufgaben"):
         self.items = items
+        self.count_noun = count_noun   # ab 0.63.2: Testprojekt "Kundenaufträgen"
         self.on_select = on_select
         self.subtitle = subtitle
         self.status_source = status_source
@@ -1775,7 +1787,8 @@ class PagedListBox:
                 sub_color=status_color(level or status) if status != Q_OPEN else None))
         self.rows.controls = rows or [ui.text("Keine Treffer für diese Auswahl.",
                                               size=13, color=C["muted"])]
-        self.lbl_count.value = "%d von %d Aufgaben" % (len(self.filtered), len(self.items))
+        self.lbl_count.value = "%s von %s %s" % (fc.de_int(len(self.filtered)),
+                                                 fc.de_int(len(self.items)), self.count_noun)
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
 
     def turn(self, delta):
@@ -1938,10 +1951,11 @@ class ProjectScreen(Screen):
             subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
                                                CATEGORY_SHORT[item["cat"]]),
             status_source=lambda: position_statuses(StatusBook(self.db), SRC_PROJECT),
-            category_filter=True, group_field="schwierigkeit")
+            category_filter=True, group_field="schwierigkeit", count_noun="Kundenaufträgen")
         self.paged.refresh()
         return screen_list([ui.Card("Testprojekte", [self.paged.root],
-                                    subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))])
+                                    subtitle="%s Kundenaufträge"
+                                             % fc.de_int(len(PROJEKTARBEITEN)))])
 
     def on_show(self):
         self.paged.refresh(keep_page=True)
@@ -2586,9 +2600,11 @@ class NotebookScreen(Screen):
         for src in SOURCES:
             counts = summary[src]
             total = sum(counts.values()) or 1
-            bar = ui.GradientBar("%s · %d zu üben" % (SOURCE_PLURAL[src], counts[Q_PRACTICE]),
+            bar = ui.GradientBar("%s · %s zu üben" % (SOURCE_PLURAL[src],
+                                                      fc.de_int(counts[Q_PRACTICE])),
                                  C["green"], C["accent"])
-            bar.set(100.0 * counts[Q_DONE] / total, "%d / %d" % (counts[Q_DONE], total))
+            bar.set(100.0 * counts[Q_DONE] / total,
+                    "%s / %s" % (fc.de_int(counts[Q_DONE]), fc.de_int(total)))
             bars.append(bar)
         self.summary.controls = bars
         self._paint_practice()
@@ -3394,10 +3410,11 @@ class ProgressScreen(Screen):
         results = self.db.get_all_results()
         count, average = self.db.get_stats()
         self._stat("tests", str(count), "abgeschlossene Sessions")
-        self._stat("avg", "%.1f %%" % average, "über alle Sessions")
+        # Ab 0.63.2 (B-D-05): Dezimalkomma (wie am PC)
+        self._stat("avg", "%s %%" % fc.de_number(average, 1), "über alle Sessions")
         if results:
             best = max(row[3] for row in results)
-            self._stat("best", "%.1f %%" % best, ihk_note(best))
+            self._stat("best", "%s %%" % fc.de_number(best, 1), ihk_note(best))
         else:
             self._stat("best", "-", "noch keine Session")
         # Ab 0.54 einmal laden: "Aufgaben pro Tag" (wie Tagesziel und Lernserie gezaehlt)
@@ -3427,7 +3444,7 @@ class ProgressScreen(Screen):
                                 size=12, color=C["muted"]),
                     ], spacing=2, tight=True, expand=True),
                     ft.Column([
-                        ui.text("%.1f %%" % percentage, size=15, color=C["accent"],
+                        ui.text("%s %%" % fc.de_number(percentage, 1), size=15, color=C["accent"],
                                 weight=ft.FontWeight.BOLD),
                         ui.text(note, size=11, color=C["text_dim"]),
                     ], spacing=2, tight=True,
@@ -3853,12 +3870,14 @@ class SettingsScreen(Screen):
         ]
 
         totals = content_totals()
-        lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
-                 "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
-                 "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
-                 "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
-        lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
+        de_int = fc.de_int   # ab 0.63.2 (B-D-07): Tausenderpunkt wie am PC
+        lines = ["Karteikarten gesamt: %s" % de_int(len(KARTEIKARTEN)),
+                 "Prüfungsfragen gesamt: %s" % de_int(len(QUIZ_QUESTIONS)),
+                 "AP1-Szenarien gesamt: %s" % de_int(len(AP1_SZENARIEN)),
+                 "AP2-Szenarien gesamt: %s" % de_int(len(SZENARIEN)),
+                 "Testprojekte gesamt: %s" % de_int(len(PROJEKTARBEITEN)), ""]
+        lines += ["%s: %s Inhalte" % (CATEGORY_SHORT[c], de_int(totals.get(c, 0)))
+                  for c in CATEGORIES]
 
         # Ab 0.62.2: "Optische Anpassungen" mit den Zwischenueberschriften
         # SCHRIFTGRÖSSE (ab 0.56, je Geraet) und FARBEN (ab 0.56; ab 0.57
@@ -3999,11 +4018,8 @@ class SettingsScreen(Screen):
         # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
         danger = self._area("loeschen", [
             ui.label("Lerndaten"),
-            ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                    "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete Szenarien. "
-                    "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                    "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
-                    "rückgängig machen.", size=13, color=C["text_dim"]),
+            # Ab 0.63.2 (B-G-16): ein Text fuer PC und Handy (fisi_optionen)
+            ui.text(fo.RESET_ALL_TEXT, size=13, color=C["text_dim"]),
             ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                       kind="danger")]),
             ft.Container(height=6),

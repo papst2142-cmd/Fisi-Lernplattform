@@ -27,6 +27,7 @@ in der Tabelle pruefungen (wird abgeglichen).
 import datetime
 import difflib
 import math
+from decimal import ROUND_FLOOR, Decimal
 import random
 import re
 import time
@@ -401,6 +402,24 @@ def _abrunden(wert):
     nie mehr, als Note und Regeln werten (49,97 -> 49,9, nicht 50). Vorher auf
     9 Stellen runden, damit Gleitkomma-Reste (49,99999999999999) nicht kippen."""
     return math.floor(round(wert, 9) * 10) / 10
+
+
+def punkte_text(wert):
+    """Punkte fuer die Anzeige, PC und Handy (ab 0.63.2, Z1): abgerundet auf
+    eine Nachkommastelle wie das Gesamtergebnis (49,95 -> "49,9", nie "50"),
+    deutsches Komma, ",0" entfaellt ("50"). Gerechnet mit Decimal aus der
+    kuerzesten Darstellung der Zahl, damit kein Gleitkomma-Rest kippt;
+    Reste wie 49,99999999999999 (aus Summen) vorher auf 9 Stellen runden
+    (wie _abrunden). Nacharbeit L2: -0,0 ergibt "0"; unendlich oder keine
+    Zahl (inf, nan) ergibt "-" wie andere leere Werte, statt abzustuerzen."""
+    wert = float(wert)
+    if not math.isfinite(wert):
+        return "-"
+    zahl = Decimal(repr(round(wert, 9))).quantize(Decimal("0.1"), rounding=ROUND_FLOOR)
+    if zahl.is_zero():
+        zahl = abs(zahl)     # -0,0 (auch -1e-12) -> "0", nicht "-0"
+    text = format(zahl, "f").replace(".", ",")
+    return text[:-2] if text.endswith(",0") else text
 
 
 def overall(scores):

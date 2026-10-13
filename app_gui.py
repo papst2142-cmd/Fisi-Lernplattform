@@ -121,6 +121,7 @@ from fisi_widgets import (  # noqa: E402
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo, _text_height,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
+    lesbare_schrift, tabellen_auswahl,
 )
 
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und Handy)
@@ -392,10 +393,32 @@ def bind_click(widgets, callback):
         make_focusable(widgets[0], lambda: callback(None))
 
 
+class FramedOptionMenu(ctk.CTkOptionMenu):
+    """Ab 0.63.2 (B-D-11): Aufklappliste mit 1 px Rahmen in C["field_border"].
+    CTkOptionMenu kennt keinen Rahmen; die Zeichenhilfe von CustomTkinter
+    kann ihn aber (border_parts), wie bei CTkButton. Im hellen Modus hob sich
+    die Liste vorher kaum von der Karte ab (card_alt/card 1,1:1)."""
+
+    def _draw(self, no_color_updates=False):
+        super()._draw(no_color_updates)
+        try:
+            self._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                self._apply_widget_scaling(self._current_width),
+                self._apply_widget_scaling(self._current_height),
+                self._apply_widget_scaling(self._corner_radius),
+                self._apply_widget_scaling(1),
+                self._apply_widget_scaling(self._current_width - self._current_height))
+            self._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                    fill=C["field_border"])
+            self._canvas.tag_lower("border_parts")
+        except (tk.TclError, AttributeError):
+            pass    # ohne Rahmen wie bis 0.63.1
+
+
 def option_menu(parent, values, command=None, width=None):
     """Aufklappliste im Stil der Filter (z.B. Thema)."""
     options = {} if width is None else {"width": width}
-    menu = ctk.CTkOptionMenu(
+    menu = FramedOptionMenu(
         parent, values=values, command=command,
         height=32, corner_radius=10, dynamic_resizing=False,
         fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -435,8 +458,11 @@ class TopicMenu:
 
 
 def count_text(counts):
-    return "Offen %d  ·  Zu üben %d  ·  Abgeschlossen %d" % (
-        counts[Q_OPEN], counts[Q_PRACTICE], counts[Q_DONE])
+    # Ab 0.63.2 (B-D-07): Tausenderpunkt, geschuetztes Leerzeichen vor der
+    # Zahl (die Zeile bricht nie zwischen "Offen" und der Zahl)
+    return "Offen\u00a0%s  ·  Zu üben\u00a0%s  ·  Abgeschlossen\u00a0%s" % (
+        fisi_core.de_int(counts[Q_OPEN]), fisi_core.de_int(counts[Q_PRACTICE]),
+        fisi_core.de_int(counts[Q_DONE]))
 
 
 def rate_box(parent, command):
@@ -464,8 +490,10 @@ class PagedList:
     """
 
     def __init__(self, parent, items, on_select, subtitle, status_source,
-                 category_filter=False, group_field=None, group_label="Thema"):
+                 category_filter=False, group_field=None, group_label="Thema",
+                 count_noun="Aufgaben"):
         self.items = items
+        self.count_noun = count_noun   # ab 0.63.2: Testprojekt "Kundenaufträgen"
         self.on_select = on_select
         self.subtitle = subtitle
         self.status_source = status_source
@@ -494,7 +522,7 @@ class PagedList:
         for key, label, values in filters:
             make_label(parent, label, font=F["label"], fg=C["muted"]).pack(
                 anchor="w", pady=(10, 4))
-            menu = ctk.CTkOptionMenu(
+            menu = FramedOptionMenu(   # ab 0.63.2 (B-D-11) mit Rahmen
                 parent, values=values, command=lambda _v: self.refresh(),
                 height=32, corner_radius=10, dynamic_resizing=False,
                 fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -517,12 +545,15 @@ class PagedList:
 
         pager = transparent_frame(parent)
         pager.pack(fill="x", pady=(10, 0))
-        IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                   parent_bg=C["card"]).pack(side="left")
+        # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
+        self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                                   parent_bg=C["card"])
+        self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
-        IconButton(pager, "arrow_right", lambda: self.turn(1),
-                   parent_bg=C["card"]).pack(side="right")
+        self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
+                                   parent_bg=C["card"])
+        self.btn_next.pack(side="right")
 
     def _make_row(self, slot):
         row, marker, inner = clickable_row(self.rows_box, C["purple"])
@@ -584,9 +615,12 @@ class PagedList:
             row["frame"].pack(fill="x", pady=4)
         for row in self.rows[len(visible):]:
             row["position"] = None
-        self.lbl_count.configure(text="%d von %d Aufgaben" % (len(self.filtered),
-                                                               len(self.items)))
+        self.lbl_count.configure(text="%s von %s %s" % (
+            fisi_core.de_int(len(self.filtered)), fisi_core.de_int(len(self.items)),
+            self.count_noun))
         self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+        self.btn_prev.set_enabled(self.page > 0)
+        self.btn_next.set_enabled(self.page < pages - 1)
 
     def turn(self, delta):
         self.page += delta
@@ -742,6 +776,7 @@ class Sidebar(ctk.CTkFrame):
         self.sub_frames = {}
         self.expanded = set()
         self.parents = {}         # Unteransicht -> Menuepunkt (buero -> game)
+        self.sub_rows = {}        # Unteransicht -> ihre Zeile (ab 0.63.2, B-D-09)
 
         logo = transparent_frame(self)
         logo.pack(fill="x", pady=(22, 20), padx=20)
@@ -795,6 +830,7 @@ class Sidebar(ctk.CTkFrame):
                                          command=lambda k=sub_key: self.app.show_view(k),
                                          sub=True, symbol=NAV_SYMBOLS.get(sub_key))
                         self.parents[sub_key] = key
+                        self.sub_rows[sub_key] = sub_row
                     else:
                         sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
                                          CATEGORY_SHORT.get(item, item),
@@ -830,16 +866,23 @@ class Sidebar(ctk.CTkFrame):
             self.rows[key].set_expanded(True)
 
     def set_active(self, key):
+        shown = self.sub_rows.get(key)
         if key in self.parents:
             if self.parents[key] not in self.expanded:
                 self._toggle(self.parents[key])
             key = self.parents[key]
         for name, row in self.rows.items():
             row.set_active(name == key)
+        # Ab 0.63.2 (B-D-09, Z2): Das Menue rollt den aktiven Eintrag ganz ins
+        # Bild (bei kleinem Fenster und grosser Schrift lag z.B. "Rechner"
+        # unter dem sichtbaren Teil, ueber dem Lernstatus-Kasten)
+        shown = shown or self.rows.get(key)
+        if shown is not None:
+            self.after_idle(lambda: self.menu_area.see(shown))
 
     def update_status(self, learned, total):
         self.status_bar.set(learned / max(1, total) * 100,
-                            "%d / %d" % (learned, total))
+                            "%s / %s" % (fisi_core.de_int(learned), fisi_core.de_int(total)))
 
     def update_db_hint(self):
         """Ab 0.62.5 (B-G-03): bleibende rote Zeile, solange die Datenbank
@@ -1338,36 +1381,39 @@ class DashboardView(View):
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             ("%s" + DASH_LEARNED + "   ·   " + DASH_RATE)
-            % (streak, learned, self.total_content, round(rate)),
+            % (streak, fisi_core.de_int(learned), fisi_core.de_int(self.total_content),
+               round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             DASH_TOTAL)
 
         # Ab 0.60 (K-B): die grosse Zahl im Ring "Pruefungstrainer" zaehlt
         # verschiedene Fragen wie der Ring selbst (vorher alle Antworten)
+        # Ab 0.63.2 (B-D-07): alle Zahlen mit Tausenderpunkt
+        de_int = fisi_core.de_int
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"],
-                            C["purple"], str(learned_cards),
-                            DASH_CARDS_SUB % total_cards)
+                            C["purple"], de_int(learned_cards),
+                            DASH_CARDS_SUB % de_int(total_cards))
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"],
-                           C["accent2"], str(quiz_distinct),
-                           DASH_QUIZ_SUB % total_quiz)
+                           C["accent2"], de_int(quiz_distinct),
+                           DASH_QUIZ_SUB % de_int(total_quiz))
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"],
-                          C["accent"], str(ap1_done),
-                          DASH_SCEN_SUB % total_ap1)
+                          C["accent"], de_int(ap1_done),
+                          DASH_SCEN_SUB % de_int(total_ap1))
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"],
-                           C["orange"], str(scen_done),
-                           DASH_SCEN_SUB % total_scen)
+                           C["orange"], de_int(scen_done),
+                           DASH_SCEN_SUB % de_int(total_scen))
 
         self.lbl_quote.configure(text="%d %%" % round(rate))
         self.lbl_quote_sub.configure(text=dash_quote_text(correct, answered))
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
-                           "%d / %d" % (learned_cards, total_cards))
+                           "%s / %s" % (de_int(learned_cards), de_int(total_cards)))
         self.bar_quiz.set(quiz_distinct / max(1, total_quiz) * 100,
-                          "%d / %d" % (quiz_distinct, total_quiz))
+                          "%s / %s" % (de_int(quiz_distinct), de_int(total_quiz)))
         self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100,
-                         "%d / %d" % (ap1_done, total_ap1))
+                         "%s / %s" % (de_int(ap1_done), de_int(total_ap1)))
         self.bar_scen.set(scen_done / max(1, total_scen) * 100,
-                          "%d / %d" % (scen_done, total_scen))
+                          "%s / %s" % (de_int(scen_done), de_int(total_scen)))
 
         # Lernverlauf
         daily = self.db.daily_counts(self.DAYS)
@@ -1750,8 +1796,9 @@ class CardsView(View):
         card = self.filtered[self.index]
         self.lbl_question.configure(text=card["q"])
         self._show_status()
-        self.lbl_counter.configure(text="Karte %d / %d"
-                                        % (self.index + 1, len(self.filtered)))
+        self.lbl_counter.configure(text="Karte %s / %s"   # ab 0.63.2 mit Punkt
+                                        % (fisi_core.de_int(self.index + 1),
+                                           fisi_core.de_int(len(self.filtered))))
         self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
                                                      TOPIC_SHORT[card["thema"]]),
                                         CATEGORY_COLOR[card["cat"]])
@@ -1893,7 +1940,8 @@ class QuizView(View):
 
         # Setup
         self.setup_card = Card(self.content, title="Test-Session",
-                               subtitle="%d Aufgaben im Katalog" % len(self.questions))
+                               subtitle="%s Aufgaben im Katalog"
+                                        % fisi_core.de_int(len(self.questions)))
         self.setup_card.pack(fill="x")
         body = self.setup_card.body
 
@@ -2159,10 +2207,11 @@ class QuizView(View):
                 if saved else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
         self.lbl_question.configure(
             text="Session beendet\n\n"
-                 "Ergebnis: %d von %d richtig (%.1f %%)\n"
+                 "Ergebnis: %d von %d richtig (%s %%)\n"
                  "%s: %s\n"
                  "Dauer: %02d:%02d Minuten\n\n%s"
-                 % (self.score, total, percentage, fr.NOTE_LANG, note,
+                 % (self.score, total, fisi_core.de_number(percentage, 1),
+                    fr.NOTE_LANG, note,
                     elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
         follow_up, self.follow_up = self.follow_up, None
@@ -2840,7 +2889,10 @@ class CoverageCard(Card):
 
 
 def _points(value):
-    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis, ohne Gleitkommafehler.
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def _note_color(points):
@@ -3087,7 +3139,7 @@ class ProjectView(View):
         layout.columnconfigure(1, weight=5, uniform="proj")
 
         list_card = Card(layout, title="Testprojekte",
-                         subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))
+                         subtitle="%s Kundenaufträge" % fisi_core.de_int(len(PROJEKTARBEITEN)))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         self.paged = PagedList(
             list_card.body, PROJEKTARBEITEN, self.load_project,
@@ -3095,7 +3147,8 @@ class ProjectView(View):
                                                CATEGORY_SHORT[item["cat"]]),
             status_source=lambda: position_statuses(StatusBook(self.db), SRC_PROJECT),
             category_filter=True,
-            group_field="schwierigkeit", group_label="Schwierigkeit")
+            group_field="schwierigkeit", group_label="Schwierigkeit",
+            count_noun="Kundenaufträgen")
         self.paged.refresh()
 
         detail = transparent_frame(layout)
@@ -3271,10 +3324,14 @@ class FinalProjectView(View):
                   font=F["small_bold"]).pack(side="left", padx=(10, 0))
         NeoButton(top, "Löschen", self._delete_project, kind="ghost", height=34,
                   font=F["small_bold"]).pack(side="left", padx=(8, 0))
-        NeoButton(top, "Als Text", lambda: self._export("txt"), kind="ghost", height=34,
-                  font=F["small_bold"]).pack(side="right")
-        NeoButton(top, "Als PDF", lambda: self._export("pdf"), kind="primary", height=34,
-                  font=F["small_bold"]).pack(side="right", padx=(0, 8))
+        # Ab 0.63.2 (B-J-N1): "Als PDF" zuerst anlegen, damit Tab links -> rechts
+        # laeuft; gepackt wird wie bisher (Anordnung unveraendert)
+        btn_pdf = NeoButton(top, "Als PDF", lambda: self._export("pdf"), kind="primary",
+                            height=34, font=F["small_bold"])
+        btn_text = NeoButton(top, "Als Text", lambda: self._export("txt"), kind="ghost",
+                             height=34, font=F["small_bold"])
+        btn_text.pack(side="right")
+        btn_pdf.pack(side="right", padx=(0, 8))
 
         self.tab_pills = PillGroup(self.content, fpj.TABS, on_change=self._on_tab)
         self.tab_pills.pack(anchor="w", pady=(14, 14))
@@ -3832,12 +3889,15 @@ class NotebookView(View):
         self.rows_box.pack(fill="x")
         pager = transparent_frame(self.list_card.body)
         pager.pack(fill="x", pady=(10, 0))
-        IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                   parent_bg=C["card"]).pack(side="left")
+        # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
+        self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                                   parent_bg=C["card"])
+        self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
-        IconButton(pager, "arrow_right", lambda: self.turn(1),
-                   parent_bg=C["card"]).pack(side="right")
+        self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
+                                   parent_bg=C["card"])
+        self.btn_next.pack(side="right")
         self.refresh()
         # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
         # on_show direkt nach dem Aufbau alles ein zweites Mal
@@ -3920,16 +3980,17 @@ class NotebookView(View):
             tile.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 6, 0))
             make_label(tile, SOURCE_PLURAL[source], font=F["small_bold"],
                        fg=C[SOURCE_COLOR_KEY[source]]).pack(anchor="w", padx=12, pady=(10, 2))
-            make_label(tile, "%d zu üben" % counts[Q_PRACTICE], font=F["h2"],
+            make_label(tile, "%s zu üben" % fisi_core.de_int(counts[Q_PRACTICE]), font=F["h2"],
                        fg=C["red"] if counts[Q_PRACTICE] else C["text_dim"]).pack(
                 anchor="w", padx=12)
-            make_label(tile, "Abgeschlossen %d von %d" % (counts[Q_DONE], total),
+            make_label(tile, "Abgeschlossen %s von %s" % (fisi_core.de_int(counts[Q_DONE]),
+                                                         fisi_core.de_int(total)),
                        font=F["tiny"], fg=C["text_dim"]).pack(anchor="w", padx=12, pady=(4, 0))
             bar = ctk.CTkProgressBar(tile, height=6, width=40, corner_radius=3,
                                      fg_color=C["card_hi"], progress_color=C["green"])
             bar.pack(fill="x", padx=12, pady=(4, 0))
             bar.set(counts[Q_DONE] / float(total))
-            make_label(tile, "Offen %d" % counts[Q_OPEN], font=F["tiny"],
+            make_label(tile, "Offen %s" % fisi_core.de_int(counts[Q_OPEN]), font=F["tiny"],
                        fg=C["muted"]).pack(anchor="w", padx=12, pady=(4, 10))
 
     def _practice_keys(self, source):
@@ -4002,6 +4063,8 @@ class NotebookView(View):
         for entry in visible:
             self._row(entry)
         self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+        self.btn_prev.set_enabled(self.page > 0)
+        self.btn_next.set_enabled(self.page < pages - 1)
 
     def _row(self, entry):
         source, item = entry["source"], entry["item"]
@@ -5103,12 +5166,13 @@ class ProgressView(View):
 
         self.stat_tests[0].configure(text=str(count))
         self.stat_tests[1].configure(text="abgeschlossene Sessions")
-        self.stat_avg[0].configure(text="%.1f %%" % average)
+        # Ab 0.63.2 (B-D-05): Dezimalkomma
+        self.stat_avg[0].configure(text="%s %%" % fisi_core.de_number(average, 1))
         self.stat_avg[1].configure(text="über alle Sessions")
 
         if results:
             best = max(row[3] for row in results)
-            self.stat_best[0].configure(text="%.1f %%" % best)
+            self.stat_best[0].configure(text="%s %%" % fisi_core.de_number(best, 1))
             self.stat_best[1].configure(text=ihk_note(best))
         else:
             self.stat_best[0].configure(text="-")
@@ -5135,7 +5199,7 @@ class ProgressView(View):
             self.tree.insert("", "end", values=(
                 timestamp,
                 "%d / %d" % (score, total),
-                "%.1f %%" % percentage,
+                "%s %%" % fisi_core.de_number(percentage, 1),
                 note,
                 "%02d:%02d min" % (duration // 60, duration % 60),
             ))
@@ -5571,7 +5635,7 @@ class SettingsView(View):
         ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
                       variable=self.var_auto, command=self._toggle_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         # Ab 0.59 (8b): Desktop-Verknuepfung, nur unter Linux
@@ -5744,7 +5808,7 @@ class SettingsView(View):
             ctk.CTkSwitch(goal.body, text=text, variable=var,
                           command=lambda k=key: self._save_goal(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         row = transparent_frame(goal.body)
@@ -5787,7 +5851,7 @@ class SettingsView(View):
             ctk.CTkSwitch(plan.body, text=text, variable=var,
                           command=lambda k=key: self._save_rp(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         make_label(plan.body, frp.WEIGHT_OPTION_HINT, font=F["tiny"], fg=C["muted"],
@@ -5843,7 +5907,7 @@ class SettingsView(View):
                                       "Lernen und beim Beenden)",
                       variable=self.var_sync_auto, command=self._toggle_sync_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         make_label(sync.body,
@@ -5878,16 +5942,17 @@ class SettingsView(View):
 
     def _build_lerninhalte(self, content):
         totals = content_totals()
-        lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
-                 "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
-                 "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
+        de_int = fisi_core.de_int   # ab 0.63.2 (B-D-07): Tausenderpunkt
+        lines = ["Karteikarten gesamt: %s" % de_int(len(KARTEIKARTEN)),
+                 "Prüfungsfragen gesamt: %s" % de_int(len(QUIZ_QUESTIONS)),
+                 "AP1-Szenarien gesamt: %s" % de_int(len(AP1_SZENARIEN)),
+                 "AP2-Szenarien gesamt: %s" % de_int(len(SZENARIEN)),
                  # ab 0.62.2 wie am Handy (F4)
-                 "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN),
+                 "Testprojekte gesamt: %s" % de_int(len(PROJEKTARBEITEN)),
                  ""]
         for category in CATEGORIES:
-            lines.append("%s: %d Inhalte" % (CATEGORY_SHORT[category],
-                                             totals.get(category, 0)))
+            lines.append("%s: %s Inhalte" % (CATEGORY_SHORT[category],
+                                             de_int(totals.get(category, 0))))
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
@@ -5908,11 +5973,8 @@ class SettingsView(View):
 
     def _build_loeschen(self, danger):
         make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        make_label(danger.body,
-                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                   "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete "
-                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
-                   "Dieser Schritt lässt sich nicht rückgängig machen.",
+        # Ab 0.63.2 (B-G-16): ein Text fuer PC und Handy (fisi_optionen)
+        make_label(danger.body, fo.RESET_ALL_TEXT,
                    font=F["small"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
@@ -6004,7 +6066,7 @@ class SettingsView(View):
         ctk.CTkSwitch(body, text=fle.SWITCH, variable=self.var_perf,
                       command=self._toggle_perf,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(12, 0))
         self.lbl_perf = make_label(body, "", font=F["small"], fg=C["muted"],
@@ -6490,10 +6552,9 @@ class SettingsView(View):
                                "Wirklich alle gespeicherten Testergebnisse und "
                                "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
                                "Dashboard bleiben erhalten."):
-            if self.db.clear_history():
-                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
-                if hint:
-                    messagebox.showinfo("Historie löschen", hint)
+            # Ab 0.63.2 (B-D-12): Bestaetigung bzw. genau ein Fehlerfenster
+            if self._delete_checked("Historie löschen", lambda: self.db.clear_history()):
+                messagebox.showinfo("Gelöscht", self._with_clock_fix(fo.DELETE_HISTORY_DONE))
                 self.app.notify_progress()
 
     def reset_all(self):
@@ -6501,10 +6562,32 @@ class SettingsView(View):
                                    "Wirklich ALLE Lerndaten unwiderruflich "
                                    "löschen?"):
             return
-        if self.db.reset_all():
+        if self._delete_checked("Alles zurücksetzen", lambda: self.db.reset_all()):
             messagebox.showinfo("Zurückgesetzt", self._with_clock_fix(
                 "Alle Lerndaten wurden gelöscht."))
             self.app.notify_progress()
+
+    def _delete_checked(self, title, action):
+        """Ab 0.63.2 (B-D-12): Loescht ueber action(). Ein Datenbankfehler
+        waehrenddessen wird gesammelt und als genau ein Fenster gezeigt
+        ("Es wurde nichts gelöscht." und der Text der Datenbank) - statt
+        des allgemeinen Datenbankfehler-Fensters. Liefert True bei Erfolg."""
+        db = self.db
+        collected = []
+        handler = db.error_handler
+        db.error_handler = collected.append
+        try:
+            done = action()
+        finally:
+            db.error_handler = handler
+        if done:
+            return True
+        message = "\n\n".join([fo.DELETE_NOTHING] + collected)
+        sidebar = getattr(self.app, "sidebar", None)
+        if sidebar is not None:
+            sidebar.update_db_hint()
+        messagebox.showerror(title, message)
+        return False
 
 
 # ============================================================================
@@ -7117,7 +7200,10 @@ class LegalDialog(ctk.CTkToplevel):
             self.listbox = tk.Listbox(
                 side, width=list_chars, activestyle="none", exportselection=False,
                 font=tk_font(F["small"]), bg=C["card_alt"], fg=C["text_soft"],
-                selectbackground=C["purple"], selectforeground="#FFFFFF",
+                # Ab 0.63.2 (B-J-01): Schrift C["card"] auf Lila (>= 4,5:1),
+                # mit eigenen Farben ohne Rueckschritt (lesbare_schrift)
+                selectbackground=C["purple"],
+                selectforeground=lesbare_schrift(C["card"], "#FFFFFF", C["purple"]),
                 highlightthickness=1, highlightbackground=C["field_border"],
                 highlightcolor=C["purple"], relief="flat", borderwidth=0)
             for name in self.choices:
@@ -7300,8 +7386,16 @@ class TourOverlay(tk.Frame):
             back = NeoButton(buttons, fh.TOUR_BACK, self.back_page, kind="ghost",
                              parent_bg=C["card"])
             back.pack(side="right", padx=(0, 10))
-        for button in ([main, back, skip] if back else [main, skip]):
-            self._focusable_button(button)
+        # Ab 0.63.2 (B-J-N2): Tab laeuft wie die Knoepfe stehen, links -> rechts
+        # (ringfoermig ab "Weiter": Weiter -> Ueberspringen -> Zurueck); auf der
+        # letzten Seite nach den Eingaben Ueberspringen -> Zurueck -> Speichern
+        if last:
+            order = [skip, back, main]
+        else:
+            order = [main, skip, back]
+        for button in order:
+            if button is not None:
+                self._focusable_button(button)
         make_label(body, fh.TOUR_KEYS, font=F["tiny"], fg=C["muted"]).pack(
             anchor="w", pady=(px(12), 0))
         self._bind_tab()
@@ -7330,7 +7424,7 @@ class TourOverlay(tk.Frame):
                 value=self.draft["abschnitte"][section])
             switch = ctk.CTkSwitch(form, text=frp.SECTION_OPTION_TEXT[section], variable=var,
                                    font=F["small"], text_color=C["text_dim"],
-                                   fg_color=C["card_alt"], progress_color=C["violet"],
+                                   fg_color=C["field_border"], progress_color=C["violet"],
                                    button_color=C["text"], button_hover_color="#FFFFFF")
             switch.pack(anchor="w", pady=(6, 0))
             switches.append(switch)
@@ -7668,9 +7762,10 @@ class UpdateDialog(ctk.CTkToplevel):
         def refresh():
             if self._downloading and self.winfo_exists():
                 self.progress.set(state["loaded"] / state["total"])
-                self.lbl_status.configure(
-                    text="Update wird heruntergeladen ... %.1f von %.1f MB"
-                         % (state["loaded"] / 1048576, state["total"] / 1048576))
+                self.lbl_status.configure(   # ab 0.63.2 (B-D-05): Dezimalkomma
+                    text="Update wird heruntergeladen ... %s von %s MB"
+                         % (fisi_core.de_number(state["loaded"] / 1048576, 1),
+                            fisi_core.de_number(state["total"] / 1048576, 1)))
                 self.after(200, refresh)
 
         self.app.updater.run_in_background(
@@ -8559,9 +8654,12 @@ class FISIApp:
         style.map("Dash.Treeview.Heading",
                   background=[("active", C["violet"])],
                   foreground=[("active", "#FFFFFF")])
+        # Ab 0.63.2 (B-J-02): Auswahlschrift C["text"] (>= 4,5:1 hell und dunkel),
+        # mit eigenen Farben ohne Rueckschritt (tabellen_auswahl)
+        selected_bg, selected_fg = tabellen_auswahl()
         style.map("Dash.Treeview",
-                  background=[("selected", mix(C["card_alt"], C["purple"], 0.45))],
-                  foreground=[("selected", "#FFFFFF")])
+                  background=[("selected", selected_bg)],
+                  foreground=[("selected", selected_fg)])
 
     # -- Navigation ---------------------------------------------------------
 
