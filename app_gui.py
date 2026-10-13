@@ -8,8 +8,8 @@ Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
 (Schwerpunkt Systemintegration).
 
 Start:      python3 app_gui.py
-Benoetigt:  Python 3.8 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
-            (pip install -r requirements.txt)
+Benoetigt:  Python 3.12 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
+            (pip install -r requirements.txt; gebaut und getestet wird mit 3.12)
 
 Die Oberflaeche besteht aus einer festen Seitenleiste, einer Kopfzeile mit
 Suche und einem Inhaltsbereich, in dem die einzelnen Ansichten umgeschaltet
