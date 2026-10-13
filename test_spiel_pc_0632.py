@@ -702,6 +702,8 @@ def pump(seconds):
         root.update()
         time.sleep(0.005)
 pump(0.5)
+root.geometry("%dx%d+0+0" % (width, height))   # FISIApp setzt eigene Groesse
+pump(0.5)
 app.show_view("game")
 pump(0.3)
 view = app.views["game"]
@@ -737,6 +739,7 @@ button = header.slot_box.winfo_children()[-1]
 gap = header.search_box.winfo_rootx() - (button.winfo_rootx() + button.winfo_width())
 report = {"signs": signs, "sign": [x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y],
           "machines": machines, "gap": gap, "button": button.winfo_class(),
+          "window": root.winfo_width(),
           "errors": errors}
 print("ERGEBNIS " + json.dumps(report), flush=True)
 os._exit(0)
