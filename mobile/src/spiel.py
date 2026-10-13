@@ -1301,10 +1301,15 @@ class TerminalBoard(ft.Column):
                                    bgcolor=TERMINAL_BG, border_radius=12,
                                    border=ft.Border.all(1, C["border"]),
                                    padding=ft.Padding.symmetric(horizontal=12, vertical=10))
+        # Ab 0.63.2 (B-9b, FG-93): "→ wischen" rechts unter dem Terminal, nur wenn
+        # eine Zeile breiter ist als der sichtbare Platz (wie bei den Rechnern)
+        self.swipe_hint = ui.SwipeHint(self.screen.content, self.lines)
         self.choices = ft.Column(spacing=8, tight=True,
                                  horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self.controls = [ft.Column([self.step_label, self.goal_label], spacing=2, tight=True),
-                         self.screen, self.choices]
+                         ft.Column([self.screen, self.swipe_hint], spacing=4, tight=True,
+                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH),
+                         self.choices]
         self._paint()
 
     @property
@@ -4244,7 +4249,11 @@ class GameScreen:
         if skipped:
             table += [ui.text("… %d weitere Raten …" % skipped, size=11, color=C["muted"]),
                       block(blocks[1])]
-        lines = [ft.Row([ft.Column(table, spacing=3, tight=True)], scroll=ft.ScrollMode.AUTO),
+        # Ab 0.63.2 (B-9b, FG-93): "→ wischen" rechts unter der Tabelle, nur wenn
+        # sie breiter ist als der sichtbare Platz
+        content = ft.Column(table, spacing=3, tight=True)
+        scroller = ft.Row([content], scroll=ft.ScrollMode.AUTO)
+        lines = [scroller, ui.SwipeHint(scroller, content),
                  ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
                          % euro(item["zinsen_noch"]), size=12, color=C["text_dim"])]
         return ft.Column(lines, spacing=3, tight=True)

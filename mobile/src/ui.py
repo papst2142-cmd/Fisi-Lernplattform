@@ -785,6 +785,51 @@ class FitBox(ft.Column):
             border=ft.Border.all(_FIT_BORDER, C["border"]), border_radius=12)
 
 
+class SwipeHint(ft.Container):
+    """Ab 0.63.2 (B-9b, FG-93): Hinweis "→ wischen" unter einem waagrecht
+    wischbaren Bereich (Spiel: Terminal, Tilgungsplan).
+
+    view ist die wischbare ft.Row (scroll), content ihr einziges Kind. Beide
+    melden ihre gezeichnete Breite (on_size_change): die Row die sichtbare
+    Breite, das Kind seine volle Breite (in der wischbaren Row ist es nicht
+    begrenzt). Der Hinweis ist nur sichtbar, wenn der Inhalt breiter ist als
+    der sichtbare Platz; solange eine der beiden Breiten fehlt, bleibt er
+    aus. Schrift und Farbe wie der Hinweis der Rechner (FitBox), rechts
+    ausgerichtet, ohne Verlauf. Er steht unter dem Bereich (nicht darin),
+    verdeckt also nichts und hat keine eigene Wisch- oder Tipp-Funktion.
+    Wie bei FitBox gilt: im Ereignis kein eigenes update()."""
+
+    TOLERANCE = 0.5   # Rundung der gemeldeten Breiten (px)
+
+    def __init__(self, view, content):
+        self.view_width = None
+        self.content_width = None
+        self.text = ft.Text(FIT_HINT, size=12, color=C["muted"], font_family=MONO,
+                            text_align=ft.TextAlign.RIGHT)
+        super().__init__(content=self.text, alignment=ft.Alignment.CENTER_RIGHT,
+                         visible=False)
+        view.on_size_change = self._view_sized
+        view.size_change_interval = 100
+        content.on_size_change = self._content_sized
+        content.size_change_interval = 100
+
+    def _view_sized(self, event):
+        self.view_width = getattr(event, "width", 0) or None
+        self._check()
+
+    def _content_sized(self, event):
+        self.content_width = getattr(event, "width", 0) or None
+        self._check()
+
+    def too_wide(self):
+        if not self.view_width or not self.content_width:
+            return False
+        return self.content_width > self.view_width + self.TOLERANCE
+
+    def _check(self):
+        self.visible = self.too_wide()
+
+
 def list_row(title, subtitle, accent, on_click, active=False, sub_color=None):
     """Antippbare Listenzeile mit farbiger Markierung links."""
     return ft.Container(
