@@ -1114,6 +1114,65 @@ class BG08Ersetzen(unittest.TestCase):
         self.gleich_und_ohne_doppelte([a, b])
         self.stabil([a, b])
 
+    def test_b_g_08_schutz_unbekannte_spaetere_loeschung(self):
+        """Beleg FG-81 Satz 4: Eine Loeschung, die das ersetzende Geraet noch
+        nicht kennt (B loescht nach As Loeschung, ohne Abgleich), gilt nach dem
+        Ersetzen weiter - auch fuer das Eingespielte."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        self.alle_sync([a, b], 1)
+        ta.pause()
+        b("lerne", 1, "offline")
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])      # A kennt diese Loeschung nicht
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(karten(a, "-vorher"), 2)
+        self.alle_sync([a, b], 3)
+        for device in (a, b):
+            self.assertEqual(device.namen(), {}, device.name)
+        self.stabil([a, b])
+
+    def test_b_g_08_offline_eintraege_bleiben_erhalten(self):
+        """gp_s6b M2, von Chat angenommen (Meldung 24, Frage 7 a), Beleg fuer
+        den Satz "Auch was ein anderes Geraet ohne Verbindung gelernt hat,
+        bleibt erhalten, sobald es sich wieder abgleicht.": C lernt offline,
+        waehrend A alles loescht; A ersetzt danach mit einer Sicherung von vor
+        der Loeschung. Mit 0.63.2 bleiben Cs Eintraege (v0.63.1: A {}, C {});
+        As Eintraege zwischen Sicherung und Loeschung bleiben weg."""
+        def ablauf(code, ordner):
+            a = self.voll("A", code=code, ordner=ordner)
+            c = self.voll("C", tz="UTC", code=code, ordner=ordner)
+            a("lerne", 2, "vorher")
+            self.alle_sync([a, c], 1)
+            a("sicherung_erstellen", self.pfad(a))
+            ta.pause()
+            c("lerne", 3, "offline")
+            ta.pause()
+            a("lerne", 1, "zwischen")
+            a.sync()
+            ta.pause()
+            self.assertTrue(a("reset_all")["ok"])
+            a.sync()
+            ta.pause()
+            a("sicherung_ersetzen", self.pfad(a))
+            a.sync()
+            self.alle_sync([c, a], 2)
+            return {d.name: d.namen() for d in (a, c)}
+        alt = ablauf(self.alter_code(ALT), "m2_alt")
+        for device in list(self.geraete):
+            device.close()
+            self.geraete.remove(device)
+        ta.server_reset()
+        neu = ablauf(CODE, "m2_neu")
+        bericht("B-G-08 M2: v0.63.1 %s | 0.63.2 %s" % (alt, neu))
+        self.assertEqual(alt, {"A": {}, "C": {}})
+        for name in ("A", "C"):
+            self.assertEqual(neu[name], {"a-vorher": 2, "c-offline": 3}, name)
+
     # ------------------------------------------------------------ A1 (gp_s6b M1)
     def _zukunft(self, code, uhr, abgleich_vorher=False, ordner=None):
         """Vorlage gp_s6b skripte/bg08_gezielt.py _zukunft: A gleicht mit
@@ -1266,6 +1325,27 @@ class BG08Ersetzen(unittest.TestCase):
         staende, (a, b, c) = self.mischbetrieb(alt, CODE, code_c, a_zuerst, zwischen=zwischen,
                                                vorher=vorher, lauf="_gemischt", pruefen=False)
         self._bg08_nichts_verloren(referenz, staende, "B-G-08 B ersetzt, gemischt")
+        # Sonderfall FG-81 (Antwort Meldung 21, 2.7, hart): A (v0.63.1) loescht
+        # das Eingespielte bei sich (alte Marke) und laedt die Loeschung immer
+        # wieder hoch - B (und C mit 0.63.2) behalten es trotzdem; ein Geraet
+        # mit v0.63.1 loescht es bei sich weiterhin.
+        bericht("B-G-08 Sonderfall FG-81: Datei-Marken %s, Feld %s; Karten x-1 A %s, B %s, C %s"
+                % (ta.datei().get("markers"), ta.datei().get("aufgehoben"),
+                   *[[karten(d, "%s-1" % n) for n in "abc"] for d in (a, b, c)]))
+        for name in ("a", "b", "c"):
+            self.assertEqual(karten(b, "%s-1" % name), 1, "B (0.63.2) %s-1" % name)
+            self.assertEqual(karten(a, "%s-1" % name), 0, "A (v0.63.1) %s-1" % name)
+            self.assertEqual(karten(c, "%s-1" % name), 1 if code_c == CODE else 0,
+                             "C %s-1" % name)
+        a.sync()            # A (v0.63.1) laedt seine Loeschung hoch, ohne das Feld
+        datei = ta.datei()
+        self.assertTrue(datei["markers"].get("reset_at"))
+        self.assertNotIn("aufgehoben", datei)
+        b.sync()            # B bekommt genau diese Datei
+        bericht("B-G-08 Sonderfall FG-81 direkt: Datei von A %s -> B danach %s"
+                % (datei["markers"].get("reset_at"), [karten(b, "%s-1" % n) for n in "abc"]))
+        for name in ("a", "b", "c"):
+            self.assertEqual(karten(b, "%s-1" % name), 1, "B nach As Loeschung %s-1" % name)
         vorher_n = ta.commits()
         self.alle_sync([a, b, c], 2)
         bericht("B-G-08 B ersetzt: 2 Runden ohne Lernen im Mischbetrieb -> %d Hochladungen"
