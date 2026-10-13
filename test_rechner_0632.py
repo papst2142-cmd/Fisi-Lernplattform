@@ -9,6 +9,7 @@ Tests ab 0.63.2 (Plan 0.63.2, Teil S3 Kern- und Rechner-Logik):
   B-D-04   Obergrenzen RAID und Bildschirm (= Restrisiko 17)
   B-D-03   keine unendlichen Werte, groesste erlaubte Werte endlich
   B-D-15   Hinweiszeile "Punkt als Tausender gelesen." (mit Restrisiko 13 USV)
+           und PC-Kaesten hoch genug (F-S3-2 a)
   RR12     "01.000" ist keine Zahl (auch im Subnetting, F-S3-4 a)
   RR16     Farbtiefe 1 bis 64 Bit
   B-K-N3   Bildrate mit Nachkommastellen ("29,97"), Rundung ohne
@@ -333,6 +334,29 @@ class BP01Test(unittest.TestCase):
         self.assertIn("Sachkosten: 1.000,00 €", fp.cost_lines(felder))
         felder["material_betrag_0"] = "inf"
         self.assertIn("Sachkosten: 0,00 €", fp.cost_lines(felder))
+
+
+class PcKaestenHinweisTest(unittest.TestCase):
+    """F-S3-2 (a): die Hinweiszeile passt ohne Scrollen in die PC-Kaesten
+    (sichtbar sind height - 1 Zeilen, wie test_rechenweg.PcKaestenTest)."""
+
+    def _hoehe(self, name):
+        with open(os.path.join(CODE, "app_gui.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        return int(re.search(r"self\.txt_%s = make_text\([^)]*height=(\d+)" % name,
+                             source).group(1))
+
+    def test_raid_10_mit_hinweis(self):
+        text = fc.raid_report("RAID 10", "1.000", "1.000")
+        self.assertEqual(text.split("\n")[-1], HINWEIS)
+        self.assertEqual(text.count("\n") + 1, 10)
+        self.assertGreaterEqual(self._hoehe("raid") - 1, 10)
+
+    def test_bildschirm_mit_bildrate_und_hinweis(self):
+        text = fc.screen_report("1.920", "1.080", "24", "29,97")
+        self.assertEqual(text.split("\n")[-1], HINWEIS)
+        self.assertEqual(text.count("\n") + 1, 13)
+        self.assertGreaterEqual(self._hoehe("screen") - 1, 13)
 
 
 if __name__ == "__main__":
