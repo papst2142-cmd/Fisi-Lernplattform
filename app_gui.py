@@ -4824,7 +4824,15 @@ class CalcView(View):
         Breite - so entsteht keine Schleife."""
         load, battery = self.ups_boxes
         card = self.ups_card
+        # Ab Gegenpruefung S1a (L3): untereinander beginnen die Felder beider
+        # Spalten an derselben Stelle (Beschriftungsspalte gleich breit). Die
+        # Entscheidung rechnet diese Angleichung heraus (Breite der Spalten
+        # ohne Angleichung), haengt also weiter nicht von der Anordnung ab.
+        labels = [max((child.winfo_reqwidth() for child in box.grid_slaves(column=0)
+                       if int(child.grid_info()["row"]) > 0), default=0)
+                  for box in self.ups_boxes]
         side = (load.winfo_reqwidth() + battery.winfo_reqwidth()
+                - sum(max(0, self.ups_label_min - width) for width in labels)
                 + card._apply_widget_scaling(32 + 2 * card.pad))
         stacked = side > avail
         if stacked != self.ups_stacked:
@@ -4833,6 +4841,11 @@ class CalcView(View):
                 battery.grid_configure(row=1, column=0, pady=(14, 0))
             else:
                 battery.grid_configure(row=0, column=1, pady=0)
+        minimum = max(labels) if stacked else 0
+        if minimum != self.ups_label_min:
+            self.ups_label_min = minimum
+            for box in self.ups_boxes:
+                box.grid_columnconfigure(0, minsize=minimum)
 
     def _build_ups(self, layout):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
@@ -4842,6 +4855,7 @@ class CalcView(View):
         columns = transparent_frame(ups.body)
         columns.pack(anchor="w", fill="x")
         self.ups_card, self.ups_boxes, self.ups_stacked = ups, [], False
+        self.ups_label_min = 0
         self.ups_entries = {}
         groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
                   (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",

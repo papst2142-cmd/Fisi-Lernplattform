@@ -15,6 +15,8 @@ Fuer Normal/Gross/Sehr gross (Faktor 1,00/1,15/1,30), Fenster 1120 x 800 und
     ist nicht breiter als der sichtbare Bereich
   * alle USV-Eingabefelder und alle Farbtiefe-Knoepfe sind abgebildet,
     liegen im sichtbaren Bereich und ueberlappen sich nicht
+  * stehen die USV-Spalten untereinander, beginnen alle Felder an derselben
+    Stelle (Gegenpruefung S1a, L3)
   * Rechnen mit den Vorgaben liefert denselben Text wie der Kern
     (USV-Empfehlung, Bildschirm mit jeder Farbtiefe)
 Gegen 14b3bd4 rot.
@@ -113,6 +115,16 @@ def worker(faktor):
                     if overlap(b, other):
                         found.append("%s: %s ueberlappt %s" % (name, label, other_label))
                 boxes.append((label, b))
+            # Gegenpruefung S1a (L3): untereinander beginnen alle USV-Felder
+            # beider Spalten an derselben Stelle
+            load_box, battery_box = view.ups_boxes
+            stacked = battery_box.winfo_rooty() >= load_box.winfo_rooty() + load_box.winfo_height()
+            starts = sorted({entry.winfo_rootx() for entry in view.ups_entries.values()})
+            werte[name]["usv_untereinander"] = stacked
+            werte[name]["usv_feldanfang"] = starts
+            if stacked and len(starts) != 1:
+                found.append("%s: USV-Felder untereinander nicht buendig (x %r)"
+                             % (name, starts))
             # Rechnen mit Vorgaben: Text wie der Kern
             view.calc_ups("empfehlung")
             fields = {key: entry.get() for key, entry in view.ups_entries.items()}
