@@ -79,7 +79,7 @@ SAVE_FAILED = ("Die Einstellung ließ sich nicht speichern. Ist der Datenordner 
 # Spiel wird aus Karteikarten und Pruefungsfragen berechnet (fisi_game.knowledge)
 RESET_ALL_TEXT = ("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
                   "Klausursimulationen, Karteikarten-Verlauf, Antworten im "
-                  "Prüfungstrainer, Aufgaben im Subnetting-Trainer und bearbeitete "
+                  "Prüfungstrainer, Aufgaben im Rechen-Trainer und bearbeitete "
                   "Szenarien und Testprojekte. Erhalten bleiben das Abschlussprojekt, "
                   "deine Einstellungen (z. B. das Tagesziel) und der Spielstand des "
                   "Lernspiels; das Wissen im Spiel beginnt aber wieder bei 0. Mit "
