@@ -6443,7 +6443,7 @@ class SettingsView(View):
                                "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
                                "Dashboard bleiben erhalten."):
             # Ab 0.63.2 (B-D-12): Bestaetigung bzw. genau ein Fehlerfenster
-            if self._delete_checked("Historie löschen", self.db.clear_history):
+            if self._delete_checked("Historie löschen", lambda: self.db.clear_history()):
                 messagebox.showinfo("Gelöscht", self._with_clock_fix(fo.DELETE_HISTORY_DONE))
                 self.app.notify_progress()
 
@@ -6452,7 +6452,7 @@ class SettingsView(View):
                                    "Wirklich ALLE Lerndaten unwiderruflich "
                                    "löschen?"):
             return
-        if self._delete_checked("Alles zurücksetzen", self.db.reset_all):
+        if self._delete_checked("Alles zurücksetzen", lambda: self.db.reset_all()):
             messagebox.showinfo("Zurückgesetzt", self._with_clock_fix(
                 "Alle Lerndaten wurden gelöscht."))
             self.app.notify_progress()
