@@ -3745,10 +3745,11 @@ def screen_report(width_text, height_text, depth, fps_text):
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
                          "Bildrate eingeben.")
-    # Ab 0.63.2 (Restrisiko 16, F6-7): nur beim direkten Kernaufruf moeglich
+    fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
+    # Ab 0.63.2 (Restrisiko 16, F6-7): nur beim direkten Kernaufruf moeglich;
+    # nach den Lesefehlern (Teilplan S3, B-D-04: erst Lesefehler)
     if not 1 <= depth <= 64:
         raise InputError("Bitte eine Farbtiefe von 1 bis 64 Bit wählen.")
-    fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
     # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
