@@ -206,10 +206,24 @@ class KernTest(Base):
                          "Sicherung eingespielt: Es fehlte nichts, alles war schon da.")
 
     def test_b_g_08_warntext_nennt_eigene_loeschungen(self):
+        # Ab 0.63.2 (FG-81, nur zusammen mit B-G-08): volle neue Saetze statt
+        # Teilstuecke; jeder Satz ist in test_abgleich_0632.py BG08Ersetzen
+        # per Verhaltenstest belegt (Liste: bau_0.63.2/s6b/ergebnis_nacharbeit_gp.md)
         text = fs.replace_question(self.backup_of(self.learned(self.db())))
-        self.assertIn("die anderer Geräte und auch die dieses Geräts", text)
-        self.assertIn("„Alle Lerndaten löschen“", text)
-        self.assertIn("Bewahre die Sicherungsdatei deshalb auf.", text)
+        erster, zweiter = text.split("\n\n")
+        self.assertTrue(erster.startswith("Der komplette Lernstand dieses Geräts"))
+        self.assertEqual(zweiter, (
+            "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
+            "dem Repository wieder dazu. "
+            "Auch was ein anderes Gerät ohne Verbindung gelernt hat, bleibt erhalten, "
+            "sobald es sich wieder abgleicht. "
+            "Löschungen, die dieses Gerät schon kennt (zum Beispiel „Alle Lerndaten "
+            "löschen“), löschen das Eingespielte nicht noch einmal; das gilt auch für "
+            "deine anderen Geräte, sobald sie mindestens Version 0.63.2 haben. "
+            "Ein Gerät mit einer älteren Version löscht das Eingespielte bei sich weiterhin. "
+            "Löschungen, die dieses Gerät noch nicht kennt, gelten weiter. "
+            "Bewahre die Sicherungsdatei deshalb auf."))
+        self.assertNotIn("ist nach dem nächsten Abgleich wieder weg", text)
 
     def test_b_g_11_volle_platte_keine_leere_sicherheitskopie(self):
         target = self.learned(self.db(), tag="alt")

@@ -581,11 +581,15 @@ def replace_question(backup):
             "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
-            "Mit eingerichtetem Abgleich kommen beim nächsten Abgleich die Daten aus dem "
-            "Repository wieder dazu. Schon abgeglichene Löschungen gelten weiterhin – "
-            "die anderer Geräte und auch die dieses Geräts (z. B. „Alle Lerndaten "
-            "löschen“): Was sie betreffen, ist nach dem nächsten Abgleich wieder weg. "
-            "Bewahre die Sicherungsdatei deshalb auf."
+            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat (Meldung 21, 2.7; Meldung 24, 2.7)
+            "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
+            "dem Repository wieder dazu. Auch was ein anderes Gerät ohne Verbindung "
+            "gelernt hat, bleibt erhalten, sobald es sich wieder abgleicht. Löschungen, "
+            "die dieses Gerät schon kennt (zum Beispiel „Alle Lerndaten löschen“), löschen "
+            "das Eingespielte nicht noch einmal; das gilt auch für deine anderen Geräte, "
+            "sobald sie mindestens Version 0.63.2 haben. Ein Gerät mit einer älteren "
+            "Version löscht das Eingespielte bei sich weiterhin. Löschungen, die dieses "
+            "Gerät noch nicht kennt, gelten weiter. Bewahre die Sicherungsdatei deshalb auf."
             % backup_summary(backup)["erstellt"])
 
 
