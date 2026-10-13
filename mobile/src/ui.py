@@ -680,6 +680,8 @@ FIT_HINT = "→ wischen"
 FIT_CHAR_RATIO = 0.62
 _FIT_PADDING = 14
 _FIT_BORDER = 1
+# Ab 0.63.2 (A5-d): Breite des Verlaufs rechts (px)
+_FIT_FADE = 28
 
 
 # Ab 0.63.1 (Plan 0.63.1 Teil 1.3, Antwort 12 (A)): fit_lines und seine
@@ -711,7 +713,11 @@ class FitBox(ft.Column):
                             font_family=MONO if mono else None, selectable=True,
                             no_wrap=True, on_size_change=self._text_sized,
                             size_change_interval=100)
-        self.content = ft.Row([self.text], scroll=ft.ScrollMode.AUTO)
+        # Ab 0.63.2 (A5-d): Leerraum hinter dem Text, nur bei "→ wischen" -
+        # so steht das Zeilenende nach dem Wischen frei vom Verlauf
+        self.end_space = ft.Container(width=_FIT_FADE, visible=False)
+        self.content = ft.Row([self.text, self.end_space], scroll=ft.ScrollMode.AUTO,
+                              spacing=0)
         self.box = ft.Container(
             content=self.content, data=self.text,
             bgcolor=C["card_alt"], border_radius=12, padding=_FIT_PADDING,
@@ -762,11 +768,22 @@ class FitBox(ft.Column):
 
     def _refit(self):
         self.zeichen = self.capacity()
-        shown = fit_lines(self.raw, self.zeichen)
+        # Ab 0.63.2 (A5-a): Abschnitte einheitlich ein- oder zweizeilig
+        shown = fit_lines(self.raw, self.zeichen, einheitlich=True)
         too_long = bool(self.zeichen) and any(
             len(line) > self.zeichen for line in shown.split("\n"))
+        if too_long:
+            # Ab 0.63.2 (A5-d): Mit "→ wischen" liegt rechts der Verlauf.
+            # Noch einmal setzen, so schmal, dass alles Teilbare davor endet;
+            # self.zeichen (volle Breite) und die Hinweisregel bleiben.
+            narrow = self.zeichen - math.ceil(
+                _FIT_FADE / (self._char_width or self._estimate()) - 1e-6)
+            if narrow > 0:
+                shown = fit_lines(self.raw, narrow, einheitlich=True)
+                too_long = any(len(line) > self.zeichen for line in shown.split("\n"))
         self.text.value = shown
         self.hint.visible = too_long
+        self.end_space.visible = too_long
         self.box.foreground_decoration = self._fade() if too_long else None
 
     def _fade(self):
@@ -775,7 +792,7 @@ class FitBox(ft.Column):
         in Kastenfarbe, die Linie des Kastens wird darueber neu gezogen."""
         width = self._box_width or 300
         full = max(0.5, 1 - (_FIT_PADDING + _FIT_BORDER) / width)
-        start = max(0.0, full - 28 / width)
+        start = max(0.0, full - _FIT_FADE / width)
         clear = ft.Colors.with_opacity(0, C["card_alt"])
         return ft.BoxDecoration(
             gradient=ft.LinearGradient(
