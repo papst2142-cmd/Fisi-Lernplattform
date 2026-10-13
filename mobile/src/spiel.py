@@ -3255,11 +3255,16 @@ class GameScreen:
                          weight=ft.FontWeight.BOLD,
                          color=C["green"] if project["team"] else C["orange"])]
         editing = self.team_for == pid
-        parts.append(ft.Row([ui.GradientButton(
-            "Team fertig" if editing else "Team ändern",
-            lambda _e: self._pick_team(None if editing else pid),
-            kind="ghost" if editing else "primary", height=38, expand=True),
-            self._details_button(pid)], spacing=8))
+        # Ab 0.63.2 (B-E-08, FG-85): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+        # Textbreite (wie bei _tender_box; _details_button bleibt unveraendert)
+        team = ui.GradientButton("Team fertig" if editing else "Team ändern",
+                                 lambda _e: self._pick_team(None if editing else pid),
+                                 kind="ghost" if editing else "primary", height=38)
+        details = self._details_button(pid)
+        for item in (team, details):
+            item.expand = None
+            item.alignment = None
+        parts.append(ft.Row([team, details], spacing=8, run_spacing=8, wrap=True))
         if editing:
             parts.append(ui.label("Wer arbeitet mit? (antippen)"))
             for option in fg.project_candidates(state, project, levels):
