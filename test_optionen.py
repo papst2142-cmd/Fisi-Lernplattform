@@ -860,7 +860,7 @@ class OptionenHandyTest(unittest.TestCase):
         fold.toggle()
         self.assertEqual(fold.header_semantics.label, "Optische Anpassungen, aufgeklappt")
         self.assertTrue(fold.header_semantics.expanded)
-        self.assertEqual(fold.arrow_text.value, "einklappen")
+        self.assertEqual(fold.arrow_text.value, "zuklappen")
 
     def test_ganze_kopfzeile_mindestens_48_dp(self):
         fold = self.screen().folds["tagesziel"]
