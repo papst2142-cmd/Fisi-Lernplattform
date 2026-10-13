@@ -3975,10 +3975,12 @@ class GameScreen:
                     offer = item["angebote"][mode]
                     button = ui.GradientButton(label, lambda _e, o=offer: self._book_ad(o),
                                                kind="primary" if mode == fg.AD_RUNNING
-                                               else "ghost", height=38, expand=True)
+                                               else "ghost", height=38)
                     button.set_enabled(not offer["problem"])
+                    # Vorschlag 0.63.2 (B-E-08/B-D-10): Textbreite, Zeilenumbruch
+                    button.alignment = None
                     buttons.append(button)
-                parts.append(ft.Row(buttons, spacing=8))
+                parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \
                     item["angebote"][fg.AD_RUNNING]["problem"]
                 if problem:
