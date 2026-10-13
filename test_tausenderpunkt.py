@@ -98,7 +98,10 @@ class LeseregelTest(unittest.TestCase):
     def test_t07_bildschirm_mit_tausenderpunkt(self):
         bericht = fc.screen_report("1.920", "1.080", "24", "30")
         self.assertEqual(zeile(bericht, "Auflösung"), "1920 x 1080 Pixel")
-        self.assertEqual(bericht, fc.screen_report("1920", "1080", "24", "30"))
+        # ab 0.63.2 (B-D-15, FG-24): genau eine Hinweiszeile kommt am Ende dazu,
+        # alles davor ist zeichengleich mit der Eingabe ohne Punkt
+        self.assertEqual(bericht, fc.screen_report("1920", "1080", "24", "30")
+                         + "\nPunkt als Tausender gelesen.")
 
     def test_t08_bildrate_abgelehnt(self):
         for wert in ("inf", "nan", "1e309", "1e300", "1e-300"):
@@ -108,7 +111,8 @@ class LeseregelTest(unittest.TestCase):
 
     def test_t09_bildrate_1000(self):
         bericht = fc.screen_report("1920", "1080", "24", "1.000")
-        self.assertEqual(zeile(bericht, "Bildrate (fps)"), "1000 Bilder/Sekunde")
+        # ab 0.63.2 (B-K-N3, FG-24): deutsche Schreibweise mit Tausenderpunkt
+        self.assertEqual(zeile(bericht, "Bildrate (fps)"), "1.000 Bilder/Sekunde")
         self.assertEqual(zeile(bericht, "Datenrate"), "5.932,62 MiB/s")
 
     def test_t12_usv_last_1000(self):

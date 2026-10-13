@@ -11,7 +11,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14, Z15 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z18 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -86,7 +86,43 @@ FREIGEGEBEN = {
     "text:CALC_EXPLAIN_RAID": [("insert", 13, [], ["n:2"], "Z15"),
                                ("insert", 45, [], ["n:2"], "Z12")],
     "text:CALC_EXPLAIN_SUBNET": [("insert", 54, [], ["n:2", "n:128"], "Z14")],
+    # Ab 0.63.2 (Plan 0.63.2, FG-23), je Zahl nachgerechnet:
+    # Z16 (A8): /32 zeigt "keine (/32, einzelne Adresse)" statt der Adresse
+    "subnet:192.168.10.7/32": [("replace", 3, ["ip:192.168.10.7"], ["n:32"], "Z16")],
+    # Z17 (B-K-N3): Bildrate 29,97 statt gerundet 30
+    "screen:1920|1080|24|29,97": [("replace", 8, ["n:30"], ["n:29.97"], "Z17")],
+    # Z18 (B-N-06): Teilungsweg vollstaendig statt "..." nach 12 Zeilen; die
+    # Zahlen sind die fehlenden Zeilen "q : 2 = q//2 Rest q%2" (siehe
+    # test_4_z18_nachgerechnet, rechnet sie aus der Basis selbst nach)
+    "trainer:zahlen|3|2": [("insert", 52, [], ["n:8", "n:2", "n:4", "n:0", "n:4", "n:2", "n:2", "n:0", "n:2", "n:2", "n:1", "n:0", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|6": [("insert", 53, [], ["n:2", "n:2", "n:1", "n:0", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|10": [("insert", 52, [], ["n:15", "n:2", "n:7", "n:1", "n:7", "n:2", "n:3", "n:1", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|11": [("insert", 52, [], ["n:7", "n:2", "n:3", "n:1", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|13": [("insert", 53, [], ["n:9", "n:2", "n:4", "n:1", "n:4", "n:2", "n:2", "n:0", "n:2", "n:2", "n:1", "n:0", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|19": [("insert", 52, [], ["n:13", "n:2", "n:6", "n:1", "n:6", "n:2", "n:3", "n:0", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|20": [("insert", 53, [], ["n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|21": [("insert", 52, [], ["n:14", "n:2", "n:7", "n:0", "n:7", "n:2", "n:3", "n:1", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|25": [("insert", 53, [], ["n:7", "n:2", "n:3", "n:1", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|30": [("insert", 52, [], ["n:11", "n:2", "n:5", "n:1", "n:5", "n:2", "n:2", "n:1", "n:2", "n:2", "n:1", "n:0", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|32": [("insert", 53, [], ["n:6", "n:2", "n:3", "n:0", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    "trainer:zahlen|3|36": [("insert", 53, [], ["n:13", "n:2", "n:6", "n:1", "n:6", "n:2", "n:3", "n:0", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
 }
+
+
+def _teilung_fortsetzen(text):
+    """B-N-06 (ab 0.63.2), unabhaengig von fisi_lernen nachgerechnet: ersetzt
+    "   ..." nach der letzten Zeile "x : 2 = q Rest r" durch die fehlenden
+    Zeilen bis "1 : 2 = 0 Rest 1"."""
+    lines = text.split("\n")
+    if "   ..." not in lines:
+        return text
+    pos = lines.index("   ...")
+    rest = int(re.fullmatch(r"   \d+ : 2 = (\d+) Rest [01]", lines[pos - 1]).group(1))
+    fehlend = []
+    while rest:
+        fehlend.append("   %d : 2 = %d Rest %d" % (rest, rest // 2, rest % 2))
+        rest //= 2
+    return "\n".join(lines[:pos] + fehlend + lines[pos + 1:])
 # Aenderungen nur der Schreibweise (Wert gleich, Test 4 vergleicht Werte):
 # Z4 deutsche Zahlen in den Anzeigen, Z7 IPv6 gegliedert, Z9 KiB/MiB/GiB/MiB/s,
 # Z10 "Abzug von 2 Adressen" (Wert 2 bleibt), Z11 "1.200 VA"/"1.000 W".
@@ -175,7 +211,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14, Z15."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z18."""
 
     @classmethod
     def setUpClass(cls):
@@ -204,7 +240,20 @@ class ZahlenUnveraendertTest(unittest.TestCase):
 
     def test_4_jede_freigabe_einzeln(self):
         nummern = sorted({e[4] for liste in FREIGEGEBEN.values() for e in liste})
-        self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z2", "Z3", "Z5", "Z6"])
+        self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z2",
+                                   "Z3", "Z5", "Z6"])
+
+    def test_4_z18_nachgerechnet(self):
+        # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
+        quellen = sorted(q for q, liste in FREIGEGEBEN.items() if liste[0][4] == "Z18")
+        self.assertEqual(len(quellen), 12)
+        for quelle in quellen:
+            alt = rt.zahlen(self.basis[quelle], rt.schreibweise_alt(quelle))
+            neu = rt.zahlen(_teilung_fortsetzen(self.basis[quelle]), "de")
+            ops = [(art, i1, alt[i1:i2], neu[j1:j2])
+                   for art, i1, i2, j1, j2 in SequenceMatcher(a=alt, b=neu, autojunk=False)
+                   .get_opcodes() if art != "equal"]
+            self.assertEqual(ops, [e[:4] for e in FREIGEGEBEN[quelle]], quelle)
 
     def test_4_schreibweise(self):
         for nummer, (quelle, teile) in SCHREIBWEISE.items():
@@ -222,11 +271,15 @@ class ZahlenUnveraendertTest(unittest.TestCase):
                     if "Hosts" in line or "Adressen gesamt" in line:
                         self.assertIsNone(re.search(r"\d{4}", line), line)
 
-    def test_4_z2_nur_31(self):
+    def test_4_z2_31_und_z16_32(self):
+        # ab 0.63.2 (A8, FG-23): /32 hat wie /31 keine Broadcast-Adresse
         self.assertIn("Broadcast-Adresse     : keine (/31, RFC 3021)",
                       fc.subnet_report("192.168.10.1/31"))
-        for value in ("192.168.10.1/30", "192.168.10.7/32"):
-            self.assertNotIn("keine", fc.subnet_report(value))
+        self.assertIn("Broadcast-Adresse     : keine (/32, einzelne Adresse)",
+                      fc.subnet_report("192.168.10.7/32"))
+        self.assertIn("Broadcast-Adresse     : 192.168.10.3",
+                      fc.subnet_report("192.168.10.1/30"))
+        self.assertNotIn("keine", fc.subnet_report("192.168.10.1/30"))
 
     def test_4_z8_fps_vorgabe_30(self):
         for path, pattern in (("app_gui.py", r'self\.entry_fps = EntryBox\([^)]*value="30"\)'),
@@ -401,6 +454,8 @@ class TrainerTest(unittest.TestCase):
                     alt = self.basis["trainer:%s|%d|%d" % (kind, level, seed)]
                     for before, after, _nr in self.ERSETZEN:
                         alt = alt.replace(before, after)
+                    if kind == "zahlen":        # ab 0.63.2 (B-N-06, FG-23)
+                        alt = _teilung_fortsetzen(alt)
                     neu = rt.trainer_text(fl.trainer_task(kind, level, "e3-%d" % seed))
                     self.assertEqual(neu, alt, (kind, level, seed))
                     count += 1

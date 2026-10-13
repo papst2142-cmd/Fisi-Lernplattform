@@ -2534,6 +2534,10 @@ def _number_value(text):
                 raise _NumberProblem("keine Zahl")  # 1.00,5 / 1,000.5 / 1.000.5
             whole = whole.replace(".", "")
     elif "." in whole:
+        # Ab 0.63.2 (Restrisiko 12): "01.000" sieht aus wie ein Tausenderpunkt
+        # mit fuehrender 0 und war still 1 -> Meldung ("0.125" bleibt 0,125)
+        if re.fullmatch(r"0[0-9]{1,2}(\.[0-9]{3})+", whole):
+            raise _NumberProblem("keine Zahl")
         if _NUMBER_GROUPS.fullmatch(whole):          # Tausenderpunkt
             whole = whole.replace(".", "")
         elif whole.count(".") == 1:                  # Dezimalpunkt
@@ -2569,6 +2573,21 @@ def read_number(text, caption, ganz=False):
             raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
         return int(value)
     return value
+
+
+def _thousands_point_lines(*texts):
+    """Ab 0.63.2 (B-D-15, Restrisiko 13): Hinweiszeile fuer das Ende eines
+    Rechner-Ergebnisses, wenn eines der gelesenen Felder einen Punkt als
+    Tausenderpunkt hatte ("1.000", "7.200", "1.234,5"; gleiche Regel wie
+    _number_value). Dezimalpunkt ("0.125") und Leerzeichen ("1 000") nicht.
+    Liefert ["Punkt als Tausender gelesen."] oder []."""
+    for text in texts:
+        whole = str(text if text is not None else "").strip()
+        whole = whole[1:] if whole.startswith("-") else whole
+        whole = whole.partition(",")[0]
+        if "." in whole and _NUMBER_GROUPS.fullmatch(whole):
+            return ["Punkt als Tausender gelesen."]
+    return []
 
 
 RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10"]
@@ -2632,8 +2651,11 @@ def subnet_report(value):
 
     if network.version == 4:
         v = ipv4_values(network)
-        # Ab 0.62.3: /31 hat keine Broadcast-Adresse (Punkt-zu-Punkt, RFC 3021)
-        broadcast = "keine (/31, RFC 3021)" if v["praefix"] == 31 else v["broadcast"]
+        # Ab 0.62.3: /31 hat keine Broadcast-Adresse (Punkt-zu-Punkt, RFC 3021);
+        # ab 0.63.2 (A8) auch /32 nicht (eine einzelne Adresse)
+        broadcast = {31: "keine (/31, RFC 3021)",
+                     32: "keine (/32, einzelne Adresse)"}.get(v["praefix"],
+                                                              v["broadcast"])
         lines = [
             "Netzadresse           : %s" % v["netz"],
             "Subnetzmaske          : %s" % v["maske"],
@@ -3660,6 +3682,15 @@ def raid_report(level, disks_text, size_text):
     size = read_number(size_text, "Kapazität je Festplatte (GB)")
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
+    # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
+    if disks > 1000:
+        raise InputError("Die Anzahl der Festplatten ist zu groß (höchstens 1.000).")
+    if size > 1000000:
+        raise InputError("Die Kapazität je Festplatte ist zu groß "
+                         "(höchstens 1.000.000 GB).")
+    if size < 0.01:
+        raise InputError("Die Kapazität je Festplatte ist zu klein "
+                         "(mindestens 0,01 GB).")
 
     values = raid_input_values(level, disks, size)
     if values is None:
@@ -3681,6 +3712,7 @@ def raid_report(level, disks_text, size_text):
         "Ausfalltoleranz       : %s" % tolerance[0],
     ]
     lines += [" " * 24 + line for line in tolerance[1:]]
+    lines += _thousands_point_lines(disks_text, size_text)     # ab 0.63.2
     return "\n".join(lines)
 
 
@@ -3697,9 +3729,17 @@ def screen_report(width_text, height_text, depth, fps_text):
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
                          "Bildrate eingeben.")
+    # Ab 0.63.2 (Restrisiko 16, F6-7): nur beim direkten Kernaufruf moeglich
+    if not 1 <= depth <= 64:
+        raise InputError("Bitte eine Farbtiefe von 1 bis 64 Bit wählen.")
     fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
+    # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
+    if width > 100000:
+        raise InputError("Die Breite ist zu groß (höchstens 100.000 Pixel).")
+    if height > 100000:
+        raise InputError("Die Höhe ist zu groß (höchstens 100.000 Pixel).")
     if fps < 0:
         raise InputError("Die Bildrate darf nicht negativ sein.")
     # Ab 0.62.4: "23.976" liest die Leseregel als 23976 (Tausenderpunkt);
@@ -3733,11 +3773,15 @@ def screen_report(width_text, height_text, depth, fps_text):
         gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
         lines += [
             "",
-            "Bildrate (fps)        : %.0f Bilder/Sekunde" % fps,
+            # ab 0.63.2 (B-K-N3): 29,97 statt 30, 1.000 statt 1000
+            "Bildrate (fps)        : %s Bilder/Sekunde" % _de_short(fps, 3),
             "Datenrate             : %s MiB/s" % de_number(mb_per_sec),
             "                      : %s Mbit/s" % de_number(mbit_per_sec),
             "                      : %s GiB/Minute" % de_number(gb_per_min),
         ]
+    # ab 0.63.2 (B-D-15): die Bildrate zaehlt nur, wenn sie gelesen wurde
+    lines += _thousands_point_lines(width_text, height_text,
+                                    fps_text if fps_text.strip() else "")
     return "\n".join(lines)
 
 
@@ -4045,6 +4089,15 @@ def ups_calculate(mode, fields, unit="W"):
                       for ok, text in checks]
             if rated_w is None:
                 lines.append("  Hinweis: ohne Nennleistung in W nur VA geprüft.")
+    # Ab 0.63.2 (Restrisiko 13, B-D-15): Hinweis als letzte Zeile der Tabelle
+    # (vor dem allgemeinen Hinweis, den das Handy getrennt zeigt); es zaehlen
+    # nur die Felder, die die gewaehlte Berechnung gelesen hat
+    used = ["last", "pf", "eta", "minuten", "alterung", "block_v", "reihe"]
+    if mode != "akku":
+        used += ["block_ah", "parallel"]
+    if mode == "empfehlung":
+        used += ["nenn_va", "nenn_w"]
+    lines += _thousands_point_lines(*[fields.get(key) for key in used])
     lines += ["", UPS_SIMPLE_TEXT]
     return {"text": "\n".join(lines), "bild": picture, "passend": passend}
 
