@@ -511,7 +511,7 @@ FOLD_STATE_OPEN = "aufgeklappt"
 
 
 def fold_label(title, opened):
-    """"Farben, eingeklappt" bzw. "Farben, aufgeklappt" (Tastatur, TalkBack)."""
+    """"Farben, zugeklappt" bzw. "Farben, aufgeklappt" (Tastatur, TalkBack)."""
     return "%s, %s" % (title, FOLD_STATE_OPEN if opened else FOLD_STATE_CLOSED)
 
 

@@ -646,24 +646,16 @@ class Klappen(unittest.TestCase):
             self.assertEqual(alt, [], name)
 
     def test_ein_wort_in_theme(self):
-        """fisi_theme.py mitpruefen (Nacharbeit L3). Ausgenommen ist nur der
-        Docstring von fold_label (fisi_theme.py:514), er liegt ausserhalb der
-        Freigabe 507-510 und wartet auf Freigabe, siehe den
-        expectedFailure-Test darunter."""
-        doc = self._fold_label_doc()
+        """fisi_theme.py mitpruefen (Nacharbeit L3), ohne Ausnahme: seit
+        FG-79 sagt auch der Docstring von fold_label "zugeklappt"."""
         alt = [(z, s) for z, s in self._strings("fisi_theme.py")
-               if any(w in s.lower() for w in self.ALT)
-               and not (z == doc.lineno and s == doc.value)]
+               if any(w in s.lower() for w in self.ALT)]
         self.assertEqual(alt, [])
 
-    @unittest.expectedFailure
-    def test_theme_fold_label_docstring_wartet_auf_freigabe(self):
-        """WARTET AUF FREIGABE: Docstring fisi_theme.py:514 sagt noch
-        "Farben, eingeklappt" (geschuetzte Datei, ausserhalb 507-510, nicht
-        geaendert). Bleibt als "expected failure" im Lauf sichtbar; nach der
-        Aenderung meldet unittest "unexpected success", dann den Marker
-        entfernen."""
+    def test_theme_fold_label_docstring(self):
+        """FG-79: Docstring fisi_theme.py fold_label sagt "zugeklappt"."""
         doc = self._fold_label_doc().value.lower()
+        self.assertIn('"farben, zugeklappt"', doc)
         self.assertFalse(any(w in doc for w in self.ALT), doc)
 
     def test_werte_und_beschriftung(self):
