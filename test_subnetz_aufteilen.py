@@ -3249,6 +3249,13 @@ class TrainerTeilenTest(unittest.TestCase):
             kern = fc.split_network(netz, anzahl, e["version"])
             for schmal, zeilen in ((False, task.steps), (True, task.steps_schmal)):
                 pc = fc.split_explain(kern, schmal).split("\n")
+                if schmal and e["nibble"]:
+                    # Nebenbefund 14 zu 0.63.1: am Handy sind nur die ersten
+                    # e["anzahl"] Subnetze "verwendet", danach "frei, Reserve"
+                    pc = [re.sub(r"^(Subnetz ([0-9.]+): )verwendet$",
+                                 lambda t: t.group(1) + ("verwendet" if int(t.group(2).replace(
+                                     ".", "")) <= e["anzahl"] else "frei, Reserve"), z)
+                          for z in pc]
                 vorne = zeilen.index(pc[0])
                 # 0.63.1 (Antwort 7): Lueckenzeile im Trainer "(nicht einzeln
                 # aufgelistet)"; Handy-Absatz neu umbrochen, darum dort flach verglichen

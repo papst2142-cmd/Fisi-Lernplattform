@@ -884,6 +884,7 @@ from fisi_core import (CALC_EXPLAIN_HANDY_WIDTH, de_int, hosts_explain,  # noqa:
                        subnet_addr_text, subnet_by_hosts, subnet_hosts_text,
                        subnet_net_text)
 from fisi_core import _explain_list_indexes, _wrap_para  # noqa: E402
+from fisi_core import SUBNET_STATE_FREE, SUBNET_STATE_USED  # noqa: E402
 
 TRAINER_NAMES = ["Verwaltung", "Produktion", "Vertrieb", "Lager", "Technik", "Gäste-WLAN",
                  "Server", "Entwicklung", "Einkauf", "Buchhaltung"]
@@ -1025,6 +1026,18 @@ def _split_gap_lines(result, steps, narrow):
     return steps, narrow
 
 
+def _split_reserve_lines(result, wanted, narrow):
+    """Handy, an Nibble-Grenzen (Nebenbefund 14 zu 0.63.1): gerechnet wird mit
+    allen Subnetzen bis zur 4-Bit-Grenze, verwendet werden aber nur die ersten
+    wanted. Die gelisteten Subnetze danach heissen darum "frei, Reserve"."""
+    for index in _explain_list_indexes(result["anzahl"])[0]:
+        if index is not None and index >= wanted:
+            old = "Subnetz %s: %s" % (de_int(index + 1), SUBNET_STATE_USED)
+            new = "Subnetz %s: %s" % (de_int(index + 1), SUBNET_STATE_FREE)
+            narrow = [new if line == old else line for line in narrow]
+    return narrow
+
+
 def _split_task(rng, level):
     """Netz aufteilen: N gleich grosse Subnetze (Stufe 3 auch IPv6, zur Haelfte
     an Nibble-Grenzen)."""
@@ -1057,6 +1070,8 @@ def _split_task(rng, level):
     steps += split_explain(result).split("\n") + _split_pick_lines(result, number, False)
     narrow += split_explain(result, True).split("\n") + _split_pick_lines(result, number, True)
     steps, narrow = _split_gap_lines(result, steps, narrow)
+    if nibble:
+        narrow = _split_reserve_lines(result, wanted, narrow)
     entry = split_entry(result, number - 1)
     size = result["groesse"]
     if version == 4:
