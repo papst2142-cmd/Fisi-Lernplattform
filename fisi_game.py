@@ -3416,18 +3416,15 @@ class GameState:
         # nicht in history; so zaehlen Rueckblick (journey, journey_stats,
         # run_metrics) und die Kopfzahlen gleich. Regeln wie in 0.62.5 (B-G-26):
         # ohne gueltige Tagesangabe wird nichts geraten und nichts uebersprungen.
-        self._counted_once = set()   # Doppel-Merker (E-5), ab 0.63.2 (B-F-02) im Spielstand
+        counted_once = set()
         for timestamp, kind, data in events:
-            self.apply_event(timestamp, kind, data)
+            self.apply_event(timestamp, kind, data, counted_once)
         self._mark_handled()
 
-    def apply_event(self, timestamp, kind, data):
-        """Ein Ereignis auf den Spielstand anwenden - der Rumpf der
-        Ereignis-Schleife, ab 0.63.2 (B-F-02) unveraendert herausgeloest. Der
-        Neuaufbau (__init__) ruft es fuer jedes Ereignis in Zeitreihenfolge auf,
-        Game._log nach dem Schreiben nur fuer das neue Ereignis (siehe
-        Game._apply_written). Danach gehoert note_handled dazu. False: als
-        eindeutiges Doppel uebersprungen (E-5, siehe oben)."""
+    @staticmethod
+    def double_of(kind, data):
+        """Schluessel eines eindeutigen Doppels (E-5) oder None - ab 0.63.2
+        (B-F-02) aus dem Schleifenrumpf herausgezogen, Regeln unveraendert."""
         if kind == EV_SOLVED:
             double = (kind, data.get("aufgabe"), data.get("tag"))
             if not (isinstance(double[1], str) and double[1] and
@@ -3439,10 +3436,28 @@ class GameState:
                 double = None
         else:
             double = None
+        return double
+
+    def counted_once(self):
+        """Die Doppel-Merker zum jetzigen Stand, aus history (ab 0.63.2,
+        B-F-02): Jeder Schluessel kam beim Anwenden genau dann dazu, wenn das
+        Ereignis in history aufgenommen wurde. Kein Feld des Spielstands (E-5)."""
+        keys = (self.double_of(kind, data) for _timestamp, kind, data in self.history)
+        return {key for key in keys if key is not None}
+
+    def apply_event(self, timestamp, kind, data, counted_once):
+        """Ein Ereignis auf den Spielstand anwenden - der Rumpf der
+        Ereignis-Schleife, ab 0.63.2 (B-F-02) unveraendert herausgeloest. Der
+        Neuaufbau (__init__) ruft es fuer jedes Ereignis in Zeitreihenfolge auf,
+        Game._log nach dem Schreiben nur fuer das neue Ereignis (siehe
+        Game._apply_written). Danach gehoert note_handled dazu. counted_once:
+        die Doppel-Merker (E-5), beim Neuaufbau eine lokale Menge. False: als
+        eindeutiges Doppel uebersprungen (E-5, siehe oben)."""
+        double = self.double_of(kind, data)
         if double is not None:
-            if double in self._counted_once:
+            if double in counted_once:
                 return False
-            self._counted_once.add(double)
+            counted_once.add(double)
         self.history.append((timestamp, kind, data))
         if self.first_event is None:
             self.first_event = str(timestamp)
@@ -5283,14 +5298,18 @@ class Game:
         if not isinstance(payload, dict):
             return False
         state = self.state
+        once = getattr(self, "_once", None)
+        if once is None or once[0] is not state:
+            once = self._once = (state, state.counted_once())
         try:
             day_before = state.day
-            state.apply_event(timestamp, kind, payload)
+            state.apply_event(timestamp, kind, payload, once[1])
             state.note_handled(kind, payload, day_before)
         except Exception:
             # Halb angewendet: neu rechnen (wirft dann wie bisher, falls das
             # Ereignis selbst den Fehler ausloest)
             self._stamp = None
+            self._once = None
             return False
         self._stamp = (self.run, after)
         self._incremental = getattr(self, "_incremental", 0) + 1

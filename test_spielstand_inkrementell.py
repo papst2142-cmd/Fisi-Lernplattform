@@ -28,9 +28,12 @@ Erwartung (rot/gruen):
                                           Neuaufbau
     test_abgleich_eingang                 fremde Zeilen (Abgleich) dazwischen:
                                           gleich dem Neuaufbau
+    test_abgleich_waehrend_schreiben      fremde Zeile zwischen Stempel und
+                                          eigenem Schreiben: Neuaufbau
     test_doppel_nach_abgleich             E-5-Doppel (fremdes Ticket, dann
                                           dasselbe lokal): zaehlt einmal, auch
-                                          schrittweise
+                                          schrittweise (Merker ohne Feld im
+                                          Spielstand, E-5 R6)
     test_oeffnen_schreibt_nichts          Oeffnen eines Spielstands aendert die
                                           Datenbank nicht und schreibt kein
                                           fehler.log
@@ -329,12 +332,39 @@ class SchrittweiseTest(_Base):
         game = fg.Game(self.db, "PC")
         game.set_profile("Abgleich", {})
         game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": 5000})
+        task = game.state.open_tickets()[0]
         # Zeile eines anderen Geraets (wie nach dem Abgleich), ohne reload
         self.db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": 2, "gehalt": 7}), "Handy",
                                game.run)
-        task = game.state.open_tickets()[0]
+        # Abzeichen-Pruefung aus: sie rechnet bei neuen Abzeichen ohnehin neu
+        # und wuerde einen Fehler im schrittweisen Weg verdecken
+        game.check_achievements = lambda *args, **kwargs: []
         game.solve(task["id"], fg.find_solution(game.state.prepared_task(task)), False)
         self.assert_like_rebuild(game, "Ticket nach fremder Zeile")
+        self.assertEqual(game.state.days_done, 2)
+        game._log(fg.EV_LAYOUT, {"wohnung": game.state.home_id, "moebel": {}, "boeden": {}})
+        self.assert_like_rebuild(game, "Einrichtung danach")
+
+    def test_abgleich_waehrend_schreiben(self):
+        """Fremde Zeile genau zwischen Stempel und eigenem Schreiben (Abgleich
+        im Hintergrund): voller Neuaufbau, nichts geht verloren."""
+        install("w", "sekunde")
+        game = fg.Game(self.db, "PC")
+        game.set_profile("Wettlauf", {})
+        game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": 5000})
+        game.check_achievements = lambda *args, **kwargs: []
+        original = self.db.log_game_event
+
+        def with_foreign(kind, data, device="", run=None):
+            original(fg.EV_DAY_END, json.dumps({"tag": 2, "gehalt": 7}), "Handy", game.run)
+            return original(kind, data, device, run)
+        self.db.log_game_event = with_foreign
+        try:
+            game._log(fg.EV_LAYOUT, {"wohnung": game.state.home_id, "moebel": {},
+                                     "boeden": {}})
+        finally:
+            self.db.log_game_event = original
+        self.assert_like_rebuild(game, "Einrichtung mit fremder Zeile dazwischen")
         self.assertEqual(game.state.days_done, 2)
 
     def test_doppel_nach_abgleich(self):
