@@ -187,16 +187,17 @@ class SchutzTest(unittest.TestCase):
 
 class IbusTeilTest(unittest.TestCase):
 
-    def test_matrix_hat_teil_ibus(self):
+    def test_matrix_ohne_teil_ibus(self):
+        # Weg (c): Teil ibus laeuft nur im Container, nicht auf GitHub
         jobs = _jobs(_lesen(BUILD))
-        self.assertIn("        teil: [spiel, lang, rest, ibus]", jobs["tests"])
+        self.assertIn("        teil: [spiel, lang, rest]", jobs["tests"])
+        self.assertNotIn("ibus", "\n".join(z for z in jobs["tests"]
+                                            if not z.lstrip().startswith("#")))
 
-    def test_werkzeuge_fuer_ibus(self):
+    def test_keine_ibus_werkzeuge_auf_github(self):
         schritt = "\n".join(_schritt(_lesen(BUILD), "Werkzeuge fuer die Tests"))
-        # Ab FG-91: python3-tk bleibt, weil Tk auf GitHub damit einfror
-        # (Lauf 38430837558), vermutet ursaechlich.
-        # Ganze Zeile pruefen (vorher nur der Anfang "... ibus dbus-x11")
-        self.assertIn("\n            sudo apt-get install -y ibus dbus-x11 python3-tk\n", schritt + "\n")
+        self.assertNotIn("ibus", schritt)
+        self.assertNotIn("python3-tk", schritt)
 
     def test_ci_tests_kennt_teil_ibus(self):
         text = _lesen(CI_TESTS)

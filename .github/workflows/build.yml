@@ -298,8 +298,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Ab 0.63.2 (B-A-01): Teil "ibus" = Nachstellung mit echtem IBus
-        teil: [spiel, lang, rest, ibus]
+        # Ab 0.63.2 (B-A-01): Der Teil "ibus" (Nachstellung mit echtem IBus)
+        # laeuft nur im Container (bash pruefung/ci_tests.sh ibus), nicht auf
+        # GitHub: Dort haengt Tk ohne Umgehung nicht verlaesslich, der Test
+        # beweist dort nichts. Der IBus-Schutz gehoert auf Nicos Testliste
+        # (Linux mit IBus).
+        teil: [spiel, lang, rest]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -316,10 +320,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb openbox x11-utils desktop-file-utils \
             hunspell hunspell-de-de
-          # Ab 0.63.2 (B-A-01): IBus und dbus-launch nur fuer den Teil "ibus"
-          if [ "$TEIL" = "ibus" ]; then
-            sudo apt-get install -y ibus dbus-x11 python3-tk
-          fi
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
