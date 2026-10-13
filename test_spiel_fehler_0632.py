@@ -10,6 +10,8 @@ Tests fuer die Spiel-Kern-Fehler aus 0.63.2 (Bauauftrag N1, Plan-Nachtrag
           bei Bitweiche offen sind                       (GruendungFortschrittTest)
   B-F-01  (Rest) Rueckfrage beim Entlassen nennt das Projekt nicht,
           PC- und Handy-Text gleich                      (EntlassenRueckfrageTest)
+          Nacharbeit Frage 26 (b): eigener Satz, wenn die Person das einzige
+          Teammitglied ist (test_einziges_teammitglied; ROT gegen 1fc8025)
 
 Erwartung: Die mit "ROT" markierten Tests sind auf 14b3bd4 (v0.63.1) rot und
 nach der Aenderung gruen. Die mit "SCHUTZ" markierten sind auf beiden Staenden
@@ -473,16 +475,32 @@ class EntlassenRueckfrageTest(unittest.TestCase):
     """B-F-01 (Rest): Rueckfrage nennt das Projekt, PC und Handy gleich."""
 
     OHNE = "%s wirklich entlassen? Die Person bewirbt sich danach nicht erneut."
+    # Frage 26 (b), Wortlaut Nico: Satz fuer das einzige Teammitglied
+    EINZIG = ("Das Projekt bleibt bestehen, kommt aber ohne Team nicht voran; "
+              "das Team änderst du unter „Team ändern“.")
 
     @classmethod
     def setUpClass(cls):
         cls.tmp = TempDB()
         db = cls.tmp.__enter__()
         cls.game = _founded(db)
+        # Frage 26: vier Personen brauchen eine Ausbaustufe mehr
+        cls.game.expand()
+        cls.game.reload()
         cls.in_project = _new_person(cls.game)
+        cls.partner = _new_person(cls.game)
         cls.free = _new_person(cls.game)
-        cls.pid = _win_project(cls.game, [cls.in_project])
+        for _try in range(30):   # neue Bewerbungen abwarten
+            if fg.applicants(cls.game.state, cls.game.content):
+                break
+            _end_day(cls.game)
+        cls.solo = _new_person(cls.game)
+        # Frage 26: Projekt mit zwei Personen (alter Satz) und Projekt, in dem
+        # die Person das einzige Teammitglied ist (neuer Satz)
+        cls.pid = _win_project(cls.game, [cls.in_project, cls.partner])
         cls.title = cls.game.state.projects[cls.pid]["titel"]
+        cls.solo_pid = _win_project(cls.game, [cls.solo])
+        cls.solo_title = cls.game.state.projects[cls.solo_pid]["titel"]
 
     @classmethod
     def tearDownClass(cls):
@@ -515,17 +533,36 @@ class EntlassenRueckfrageTest(unittest.TestCase):
         return asked[0]
 
     def test_rueckfrage_nennt_projekt(self):
-        """ROT: Person im laufenden Projekt: Rueckfrage nennt den Titel."""
+        """ROT: Person im laufenden Projekt: Rueckfrage nennt den Titel.
+        Ab Frage 26 (Gegenfall): Team hat noch eine Person -> Satz
+        "laeuft ohne diese Person weiter" unveraendert."""
         item = self._item(self.in_project)
         self.assertEqual(self.game.state.project_of(self.in_project), self.pid)
+        self.assertEqual(self.game.state.projects[self.pid]["team"],
+                         [self.in_project, self.partner])
         expected = (self.OHNE % item["name"] + " %s arbeitet im Projekt „%s“. Das Projekt "
                     "läuft ohne diese Person weiter; das Team änderst du unter "
                     "„Team ändern“." % (item["name"], self.title))
         self.assertEqual(self._pc_text(item), ("Entlassen", expected))
+        self.assertEqual(self._mobile_text(item), ("Entlassen", expected))
+        self.assertNotIn("bleibt bestehen", expected)
+
+    def test_einziges_teammitglied(self):
+        """ROT gegen 1fc8025 (Frage 26 b): Ist die Person das einzige
+        Teammitglied, lautet der Projektsatz genau wie von Nico entschieden;
+        PC und Handy gleich."""
+        item = self._item(self.solo)
+        self.assertEqual(self.game.state.projects[self.solo_pid]["team"], [self.solo])
+        expected = (self.OHNE % item["name"] + " %s arbeitet im Projekt „%s“. " % (
+            item["name"], self.solo_title) + self.EINZIG)
+        self.assertEqual(self.game.fire_question(self.solo, item["name"]), expected)
+        self.assertEqual(self._pc_text(item), ("Entlassen", expected))
+        self.assertEqual(self._mobile_text(item), ("Entlassen", expected))
+        self.assertNotIn("läuft ohne diese Person weiter", expected)
 
     def test_pc_und_handy_gleich(self):
         """ROT (Projektteil) bzw. SCHUTZ: PC- und Handy-Rueckfrage gleich."""
-        for person in (self.in_project, self.free):
+        for person in (self.in_project, self.partner, self.solo, self.free):
             item = self._item(person)
             self.assertEqual(self._pc_text(item), self._mobile_text(item))
         self.assertIn(self.title, self._mobile_text(self._item(self.in_project))[1])
@@ -542,6 +579,8 @@ class EntlassenRueckfrageTest(unittest.TestCase):
         events = len(self.game.db.game_events(self.game.run))
         found = self.game.fire_projects(self.in_project)
         self.assertEqual([item["projekt"] for item in found], [self.pid])
+        self.assertEqual([item["projekt"] for item in self.game.fire_projects(self.solo)],
+                         [self.solo_pid])
         self.assertEqual(self.game.fire_projects(self.free), [])
         self.assertEqual(len(self.game.db.game_events(self.game.run)), events)
 

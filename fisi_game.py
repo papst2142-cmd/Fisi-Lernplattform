@@ -5414,12 +5414,19 @@ class Game:
     def fire_question(self, staff_id, name):
         """Ab 0.63.2 (B-F-01 Rest): Rueckfrage beim Entlassen, PC und Handy
         gleich. Arbeitet die Person in einem laufenden Projekt, nennt die
-        Rueckfrage es; sonst bleibt der Text wie bis 0.63.1."""
+        Rueckfrage es; sonst bleibt der Text wie bis 0.63.1. Ab 0.63.2
+        (Frage 26 b): Ist die Person das einzige Teammitglied, steht statt
+        "laeuft ohne diese Person weiter" der Satz zum Projekt ohne Team."""
         text = "%s wirklich entlassen? Die Person bewirbt sich danach nicht erneut." % name
         for project in self.fire_projects(staff_id):
-            text += (" %s arbeitet im Projekt „%s“. Das Projekt läuft ohne diese Person "
-                     "weiter; das Team änderst du unter „Team ändern“." % (
-                         name, project.get("titel") or project["projekt"]))
+            if any(person != staff_id for person in project["team"]):
+                text += (" %s arbeitet im Projekt „%s“. Das Projekt läuft ohne diese Person "
+                         "weiter; das Team änderst du unter „Team ändern“." % (
+                             name, project.get("titel") or project["projekt"]))
+            else:
+                text += (" %s arbeitet im Projekt „%s“. Das Projekt bleibt bestehen, kommt "
+                         "aber ohne Team nicht voran; das Team änderst du unter "
+                         "„Team ändern“." % (name, project.get("titel") or project["projekt"]))
         return text
 
     def train(self, staff_id, target):
