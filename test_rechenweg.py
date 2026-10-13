@@ -4,14 +4,15 @@
 Tests ab 0.62.3 (Plan 0.62.3, Teil E): Rechenwege am Handy und Pruefung aller
 Rechenwege und Rechner-Anzeigen.
 
-  Test 1   Handy-Fassungen: hoechstens 28 Zeichen je Zeile
+  Test 1   Handy-Fassungen: hoechstens 26 Zeichen je Zeile (bis 0.63.1: 28)
+  Test 1b  Handy-Fassungen: dieselben Woerter wie am PC (ab 0.63.2, FG-73)
   Test 2   Handy-Fassungen: dieselben Zahlen wie am PC (Zusatzzahlen nur aus
            einer ausdruecklichen Liste: Oktett-Nummern, Dezimalwert je Oktett)
   Test 2b  Ergebnisse in derselben Reihenfolge wie am PC
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14-Z18 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z31 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -45,7 +46,14 @@ import fisi_core as fc            # noqa: E402
 import fisi_lernen as fl          # noqa: E402
 import rechenweg_texte as rt      # noqa: E402
 
-GRENZE = 28    # Freigabe 0.62.3 (F-P2): Anheben nur mit Freigabe
+# Ab 0.63.2 (Meldung 21 Frage 2 b, FG-73): 26 statt 28 (ein Zeichen Abstand
+# zum Kasten bei "Sehr gross"). Darf nur sinken, nie steigen.
+GRENZE = 26    # vorher 28 (Freigabe 0.62.3, F-P2)
+# Test 9: Schritt 3 des Trainers am Handy (fisi_lernen.py, nicht Teil von
+# FG-73) behaelt die bisherige Grenze 28; seine Zeile "3. UND-Verknuepfung je
+# Oktett" hat 28 Zeichen. Ab FG-82 auch die Breite der erzeugten Rechenwege
+# ("Netz aufteilen", "Nach Hostbedarf"): CALC_EXPLAIN_HANDY_WIDTH = 28 (Test 1).
+GRENZE_TRAINER = 28
 
 PAARE = [("SUBNET", fc.CALC_EXPLAIN_SUBNET, fc.CALC_EXPLAIN_SUBNET_HANDY),
          ("RAID", fc.CALC_EXPLAIN_RAID, fc.CALC_EXPLAIN_RAID_HANDY),
@@ -77,7 +85,15 @@ FREIGEGEBEN = {
     "subnet:192.168.10.1/31": [("replace", 3, ["ip:192.168.10.1"], ["n:31", "n:3021"], "Z2")],
     "raid:RAID 5|4|1,5": [("replace", 2, ["n:2"], ["n:1.5"], "Z3")],
     "raid:RAID 5|3|0,5": [("replace", 2, ["n:0"], ["n:0.5"], "Z3")],
-    "text:CALC_EXPLAIN_SCREEN": [("replace", 11, ["n:16.7"], ["n:16.8"], "Z5")],
+    # ab 0.63.2 (Meldung 21 Frage 9, Z30): Satz "32 Bit = True Color (24 Bit) +
+    # 8 Bit Alpha (Transparenz)" direkt nach der Farbtiefe; der Vergleich legt
+    # ihn mit Z5 in einen Schritt ("je 8 Bit" bleibt), getrennt nachgerechnet in
+    # test_4_z30_nachgerechnet
+    "text:CALC_EXPLAIN_SCREEN": [("replace", 11, ["n:16.7"],
+                                  ["n:16.8", "n:8", "n:32", "n:24"], "Z5+Z30"),
+                                 # ab 0.63.2 (B-N-07 5.13, FG-23): Binaerpraefix
+                                 ("insert", 21, [], ["n:1024", "n:2", "n:10", "n:1",
+                                                     "n:1000"], "Z24")],
     "upsaufgabe:4": [("insert", 9, [], ["n:1", "n:6"], "Z6"),
                      ("replace", 11, ["n:0.1667"], ["n:1", "n:6"], "Z6")],
     "raid:RAID 10|4|1000": [("insert", 8, [], ["n:2"], "Z12")],
@@ -85,7 +101,21 @@ FREIGEGEBEN = {
     "raid:RAID 10|8|1000": [("insert", 8, [], ["n:4"], "Z12")],
     "text:CALC_EXPLAIN_RAID": [("insert", 13, [], ["n:2"], "Z15"),
                                ("insert", 45, [], ["n:2"], "Z12")],
-    "text:CALC_EXPLAIN_SUBNET": [("insert", 54, [], ["n:2", "n:128"], "Z14")],
+    "text:CALC_EXPLAIN_SUBNET": [
+        # ab 0.63.2 (B-N-07, FG-23): Z19 = 5.1 Beispiel /28 (Grenze im Oktett),
+        # Z20 = 5.2 ODER mit Bitreihen, Z21 = 5.3 Ausnahmen /31 und /32
+        ("insert", 25, [], ["ip:192.168.1.50", "n:28", "n:4", "n:50", "s:00110010",
+                            "n:240", "n:11110000", "s:00110000", "n:48", "n:28",
+                            "ip:192.168.1.48"], "Z19"),
+        ("insert", 29, [], ["n:4", "n:0", "s:00000000", "n:11111111", "n:11111111",
+                            "n:255"], "Z20"),
+        # ab 0.63.2 (Meldung 21 Frage 13 b): Z31 = ODER-Beispiel /28 in Schritt 3,
+        # nachgerechnet in test_4_z31_nachgerechnet
+        ("insert", 30, [], ["ip:192.168.1.50", "n:28", "n:4", "s:00110000", "n:48",
+                            "s:00001111", "ip:0.0.0.15", "s:00111111", "n:63", "n:28",
+                            "ip:192.168.1.63"], "Z31"),
+        ("insert", 51, [], ["n:31", "n:3021", "n:32"], "Z21"),
+        ("insert", 54, [], ["n:2", "n:128"], "Z14")],
     # Ab 0.63.2 (Plan 0.63.2, FG-23), je Zahl nachgerechnet:
     # Z16 (A8): /32 zeigt "keine (/32, einzelne Adresse)" statt der Adresse
     "subnet:192.168.10.7/32": [("replace", 3, ["ip:192.168.10.7"], ["n:32"], "Z16")],
@@ -106,6 +136,109 @@ FREIGEGEBEN = {
     "trainer:zahlen|3|30": [("insert", 52, [], ["n:11", "n:2", "n:5", "n:1", "n:5", "n:2", "n:2", "n:1", "n:2", "n:2", "n:1", "n:0", "n:1", "n:2", "n:0", "n:1"], "Z18")],
     "trainer:zahlen|3|32": [("insert", 53, [], ["n:6", "n:2", "n:3", "n:0", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
     "trainer:zahlen|3|36": [("insert", 53, [], ["n:13", "n:2", "n:6", "n:1", "n:6", "n:2", "n:3", "n:0", "n:3", "n:2", "n:1", "n:1", "n:1", "n:2", "n:0", "n:1"], "Z18")],
+    # ab 0.63.2 (B-N-07, FG-23), nachgerechnet in test_4_bn07_nachgerechnet:
+    # Z22 = 5.5 (80 % / 0,8 benannt, Laufzeitformel), Z23 = 5.7 (Beispielkopf),
+    # Z25 = 4.9 (Stellenzahl wie die Anzeige: 666,67 VA, 23,0 / 18,4 min,
+    # 44,4 % / 66,7 %). insert 39: 23 = "gerundet 23,0" (Z25), 80 und 4 (Z22)
+    "text:CALC_EXPLAIN_UPS": [("insert", 1, [], ["n:0.9"], "Z23"),
+                              ("insert", 6, [], ["n:12"], "Z23"),
+                              ("insert", 7, [], ["n:1500", "n:900"], "Z23"),
+                              ("insert", 10, [], ["n:666.67"], "Z25"),
+                              ("insert", 34, [], ["n:60"], "Z22"),
+                              ("insert", 39, [], ["n:23", "n:80", "n:4"], "Z22"),
+                              ("insert", 42, [], ["n:18.4"], "Z25"),
+                              ("replace", 45, ["n:667"], ["n:666.67"], "Z25"),
+                              ("replace", 47, ["n:44"], ["n:44.4"], "Z25"),
+                              ("replace", 50, ["n:67", "n:18.43"], ["n:66.7", "n:18.4"],
+                               "Z25"),
+                              ("insert", 53, [], ["n:80", "n:0.8", "n:3", "n:4"], "Z22")],
+    # Z29 = Gegenpruefung L6 (B-N-07 4.9): Anzeige "Auslastung Scheinleistung:
+    # 666,67 VA von 1.500 VA = 44,4 %" statt "667 VA ... = 44,4 %" (667 / 1.500
+    # waeren 44,5 %), nachgerechnet in test_4_z29_nachgerechnet
+    "ups:empfehlung": [("replace", 18, ["n:667"], ["n:666.67"], "Z29")],
+    "ups:empfehlung|nenn_w leer": [("replace", 18, ["n:667"], ["n:666.67"], "Z29")],
+    # Z28 = 4.15b IPv6-Anzeige "Adressen gesamt : 2^64 = 18.446..." (Zweierpotenz
+    # vor der Zahl), nachgerechnet in test_4_z28_nachgerechnet
+    "subnet:2001:db8::1/64": [("insert", 4, [], ["n:2", "n:64"], "Z28")],
+    "subnet:2001:db8:abcd:12::/48": [("insert", 4, [], ["n:2", "n:80"], "Z28")],
+    "subnet:fe80::1/10": [("insert", 4, [], ["n:2", "n:118"], "Z28")],
+    "subnet:2001:db8::1/127": [("insert", 5, [], ["n:1", "n:2"], "Z28")],
+    "subnet:2001:db8::1/128": [("insert", 4, [], ["n:2", "n:0"], "Z28")],
+    # Z26 = 5.11 Trainer IPv4: "Die folgenden Oktette sind in der Netzadresse 0 und
+    # in der Broadcast-Adresse 255." (Praefixgrenze im 1. bis 3. Oktett);
+    # Z27 = 5.9 Trainer Zahlen: "Hex-Ziffern: E = 14, F = 15" (Hex gegeben).
+    # Je Quelle nachgerechnet in test_4_z26_z27_nachgerechnet.
+    'trainer:ipv4|2|3': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|4': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|5': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|8': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|13': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|15': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|18': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|20': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|27': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|30': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|31': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|32': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|33': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|34': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|35': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|2|39': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|0': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|4': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|6': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|7': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|8': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|9': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|12': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|13': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|14': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|18': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|19': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|20': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|21': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|23': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|25': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|26': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|28': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|29': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|33': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|35': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|37': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:ipv4|3|38': [('insert', 26, [], ['n:0', 'n:255'], 'Z26')],
+    'trainer:zahlen|1|3': [('insert', 9, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|1|14': [('insert', 9, [], ['n:11'], 'Z27')],
+    'trainer:zahlen|1|19': [('insert', 9, [], ['n:12'], 'Z27')],
+    'trainer:zahlen|1|21': [('insert', 9, [], ['n:14'], 'Z27')],
+    'trainer:zahlen|1|24': [('insert', 9, [], ['n:10'], 'Z27')],
+    'trainer:zahlen|1|27': [('insert', 9, [], ['n:14'], 'Z27')],
+    'trainer:zahlen|1|28': [('insert', 7, [], ['n:10', 'n:11'], 'Z27')],
+    'trainer:zahlen|1|32': [('insert', 7, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|1|36': [('insert', 9, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|2|0': [('insert', 11, [], ['n:14', 'n:15'], 'Z27')],
+    'trainer:zahlen|2|5': [('insert', 11, [], ['n:10', 'n:11'], 'Z27')],
+    'trainer:zahlen|2|6': [('insert', 11, [], ['n:13', 'n:15'], 'Z27')],
+    'trainer:zahlen|2|11': [('insert', 12, [], ['n:12'], 'Z27')],
+    'trainer:zahlen|2|14': [('insert', 9, [], ['n:14'], 'Z27')],
+    'trainer:zahlen|2|15': [('insert', 12, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|2|18': [('insert', 11, [], ['n:11', 'n:12'], 'Z27')],
+    'trainer:zahlen|2|20': [('insert', 11, [], ['n:10', 'n:15'], 'Z27')],
+    'trainer:zahlen|2|28': [('insert', 11, [], ['n:12', 'n:13'], 'Z27')],
+    'trainer:zahlen|2|29': [('insert', 9, [], ['n:11'], 'Z27')],
+    'trainer:zahlen|2|32': [('insert', 13, [], ['n:12'], 'Z27')],
+    'trainer:zahlen|2|34': [('insert', 12, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|2|36': [('insert', 11, [], ['n:12'], 'Z27')],
+    'trainer:zahlen|2|37': [('insert', 12, [], ['n:13'], 'Z27')],
+    'trainer:zahlen|3|14': [('insert', 16, [], ['n:12'], 'Z27')],
+    'trainer:zahlen|3|18': [('insert', 16, [], ['n:15'], 'Z27')],
+    'trainer:zahlen|3|22': [('insert', 15, [], ['n:11', 'n:15'], 'Z27')],
+    'trainer:zahlen|3|23': [('insert', 15, [], ['n:15'], 'Z27')],
+    'trainer:zahlen|3|24': [('insert', 14, [], ['n:12', 'n:15'], 'Z27')],
+    'trainer:zahlen|3|26': [('insert', 15, [], ['n:14'], 'Z27')],
+    'trainer:zahlen|3|31': [('insert', 15, [], ['n:15'], 'Z27')],
+    'trainer:zahlen|3|37': [('insert', 15, [], ['n:11'], 'Z27')],
+    'trainer:zahlen|3|38': [('insert', 14, [], ['n:11', 'n:15'], 'Z27')],
+    'trainer:zahlen|3|39': [('insert', 15, [], ['n:11', 'n:12'], 'Z27')],
 }
 
 
@@ -123,6 +256,37 @@ def _teilung_fortsetzen(text):
         fehlend.append("   %d : 2 = %d Rest %d" % (rest, rest // 2, rest % 2))
         rest //= 2
     return "\n".join(lines[:pos] + fehlend + lines[pos + 1:])
+
+
+def _bn07_trainer(text):
+    """B-N-07 (ab 0.63.2), unabhaengig von fisi_lernen aus dem alten Text
+    abgeleitet: 5.11 Zeile zu den Folge-Oktetten nach dem Kurzweg (Grenze im
+    1. bis 3. Oktett), 5.9 Werte der Hex-Buchstaben und Richtung "Hex -> Binaer"
+    bei Hex-Vorgabe, 5.12 Hinweis, wenn es keine Folge von Nullbloecken gibt."""
+    out = []
+    lines = text.split("\n")
+    ergebnis = next((line[10:] for line in lines if line.startswith("Ergebnis: ")), "")
+    hex_gegeben = any(line.startswith("Hex -> Dezimal: ") for line in lines)
+    for line in lines:
+        if hex_gegeben and line.startswith("Binär -> Hex: in Vierergruppen (Nibbles) von "
+                                           "rechts teilen: "):
+            line = ("Hex -> Binär: jede Hex-Ziffer als Vierergruppe (Nibble) schreiben: "
+                    + line.split("teilen: ", 1)[1])
+        out.append(line)
+        okt = re.match(r"   Kurzweg: Blockgröße im (\d)\. Oktett", line)
+        if okt and int(okt.group(1)) < 4:
+            out.append("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
+                       "Broadcast-Adresse 255.")
+        if line.startswith("Hex -> Dezimal: "):
+            buchstaben = sorted(set(re.findall(r"([A-F]) x 16\^", line)))
+            if buchstaben:
+                out.append("   Hex-Ziffern: " + ", ".join(
+                    "%s = %d" % (b, "ABCDEF".index(b) + 10) for b in buchstaben))
+        if line.startswith("2. Die längste Folge von Nullblöcken") and "::" not in ergebnis:
+            out.append("   Hier gibt es keine solche Folge, dieser Schritt entfällt.")
+    return "\n".join(out)
+
+
 # Aenderungen nur der Schreibweise (Wert gleich, Test 4 vergleicht Werte):
 # Z4 deutsche Zahlen in den Anzeigen, Z7 IPv6 gegliedert, Z9 KiB/MiB/GiB/MiB/s,
 # Z10 "Abzug von 2 Adressen" (Wert 2 bleibt), Z11 "1.200 VA"/"1.000 W".
@@ -136,7 +300,9 @@ SCHREIBWEISE = {
                                        "5,93 MiB"]),
     "Z10": ("text:CALC_EXPLAIN_SUBNET", ["Abzug von 2 Adressen"]),
     "Z11": ("upsaufgabe:3", ["1.200 VA", "1.500 VA und 1.000 W"]),
-    "Z11 Rechenweg": ("text:CALC_EXPLAIN_UPS", ["USV 1.500 VA / 900 W", "667 / 1.500 = 44 %"]),
+    # ab 0.63.2 (B-N-07 4.9, FG-23): 666,67 VA und 44,4 % wie in der Anzeige
+    "Z11 Rechenweg": ("text:CALC_EXPLAIN_UPS", ["USV 1.500 VA / 900 W",
+                                                "666,67 / 1.500 = 44,4 %"]),
 }
 
 
@@ -157,6 +323,47 @@ def _zahlen(text):
     return _oktette(rt.zahlen(text, "de"))
 
 
+def _woerter(text):
+    """Woerter eines Rechenwegs; am Zeilenende getrennte Woerter ("Punkt-zu-
+    Punkt-" / "Verbindungen"), Tausendergruppen (".616") und IPv6-Adressen
+    nach ":" werden wieder zusammengesetzt."""
+    text = re.sub(r"(?<=[A-Za-zÄÖÜäöüß0-9])-\n\s*(?=[A-Za-zÄÖÜäöüß])", "-", text)
+    text = re.sub(r"(?<=\d)\n\s*(?=\.\d{3})", "", text)
+    text = re.sub(r"((?:^|\s)[0-9a-f]{1,4}(?::[0-9a-f]{0,4})*:)\n\s*(?=[0-9a-f]{4}:)",
+                  r"\1", text)
+    return text.split()
+
+
+# Test 1b: Unterschiede Handy/PC, die es schon vor dem Umbruch auf 26 gab
+# (Stand 208f80c); RAID, Bildschirm und USV sind Wort fuer Wort gleich
+WOERTER_ANDERS = {
+    "SUBNET": [
+        ("replace", ["/24", "=", "11111111.11111111.11111111.00000000"],
+         ["/24,", "Oktett", "für", "Oktett:", "1.", "Oktett", "11111111"]),
+        ("replace", ["."], ["2.", "Oktett", "11111111", "="]),
+        ("replace", ["."], ["3.", "Oktett", "11111111", "="]),
+        ("replace", ["."], ["4.", "Oktett", "00000000", "="]),
+        ("insert", [], ["UND", "255.255.255.0,", "Oktett", "für", "Oktett:", "1.", "Oktett",
+                        "192"]),
+        ("replace", ["11000000.10101000.00000001.00110010"], ["11000000"]),
+        ("replace", ["255.255.255.0"], ["255"]),
+        ("replace", ["11111111.11111111.11111111.00000000",
+                     "-------------------------------------------------------"],
+         ["11111111"]),
+        ("replace", ["11000000.10101000.00000001.00000000"],
+         ["11000000", "2.", "Oktett", "168", "=", "10101000", "UND", "255", "=", "11111111",
+          "Ergebnis", "=", "10101000", "3.", "Oktett", "1", "=", "00000001", "UND", "255",
+          "=", "11111111", "Ergebnis", "=", "00000001", "4.", "Oktett", "50", "=",
+          "00110010", "UND", "0", "=", "00000000", "Ergebnis", "=", "00000000"]),
+    ],
+    "SUBNET_V6": [
+        ("replace", ["Eine", "IPv6-Adresse"], ["IPv6"]),
+        ("delete", ["Präfixlänge", "(die"], []),
+        ("replace", ["/)"], ["/"]),
+    ],
+}
+
+
 def _ueberschriften(text):
     """Nicht eingerueckte Zeilen, Absatz fuer Absatz zusammengesetzt."""
     heads, current = [], []
@@ -173,11 +380,24 @@ def _ueberschriften(text):
 
 class HandyFassungTest(unittest.TestCase):
     def test_1_zeilenlaenge(self):
-        self.assertEqual(fc.CALC_EXPLAIN_HANDY_WIDTH, GRENZE)
+        # ab 0.63.2 (FG-82): erzeugte Rechenwege 28 (= GRENZE_TRAINER), feste
+        # Texte unten gegen GRENZE = 26
+        self.assertEqual(fc.CALC_EXPLAIN_HANDY_WIDTH, GRENZE_TRAINER)
         for name, _pc, handy in PAARE:
             for number, line in enumerate(handy.split("\n"), 1):
                 self.assertLessEqual(len(line), GRENZE, "%s Zeile %d hat %d Zeichen: %r"
                                      % (name, number, len(line), line))
+
+    def test_1b_woerter_wie_pc(self):
+        # ab 0.63.2 (FG-73): der neue Umbruch aendert kein Wort. Handy-Inhalt =
+        # PC-Inhalt bis auf die festen Unterschiede, die schon vorher bestanden
+        # (Bitreihen Oktett fuer Oktett, kuerzere Saetze bei IPv6)
+        for name, pc, handy in PAARE + [("SUBNET_V6", fc.CALC_EXPLAIN_SUBNET_V6,
+                                         fc.CALC_EXPLAIN_SUBNET_V6_HANDY)]:
+            a, b = _woerter(pc), _woerter(handy)
+            ops = [(art, a[i1:i2], b[j1:j2]) for art, i1, i2, j1, j2
+                   in SequenceMatcher(a=a, b=b, autojunk=False).get_opcodes() if art != "equal"]
+            self.assertEqual(ops, WOERTER_ANDERS.get(name, []), name)
 
     def test_2_gleiche_zahlen(self):
         for name, pc, handy in PAARE:
@@ -211,7 +431,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z18."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z31."""
 
     @classmethod
     def setUpClass(cls):
@@ -239,9 +459,12 @@ class ZahlenUnveraendertTest(unittest.TestCase):
         self.assertGreater(zahlen, 10000)
 
     def test_4_jede_freigabe_einzeln(self):
-        nummern = sorted({e[4] for liste in FREIGEGEBEN.values() for e in liste})
-        self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z2",
-                                   "Z3", "Z5", "Z6"])
+        # "Z5+Z30": ein Vergleichsschritt mit zwei Freigaben (ab 0.63.2)
+        nummern = sorted({nr for liste in FREIGEGEBEN.values() for e in liste
+                          for nr in e[4].split("+")})
+        self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z19",
+                                   "Z2", "Z20", "Z21", "Z22", "Z23", "Z24", "Z25", "Z26",
+                                   "Z27", "Z28", "Z29", "Z3", "Z30", "Z31", "Z5", "Z6"])
 
     def test_4_z18_nachgerechnet(self):
         # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
@@ -254,6 +477,137 @@ class ZahlenUnveraendertTest(unittest.TestCase):
                    for art, i1, i2, j1, j2 in SequenceMatcher(a=alt, b=neu, autojunk=False)
                    .get_opcodes() if art != "equal"]
             self.assertEqual(ops, [e[:4] for e in FREIGEGEBEN[quelle]], quelle)
+
+    def test_4_z26_z27_nachgerechnet(self):
+        # ab 0.63.2 (B-N-07 5.11, 5.9): jede Z26-/Z27-Zahl aus der Basis selbst
+        # abgeleitet (_bn07_trainer), und keine Quelle fehlt in der Liste
+        erwartet = {}
+        for quelle in sorted(self.basis):
+            if not quelle.startswith("trainer:"):
+                continue
+            text = self.basis[quelle]
+            for before, after, _nr in TrainerTest.ERSETZEN:
+                text = text.replace(before, after)
+            alt = rt.zahlen(self.basis[quelle], "de")
+            neu = rt.zahlen(_bn07_trainer(text), "de")
+            ops = [(art, i1, alt[i1:i2], neu[j1:j2])
+                   for art, i1, i2, j1, j2 in SequenceMatcher(a=alt, b=neu, autojunk=False)
+                   .get_opcodes() if art != "equal"]
+            if ops:
+                erwartet[quelle] = ops
+        liste = {q: [e[:4] for e in l] for q, l in FREIGEGEBEN.items()
+                 if l[0][4] in ("Z26", "Z27")}
+        self.assertEqual(liste, erwartet)
+        self.assertEqual(len(liste), 71)
+        for quelle, ops in liste.items():
+            nummer = FREIGEGEBEN[quelle][0][4]
+            self.assertEqual(nummer, "Z26" if quelle.startswith("trainer:ipv4") else "Z27")
+            if nummer == "Z26":
+                self.assertEqual([op[3] for op in ops], [["n:0", "n:255"]])
+            else:   # Werte der Buchstaben: A = 10 ... F = 15
+                for wert in ops[0][3]:
+                    self.assertIn(int(wert[2:]), range(10, 16))
+
+    def test_4_z29_nachgerechnet(self):
+        # ab 0.63.2 (Gegenpruefung L6): die VA-Zahl der Pruefzeile ist der
+        # ungerundete Wert 600 W / 0,9, aus dem die Prozentzahl gerechnet wird
+        quellen = sorted(q for q, l in FREIGEGEBEN.items() if l[0][4] == "Z29")
+        self.assertEqual(quellen, ["ups:empfehlung", "ups:empfehlung|nenn_w leer"])
+        self.assertEqual(fc.de_number(600 / 0.9), "666,67")
+        self.assertEqual(fc.de_number(666.67 / 1500 * 100, 1), "44,4")
+        self.assertEqual(fc.de_number(667 / 1500 * 100, 1), "44,5")
+        for quelle in quellen:
+            self.assertIn("Auslastung Scheinleistung: 666,67 VA von 1.500 VA = 44,4 %",
+                          self.neu[quelle])
+            self.assertIn("Auslastung Scheinleistung: 667 VA von 1.500 VA = 44,4 %",
+                          self.basis[quelle])
+
+    def test_4_z30_nachgerechnet(self):
+        # ab 0.63.2 (Meldung 21 Frage 9): 24 + 8 = 32, und ohne den neuen Satz
+        # bleibt von "Z5+Z30" genau Z5 (16,7 -> 16,8) uebrig
+        satz = "   32 Bit = True Color (24 Bit) + 8 Bit Alpha (Transparenz)\n"
+        werte = [int(z) for z in re.findall(r"\d+", satz)]
+        self.assertEqual(werte, [32, 24, 8])
+        self.assertEqual(werte[1] + werte[2], werte[0])
+        self.assertIn(("32", "32 Bit (True Color + Alpha)"), fc.COLOR_DEPTHS)
+        self.assertIn(("24", "24 Bit (True Color)"), fc.COLOR_DEPTHS)
+        text = self.neu["text:CALC_EXPLAIN_SCREEN"]
+        self.assertEqual(text.count(satz), 1)
+        alt = rt.zahlen(self.basis["text:CALC_EXPLAIN_SCREEN"], "de")
+        ohne = rt.zahlen(text.replace(satz, ""), "de")
+        ops = [(art, i1, alt[i1:i2], ohne[j1:j2])
+               for art, i1, i2, j1, j2 in SequenceMatcher(a=alt, b=ohne, autojunk=False)
+               .get_opcodes() if art != "equal"]
+        self.assertEqual(ops[0], ("replace", 11, ["n:16.7"], ["n:16.8"]))
+        self.assertEqual(ops[1:], [e[:4] for e in FREIGEGEBEN["text:CALC_EXPLAIN_SCREEN"][1:]])
+
+    def test_4_z31_nachgerechnet(self):
+        # ab 0.63.2 (Meldung 21 Frage 13 b): Broadcast-Adresse bei /28 bitweise
+        import ipaddress
+        netz = ipaddress.ip_network("192.168.1.50/28", strict=False)
+        wildcard = netz.hostmask.packed[3]
+        self.assertEqual((str(netz.hostmask), wildcard, 255 - 240), ("0.0.0.15", 15, 15))
+        self.assertEqual(48 | wildcard, 63)
+        self.assertEqual((format(48, "08b"), format(wildcard, "08b"), format(48 | 15, "08b")),
+                         ("00110000", "00001111", "00111111"))
+        self.assertEqual(str(netz.broadcast_address), "192.168.1.63")
+        eintrag = [e for e in FREIGEGEBEN["text:CALC_EXPLAIN_SUBNET"] if e[4] == "Z31"]
+        self.assertEqual(len(eintrag), 1)
+        self.assertEqual(eintrag[0][3], ["ip:192.168.1.50", "n:28", "n:4", "s:00110000",
+                                         "n:48", "s:00001111", "ip:0.0.0.15",
+                                         "s:00111111", "n:63", "n:28", "ip:192.168.1.63"])
+        # die /24-Zeilen davor bleiben
+        self.assertIn("ODER-Ergebnis:  11111111 = 255\n   -> Broadcast-Adresse: "
+                      "192.168.1.255\n   Beispiel 192.168.1.50/28", fc.CALC_EXPLAIN_SUBNET)
+
+    def test_4_z28_nachgerechnet(self):
+        # ab 0.63.2 (B-N-07 4.15b): 2^(128 - Praefix) = Anzahl, und eingefuegt
+        # sind genau die Zahlen 2 und 128 - Praefix
+        import ipaddress
+        quellen = sorted(q for q, l in FREIGEGEBEN.items() if l[0][4] == "Z28")
+        self.assertEqual(quellen, sorted("subnet:" + v for v in rt.SUBNET_INPUTS if ":" in v))
+        for quelle in quellen:
+            netz = ipaddress.ip_network(quelle[7:], strict=False)
+            hoch = 128 - netz.prefixlen
+            self.assertEqual(2 ** hoch, netz.num_addresses)
+            self.assertIn("Adressen gesamt       : 2^%d = %s" % (hoch, fc.de_int(2 ** hoch)),
+                          fc.subnet_report(quelle[7:]))
+            eingefuegt = sorted(FREIGEGEBEN[quelle][0][3])
+            self.assertEqual(eingefuegt, sorted(["n:2", "n:%d" % hoch]))
+
+    def test_4_bn07_nachgerechnet(self):
+        # ab 0.63.2 (B-N-07): neue Zahlen der Rechenwege selbst nachgerechnet
+        import ipaddress
+        # Z19 (5.1): 192.168.1.50/28 -> Netz 192.168.1.48, Maske 240 im 4. Oktett
+        netz = ipaddress.ip_network("192.168.1.50/28", strict=False)
+        self.assertEqual((str(netz.network_address), netz.netmask.packed[3]),
+                         ("192.168.1.48", 240))
+        self.assertEqual((format(50, "08b"), format(240, "08b"), format(50 & 240, "08b")),
+                         ("00110010", "11110000", "00110000"))
+        # Z20 (5.2): 4. Oktett Netzadresse 0 ODER Wildcard 255 = 255
+        self.assertEqual(0 | 255, 255)
+        # Z21 (5.3): gleiche Aussagen wie die Anzeige (/31 RFC 3021, /32)
+        self.assertIn("/31, RFC 3021", fc.subnet_report("192.168.10.1/31"))
+        self.assertIn("/32, einzelne Adresse", fc.subnet_report("192.168.10.7/32"))
+        # Z23 (5.7): Beispielkopf = Vorgaben des Rechners
+        d = fc.UPS_FIELD_DEFAULTS
+        self.assertEqual((d["pf"], d["block_ah"], d["nenn_va"], d["nenn_w"]),
+                         ("0,9", "12", "1500", "900"))
+        # Z25 (4.9): Werte wie die Anzeige des Rechners (eine Nachkommastelle)
+        self.assertEqual(fc.de_number(600 / 0.9), "666,67")
+        anzeige = fc.ups_calculate("empfehlung", dict(d), "W")["text"]
+        for wert in ("44,4 %", "66,7 %", "23,0 min", "18,4 min"):
+            self.assertIn(wert, anzeige)
+        self.assertEqual(fc.de_number(600 / 0.9 / 1500 * 100, 1), "44,4")
+        self.assertEqual(fc.de_number(288 * 0.8 / 600 * 60), "23,04")
+        self.assertEqual(fc.de_number(288 * 0.8 / 600 * 60 * 0.8), "18,43")
+        # Z22 (5.5): 80 % = Wirkungsgrad, Restkapazitaet und Auslastungsgrenze
+        self.assertEqual((fc.UPS_ETA_DEFAULT, fc.ups_end_share(fc.UPS_AGING_DEFAULT),
+                          fc.UPS_LOAD_LIMIT), (80, 80, 80))
+        for schritt in ("SCHRITT 3: Verluste", "SCHRITT 4: Alterungszuschlag"):
+            self.assertIn(schritt, fc.CALC_EXPLAIN_UPS)
+        # Z24 (5.13): 1024 = 2^10, Dezimalpraefix 1000
+        self.assertEqual(2 ** 10, 1024)
 
     def test_4_schreibweise(self):
         for nummer, (quelle, teile) in SCHREIBWEISE.items():
@@ -438,6 +792,13 @@ class TrainerTest(unittest.TestCase):
         ("bis Broadcast - 1)", "bis Broadcast-Adresse - 1)", "1.2"),
         (", Broadcast ", ", Broadcast-Adresse ", "1.2"),
         ("·16^", " x 16^", "1.20"),
+        # ab 0.63.2 (B-N-07, FG-10/FG-23): Wortlaut 3.16 und 1.19
+        (" die Netzdaten.\n", " die Netzdaten (die Adresse kann auch selbst die Netz- oder "
+         "Broadcast-Adresse sein).\n", "3.16"),
+        ("2. Den längsten Block aufeinanderfolgender Nullblöcke (mindestens zwei) durch "
+         "'::' ersetzen, bei Gleichstand den ersten.",
+         "2. Die längste Folge von Nullblöcken (mindestens zwei) durch '::' ersetzen, "
+         "bei Gleichstand die erste.", "1.19"),
     ]
 
     @classmethod
@@ -456,6 +817,7 @@ class TrainerTest(unittest.TestCase):
                         alt = alt.replace(before, after)
                     if kind == "zahlen":        # ab 0.63.2 (B-N-06, FG-23)
                         alt = _teilung_fortsetzen(alt)
+                    alt = _bn07_trainer(alt)    # ab 0.63.2 (B-N-07 5.9, 5.11, 5.12)
                     neu = rt.trainer_text(fl.trainer_task(kind, level, "e3-%d" % seed))
                     self.assertEqual(neu, alt, (kind, level, seed))
                     count += 1
@@ -472,7 +834,7 @@ class TrainerTest(unittest.TestCase):
                 block = handy.steps[start:start + 18]
                 self.assertEqual(handy.steps[:start] + handy.steps[start + 18:],
                                  pc.steps[:start] + pc.steps[start + 3:])
-                self.assertTrue(all(len(line) <= GRENZE for line in block), block)
+                self.assertTrue(all(len(line) <= GRENZE_TRAINER for line in block), block)
                 pc_z = Counter(_zahlen("\n".join(pc.steps[start:start + 3])))
                 handy_z = Counter(_zahlen("\n".join(block)))
                 self.assertEqual(pc_z - handy_z, Counter())

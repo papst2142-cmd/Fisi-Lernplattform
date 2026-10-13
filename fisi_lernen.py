@@ -577,7 +577,7 @@ TRAINER_KINDS = [
     ("ipv4", "IPv4-Subnetz"),
     ("vlsm", "VLSM"),
     ("zahlen", "Binär/Hex/Dezimal"),
-    ("ipv6", "IPv6 kürzen"),
+    ("ipv6", "IPv6-Schreibweise"),      # ab 0.63.2 (B-N-07 4.13), kuerzen und ausschreiben
     ("teilen", "Netz aufteilen"),
     ("bedarf", "Nach Hostbedarf"),
 ]
@@ -585,6 +585,9 @@ TRAINER_KIND_NAME = dict(TRAINER_KINDS)
 TRAINER_LEVELS = [(1, "Leicht"), (2, "Mittel"), (3, "Schwer")]
 TRAINER_LEVEL_NAME = dict(TRAINER_LEVELS)
 TRAINER_ROUND = 10
+# Ab 0.63.2 (B-N-07 4.12): Kartentitel PC und Handy; der Trainer hat auch
+# Zahlensysteme und IPv6, nicht nur Subnetting
+TRAINER_TITLE = "Rechen-Trainer"
 
 
 class TrainerTask:
@@ -729,13 +732,18 @@ def _ipv4_task(rng, level, schmal=False):
                      % (block_octet + 1, mask_octet, 256 - mask_octet,
                         address.packed[block_octet],
                         network.network_address.packed[block_octet]))
+        if block_octet < 3:      # ab 0.63.2 (B-N-07 5.11)
+            steps.append("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
+                         "Broadcast-Adresse 255.")
     steps += [
         "4. Broadcast-Adresse: alle Hostbits auf 1 = %s" % network.broadcast_address,
         "5. Hostbereich: %s bis %s (Netzadresse + 1 bis Broadcast-Adresse - 1)"
         % (first_host, last_host),
         "6. Nutzbare Hosts: 2^%d - 2 = %d" % (32 - prefix, hosts),
     ]
-    text = "Berechne zur Adresse %s/%d die Netzdaten." % (address, prefix)
+    # ab 0.63.2 (B-N-07 3.16): die Adresse kann selbst Netz- oder Broadcast-Adresse sein
+    text = ("Berechne zur Adresse %s/%d die Netzdaten (die Adresse kann auch selbst "
+            "die Netz- oder Broadcast-Adresse sein)." % (address, prefix))
     return TrainerTask("ipv4", level, text, fields, solution, steps, matchers)
 
 
@@ -818,11 +826,19 @@ def _number_task(rng, level):
         terms = ["%s x 16^%d" % (digit, len(hex_digits) - 1 - i)
                  for i, digit in enumerate(hex_digits)]
         steps.append("Hex -> Dezimal: %s = %d" % (" + ".join(terms), value))
+        letters = sorted(set(digit for digit in hex_digits if digit in "ABCDEF"))
+        if letters:              # ab 0.63.2 (B-N-07 5.9)
+            steps.append("   Hex-Ziffern: %s" % ", ".join(
+                "%s = %d" % (digit, int(digit, 16)) for digit in letters))
     else:
         steps.append("Stellenwerte der Einsen addieren: %s = %d"
                      % (" + ".join(parts), value))
-    steps.append("Binär -> Hex: in Vierergruppen (Nibbles) von rechts teilen: %s"
-                 % " ".join(n.zfill(4) for n in nibbles))
+    if given == "hex":           # ab 0.63.2 (B-N-07 5.9): Richtung Hex -> Binaer
+        steps.append("Hex -> Binär: jede Hex-Ziffer als Vierergruppe (Nibble) "
+                     "schreiben: %s" % " ".join(n.zfill(4) for n in nibbles))
+    else:
+        steps.append("Binär -> Hex: in Vierergruppen (Nibbles) von rechts teilen: %s"
+                     % " ".join(n.zfill(4) for n in nibbles))
     steps.append("Jede Gruppe ist eine Hex-Ziffer: %s"
                  % " ".join("%s=%X" % (n.zfill(4), int(n, 2)) for n in nibbles))
     text = "Rechne %s %s in die anderen Zahlensysteme um." % (names[given], shown[given])
@@ -859,12 +875,15 @@ def _ipv6_task(rng, level):
         solution = {"kurz": short}
         matchers = {"kurz": _ipv6_text_matcher(short)}
         text = "Kürze die IPv6-Adresse %s so weit wie möglich." % full
+        # ab 0.63.2 (B-N-07 1.19 und 5.12)
         steps = ["1. Führende Nullen in jedem Block weglassen: %s"
                  % ":".join("%x" % g for g in groups),
-                 "2. Den längsten Block aufeinanderfolgender Nullblöcke (mindestens "
-                 "zwei) durch '::' ersetzen, bei Gleichstand den ersten.",
-                 "3. '::' darf nur einmal vorkommen; Kleinbuchstaben verwenden.",
-                 "Ergebnis: %s" % short]
+                 "2. Die längste Folge von Nullblöcken (mindestens zwei) durch "
+                 "'::' ersetzen, bei Gleichstand die erste."]
+        if "::" not in short:
+            steps.append("   Hier gibt es keine solche Folge, dieser Schritt entfällt.")
+        steps += ["3. '::' darf nur einmal vorkommen; Kleinbuchstaben verwenden.",
+                  "Ergebnis: %s" % short]
     return TrainerTask("ipv6", level, text, fields, solution, steps, matchers)
 
 

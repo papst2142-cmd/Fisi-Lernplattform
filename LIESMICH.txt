@@ -71,7 +71,7 @@ abgerundete Kacheln, Farbverlaeufe):
                      Bildschirm-Datenvolumen (Datenmenge und Datenrate),
                      jeweils mit aufklappbarem Rechenweg, dazu
                      USV-Kapazitaet (Akku oder Laufzeit, mit Empfehlung und
-                     Uebungsaufgaben) und ein Subnetting-Trainer mit
+                     Uebungsaufgaben) und ein Rechen-Trainer mit
                      Zufallsaufgaben.
 
   Spiel              Lernspiel: Als Mitarbeiter eines IT-Dienstleisters
@@ -334,7 +334,7 @@ Programmdateien (PC):
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
   fisi_lernen.py        Wiederholungssystem, Tagesziel, Lernserie und
-                        Subnetting-Trainer
+                        Rechen-Trainer
   fisi_pruefung.py      Klausursimulationen des Pruefungstrainers
   fisi_projekt.py       Arbeitsbereich Abschlussprojekt
   fisi_pdf.py           Einfacher PDF-Export

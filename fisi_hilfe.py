@@ -273,7 +273,8 @@ HELP_SECTIONS = [
               "Laufzeit. Unter „Übungsaufgaben“ gibt es Aufgaben mit „Lösung anzeigen“ "
               "und „Nächste Aufgabe“.\n\n"
               "Oben unter „Trainer“ rechnest du selbst: „IPv4-Subnetz“, „VLSM“, "
-              "„Binär/Hex/Dezimal“ und „IPv6 kürzen“, jeweils „Leicht“, „Mittel“ oder "
+              "„Binär/Hex/Dezimal“, „IPv6-Schreibweise“, „Netz aufteilen“ und "
+              "„Nach Hostbedarf“, jeweils „Leicht“, „Mittel“ oder "
               "„Schwer“. Trainer-Aufgaben zählen zum Tagesziel.")},
     {"id": "spiel", "titel": "Firma-Spiel",
      "reiter": ["Spiel"],
