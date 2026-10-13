@@ -927,6 +927,41 @@ def _correct_own_entries(db, remote, deviation):
         return
     shift = int(round(deviation / 60.0))
     earliest = _measured_server_time(db)
+    # Ab 0.63.2 (R-d, Freigabe F19 "mehrdeutig -> behalten"): Geht die Uhr
+    # vor, wurde sie seit der letzten Messung (mit richtiger Uhr) um jump
+    # vorgestellt. Ein Eintrag bekommt die Abweichung nur, wenn er sicher
+    # NACH dem Stellen entstand (Geraeteuhr T > jetzt - jump). Sicher davor
+    # (T < Messung + jump) oder dazwischen (beide Lesarten moeglich) bleibt er,
+    # wie er ist: Er liegt dann hoechstens spaeter als in Wahrheit, faellt also
+    # nie unter eine Loeschung, die nach ihm kam. Bei Ueberlappung gilt
+    # "sicher davor". Je 5 Minuten (CLOCK_TOLERANCE) zugunsten von "bleibt".
+    # Ist der Sprung nicht feststellbar (anderer Systemstart, Laufzeit-Uhr
+    # widerspricht) oder war die Uhr schon bei der Messung falsch und ist seitdem
+    # gesprungen, ist alles mehrdeutig: nichts verschieben. Ohne Messung, ohne
+    # Sprung seit einer (alten) Messung und bei nachgehender Uhr (dort heisst
+    # "behalten" verschieben) wie bisher. Die Untergrenze earliest bleibt;
+    # verschoben wird also immer nur ein Teil dessen, was bisher verschoben wurde.
+    limits = None           # (vor, nach): verschieben nur bei T >= vor und T > nach
+    previous = _last_measurement(db) if deviation > 0 else None
+    if previous is not None:
+        seconds, measured = previous
+        jump = deviation - seconds
+        now_utc = device_now().astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        try:
+            from fisi_core import _clock_jump
+            running = _clock_jump(json.loads(db.get_meta(CLOCK_KEY)),
+                                  (now_utc - measured).total_seconds())
+        except (TypeError, ValueError, AttributeError, ImportError):
+            running = None
+        confirmed = running is not None and abs(running - jump) <= CLOCK_TOLERANCE
+        tolerance = datetime.timedelta(seconds=CLOCK_TOLERANCE)
+        if abs(seconds) <= CLOCK_TOLERANCE and confirmed:
+            limits = (measured + datetime.timedelta(seconds=jump) + tolerance,
+                      now_utc - datetime.timedelta(seconds=jump) + tolerance)
+        elif abs(seconds) > CLOCK_TOLERANCE and abs(jump) <= CLOCK_TOLERANCE and confirmed:
+            limits = None   # seit der Messung nicht gestellt: alle mit derselben Abweichung
+        else:
+            limits = (datetime.datetime.max, datetime.datetime.max)
     known = _uids(remote) if remote else {}
     since = (device_now() - datetime.timedelta(seconds=CLOCK_VALID)).strftime(
         "%Y-%m-%d %H:%M:%S")
@@ -954,6 +989,11 @@ def _correct_own_entries(db, remote, deviation):
                         continue
                     if offset in plain and (earliest is None or moment - datetime.timedelta(
                             minutes=offset + shift) >= earliest):
+                        own = moment - datetime.timedelta(minutes=offset)   # Geraeteuhr, UTC
+                        if limits is not None and own < limits[0]:
+                            continue        # sicher vor dem Stellen (Vorrang)
+                        if limits is not None and not own > limits[1]:
+                            continue        # mehrdeutig: behalten
                         updates.append((offset + shift, rowid))
                 conn.executemany("UPDATE %s SET utc_offset = ? WHERE rowid = ?" % table,
                                  updates)
