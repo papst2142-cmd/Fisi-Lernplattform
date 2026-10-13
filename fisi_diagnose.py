@@ -71,9 +71,17 @@ _PATTERNS = [
     (re.compile(r"(?i)(authorization['\"]?\s*[:=]\s*['\"]?)(?:bearer\s+|token\s+|basic\s+)?"
                 r"[^\s'\",}]+"), r"\1" + REDACTED),
     (re.compile(r"(?i)\b(bearer\s+)[A-Za-z0-9._~+/=-]{8,}"), r"\1" + REDACTED),
-    # Schluessel = Wert bzw. "schluessel": "wert"
-    (re.compile(r"(?i)([\"']?[\w-]*(?:token|passw\w*|kennwort|secret|api[_-]?key)[\"']?"
-                r"\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}]+)"), r"\1" + REDACTED),
+    # Schluessel = Wert bzw. "schluessel": "wert". Der Schluessel ist ein
+    # ganzes Wort aus [\w-] (ab 0.63.2 linear, gleiche Treffer wie vorher
+    # "[\w-]*(?:token|passw\w*|kennwort|secret|api[_-]?key)"): es beginnt
+    # nicht mitten in einem Wort (sonst wuerde die Suche bei langen Ketten
+    # ohne Leerzeichen an jeder Stelle neu zuruecklaufen) und endet auf
+    # token/kennwort/secret/api[_-]?key oder enthaelt "passw" im letzten
+    # Teil ohne "-".
+    (re.compile(r"(?i)([\"']?(?<![\w-])"
+                r"(?:[\w-]+(?:(?<=token)|(?<=kennwort)|(?<=secret)|(?<=apikey)|(?<=api_key)"
+                r"|(?<=api-key))|(?:[\w-]*-)?(?:(?!passw)\w)*passw\w*)"
+                r"[\"']?\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}]+)"), r"\1" + REDACTED),
     # Zugangsdaten in Adressen: https://name:passwort@host oder https://token@host
     (re.compile(r"(?i)\b(https?://)[^\s/@]+@"), r"\1" + REDACTED + "@"),
 ]
