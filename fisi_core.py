@@ -153,6 +153,8 @@ def write_error_log(text, path=None):
     selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...). path nur
     fuer eine Datenbank an anderem Ort (ab 0.62.5: fehler.log daneben)."""
     try:
+        # ab 0.63.2 (B-L-03): Zugangsschluessel wie im Bericht entfernen; spaet eingefuehrt (Kreis)
+        from fisi_diagnose import scrub
         path = path or error_log_path()
         if os.path.exists(path) and os.path.getsize(path) > ERROR_LOG_MAX:
             with open(path, encoding="utf-8", errors="replace") as handle:
@@ -163,7 +165,7 @@ def write_error_log(text, path=None):
         with open(path, "a", encoding="utf-8") as handle:
             handle.write("=== %s | Version %s | %s ===\n%s\n" % (
                 stamp, _error_log_version or "?", sys.platform,
-                anonymize_paths(text.rstrip())))
+                anonymize_paths(scrub(text.rstrip()))))
     except Exception:
         pass
 
