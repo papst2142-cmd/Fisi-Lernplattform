@@ -11,7 +11,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14-Z29 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z30 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -77,7 +77,12 @@ FREIGEGEBEN = {
     "subnet:192.168.10.1/31": [("replace", 3, ["ip:192.168.10.1"], ["n:31", "n:3021"], "Z2")],
     "raid:RAID 5|4|1,5": [("replace", 2, ["n:2"], ["n:1.5"], "Z3")],
     "raid:RAID 5|3|0,5": [("replace", 2, ["n:0"], ["n:0.5"], "Z3")],
-    "text:CALC_EXPLAIN_SCREEN": [("replace", 11, ["n:16.7"], ["n:16.8"], "Z5"),
+    # ab 0.63.2 (Meldung 21 Frage 9, Z30): Satz "32 Bit = True Color (24 Bit) +
+    # 8 Bit Alpha (Transparenz)" direkt nach der Farbtiefe; der Vergleich legt
+    # ihn mit Z5 in einen Schritt ("je 8 Bit" bleibt), getrennt nachgerechnet in
+    # test_4_z30_nachgerechnet
+    "text:CALC_EXPLAIN_SCREEN": [("replace", 11, ["n:16.7"],
+                                  ["n:16.8", "n:8", "n:32", "n:24"], "Z5+Z30"),
                                  # ab 0.63.2 (B-N-07 5.13, FG-23): Binaerpraefix
                                  ("insert", 21, [], ["n:1024", "n:2", "n:10", "n:1",
                                                      "n:1000"], "Z24")],
@@ -359,7 +364,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z29."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z30."""
 
     @classmethod
     def setUpClass(cls):
@@ -387,10 +392,12 @@ class ZahlenUnveraendertTest(unittest.TestCase):
         self.assertGreater(zahlen, 10000)
 
     def test_4_jede_freigabe_einzeln(self):
-        nummern = sorted({e[4] for liste in FREIGEGEBEN.values() for e in liste})
+        # "Z5+Z30": ein Vergleichsschritt mit zwei Freigaben (ab 0.63.2)
+        nummern = sorted({nr for liste in FREIGEGEBEN.values() for e in liste
+                          for nr in e[4].split("+")})
         self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z19",
                                    "Z2", "Z20", "Z21", "Z22", "Z23", "Z24", "Z25", "Z26",
-                                   "Z27", "Z28", "Z29", "Z3", "Z5", "Z6"])
+                                   "Z27", "Z28", "Z29", "Z3", "Z30", "Z5", "Z6"])
 
     def test_4_z18_nachgerechnet(self):
         # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
@@ -447,6 +454,25 @@ class ZahlenUnveraendertTest(unittest.TestCase):
                           self.neu[quelle])
             self.assertIn("Auslastung Scheinleistung: 667 VA von 1.500 VA = 44,4 %",
                           self.basis[quelle])
+
+    def test_4_z30_nachgerechnet(self):
+        # ab 0.63.2 (Meldung 21 Frage 9): 24 + 8 = 32, und ohne den neuen Satz
+        # bleibt von "Z5+Z30" genau Z5 (16,7 -> 16,8) uebrig
+        satz = "   32 Bit = True Color (24 Bit) + 8 Bit Alpha (Transparenz)\n"
+        werte = [int(z) for z in re.findall(r"\d+", satz)]
+        self.assertEqual(werte, [32, 24, 8])
+        self.assertEqual(werte[1] + werte[2], werte[0])
+        self.assertIn(("32", "32 Bit (True Color + Alpha)"), fc.COLOR_DEPTHS)
+        self.assertIn(("24", "24 Bit (True Color)"), fc.COLOR_DEPTHS)
+        text = self.neu["text:CALC_EXPLAIN_SCREEN"]
+        self.assertEqual(text.count(satz), 1)
+        alt = rt.zahlen(self.basis["text:CALC_EXPLAIN_SCREEN"], "de")
+        ohne = rt.zahlen(text.replace(satz, ""), "de")
+        ops = [(art, i1, alt[i1:i2], ohne[j1:j2])
+               for art, i1, i2, j1, j2 in SequenceMatcher(a=alt, b=ohne, autojunk=False)
+               .get_opcodes() if art != "equal"]
+        self.assertEqual(ops[0], ("replace", 11, ["n:16.7"], ["n:16.8"]))
+        self.assertEqual(ops[1:], [e[:4] for e in FREIGEGEBEN["text:CALC_EXPLAIN_SCREEN"][1:]])
 
     def test_4_z28_nachgerechnet(self):
         # ab 0.63.2 (B-N-07 4.15b): 2^(128 - Praefix) = Anzahl, und eingefuegt

@@ -11,6 +11,8 @@ PC und Handy gleich.
                     5.13, 4.9, 4.15b
   Trainer (fisi_lernen.py, ausserhalb des T5-Blocks): 5.9, 5.11, 5.12,
                     3.16, 1.19, 4.12, 4.13
+  Nacharbeit Meldung 21: Z30 (Alpha), Z31 (ODER-Beispiel /28), Hilfe-Satz
+                    mit allen Trainer-Arten, alter Name "Subnetting-Trainer"
 
 Der Code-Ordner ist waehlbar (Rot-Probe gegen einen alten Stand):
 
@@ -253,6 +255,23 @@ class TrainerTest(unittest.TestCase):
         self.assertIn("ui.Card(TRAINER_TITLE, [", handy)
         for text in (pc, handy):
             self.assertNotIn('"Subnetting-Trainer"', text)
+
+
+class NacharbeitM21Test(unittest.TestCase):
+    """Ab 0.63.2, Nacharbeit nach Meldung 21 (Weisung Chat 3.2, Nachtrag Nico)."""
+
+    def test_z30_alpha(self):
+        # Frage 9 (a), Z30: Satz in Schritt 2 des Bildschirm-Rechenwegs, PC = Handy
+        satz = "32 Bit = True Color (24 Bit) + 8 Bit Alpha (Transparenz)"
+        for text in (fc.CALC_EXPLAIN_SCREEN, fc.CALC_EXPLAIN_SCREEN_HANDY):
+            schritt2 = _flach(_abschnitt(text, "SCHRITT 2", "SCHRITT 3"))
+            self.assertIn("je 8 Bit für Rot, Grün und Blau). " + satz + " Datenmenge (Bit)",
+                          schritt2)
+            self.assertEqual(_flach(text).count("Alpha"), 1)
+        gesamt, true_color, alpha = (int(z) for z in re.findall(r"\d+", satz))
+        self.assertEqual(true_color + alpha, gesamt)
+        self.assertEqual(true_color, 3 * 8)      # je 8 Bit fuer Rot, Gruen, Blau
+        self.assertIn(("32", "32 Bit (True Color + Alpha)"), fc.COLOR_DEPTHS)
 
 
 if __name__ == "__main__":
