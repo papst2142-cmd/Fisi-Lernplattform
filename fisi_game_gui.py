@@ -2772,6 +2772,9 @@ class FitWidth:
                 grid.columnconfigure(column, weight=conf["weight"],
                                      uniform=conf["uniform"] or "", minsize=conf["minsize"])
             for tile, kwargs in saved["kacheln"]:
+                # neu einordnen: nicht angegebene Abstaende (z. B. pady der
+                # unteren Kachel bei weniger Spalten) fallen auf 0 zurueck
+                tile.grid_forget()
                 tile.grid(**kwargs)
             grid._fit_cols_now = grid._fit_columns
             return
