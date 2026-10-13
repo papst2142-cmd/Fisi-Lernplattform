@@ -980,6 +980,7 @@ def _correct_own_entries(db, remote, deviation):
     known = _uids(remote) if remote else {}
     since = (device_now() - datetime.timedelta(seconds=CLOCK_VALID)).strftime(
         "%Y-%m-%d %H:%M:%S")
+    refuse_read_only(db)    # ab 0.63.2 (FG-78): direkt vor dem Uhr-Nachtrag
     conn = sqlite3.connect(db.db_path)
     try:
         with conn:

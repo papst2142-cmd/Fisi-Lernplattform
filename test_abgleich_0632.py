@@ -220,6 +220,52 @@ class GBSperre(unittest.TestCase):
         self.assertEqual(zeilen(db.db_path, "SELECT utc_offset FROM card_events"), offsets)
         self.assertEqual(sha(db.db_path), vorher, "Datei wurde veraendert")
 
+    def test_fg_78_sperre_vor_dem_uhr_nachtrag(self):
+        """FG-78 (gp_s6a L2, Versuch gb_sync_rest.py): Die Sperre entsteht
+        zwischen der Pruefung nach dem Netz und dem Uhr-Nachtrag (beim
+        Schreiben in _note_mixed). Der Nachtrag wird nicht geschrieben
+        (SyncError, utc_offset unveraendert); beim naechsten Abgleich ohne
+        Sperre wird er nachgeholt - nichts geht verloren."""
+        db = neue_db("fg78")
+        for i in range(3):
+            db.log_card("Kat", "eigen-%d" % i, "karte", 1)
+        offsets = zeilen(db.db_path, "SELECT utc_offset FROM card_events ORDER BY rowid")
+        now = fisi_core.device_now().astimezone(fisi_core.datetime.timezone.utc)
+
+        def fetch(repo, token):
+            fisi_sync._SERVER_CLOCK.update(
+                server=now - fisi_core.datetime.timedelta(hours=2), device=now)
+            datei = fremde_datei()
+            return "sha1", datei        # ohne "schreiber": _note_mixed schreibt
+
+        echt = db.set_meta
+
+        def set_meta(key, value):
+            if key == fisi_sync.MIXED_KEY:
+                db.read_only_reason = "kaputt"      # Schaden genau hier erkannt
+                return False
+            return echt(key, value)
+
+        with mock.patch.object(fisi_sync, "fetch_remote", fetch), \
+                mock.patch.object(fisi_sync, "upload", lambda *a, **k: "sha2"), \
+                mock.patch.object(db, "set_meta", set_meta):
+            with self.assertRaises(fisi_sync.SyncError) as caught:
+                fisi_sync.sync(db, settings=dict(self.SETTINGS), device="Test")
+        nach_sperre = zeilen(db.db_path, "SELECT utc_offset FROM card_events ORDER BY rowid")
+        bericht("FG-78 Sperre vor dem Uhr-Nachtrag: %s | utc_offset vorher %s, danach %s"
+                % (caught.exception, offsets, nach_sperre))
+        self.assertIn(KAPUTT, str(caught.exception))
+        self.assertEqual(nach_sperre, offsets)
+        self.assertIsNone(db.get_meta(fisi_core.CLOCK_KEY))
+        db.read_only_reason = None                  # Schaden behoben
+        with mock.patch.object(fisi_sync, "fetch_remote", fetch), \
+                mock.patch.object(fisi_sync, "upload", lambda *a, **k: "sha2"):
+            fisi_sync.sync(db, settings=dict(self.SETTINGS), device="Test")
+        nachgeholt = zeilen(db.db_path, "SELECT utc_offset FROM card_events ORDER BY rowid")
+        bericht("FG-78 naechster Abgleich: utc_offset %s" % (nachgeholt,))
+        self.assertEqual(nachgeholt, [(row[0] + 120,) for row in offsets])
+        self.assertEqual(zeilen(db.db_path, "SELECT count(*) FROM card_events"), [(3,)])
+
     def test_g_b_merge_into_local_vor_schreibblock(self):
         """Sperre kommt nach der Pruefung am Anfang von merge_into_local
         (waehrend export_local): kein Schreiben, SyncError."""
