@@ -22,15 +22,22 @@ S4-Felder (N-d) und schon gestellte WiSo-Fragen (N-g).
     einem Geraet mit v0.63.1.
   * N-g: used_items liest abgeschlossene WiSo-Pruefungen ueber den heutigen
     Fragetext (auch ueber Ketten), schreibt aber nichts um.
+  * FG-87 (Zusatz von Nico, Frage 5 b): "Z.B."/"Z. B." teilt kein
+    Bewertungskriterium mehr (A1-025 T2, A1-039 T3, A2-036 T1 je eines
+    weniger), laufende Pruefungen werden umgestellt (KriterienGrossZbTest,
+    MischbetriebFg87Test mit Code v0.63.1, TZ1-TZ8); die 13 Stellen "Z.B."
+    heissen "Z. B.".
   Laufende WiSo-Pruefung ueber das Update (Test (4)): test_inhalte_0632.
   LaufendePruefungTest.test_wiso_zb_ueber_das_update.
 
 Aufruf:  python test_inhalte_zb.py
 """
+import glob
 import hashlib
 import itertools
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -681,6 +688,42 @@ class KriterienGrossZbTest(unittest.TestCase):
             self.assertEqual(len(KRITERIEN_FG87_ALT[(quelle, index, teil)]), alt)
             self.assertEqual(len(kriterien), neu)
             self.assertTrue(kriterien[0].startswith((ZB_GROSS + " ", ZB_GROSS_NEU + " ")))
+
+    def test_tz3_kein_gross_zb_mehr(self):
+        # Schritt 2: die 13 Stellen "Z.B." -> "Z. B." (normales Leerzeichen)
+        soll = {"fachgespraech.json": 4, "karteikarten.json": 2, "projektarbeiten.json": 3,
+                "quizfragen.json": 0, "szenarien_ap1.json": 2, "szenarien_ap2.json": 2}
+        self.assertEqual(sorted(soll), sorted(ANZAHL_TEXT))
+        for datei, anzahl in soll.items():
+            text = roh(datei)
+            self.assertNotIn(ZB_GROSS, text, datei)
+            self.assertEqual(text.count(ZB_GROSS_NEU), anzahl, datei)
+            for zeichen in ("\u00a0", "\u202f", "\u2009"):
+                self.assertNotIn("Z." + zeichen + "B.", text, datei)
+        self.assertEqual(sum(soll.values()), 13)
+        self.assertNotIn(ZB_GROSS, roh(os.path.join("spiel", "aufgaben_vorlagen.json")))
+
+    def test_tz3_nicht_erkannte_formen_kommen_nicht_vor(self):
+        # bekannte Grenze (test_tz1_bekannte_grenzen): diese Formen erkennt
+        # criteria nicht; im Bestand gibt es keine (maschinell, alle inhalte/)
+        muster = re.compile("Z\\.b\\.|z\\.b\\.|[Zz]\\.[\u00a0\u202f\u2009][Bb]\\.|"
+                            "[^\\W\\d_]Z\\. ?B\\.")
+        dateien = glob.glob(os.path.join(INHALTE, "**", "*.json"), recursive=True)
+        self.assertGreater(len(dateien), 10)
+        for pfad in dateien:
+            with open(pfad, encoding="utf-8") as handle:
+                self.assertIsNone(muster.search(handle.read()), pfad)
+
+    def test_tz4_wortlaut_der_drei(self):
+        # "Z. B." steht vor der Aussage im selben Kriterium (bei falscher
+        # Reihenfolge - Schreibweise ohne Fix - fiele es weg)
+        for (quelle, index, teil), alt in KRITERIEN_FG87_ALT.items():
+            kriterien = teile_von(quelle, index)[teil]["kriterien"]
+            self.assertEqual(kriterien, [ZB_GROSS_NEU + " " + alt[1]] + alt[2:])
+        # A2-025 T2: nur der Wortlaut, weiter 1 Kriterium mit "Z. B."
+        kriterien = teile_von("ap2", 24)[1]["kriterien"]
+        self.assertEqual(len(kriterien), 1)
+        self.assertTrue(kriterien[0].startswith(ZB_GROSS_NEU + " das vierte Hextet"))
 
     def test_tz5_alle_hakenmuster(self):
         # Haken-Regel (Antwort Meldung 26, Frage 2 a): Haken von "Z.B." faellt
