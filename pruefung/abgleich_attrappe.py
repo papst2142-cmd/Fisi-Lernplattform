@@ -222,14 +222,22 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(404, {"message": "Not Found"})
         length = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(length))
-        ctl = STATE.ctl
-        if ctl.get("put_status"):
-            n = ctl.get("put_status_n")
-            if n is None or n > 0:
-                if n is not None:
-                    ctl["put_status_n"] = n - 1
-                return self._json(int(ctl["put_status"]), {"message": "Attrappe"})
-        hang = ctl.get("put_hang")
+        # Steuerwerte unter der Sperre lesen und put_status_n dort
+        # herunterzaehlen (gleichzeitige PUTs, ThreadingHTTPServer). Die
+        # Antwort geht erst ausserhalb der Sperre raus, und put_hang schlaeft
+        # nie unter der Sperre.
+        forced = None
+        with STATE.lock:
+            ctl = STATE.ctl
+            if ctl.get("put_status"):
+                n = ctl.get("put_status_n")
+                if n is None or n > 0:
+                    if n is not None:
+                        ctl["put_status_n"] = n - 1
+                    forced = int(ctl["put_status"])
+            hang = ctl.get("put_hang")
+        if forced is not None:
+            return self._json(forced, {"message": "Attrappe"})
         if hang == "vor_speichern":
             with STATE.lock:
                 STATE.log.append(("PUT", self.path, "haengt_vor_speichern"))
