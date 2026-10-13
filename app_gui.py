@@ -3992,7 +3992,7 @@ class NotebookView(View):
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         self.list_card.set_subtitle(plural(len(self.entries), "Frage", "Fragen"))
         if not visible:
-            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+            text = ("Nichts zu üben – sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
                     "Keine Fragen in dieser Auswahl.")
             if self.query.strip() and self.all_entries:
@@ -5863,7 +5863,7 @@ class SettingsView(View):
         make_label(about.body,
                    fr.about_text(APP_TITLE, APP_VERSION,
                                  "Umgesetzt mit Python und CustomTkinter. Die Installer für "
-                                 "Windows, Linux und macOS bringen alles Nötige mit - es muss "
+                                 "Windows, Linux und macOS bringen alles Nötige mit – es muss "
                                  "nichts zusätzlich installiert werden. Die Handy-App für "
                                  "Android nutzt dieselben Lerninhalte."),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
@@ -6101,7 +6101,7 @@ class SettingsView(View):
                                          "eintragen.", text_color=C["yellow"])
             return
         self.btn_sync.set_enabled(False)
-        self.lbl_sync.configure(text="Gleiche ab ...", text_color=C["text_dim"])
+        self.lbl_sync.configure(text="Gleiche ab …", text_color=C["text_dim"])
         self.app.sync.run()
 
     def show_sync_status(self, result, error):
@@ -6127,7 +6127,7 @@ class SettingsView(View):
 
     def check_updates(self):
         self.btn_update.set_enabled(False)
-        self.lbl_update.configure(text="Suche nach Updates ...", text_color=C["text_dim"])
+        self.lbl_update.configure(text="Suche nach Updates …", text_color=C["text_dim"])
         self.app.updater.check(manual=True, on_done=self._update_checked)
 
     def _update_checked(self, info, error):
@@ -7571,7 +7571,7 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_main.set_enabled(False)
         self.btn_later.set_enabled(False)
         self.progress.pack(fill="x", pady=(12, 0), side="bottom", after=self.lbl_status)
-        self.lbl_status.configure(text="Update wird heruntergeladen ...",
+        self.lbl_status.configure(text="Update wird heruntergeladen …",
                                   text_color=C["text_dim"])
         state = {"loaded": 0, "total": self.info.asset_size or 1}
         self._downloading = True
@@ -7598,7 +7598,7 @@ class UpdateDialog(ctk.CTkToplevel):
             self._failed(error)
             return
         self.progress.set(1)
-        self.lbl_status.configure(text="Update wird installiert ...")
+        self.lbl_status.configure(text="Update wird installiert …")
         self.app.updater.run_in_background(
             lambda: fisi_update.install(path, version=self.info.version), self._installed)
 

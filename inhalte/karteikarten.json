@@ -757,10 +757,10 @@
     "cat": "wirtschaft",
     "thema": "projekt",
     "q": "Welche drei zentralen Rollen definiert das Scrum-Framework?",
-    "a": "Product Owner, Scrum Master und Entwicklungsteam",
-    "a_full": "Der Product Owner verantwortet das Product Backlog, der Scrum Master moderiert den Prozess, das Entwicklungsteam setzt die Arbeit in Sprints um.",
+    "a": "Product Owner, Scrum Master und Developers (Entwickler)",
+    "a_full": "Der Product Owner verantwortet das Product Backlog, der Scrum Master moderiert den Prozess, die Developers setzen die Arbeit in Sprints um. Der offizielle Scrum-Leitfaden von 2020 nennt das Verantwortlichkeiten im Scrum-Team. Ältere Fassungen sprachen vom Entwicklungsteam.",
     "options": [
-      "Product Owner, Scrum Master und Entwicklungsteam",
+      "Product Owner, Scrum Master und Developers (Entwickler)",
       "Projektleiter, Tester und Kunde",
       "CEO, CTO und Product Manager",
       "Auftraggeber, Auftragnehmer und Berater"
@@ -1562,7 +1562,7 @@
   {
     "cat": "netzwerk",
     "thema": "routing",
-    "q": "Welche Domäne trennt ein Router, ein einfacher Switch aber nicht?",
+    "q": "Welche Domäne trennt ein Router, ein einfacher Switch aber NICHT?",
     "a": "Die Broadcast-Domäne",
     "a_full": "Ein Switch leitet Broadcasts an alle Ports im gleichen VLAN weiter. Ein Router leitet Broadcasts nicht weiter und begrenzt damit die Broadcast-Domäne.",
     "options": [
@@ -2071,7 +2071,7 @@
     "thema": "wan_vpn",
     "q": "Wofür steht FTTH?",
     "a": "Fiber To The Home",
-    "a_full": "Bei FTTH reicht die Glasfaser bis in die Wohnung bzw. das Gebäude. Bei FTTC (Curb) endet sie am Verteilerkasten, danach geht es über Kupfer weiter.",
+    "a_full": "Bei FTTH reicht die Glasfaser bis in die Wohnung (bei FTTB nur bis ins Gebäude, danach Kupfer). Bei FTTC (Curb) endet sie am Verteilerkasten, danach geht es über Kupfer weiter.",
     "options": [
       "Fiber To The Home",
       "Fast Transfer To Host",
@@ -3916,10 +3916,10 @@
     "cat": "wirtschaft",
     "thema": "recht",
     "q": "Was ist Prokura?",
-    "a": "Eine umfassende Handlungsvollmacht, die im Handelsregister eingetragen wird",
-    "a_full": "Ein Prokurist darf fast alle Geschäfte abschließen, aber z.B. keine Grundstücke verkaufen oder die Firma auflösen. Er zeichnet mit 'ppa.'.",
+    "a": "Eine umfassende, gesetzlich festgelegte Vollmacht, die im Handelsregister eingetragen wird",
+    "a_full": "Ein Prokurist darf fast alle Geschäfte abschließen, aber z.B. keine Grundstücke verkaufen oder die Firma auflösen. Er zeichnet mit 'ppa.'. Davon zu unterscheiden ist die Handlungsvollmacht (§ 54 HGB): Sie reicht weniger weit und wird nicht ins Handelsregister eingetragen.",
     "options": [
-      "Eine umfassende Handlungsvollmacht, die im Handelsregister eingetragen wird",
+      "Eine umfassende, gesetzlich festgelegte Vollmacht, die im Handelsregister eingetragen wird",
       "Eine Vollmacht nur für eine einzelne Aufgabe",
       "Die Leitung des Betriebsrats",
       "Eine Form der Kündigung"
@@ -9622,7 +9622,7 @@
   {
     "cat": "wirtschaft",
     "thema": "recht",
-    "q": "Welches Geschäft darf ein Prokurist ohne besondere Befugnis nicht abschließen?",
+    "q": "Welches Geschäft darf ein Prokurist ohne besondere Befugnis NICHT abschließen?",
     "a": "Grundstücke des Unternehmens verkaufen oder belasten",
     "a_full": "Die Prokura erlaubt fast alle Geschäfte eines Handelsgewerbes. Für Verkauf und Belastung von Grundstücken braucht der Prokurist eine besondere Befugnis. Grundlagengeschäfte wie Bilanz unterschreiben, Prokura erteilen oder Insolvenz anmelden bleiben dem Inhaber vorbehalten.",
     "options": [
@@ -11158,7 +11158,7 @@
     "thema": "datenschutz",
     "q": "Eine Kundin schickt ihr Auskunftsersuchen nach Art. 15 DSGVO direkt an den Rechenzentrumsdienstleister Ihres Unternehmens. Wie reagiert der Dienstleister richtig?",
     "a": "Er leitet das Ersuchen unverzüglich an den Verantwortlichen weiter",
-    "a_full": "Die Auskunft schuldet der Verantwortliche, nicht der Auftragsverarbeiter. Der Dienstleister unterstützt ihn nach Art. 28 Abs. 3 DSGVO, z.B. indem er Anfragen weiterleitet und Daten bereitstellt. Die Monatsfrist läuft ab Eingang beim Verantwortlichen, deshalb muss die Weiterleitung schnell gehen.",
+    "a_full": "Die Auskunft schuldet der Verantwortliche, nicht der Auftragsverarbeiter. Der Dienstleister unterstützt ihn nach Art. 28 Abs. 3 DSGVO, z.B. indem er Anfragen weiterleitet und Daten bereitstellt. Damit die Monatsfrist für die Antwort (Art. 12 Abs. 3 DSGVO) sicher eingehalten wird, muss die Weiterleitung unverzüglich erfolgen.",
     "options": [
       "Er leitet das Ersuchen unverzüglich an den Verantwortlichen weiter",
       "Er beantwortet das Ersuchen selbst mit allen gespeicherten Daten",
@@ -11171,7 +11171,7 @@
     "thema": "krypto",
     "q": "Die Personalabteilung verschickt eine interne Rundmail zur neuen Urlaubsregelung. Der Inhalt ist nicht geheim, aber jeder soll prüfen können, dass sie echt ist. Was ist passend?",
     "a": "Die Mail signieren, aber nicht verschlüsseln",
-    "a_full": "Eine Signatur belegt Herkunft und Unverändertheit, geheim muss der Inhalt hier nicht sein. Die Absenderin signiert mit ihrem privaten Schlüssel, die Empfänger prüfen mit ihrem öffentlichen Schlüssel. Eine Verschlüsselung wäre für alle Empfänger unnötiger Aufwand.",
+    "a_full": "Eine Signatur belegt Herkunft und Unverändertheit, geheim muss der Inhalt hier nicht sein. Die Absenderin signiert mit ihrem privaten Schlüssel, die Empfänger prüfen mit dem öffentlichen Schlüssel der Absenderin. Eine Verschlüsselung wäre für alle Empfänger unnötiger Aufwand.",
     "options": [
       "Die Mail signieren, aber nicht verschlüsseln",
       "Die Mail verschlüsseln, aber nicht signieren",
@@ -11470,10 +11470,10 @@
     "thema": "hardware",
     "q": "Ein Upgrade auf Windows 11 wird mit dem Hinweis abgelehnt, der PC erfülle die Anforderungen nicht. Die Hardware ist zwei Jahre alt. Was prüfen Sie im UEFI?",
     "a": "Ob TPM 2.0 (fTPM bzw. PTT) und Secure Boot aktiviert sind",
-    "a_full": "Windows 11 setzt TPM 2.0 und Secure Boot voraus. Bei vielen Mainboards ist das TPM in der CPU vorhanden (AMD fTPM, Intel PTT), aber ab Werk abgeschaltet. Nach dem Aktivieren im UEFI läuft die Prüfung meist erfolgreich durch.",
+    "a_full": "Windows 11 setzt TPM 2.0 und UEFI mit Secure-Boot-Fähigkeit voraus. Bei vielen Mainboards ist das TPM in der CPU vorhanden (AMD fTPM, Intel PTT), aber ab Werk abgeschaltet. Nach dem Aktivieren im UEFI läuft die Prüfung meist erfolgreich durch. Secure Boot sollte ebenfalls eingeschaltet sein, für die Prüfung genügt aber, dass das Mainboard es unterstützt.",
     "options": [
       "Ob TPM 2.0 (fTPM bzw. PTT) und Secure Boot aktiviert sind",
-      "Ob der Legacy-Modus (CSM) statt UEFI aktiviert ist",
+      "Ob der Legacy-Modus (CSM) eingeschaltet werden muss",
       "Ob die Virtualisierung der CPU abgeschaltet ist",
       "Ob das Hyper-Threading des Prozessors aktiv ist"
     ]
@@ -16838,10 +16838,10 @@
     "cat": "sicherheit",
     "thema": "haertung",
     "q": "Ein Webshop bindet eine JavaScript-Bibliothek in einer sechs Jahre alten Version ein, für die eine bekannte CVE existiert. Welche OWASP-Kategorie liegt vor und was hilft?",
-    "a": "Veraltete Komponenten, Abhilfe durch Inventar der Bibliotheken und Updates",
-    "a_full": "Viele Angriffe nutzen bekannte Lücken in Fremdkomponenten, nicht im eigenen Code. Eine Stückliste der Software (SBOM) zeigt, welche Bibliotheken in welcher Version im Einsatz sind. Automatische Abhängigkeitsprüfungen melden neue CVEs, damit zeitnah aktualisiert wird.",
+    "a": "Veraltete Komponenten (OWASP Top 10:2021, A06), Abhilfe durch Inventar der Bibliotheken und Updates",
+    "a_full": "Viele Angriffe nutzen bekannte Lücken in Fremdkomponenten, nicht im eigenen Code. Eine Stückliste der Software (SBOM) zeigt, welche Bibliotheken in welcher Version im Einsatz sind. Automatische Abhängigkeitsprüfungen melden neue CVEs, damit zeitnah aktualisiert wird. Die Bezeichnung folgt der OWASP Top 10:2021, dort ist es die Kategorie A06.",
     "options": [
-      "Veraltete Komponenten, Abhilfe durch Inventar der Bibliotheken und Updates",
+      "Veraltete Komponenten (OWASP Top 10:2021, A06), Abhilfe durch Inventar der Bibliotheken und Updates",
       "Fehlerhafte Zugriffskontrolle, Abhilfe durch längere Passwörter",
       "Unsicheres Design, Abhilfe durch einen neuen Webserver",
       "Fehlende Protokollierung, Abhilfe durch mehr Logspeicher"
@@ -18702,7 +18702,7 @@
     "rahmenplan": [
       "A4b"
     ],
-    "q": "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip wurde nicht umgesetzt?",
+    "q": "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip wurde NICHT umgesetzt?",
     "a": "Die Kapselung (encapsulation): saldo privat machen und nur über Methoden ändern",
     "a_full": "Kapselung bedeutet, dass ein Objekt seinen inneren Zustand vor direktem Zugriff von außen schützt. Attribute werden privat deklariert und nur über öffentliche Methoden wie einzahlen() oder abheben() verändert. Diese Methoden können Regeln prüfen, z. B. dass kein unzulässiger Wert entsteht.",
     "options": [

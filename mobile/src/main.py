@@ -2644,7 +2644,7 @@ class NotebookScreen(Screen):
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         rows = [self._row(entry) for entry in visible]
         if not rows:
-            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+            text = ("Nichts zu üben – sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
                     "Keine Fragen in dieser Auswahl.")
             if self.query.strip() and self.all_entries:
@@ -4223,7 +4223,7 @@ class SettingsScreen(Screen):
             self.lbl_sync.color = C["yellow"]
             return
         self.btn_sync.set_enabled(False)
-        self.lbl_sync.value = "Gleiche ab ..."
+        self.lbl_sync.value = "Gleiche ab …"
         self.lbl_sync.color = C["text_dim"]
         self.app.sync.run()
 
@@ -4245,7 +4245,7 @@ class SettingsScreen(Screen):
 
     def check_updates(self, _event=None):
         self.btn_update.set_enabled(False)
-        self.lbl_update.value = "Suche nach Updates ..."
+        self.lbl_update.value = "Suche nach Updates …"
         self.box_update.visible = True
         self.lbl_update.color = C["text_dim"]
         self.app.check_updates(manual=True)
@@ -4546,7 +4546,7 @@ class SearchScreen(Screen):
     crumbs = ("SUCHE", "ERGEBNISSE")
 
     def build(self):
-        self.field = ui.entry(hint="Suchen ... (z.B. RAID, DNS, DSGVO)", expand=True)
+        self.field = ui.entry(hint="Suchen … (z. B. RAID, DNS, DSGVO)", expand=True)
         self.field.on_submit = lambda _e: self.search(self.field.value or "")
         self.field.autofocus = True
         self.lbl_info = ui.text("", size=13, color=C["text_dim"])

@@ -374,7 +374,7 @@
       "Ein Netzwerkprotokoll"
     ],
     "a": "Umwandlung von Daten in einen Prüfwert fester Länge, der nicht umkehrbar ist",
-    "exp": "Hashfunktionen erzeugen aus beliebigen Daten einen eindeutigen Prüfwert, z.B. zur Integritätsprüfung oder Passwortspeicherung - Hashing ist nicht umkehrbar."
+    "exp": "Hashfunktionen erzeugen aus beliebigen Daten einen charakteristischen Prüfwert, z.B. zur Integritätsprüfung oder Passwortspeicherung - Hashing ist nicht umkehrbar. Zwei verschiedene Eingaben mit gleichem Hashwert (Kollision) gibt es zwar, bei sicheren Verfahren sind sie aber praktisch nicht zu finden."
   },
   {
     "cat": "sicherheit",
@@ -925,7 +925,7 @@
   {
     "cat": "wirtschaft",
     "thema": "service",
-    "q": "Welche Phase gehört zum ITIL-Service-Lebenszyklus?",
+    "q": "Welche Phase gehört zum ITIL-Service-Lebenszyklus (ITIL v3/2011)?",
     "options": [
       "Service Operation",
       "Code Deployment",
@@ -933,7 +933,7 @@
       "Database Indexing"
     ],
     "a": "Service Operation",
-    "exp": "Service Operation sichert den laufenden Betrieb von IT-Services nach ITIL."
+    "exp": "Service Operation ist eine der fünf Phasen des Service-Lebenszyklus nach ITIL v3/2011 und sichert den laufenden Betrieb von IT-Services. ITIL 4 (seit 2019) ersetzt den Lebenszyklus durch das Service Value System."
   },
   {
     "cat": "wirtschaft",
@@ -2056,7 +2056,7 @@
   {
     "cat": "netzwerk",
     "thema": "grundlagen",
-    "q": "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?",
+    "q": "Welche Information steht im Ethernet-Frame, aber NICHT im IP-Paket?",
     "options": [
       "Die MAC-Adresse von Absender und Empfänger",
       "Die IP-Adresse des Empfängers",
@@ -8168,12 +8168,12 @@
     "thema": "linux",
     "q": "Welche Rechte hat die Datei /etc/shadow typischerweise?",
     "options": [
-      "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+      "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z.B. 640 root:shadow oder 000",
       "Alle Benutzer dürfen sie lesen",
       "Alle Benutzer dürfen sie schreiben",
       "Sie ist ausführbar"
     ],
-    "a": "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+    "a": "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z.B. 640 root:shadow oder 000",
     "exp": "Wären die Hashes für alle lesbar, könnte jeder Benutzer Passwörter offline knacken. Deshalb stehen sie nicht in /etc/passwd, sondern in der geschützten /etc/shadow."
   },
   {
@@ -10111,7 +10111,7 @@
       "027 (----w-rwx)"
     ],
     "a": "640 (rw-r-----)",
-    "exp": "Dateien starten mit 666. Die umask 027 entzieht der Gruppe Schreibrecht und anderen alle Rechte: 666 - 027 ergibt bitweise 640. Ordner (777) erhalten 750."
+    "exp": "Dateien starten mit 666. Die umask 027 entzieht der Gruppe Schreibrecht und anderen alle Rechte: 666 UND NICHT 027 (bitweise) ergibt 640, die in der umask gesetzten Bits werden also entfernt. Ordner (777) erhalten 750."
   },
   {
     "cat": "systeme",
@@ -10766,7 +10766,7 @@
   {
     "cat": "systeme",
     "thema": "storage",
-    "q": "Welches Protokoll nutzt NFS standardmäßig?",
+    "q": "Welchen Port nutzt NFS standardmäßig?",
     "options": [
       "TCP- bzw. UDP-Port 2049",
       "Port 445",
@@ -10774,7 +10774,7 @@
       "Port 3260"
     ],
     "a": "TCP- bzw. UDP-Port 2049",
-    "exp": "NFS (vor allem unter Linux) nutzt 2049. SMB nutzt 445, iSCSI 3260."
+    "exp": "Gefragt ist der Port: NFS nutzt standardmäßig Port 2049 (NFS Version 4 über TCP, Version 3 über TCP oder UDP). SMB nutzt 445, iSCSI 3260."
   },
   {
     "cat": "systeme",
@@ -12105,7 +12105,7 @@
   {
     "cat": "netzwerk",
     "thema": "verkabelung",
-    "q": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) nicht erkannt?",
+    "q": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) NICHT erkannt?",
     "options": [
       "Split Pair, also Adern aus zwei verschiedenen Paaren vertauscht",
       "Ein offener Stromkreis durch eine gebrochene Ader",
@@ -13314,7 +13314,7 @@
   {
     "cat": "wirtschaft",
     "thema": "recht",
-    "q": "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?",
+    "q": "Bei welchem Onlinekauf hat ein Verbraucher KEIN Widerrufsrecht?",
     "options": [
       "Software in versiegelter Packung, deren Siegel er geöffnet hat",
       "Ein Notebook, das er ausgepackt und kurz getestet hat",
@@ -17201,7 +17201,7 @@
   {
     "cat": "systeme",
     "thema": "zahlen",
-    "q": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?",
+    "q": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern (1 TB = 10^12 Byte)?",
     "options": [
       "30 Tage",
       "31 Tage",
@@ -17209,7 +17209,7 @@
       "185 Tage"
     ],
     "a": "30 Tage",
-    "exp": "Je Tag: 6 * 4 Mbit/s / 8 * 86.400 s = 259,2 GB. 8.000 GB / 259,2 GB = 30,86, also 30 volle Tage."
+    "exp": "Gerechnet wird dezimal (1 TB = 10^12 Byte = 1.000 GB). Je Tag: 6 * 4 Mbit/s / 8 * 86.400 s = 259,2 GB. 8.000 GB / 259,2 GB = 30,86, also 30 volle Tage."
   },
   {
     "cat": "systeme",
@@ -19234,10 +19234,10 @@
       "ca. 28 Minuten 48 Sekunden",
       "ca. 2 Minuten 24 Sekunden",
       "ca. 3 Minuten 36 Sekunden",
-      "ca. 30 Minuten 55 Sekunden"
+      "ca. 4 Stunden 48 Minuten"
     ],
     "a": "ca. 28 Minuten 48 Sekunden",
-    "exp": "Alle Images laufen über den Uplink des Servers: 12 * 18 GB = 216 GB = 1.728.000 Mbit. 1.728.000 Mbit / 1.000 Mbit/s = 1.728 s."
+    "exp": "Alle Images laufen über den Uplink des Servers: 12 * 18 GB = 216 GB = 1.728.000 Mbit (GB hier dezimal, 1 GB = 10^9 Byte). 1.728.000 Mbit / 1.000 Mbit/s = 1.728 s = 28 Minuten 48 Sekunden."
   },
   {
     "cat": "netzwerk",
@@ -19437,7 +19437,7 @@
   {
     "cat": "netzwerk",
     "thema": "wlan",
-    "q": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
+    "q": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s (1 MB = 10^6 Byte) bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
     "options": [
       "32",
       "33",
@@ -19445,7 +19445,7 @@
       "260"
     ],
     "a": "32",
-    "exp": "Netto: 867 * 45 % = 390,15 Mbit/s. Bedarf je Laptop: 1,5 MB/s * 8 = 12 Mbit/s. 390,15 / 12 = 32,51, also 32 Laptops (abrunden)."
+    "exp": "Netto: 867 * 45 % = 390,15 Mbit/s. Bedarf je Laptop: 1,5 MB/s * 8 = 12 Mbit/s (dezimal, 1 MB = 10^6 Byte). 390,15 / 12 = 32,51, also 32 Laptops (abrunden)."
   },
   {
     "cat": "netzwerk",
@@ -25131,7 +25131,7 @@
   {
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
-    "q": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget im dritten Jahr in heutigen Preisen noch wert?",
+    "q": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget nach drei Jahren in heutigen Preisen noch wert?",
     "options": [
       "160.019,34 Euro",
       "158.400,00 Euro",
@@ -25139,7 +25139,7 @@
       "202.475,52 Euro"
     ],
     "a": "160.019,34 Euro",
-    "exp": "Die Preissteigerung wirkt mit Zinseszins: 180.000,00 Euro / 1,04^3 = 180.000,00 Euro / 1,124864 = 160.019,34 Euro."
+    "exp": "Gemeint ist der Wert nach drei Jahren, also nach drei Preissteigerungen. Sie wirken mit Zinseszins: 180.000,00 Euro / 1,04^3 = 180.000,00 Euro / 1,124864 = 160.019,34 Euro."
   },
   {
     "cat": "wirtschaft",
@@ -27984,7 +27984,7 @@
     "rahmenplan": [
       "F5a"
     ],
-    "q": "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) nicht geschützt?",
+    "q": "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) NICHT geschützt?",
     "options": [
       "Ob jemand raucht",
       "Das Alter",
