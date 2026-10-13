@@ -3574,11 +3574,23 @@ def fit_lines(text, zeichen, einheitlich=False):
     Ab 0.63.2 (A5-a, nur Handy): einheitlich=True - muss in einem Abschnitt
     (aufeinanderfolgende Zeilen "Beschriftung : Wert" mit ": " an derselben
     Stelle) eine Zeile umbrechen, stehen alle Zeilen dieses Abschnitts
-    zweizeilig ("Beschriftung:" / "  Wert"). Standard False: wie bisher (PC)."""
+    zweizeilig ("Beschriftung:" / "  Wert"). Standard False: wie bisher (PC).
+    Ab 0.63.2 (FG-74, nur mit einheitlich=True): eine Zeile ohne ": ", die
+    direkt auf einen Block folgt und genau in dessen Wertspalte beginnt
+    (RAID 10: "(bis zu 2, wenn je Spiegelpaar"), setzt den Wert fort; bricht
+    der Block um, steht sie wie der Wert mit 2 Leerzeichen Einzug."""
     if not text or not zeichen or zeichen <= 0:
         return text
     lines = text.split("\n")
     forced = set()
+
+    def continues(at, head):
+        if not einheitlich or at >= len(lines) or ": " in lines[at]:
+            return False
+        body = lines[at].lstrip(" ")
+        return (body.strip() != "" and "  " not in body.rstrip()
+                and len(lines[at]) - len(body) == lines[head].find(": ") + 2)
+
     if einheitlich:
         # Abschnitte suchen: Bloecke (Kopfzeile + Folgezeilen) mit ": " an
         # derselben Stelle; bricht einer davon nach F-8 b um, alle zweizeilig
@@ -3595,6 +3607,9 @@ def fit_lines(text, zeichen, einheitlich=False):
                 follow = _fit_parts(lines[index])
                 if follow is None or follow[1]:
                     break
+                block.append(lines[index])
+                index += 1
+            while continues(index, start):
                 block.append(lines[index])
                 index += 1
             pos = lines[start].find(": ")
@@ -3631,10 +3646,16 @@ def fit_lines(text, zeichen, einheitlich=False):
                 break
             block.append((lines[index], follow))
             index += 1
-        if start not in forced and all(len(item) <= zeichen for item, _parts in block):
+        more = []
+        while continues(index, start):
+            more.append(lines[index])
+            index += 1
+        if start not in forced and all(len(item) <= zeichen for item, _parts in block) \
+                and all(len(item) <= zeichen for item in more):
             out.extend(item for item, _parts in block)
+            out.extend(more)
             continue
-        prose = _fit_prose(line, zeichen) if len(block) == 1 else None
+        prose = _fit_prose(line, zeichen) if len(block) == 1 and not more else None
         if prose:                            # ab 0.63.2 (A5): Satz mit ":"
             out.extend(prose)
             continue
@@ -3643,6 +3664,9 @@ def fit_lines(text, zeichen, einheitlich=False):
         for _item, item_parts in block:
             out.extend("%s  %s" % (indent, row)
                        for row in _fit_value(item_parts[2], zeichen - len(indent) - 2))
+        if more:
+            out.extend("%s  %s" % (indent, row) for row in _fit_value(
+                " ".join(item.strip() for item in more), zeichen - len(indent) - 2))
     return "\n".join(out)
 
 

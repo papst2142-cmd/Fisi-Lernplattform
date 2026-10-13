@@ -456,5 +456,105 @@ class ProblemberichtTest(unittest.TestCase):
                          fdg.build_report(self.screen.db, handy.APP_VERSION, "Handy"))
 
 
+# ---------------------------------------------------------------------------
+#  FG-74 (Meldung 21, Frage 3 a): RAID-10-Fortsetzung am Handy
+# ---------------------------------------------------------------------------
+
+def _pc_korpus():
+    """Texte fuer den PC-Vergleich: alle RAID-Level (auch RAID 10 mit
+    Fortsetzungszeilen), Netzdaten IPv4/IPv6, Bildschirm, dazu Kunsttexte mit
+    eingerueckten Zeilen ohne ": " (Gegenfaelle)."""
+    texte = []
+    for level in fc.RAID_LEVELS:
+        for disks in ("2", "3", "4", "6", "8"):
+            texte.append(fc.raid_report(level, disks, "4000"))
+    texte += [fc.subnet_report("192.168.10.0/26"),
+              fc.subnet_report("2001:db8:85a3::8a2e:370:7334/64"),
+              fc.screen_report("7680", "4320", "32", "240")]
+    texte += [RaidFortsetzungTest.GEGENFALL, RaidFortsetzungTest.TIEFER,
+              RaidFortsetzungTest.NACH_LEERZEILE]
+    return [text for text in texte if text]
+
+
+def _pc_ausgabe():
+    return "\n\x00\n".join(fc.fit_lines(text, zeichen) + "\x01"
+                          + fc.fit_lines(text, zeichen, einheitlich=False)
+                          for text in _pc_korpus() for zeichen in range(10, 81))
+
+
+class RaidFortsetzungTest(unittest.TestCase):
+    """FG-74: Am Handy (einheitlich=True) gilt eine eingerueckte Zeile ohne
+    ": ", die direkt auf einen Block folgt und genau in dessen Wertspalte
+    beginnt, als Fortsetzung des Werts. Am PC bleibt alles zeichengleich."""
+
+    # Einrueckung 2 bzw. 10 (nicht die Wertspalte 8): KEINE Fortsetzung
+    GEGENFALL = ("Wert  : eins zwei drei vier\n"
+                 "  kurz\n"
+                 "  auch kurz")
+    TIEFER = ("Wert  : eins zwei drei vier\n"
+              "          tiefer\n"
+              "          eingerueckt")
+    # Wertspalte, aber nach einer Leerzeile: KEINE Fortsetzung
+    NACH_LEERZEILE = ("Wert  : eins zwei drei vier\n"
+                      "\n"
+                      "        ein Satz in der Wertspalte, der lang ist")
+    # Sha256 der PC-Ausgabe (_pc_ausgabe) auf a123cc3, also vor FG-74
+    PC_SOLL = "60a3b4a91da91faf4825791ddfbbb666d173c39eb03da106a1c3446afcf3fb34"
+
+    def test_raid10_handy(self):
+        text = fc.raid_report("RAID 10", "4", "4000")
+        for zeichen in (27, 24, 22):
+            with self.subTest(zeichen=zeichen):
+                neu = fc.fit_lines(text, zeichen, einheitlich=True).split("\n")
+                start = neu.index("Ausfalltoleranz:")
+                self.assertEqual(neu[start + 1], "  1 Festplatte sicher")
+                fort = neu[start + 2:]
+                # die Fortsetzung steht wie der Wert mit 2 Leerzeichen Einzug,
+                # Wort fuer Wort vollstaendig, keine schmale Spalte mehr
+                self.assertTrue(all(row.startswith("  ") and not row.startswith("   ")
+                                    for row in fort), neu)
+                self.assertTrue(all(len(row) <= zeichen for row in neu), neu)
+                self.assertEqual(" ".join(row.strip() for row in fort),
+                                 "(bis zu 2, wenn je Spiegelpaar nur eine ausfällt)")
+                self.assertLessEqual(len(fort), 3, neu)
+                self.assertEqual(_norm("\n".join(neu)), _norm(text))
+        self.assertEqual(fc.fit_lines(text, 27, einheitlich=True).split("\n")[-5:],
+                         ["Ausfalltoleranz:", "  1 Festplatte sicher",
+                          "  (bis zu 2, wenn je", "  Spiegelpaar nur eine",
+                          "  ausfällt)"])
+
+    def test_raid10_acht_platten(self):
+        text = fc.raid_report("RAID 10", "8", "1000")
+        neu = fc.fit_lines(text, 27, einheitlich=True).split("\n")
+        self.assertEqual(neu[-3:], ["  (bis zu 4, wenn je", "  Spiegelpaar nur eine",
+                                    "  ausfällt)"])
+        # passt alles, bleibt der Text wie er ist
+        self.assertEqual(fc.fit_lines(text, 60, einheitlich=True), text)
+
+    def test_gegenfall_nicht_verschmelzen(self):
+        # die eingerueckten Zeilen bleiben je fuer sich, genau wie am PC
+        neu = fc.fit_lines(self.GEGENFALL, 20, einheitlich=True).split("\n")
+        self.assertEqual(neu, ["Wert:", "  eins zwei drei", "  vier", "  kurz",
+                               "  auch kurz"])
+        neu = fc.fit_lines(self.TIEFER, 20, einheitlich=True).split("\n")
+        self.assertEqual(neu, ["Wert:", "  eins zwei drei", "  vier",
+                               "          tiefer", "          eingerueckt"])
+        neu = fc.fit_lines(self.NACH_LEERZEILE, 20, einheitlich=True).split("\n")
+        self.assertEqual(neu, ["Wert:", "  eins zwei drei", "  vier", "",
+                               "        ein Satz in", "        der", "        Wertspalte,",
+                               "        der lang ist"])
+
+    def test_pc_zeichengleich(self):
+        text = fc.raid_report("RAID 10", "4", "4000")
+        self.assertEqual(fc.fit_lines(text, 27).split("\n")[-11:],
+                         ["Ausfalltoleranz:", "  1 Festplatte sicher"]
+                         + ["                        " + wort for wort in
+                            ("(bis", "zu", "2,", "wenn", "je", "Spiegelpaar", "nur",
+                             "eine", "ausfällt)")])
+        import hashlib
+        self.assertEqual(hashlib.sha256(_pc_ausgabe().encode("utf-8")).hexdigest(),
+                         self.PC_SOLL)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
