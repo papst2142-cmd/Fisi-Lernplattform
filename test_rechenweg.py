@@ -11,7 +11,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14-Z30 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z31 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -101,6 +101,11 @@ FREIGEGEBEN = {
                             "ip:192.168.1.48"], "Z19"),
         ("insert", 29, [], ["n:4", "n:0", "s:00000000", "n:11111111", "n:11111111",
                             "n:255"], "Z20"),
+        # ab 0.63.2 (Meldung 21 Frage 13 b): Z31 = ODER-Beispiel /28 in Schritt 3,
+        # nachgerechnet in test_4_z31_nachgerechnet
+        ("insert", 30, [], ["ip:192.168.1.50", "n:28", "n:4", "s:00110000", "n:48",
+                            "s:00001111", "ip:0.0.0.15", "s:00111111", "n:63", "n:28",
+                            "ip:192.168.1.63"], "Z31"),
         ("insert", 51, [], ["n:31", "n:3021", "n:32"], "Z21"),
         ("insert", 54, [], ["n:2", "n:128"], "Z14")],
     # Ab 0.63.2 (Plan 0.63.2, FG-23), je Zahl nachgerechnet:
@@ -364,7 +369,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z30."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z31."""
 
     @classmethod
     def setUpClass(cls):
@@ -397,7 +402,7 @@ class ZahlenUnveraendertTest(unittest.TestCase):
                           for nr in e[4].split("+")})
         self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z19",
                                    "Z2", "Z20", "Z21", "Z22", "Z23", "Z24", "Z25", "Z26",
-                                   "Z27", "Z28", "Z29", "Z3", "Z30", "Z5", "Z6"])
+                                   "Z27", "Z28", "Z29", "Z3", "Z30", "Z31", "Z5", "Z6"])
 
     def test_4_z18_nachgerechnet(self):
         # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
@@ -473,6 +478,25 @@ class ZahlenUnveraendertTest(unittest.TestCase):
                .get_opcodes() if art != "equal"]
         self.assertEqual(ops[0], ("replace", 11, ["n:16.7"], ["n:16.8"]))
         self.assertEqual(ops[1:], [e[:4] for e in FREIGEGEBEN["text:CALC_EXPLAIN_SCREEN"][1:]])
+
+    def test_4_z31_nachgerechnet(self):
+        # ab 0.63.2 (Meldung 21 Frage 13 b): Broadcast-Adresse bei /28 bitweise
+        import ipaddress
+        netz = ipaddress.ip_network("192.168.1.50/28", strict=False)
+        wildcard = netz.hostmask.packed[3]
+        self.assertEqual((str(netz.hostmask), wildcard, 255 - 240), ("0.0.0.15", 15, 15))
+        self.assertEqual(48 | wildcard, 63)
+        self.assertEqual((format(48, "08b"), format(wildcard, "08b"), format(48 | 15, "08b")),
+                         ("00110000", "00001111", "00111111"))
+        self.assertEqual(str(netz.broadcast_address), "192.168.1.63")
+        eintrag = [e for e in FREIGEGEBEN["text:CALC_EXPLAIN_SUBNET"] if e[4] == "Z31"]
+        self.assertEqual(len(eintrag), 1)
+        self.assertEqual(eintrag[0][3], ["ip:192.168.1.50", "n:28", "n:4", "s:00110000",
+                                         "n:48", "s:00001111", "ip:0.0.0.15",
+                                         "s:00111111", "n:63", "n:28", "ip:192.168.1.63"])
+        # die /24-Zeilen davor bleiben
+        self.assertIn("ODER-Ergebnis:  11111111 = 255\n   -> Broadcast-Adresse: "
+                      "192.168.1.255\n   Beispiel 192.168.1.50/28", fc.CALC_EXPLAIN_SUBNET)
 
     def test_4_z28_nachgerechnet(self):
         # ab 0.63.2 (B-N-07 4.15b): 2^(128 - Praefix) = Anzahl, und eingefuegt

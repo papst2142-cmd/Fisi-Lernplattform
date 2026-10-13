@@ -116,8 +116,10 @@ class MitNeuenZahlenTest(unittest.TestCase):
     def test_5_2_oder_mit_bitreihen(self):
         for text in (fc.CALC_EXPLAIN_SUBNET, fc.CALC_EXPLAIN_SUBNET_HANDY):
             schritt3 = _abschnitt(text, "SCHRITT 3", "SCHRITT 4")
+            # ab Nacharbeit Meldung 21 (Z31): danach das /28-Beispiel
             self.assertEqual(re.findall(r"[01]{8}", schritt3),
-                             ["00000000", "11111111", "11111111"])
+                             ["00000000", "11111111", "11111111",
+                              "00110000", "00001111", "00111111"])
             self.assertIn("ODER-Ergebnis: 11111111 = 255", _flach(schritt3))
 
     def test_5_3_ausnahmen_31_32(self):
@@ -273,6 +275,27 @@ class NacharbeitM21Test(unittest.TestCase):
         self.assertEqual(true_color, 3 * 8)      # je 8 Bit fuer Rot, Gruen, Blau
         self.assertIn(("32", "32 Bit (True Color + Alpha)"), fc.COLOR_DEPTHS)
 
+    def test_z31_oder_beispiel_28(self):
+        # Frage 13 (b), Z31: /24-Zeile bleibt, danach das /28-Beispiel aus
+        # Schritt 2, parallel gebaut; PC = Handy
+        for text in (fc.CALC_EXPLAIN_SUBNET, fc.CALC_EXPLAIN_SUBNET_HANDY):
+            schritt3 = _flach(_abschnitt(text, "SCHRITT 3", "SCHRITT 4"))
+            self.assertIn("Netzadresse: 00000000 Wildcard-Maske: 11111111 "
+                          "ODER-Ergebnis: 11111111 = 255 -> Broadcast-Adresse: "
+                          "192.168.1.255 Beispiel 192.168.1.50/28 von oben, im 4. Oktett: "
+                          "Netzadresse: 00110000 (= 48) Wildcard-Maske: 00001111 "
+                          "(0.0.0.15) ODER-Ergebnis: 00111111 = 63 "
+                          "-> Broadcast-Adresse bei /28: 192.168.1.63", schritt3)
+            schritt2 = _flach(_abschnitt(text, "SCHRITT 2", "SCHRITT 3"))
+            self.assertIn("Beispiel 192.168.1.50/28, im 4. Oktett:", schritt2)
+            self.assertIn("UND-Ergebnis: 00110000 = 48", schritt2)
+        # nachgerechnet: Wildcard 15 = 255 - 240, 48 ODER 15 = 63
+        self.assertEqual(255 - 240, int("00001111", 2))
+        self.assertEqual(int("00110000", 2) | int("00001111", 2), int("00111111", 2))
+        self.assertEqual(int("00111111", 2), 63)
+        netz = ipaddress.ip_network("192.168.1.50/28", strict=False)
+        self.assertEqual((str(netz.hostmask), str(netz.broadcast_address)),
+                         ("0.0.0.15", "192.168.1.63"))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
