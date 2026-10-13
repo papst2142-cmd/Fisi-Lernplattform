@@ -642,6 +642,7 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     remote_tables = remote.get("tables") or {}
 
     received = []       # ab 0.62.5 (B-G-18): (Tabelle, uid) neu uebernommen
+    refuse_read_only(db)    # ab 0.63.2 (G-B): direkt vor dem Schreibblock
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -736,6 +737,7 @@ def sync(db, settings=None, device=""):
     for _attempt in range(3):
         _SERVER_CLOCK.update(server=None, device=None)
         sha, remote = fetch_remote(repo, token)
+        refuse_read_only(db)    # ab 0.63.2 (G-B): auch nach dem Netz, vor dem Schreiben
         raw_markers = dict((remote or {}).get("markers") or {}) if remote else {}
         deviation = _clock_deviation()
         mixed = _note_mixed(db, remote, deviation)
