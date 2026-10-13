@@ -251,8 +251,7 @@ def pruefe_abschlussprojekt(ctx):
 # umbrochene Zeile, keine verschobene Unterschrift - Normal ist nicht Teil
 # von Z3; Pixelvergleich der Fotos im Bericht).
 
-Z3_STUFEN = {1.0: "normal"}
-# Gross/Sehr gross folgt im eigenen Commit (Design, F11)
+Z3_STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 # Normal 1120: Notizblock (+99 px) und Fortschritt (+34 px) waren schon in
 # 0.63.1 zu breit (Messung Plan S1), die Optionen mit allen Bereichen
 # aufgeklappt ebenso (+6 px, Messung S1c2). Normal gehoert nicht zu Z3 und
