@@ -11,6 +11,9 @@ geprueften Ansicht, in jedem geprueften Zustand:
   * jedes Bedienelement (Knopf, Feld, Aufklappliste, Haken, Textkasten)
     liegt ganz im sichtbaren Bereich und ganz in seinem Rahmen (nicht
     abgeschnitten) und ueberlappt kein anderes
+  * steht der Inhalt neben der Liste, ist er mindestens 440 logische px
+    breit; sonst stehen Liste und Inhalt untereinander, und der Inhalt
+    steht nach "Naechstes ..." oben im sichtbaren Bereich
   * bei 1360 x 900 Normal bleibt die Anordnung wie bisher (zwei Spalten im
     Raster mit gleich breiten Einheiten, Kopfzeilen nicht umbrochen)
 
@@ -37,9 +40,7 @@ import unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-FAKTOREN = {1.0: "normal"}
-# Teil b (Gross/Sehr gross) folgt im eigenen Commit
-STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
+FAKTOREN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 FENSTER = ((1120, 720), (1360, 900))
 
 # Name -> Pruef-Funktion(ctx); Reihenfolge = Reihenfolge im Prozess
@@ -182,6 +183,29 @@ def _zwei_spalten_wie_bisher(ctx, layout, links, rechts, gruppe):
                               % (name, column, conf, weight, gruppe))
 
 
+def _inhalt_breit_genug(ctx, detail):
+    """Teil b: steht der Inhalt neben der Liste, ist er mindestens 440
+    logische px breit (lesbar); sonst stehen beide untereinander."""
+    if int(detail.grid_info()["column"]) != 1:
+        return
+    breite = detail.winfo_width() / ctx.faktor
+    if breite < 440 - 1:
+        ctx.fehler.append("%s: Inhalt neben der Liste nur %d logische px breit"
+                          % (ctx.name, breite))
+
+
+def _inhalt_sichtbar(ctx, detail):
+    """Untereinander (Teil b): nach "Naechstes ..." steht der Inhalt (unter
+    der Liste) oben im sichtbaren Bereich."""
+    view = ctx.view
+    if getattr(view, "column_mode", None) != "gestapelt":
+        return
+    ctx.pump(0.3)
+    oben = detail.winfo_rooty() - view.canvas.winfo_rooty()
+    if not 0 <= oben < view.canvas.winfo_height() // 3:
+        ctx.fehler.append("%s/naechstes: Inhalt nicht oben im Bild (y %d)" % (ctx.name, oben))
+
+
 def _szenarien(ctx, key, gruppe):
     view = ctx.zeige(key)
     ctx.pruefe("start")
@@ -190,6 +214,8 @@ def _szenarien(ctx, key, gruppe):
     view.next_scenario()
     ctx.pump(0.4)
     ctx.pruefe("naechstes")
+    _inhalt_sichtbar(ctx, view.task_card.master)
+    _inhalt_breit_genug(ctx, view.task_card.master)
     if ctx.breit():
         detail = view.task_card.master
         layout = detail.master
@@ -216,6 +242,8 @@ def pruefe_testprojekt(ctx):
     view.next_project()
     ctx.pump(0.4)
     ctx.pruefe("naechstes")
+    _inhalt_sichtbar(ctx, view.task_card.master)
+    _inhalt_breit_genug(ctx, view.task_card.master)
     if ctx.breit():
         detail = view.task_card.master
         layout = detail.master
@@ -250,7 +278,7 @@ def worker(faktor, breite, hoehe, namen):
     import app_gui
     import fisi_theme
     import fisi_widgets
-    fisi_theme.apply_font_size(STUFEN[faktor])
+    fisi_theme.apply_font_size(FAKTOREN[faktor])
     fisi_widgets.apply_ui_scale(faktor)
     app_gui.UpdateController.auto_check = lambda self: None
     app_gui.SyncController.auto_start = lambda self: None

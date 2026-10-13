@@ -994,8 +994,8 @@ class FitWidthMixin:
     Schieberegler ins Fenster (Muster wie Dashboard 0.58 und Rechner).
     Reicht die sichtbare Breite nicht, werden nur Anordnung, Umbruch und
     Breiten angepasst: Knopfzeilen und Formularzeilen brechen um (FlowRow),
-    Unterschriften ruecken unter die Ueberschrift, die rechte Spalte wird
-    schmaler. Bei breitem Fenster bleibt alles wie bisher. Entschieden
+    Unterschriften ruecken unter die Ueberschrift, zwei Spalten stehen
+    untereinander. Bei breitem Fenster bleibt alles wie bisher. Entschieden
     wird nur aus der sichtbaren Breite und den gewuenschten Breiten der
     Teile (nie aus der Lage, die sich dadurch aendert: keine Schleife)."""
 
@@ -1003,6 +1003,7 @@ class FitWidthMixin:
     COLUMN_GAP = 16    # Abstand der beiden Spalten (padx 8 + 8, logische px)
     STACK_GAP = 14     # Abstand untereinander (wie zwischen den Karten)
     MIN_TEXT = 220     # schmalste Umbruchbreite (ScrollArea._fit_wraplengths)
+    MIN_COLUMN = 440   # rechte Spalte nebeneinander mindestens so breit (logische px)
 
     def _init_fit(self):
         self._fit_pending = False
@@ -1062,10 +1063,11 @@ class FitWidthMixin:
         return changed
 
     def _fit_columns(self, avail, layout, left, right, flows, cards, uniform):
-        """Liste links, Inhalt rechts (Gewichte 2 : 5 wie bisher). Zwei Stufen:
-        "breit" wie bisher (gleich breite Raster-Einheiten) und "frei" (beide
-        Spalten nebeneinander, die rechte so breit, wie Platz ist; ihre
-        Knopfzeilen brechen bei Bedarf um)."""
+        """Liste links, Inhalt rechts (Gewichte 2 : 5 wie bisher). Drei Stufen:
+        "breit" wie bisher (gleich breite Raster-Einheiten), "frei" (beide
+        Spalten nebeneinander, die rechte mindestens MIN_COLUMN breit; ihre
+        Knopfzeilen brechen bei Bedarf um) und "gestapelt" (Liste oben,
+        Inhalt darunter, wie die Spalten des Rechners)."""
         gap = px(self.COLUMN_GAP)
         left_width = left.winfo_reqwidth()
         flow_rows = [(FlowRow.of(frame), inset) for frame, inset in flows]
@@ -1077,17 +1079,45 @@ class FitWidthMixin:
                      + [self._head_min(card) for card in cards] + [text])
         if 7 * max(left_width / 2.0, natural / 5.0) + gap <= avail:
             mode, room = "breit", natural
+        elif avail - left_width - gap >= max(narrow, px(self.MIN_COLUMN)):
+            mode, room = "frei", avail - left_width - gap
         else:
-            mode, room = "frei", max(narrow, avail - left_width - gap)
+            mode, room = "gestapelt", avail
         changed = self._fit_flows(flows, room)
         changed |= self._fit_cards(cards, room)
         if mode != self.column_mode:
             self.column_mode = mode
+            stacked = mode == "gestapelt"
             group = uniform if mode == "breit" else ""
-            layout.columnconfigure(0, weight=2, uniform=group)
-            layout.columnconfigure(1, weight=5, uniform=group)
+            layout.columnconfigure(0, weight=1 if stacked else 2, uniform=group)
+            layout.columnconfigure(1, weight=0 if stacked else 5, uniform=group)
+            left.grid(row=0, column=0, sticky="nsew", padx=(0, 0 if stacked else 8))
+            if stacked:
+                right.grid(row=1, column=0, sticky="nsew", padx=0,
+                           pady=(self.STACK_GAP, 0))
+            else:
+                right.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=0)
             changed = True
         return changed
+
+    def _show_detail(self, detail):
+        """Untereinander (gestapelt): nach der Wahl eines Eintrags (Liste,
+        "Naechstes ...") zum Inhalt unter der Liste rollen."""
+        if self.column_mode != "gestapelt":
+            return
+
+        def scroll():
+            try:
+                top = detail.winfo_rooty() - self.inner.winfo_rooty()
+                self.canvas.yview_moveto(max(0, top - px(8)) / max(1, self.inner.winfo_height()))
+                # Tk rollt in Schritten (yscrollincrement): ragt der Anfang
+                # danach oben heraus, einen Schritt zurueck
+                self.update_idletasks()
+                if detail.winfo_rooty() < self.canvas.winfo_rooty():
+                    self.canvas.yview_scroll(-1, "units")
+            except tk.TclError:
+                pass
+        self.after_idle(scroll)
 
 
 # ============================================================================
@@ -3140,6 +3170,8 @@ class ScenarioViewBase(FitWidthMixin, View):
         self.paged.refresh(keep_page=True)
         self.paged.show(position)
         self._show_status()
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_solution(self):
         scenario = self.DATA[self.index]
@@ -3338,6 +3370,8 @@ class ProjectView(FitWidthMixin, View):
         self.btn_toggle.set_text("Lösungsansätze anzeigen")
         self._highlight()
         self.paged.show(position)
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_hints(self):
         project = PROJEKTARBEITEN[self.index]
