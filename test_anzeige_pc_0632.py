@@ -90,7 +90,7 @@ class QuelltextTest(unittest.TestCase):
     def test_b_g_16_gemeinsamer_text(self):
         import fisi_optionen as fo
         text = getattr(fo, "RESET_ALL_TEXT", "")
-        for word in ("Klausursimulationen", "Subnetting-Trainer", "Testprojekte",
+        for word in ("Klausursimulationen", "Rechen-Trainer", "Testprojekte",
                      "Abschlussprojekt", "Einstellungen", "Spielstand",
                      "Wissen im Spiel", "Abgleich", "nicht rückgängig"):
             self.assertIn(word, text)
