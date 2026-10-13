@@ -35,6 +35,12 @@ os.environ["FISI_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "handy_0632.db")
 WISO_TEXT = "Die Zeit ist um, die Prüfung wurde abgegeben und ausgewertet."
 SEARCH_HINT = "Gib oben einen Suchbegriff ein und tippe auf die Lupe."
 DB_TEXT = "Datenbank-Hinweis (Test)"
+# B-D-12 (Plan 5.3 Nr. 5, PC = Handy): Wortlaute wie die gemeinsamen
+# Konstanten, die S1b in fisi_optionen anlegt (version-0632-s1b cdf6da2:
+# fo.DELETE_HISTORY_DONE, fo.DELETE_NOTHING). Das Handy nutzt bis zur
+# Integration noch Literale; test_wortlaut_wie_gemeinsame_texte koppelt beides.
+DELETE_WORTLAUT = {"DELETE_HISTORY_DONE": "Die Historie wurde gelöscht.",
+                   "DELETE_NOTHING": "Es wurde nichts gelöscht."}
 
 
 def _flet_ok():
@@ -535,6 +541,27 @@ class HistorieLoeschenTest(HandyBasis):
         db.read_only_reason = "schreibschutz"
         self.settings.clear_history()
         self.assertEqual(self.toasts(), ["Es wurde nichts gelöscht."])
+
+    def test_wortlaut_wie_gemeinsame_texte(self):
+        """Zusatz Hauptstrang (Plan 5.3 Nr. 5): Die Handy-Hinweise nach
+        "Historie löschen" muessen woertlich den gemeinsamen Texten gleichen.
+        Geprueft wird das Gezeigte (nicht der Quelltext), damit der Test auch
+        nach der Umstellung auf fo.-Konstanten gilt. Hat fisi_optionen die
+        Konstanten schon (nach dem Merge von S1b), muessen sie gleich sein."""
+        import fisi_optionen as fo
+        for name, text in DELETE_WORTLAUT.items():
+            if hasattr(fo, name):
+                self.assertEqual(getattr(fo, name), text, name)
+        self.settings.clear_history()
+        done = self.toasts()
+        self.events.clear()
+        with self.db_error("clear_history", result=False):
+            self.settings.clear_history()
+        nothing = self.toasts()
+        self.assertEqual(len(done), 1, done)
+        self.assertEqual(len(nothing), 1, nothing)
+        self.assertEqual(done[0].split("\n\n")[0], DELETE_WORTLAUT["DELETE_HISTORY_DONE"])
+        self.assertEqual(nothing[0].split("\n\n")[0], DELETE_WORTLAUT["DELETE_NOTHING"])
 
 
 # ============================================================================
