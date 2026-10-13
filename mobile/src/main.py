@@ -3774,12 +3774,14 @@ class SettingsScreen(Screen):
         self.btn_sync = ui.GradientButton("Speichern und abgleichen", self.sync_now,
                                           kind="accent")
         self.lbl_sync = ui.text("", size=13, color=C["text_dim"])
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, gezeigt nur mit Text
+        self.lbl_sync_mixed = ui.text("", size=13, color=C["text_dim"])
         sync = self._area("abgleich", [
             ui.text("Repository (Benutzer/Name)", size=13, color=C["text_dim"]),
             self.entry_repo,
             ui.text("Zugangsschlüssel (Token)", size=13, color=C["text_dim"]),
             self.entry_token,
-            ft.Row([self.btn_sync]), ui.live(self.lbl_sync),
+            ft.Row([self.btn_sync]), ui.live(self.lbl_sync), self.lbl_sync_mixed,
             self._switch("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
                          "Verlassen der App)", settings["sync_auto"], self._toggle_sync_auto),
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
@@ -4229,6 +4231,13 @@ class SettingsScreen(Screen):
 
     def show_sync_status(self, result, error):
         self.btn_sync.set_enabled(True)
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, Text wie am PC aus
+        # fisi_optionen; ohne Text nicht gezeigt. Ohne die Zeile (Attrappen,
+        # die nur lbl_sync kennen) bleibt alles wie bisher.
+        mixed = getattr(self, "lbl_sync_mixed", None)
+        if mixed is not None:
+            mixed.value = fo.sync_mixed_text(self.app.db)
+            mixed.visible = bool(mixed.value)
         if error:
             self.lbl_sync.value, self.lbl_sync.color = error, C["red"]
             return
