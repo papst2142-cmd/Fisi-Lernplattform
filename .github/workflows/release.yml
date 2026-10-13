@@ -11,6 +11,9 @@
 #  dem Anlegen des Tags gescheitert), wird der Bau fuer den vorhandenen Tag
 #  nachgeholt - ohne neuen Tag. Von Hand geht das weiter mit "Installer
 #  bauen" -> "Run workflow" -> "Use workflow from" = Tag (siehe build.yml).
+#  Release zurueckziehen heisst: Release und Tag loeschen, oder vor dem
+#  naechsten Hochladen auf den Hauptzweig die Versionsnummer erhoehen.
+#  Waehrend eines Nachholens von Hand nichts auf den Hauptzweig hochladen.
 #  Hinweis: Tags, die ein Ablauf mit GITHUB_TOKEN anlegt, starten keine
 #  weiteren Ablaeufe - deshalb wird build.yml hier direkt aufgerufen.
 # ============================================================================
