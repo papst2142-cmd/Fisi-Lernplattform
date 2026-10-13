@@ -2687,7 +2687,9 @@ def subnet_report(value):
             "Präfixlänge           : /%d" % network.prefixlen,
             "Erste Adresse         : %s" % network.network_address,
             "Letzte Adresse        : %s" % network[-1],
-            "Adressen gesamt       : %s" % de_int(network.num_addresses),
+            # ab 0.63.2 (B-N-07 4.15b): Zweierpotenz vor der langen Zahl
+            "Adressen gesamt       : 2^%d = %s" % (128 - network.prefixlen,
+                                                  de_int(network.num_addresses)),
         ]
     return "\n".join(lines)
 

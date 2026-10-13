@@ -11,7 +11,7 @@ Rechenwege und Rechner-Anzeigen.
   Test 3   dieselben Schritt-Ueberschriften
   Test 4   alle angezeigten Zahlen gleich der Ausgangsbasis v0.62.2
            (pruefung/rechenweg_basis_0622.json), ausser den freigegebenen
-           Aenderungen Z1-Z12, Z14-Z27 - jede einzeln mit vorher/nachher;
+           Aenderungen Z1-Z12, Z14-Z28 - jede einzeln mit vorher/nachher;
            dazu deutsche Schreibweise der Anzeigen (Z4, Z7) und fps 30 (Z8)
   Test 5   Spalten gerade ("=", Punkte, Bitreihen)
   Test 6   Handy: Box ohne Umbruch, seitlich wischbar; USV-Hinweis ausserhalb
@@ -134,6 +134,13 @@ FREIGEGEBEN = {
                               ("replace", 50, ["n:67", "n:18.43"], ["n:66.7", "n:18.4"],
                                "Z25"),
                               ("insert", 53, [], ["n:80", "n:0.8", "n:3", "n:4"], "Z22")],
+    # Z28 = 4.15b IPv6-Anzeige "Adressen gesamt : 2^64 = 18.446..." (Zweierpotenz
+    # vor der Zahl), nachgerechnet in test_4_z28_nachgerechnet
+    "subnet:2001:db8::1/64": [("insert", 4, [], ["n:2", "n:64"], "Z28")],
+    "subnet:2001:db8:abcd:12::/48": [("insert", 4, [], ["n:2", "n:80"], "Z28")],
+    "subnet:fe80::1/10": [("insert", 4, [], ["n:2", "n:118"], "Z28")],
+    "subnet:2001:db8::1/127": [("insert", 5, [], ["n:1", "n:2"], "Z28")],
+    "subnet:2001:db8::1/128": [("insert", 4, [], ["n:2", "n:0"], "Z28")],
     # Z26 = 5.11 Trainer IPv4: "Die Oktette danach sind in der Netzadresse 0 und
     # in der Broadcast-Adresse 255." (Praefixgrenze im 1. bis 3. Oktett);
     # Z27 = 5.9 Trainer Zahlen: "Hex-Ziffern: E = 14, F = 15" (Hex gegeben).
@@ -347,7 +354,7 @@ class HandyFassungTest(unittest.TestCase):
 
 
 class ZahlenUnveraendertTest(unittest.TestCase):
-    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z27."""
+    """Test 4: alle Zahlen gleich der Ausgangsbasis, ausser Z1-Z12, Z14-Z28."""
 
     @classmethod
     def setUpClass(cls):
@@ -378,7 +385,7 @@ class ZahlenUnveraendertTest(unittest.TestCase):
         nummern = sorted({e[4] for liste in FREIGEGEBEN.values() for e in liste})
         self.assertEqual(nummern, ["Z1", "Z12", "Z14", "Z15", "Z16", "Z17", "Z18", "Z19",
                                    "Z2", "Z20", "Z21", "Z22", "Z23", "Z24", "Z25", "Z26",
-                                   "Z27", "Z3", "Z5", "Z6"])
+                                   "Z27", "Z28", "Z3", "Z5", "Z6"])
 
     def test_4_z18_nachgerechnet(self):
         # ab 0.63.2: jede Z18-Zahl aus der Basis selbst nachgerechnet
@@ -421,6 +428,21 @@ class ZahlenUnveraendertTest(unittest.TestCase):
             else:   # Werte der Buchstaben: A = 10 ... F = 15
                 for wert in ops[0][3]:
                     self.assertIn(int(wert[2:]), range(10, 16))
+
+    def test_4_z28_nachgerechnet(self):
+        # ab 0.63.2 (B-N-07 4.15b): 2^(128 - Praefix) = Anzahl, und eingefuegt
+        # sind genau die Zahlen 2 und 128 - Praefix
+        import ipaddress
+        quellen = sorted(q for q, l in FREIGEGEBEN.items() if l[0][4] == "Z28")
+        self.assertEqual(quellen, sorted("subnet:" + v for v in rt.SUBNET_INPUTS if ":" in v))
+        for quelle in quellen:
+            netz = ipaddress.ip_network(quelle[7:], strict=False)
+            hoch = 128 - netz.prefixlen
+            self.assertEqual(2 ** hoch, netz.num_addresses)
+            self.assertIn("Adressen gesamt       : 2^%d = %s" % (hoch, fc.de_int(2 ** hoch)),
+                          fc.subnet_report(quelle[7:]))
+            eingefuegt = sorted(FREIGEGEBEN[quelle][0][3])
+            self.assertEqual(eingefuegt, sorted(["n:2", "n:%d" % hoch]))
 
     def test_4_bn07_nachgerechnet(self):
         # ab 0.63.2 (B-N-07): neue Zahlen der Rechenwege selbst nachgerechnet
