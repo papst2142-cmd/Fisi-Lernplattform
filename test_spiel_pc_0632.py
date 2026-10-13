@@ -254,9 +254,14 @@ class ReiterFehlerTest(AppCase):
             (title, text))
         self.stop_preloader()
         self.app.slot_chosen = True
+        # AppCase setzt FISI_SELFTEST nur gegen Netzzugriffe (beim Start der
+        # App gelesen); hier soll sich die App wie beim Nutzer verhalten
+        self._saved_selftest = os.environ.pop("FISI_SELFTEST", None)
 
     def tearDown(self):
         self.gui.messagebox.showerror = self._saved_showerror
+        if self._saved_selftest is not None:
+            os.environ["FISI_SELFTEST"] = self._saved_selftest
         super().tearDown()
 
     def _click(self, row, key):
@@ -309,6 +314,23 @@ class ReiterFehlerTest(AppCase):
         self.assertEqual(len(self._packed(view)), len(before))
         self.assertEqual(len(self.shown), 1)
         self.assertEqual(len(self.errors), 1)
+
+    def test_starttest_ohne_fenster(self):
+        """Nacharbeit L5: Im Starttest (FISI_SELFTEST) wartete das Fenster auf
+        einen Klick, der Lauf endete nie. Dort nur report_callback_exception
+        (Starttest-Protokoll, Exit-Code), Rueckkehr wie sonst."""
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        restore = self._broken(view, "_build_records")
+        os.environ["FISI_SELFTEST"] = os.path.join(self.folder, "log.txt")
+        self._click(view._tab_row, "erfolge")
+        self.assertEqual(self.shown, [])
+        self.assertEqual(len(self.errors), 1)
+        self.assertIn("kuenstlicher Fehler", self.errors[0])
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        restore()
 
     def test_reise_neuaufbau_mit_kaputtem_reiter(self):
         self.app.show_view("reise")
@@ -366,10 +388,12 @@ class FirmaReiterFehlerTest(ReiterFehlerTest):
             (title, text))
         self.stop_preloader()
         self.app.slot_chosen = True
+        self._saved_selftest = os.environ.pop("FISI_SELFTEST", None)
 
     # die Reise-Tests laufen schon in ReiterFehlerTest
     test_reise_klick_auf_kaputten_reiter = None
     test_reise_neuaufbau_mit_kaputtem_reiter = None
+    test_starttest_ohne_fenster = None
 
     def test_firma_klick_auf_kaputten_reiter(self):
         view = self.app.views["firma"]

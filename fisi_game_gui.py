@@ -2246,8 +2246,13 @@ class TabCache:
         names = dict(self._tab_list())
         self._tab_frames.pop(failed, None)
         self.app.root.report_callback_exception(*exc_info)
-        messagebox.showerror(self.TAB_ERROR_TITLE,
-                             self.TAB_ERROR_TEXT % names.get(failed, failed))
+        # Im Starttest (FISI_SELFTEST) kein modales Fenster: es wartete auf
+        # einen Klick, der Lauf endete nie. Der Fehler zaehlt dort schon ueber
+        # report_callback_exception (Starttest-Protokoll, Exit-Code 1).
+        import os
+        if not os.environ.get("FISI_SELFTEST"):
+            messagebox.showerror(self.TAB_ERROR_TITLE,
+                                 self.TAB_ERROR_TEXT % names.get(failed, failed))
         back = getattr(self, "_tab_ok", None)
         if back is None or back == failed or back not in names:
             return
