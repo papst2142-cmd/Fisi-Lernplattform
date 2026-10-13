@@ -848,5 +848,62 @@ class AufklapplisteRahmenTest(unittest.TestCase):
                              {C["field_border"]})
 
 
+class SchildAufMoebelTest(unittest.TestCase):
+    """B-D-10 (Nacharbeit L1): Ein Raumschild, das schon immer auf einem
+    Moebel beginnt (Kueche zuhause auf dem Herd), bleibt an seinem Platz;
+    nur Schilder, die frei beginnen und in die Einrichtung hineinwachsen,
+    ruecken darunter (fisi_game_gui.FloorPlan._clear_furniture)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import customtkinter as ctk
+        import app_gui
+        import fisi_widgets
+        app_gui.apply_appearance()
+        self.root = ctk.CTk()
+        self.root.geometry("1100x800+0+0")
+        fisi_widgets.setup_fonts(self.root)
+
+    def tearDown(self):
+        self.root.destroy()
+
+    def test_schild_auf_moebel_bleibt(self):
+        import fisi_game as fg
+        import fisi_game_gui as gg
+        plan = gg.FloorPlan(self.root, lambda _room: None, site=fg.SITE_HOME)
+        plan.pack(fill="both", expand=True)
+        self.root.update()
+        plan.set_state(fg.GameState([("2026-01-01", fg.EV_PROFILE,
+                                      {"name": "Kim", "aussehen": {}})]))
+        self.root.update()
+        content = plan.content()
+        rooms = {room["name"]: room for room in content["gebaeude"]["raeume"]}
+        signs = [shape for shape in fg.building_shapes({}, None, None, content=content)
+                 if shape["k"] == "text" and shape.get("bg") and shape["text"] in rooms]
+        checked = []
+        for shape in signs:
+            names = (shape["text"], shape.get("kurz"))      # bei wenig Platz Kurzname
+            item = [entry for entry in plan.find_all() if plan.type(entry) == "text"
+                    and plan.itemcget(entry, "text") in names][0]
+            # Schildanfang an der Sollstelle aus dem Grundriss (nicht dort,
+            # wohin es vielleicht gerueckt ist)
+            nominal = plan._xy(shape["x"], shape["y"])[1]
+            shift = nominal - plan.coords(item)[1]
+            x1, y1, x2, y2 = plan.bbox(item)
+            start = (x1 - gg.px(8), y1 + shift - gg.px(3), x1 + gg.px(8), y2 + shift + gg.px(3))
+            on_furniture = False
+            for deco in rooms[shape["text"]].get("deko", []):
+                left, top = plan._xy(deco["x"], deco["y"])
+                right, bottom = plan._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+                on_furniture |= _hits(start, (left, top, right, bottom))
+            if on_furniture:
+                checked.append(shape["text"])
+                self.assertAlmostEqual(plan.coords(item)[1], nominal, delta=1,
+                                       msg=shape["text"])
+        self.assertIn("Küche", checked)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
