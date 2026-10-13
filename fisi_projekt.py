@@ -21,7 +21,7 @@ import os
 import re
 import uuid
 
-from fisi_core import CATEGORY_KEYS, CONTENT_DIR, PROJEKTARBEITEN
+from fisi_core import CATEGORY_KEYS, CONTENT_DIR, PROJEKTARBEITEN, _number_value
 
 MAX_HOURS = 40
 DOC_SHARE_MAX = 20          # Prozent der Stunden fuer die Dokumentation (DIHK ca. 20)
@@ -233,13 +233,18 @@ def apply_template(db, project, position):
 # ============================================================================
 
 def to_number(text, default=0.0):
-    """Zahl aus einer Eingabe wie "25", "25,5" oder "1.234,56"."""
+    """Zahl aus einer Eingabe wie "25", "25,5" oder "1.234,56".
+
+    Ab 0.63.2 (B-P-01): gleiche Leseregel wie die Rechner (fisi_core,
+    _number_value): "1.000" = 1000 (vorher 1), "1.000.000" = 1000000 (vorher
+    0). Was die Regel ablehnt ("abc", "inf", "nan", 400 Ziffern, mehr als 3
+    Nachkommastellen), ergibt wie bisher bei Fehlern den Vorgabewert."""
     value = str(text if text is not None else "").strip().replace("€", "").replace(" ", "")
-    if "," in value:
-        value = value.replace(".", "").replace(",", ".")
+    if not value:
+        return default
     try:
-        return float(value) if value else default
-    except ValueError:
+        return _number_value(value)
+    except ValueError:                  # _NumberProblem ist ein ValueError
         return default
 
 

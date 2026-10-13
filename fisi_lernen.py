@@ -625,7 +625,7 @@ def _ip_matcher(expected):
 def _int_matcher(expected):
     def match(text):
         value = _clean(text).replace(".", "")
-        return value.isdigit() and int(value) == expected
+        return _digits(value) and int(value) == expected    # ab 0.63.2 (A10)
     return match
 
 
@@ -812,9 +812,7 @@ def _number_task(rng, level):
             rest //= 2
         steps.append("Dezimal -> Binär (fortgesetzt durch 2 teilen, Reste von unten "
                      "nach oben lesen):")
-        steps += ["   " + line for line in lines[:12]]
-        if len(lines) > 12:
-            steps.append("   ...")
+        steps += ["   " + line for line in lines]     # ab 0.63.2 (B-N-06): alle Zeilen
     elif given == "hex":
         hex_digits = format(value, "X")
         terms = ["%s x 16^%d" % (digit, len(hex_digits) - 1 - i)
