@@ -733,7 +733,7 @@ def _ipv4_task(rng, level, schmal=False):
                         address.packed[block_octet],
                         network.network_address.packed[block_octet]))
         if block_octet < 3:      # ab 0.63.2 (B-N-07 5.11)
-            steps.append("   Die Oktette danach sind in der Netzadresse 0 und in der "
+            steps.append("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
                          "Broadcast-Adresse 255.")
     steps += [
         "4. Broadcast-Adresse: alle Hostbits auf 1 = %s" % network.broadcast_address,

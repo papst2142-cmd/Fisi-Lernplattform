@@ -55,7 +55,7 @@ def _abschnitt(text, start, ende):
 class OhneNeueZahlenTest(unittest.TestCase):
     def test_5_4_umgestellt(self):
         for text in (fc.CALC_EXPLAIN_UPS, fc.CALC_EXPLAIN_UPS_HANDY):
-            self.assertIn("umgestellt nach S: S (VA) = P (W) / Leistungsfaktor", _flach(text))
+            self.assertIn("Umgestellt nach S: S (VA) = P (W) / Leistungsfaktor", _flach(text))
 
     def test_5_6_klammern_und_einheit(self):
         for text in (fc.CALC_EXPLAIN_UPS, fc.CALC_EXPLAIN_UPS_HANDY):
@@ -203,7 +203,7 @@ class TrainerTest(unittest.TestCase):
         self.assertTrue(all(gesehen.values()), gesehen)
 
     def test_5_11_folge_oktette(self):
-        satz = ("   Die Oktette danach sind in der Netzadresse 0 und in der "
+        satz = ("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
                 "Broadcast-Adresse 255.")
         gesehen = set()
         for task in self._aufgaben("ipv4"):

@@ -2708,7 +2708,7 @@ class NotebookScreen(Screen):
 # ============================================================================
 
 class TrainerPanel(ft.Column):
-    """Subnetting-Trainer im Rechner (ab 0.51), wie am PC."""
+    """Rechen-Trainer im Rechner (ab 0.51), wie am PC."""
 
     def __init__(self, app):
         self.app = app

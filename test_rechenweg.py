@@ -141,7 +141,7 @@ FREIGEGEBEN = {
     "subnet:fe80::1/10": [("insert", 4, [], ["n:2", "n:118"], "Z28")],
     "subnet:2001:db8::1/127": [("insert", 5, [], ["n:1", "n:2"], "Z28")],
     "subnet:2001:db8::1/128": [("insert", 4, [], ["n:2", "n:0"], "Z28")],
-    # Z26 = 5.11 Trainer IPv4: "Die Oktette danach sind in der Netzadresse 0 und
+    # Z26 = 5.11 Trainer IPv4: "Die folgenden Oktette sind in der Netzadresse 0 und
     # in der Broadcast-Adresse 255." (Praefixgrenze im 1. bis 3. Oktett);
     # Z27 = 5.9 Trainer Zahlen: "Hex-Ziffern: E = 14, F = 15" (Hex gegeben).
     # Je Quelle nachgerechnet in test_4_z26_z27_nachgerechnet.
@@ -252,7 +252,7 @@ def _bn07_trainer(text):
         out.append(line)
         okt = re.match(r"   Kurzweg: Blockgröße im (\d)\. Oktett", line)
         if okt and int(okt.group(1)) < 4:
-            out.append("   Die Oktette danach sind in der Netzadresse 0 und in der "
+            out.append("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
                        "Broadcast-Adresse 255.")
         if line.startswith("Hex -> Dezimal: "):
             buchstaben = sorted(set(re.findall(r"([A-F]) x 16\^", line)))

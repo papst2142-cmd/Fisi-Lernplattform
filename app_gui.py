@@ -4065,7 +4065,7 @@ class NotebookView(View):
 # ============================================================================
 
 class TrainerPanel(ctk.CTkFrame):
-    """Subnetting-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
+    """Rechen-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
     Eingabefeldern, automatischer Pruefung und Rechenweg."""
 
     def __init__(self, parent, app):
