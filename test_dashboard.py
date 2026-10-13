@@ -260,7 +260,7 @@ class PcTest(unittest.TestCase):
         texts = self.texts(self.show("dashboard")) + self.texts(self.app.sidebar)
         streak = [text for text in texts if "Lernserie" in text]
         self.assertEqual(len(streak), 1, streak)
-        self.assertIn(fl.DASH_QUIZ_SUB % len(fc.QUIZ_QUESTIONS), texts)
+        self.assertIn(fl.DASH_QUIZ_SUB % fc.de_int(len(fc.QUIZ_QUESTIONS)), texts)
         self.assertIn("20", texts)
         self.assertIn(fl.DASH_SIDEBAR_BAR, texts)
 
