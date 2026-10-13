@@ -715,6 +715,7 @@ class CardsScreen(Screen):
             self.lbl_status.value = ""
             self.lbl_counter.value = "0 / 0"
             self.btn_check.set_enabled(False)
+            _redraw(getattr(self, "root", None))   # ab 0.63.2 (Z7), siehe unten
             return
         self.btn_check.set_enabled(True)
         card = self.filtered[self.index]
@@ -737,6 +738,11 @@ class CardsScreen(Screen):
         else:
             self.reveal_hint.visible = True
             self.btn_check.set_text("Lösung aufdecken")
+        # Ab 0.63.2 (Z7): update_ui steht am Ende jedes Ereignisses (Blaettern,
+        # Filter, Lernmodus); _flush oben kann bei einem Datenbankfehler einen
+        # Hinweis zeigen, danach zeichnet Flet die neue Karte nicht von selbst
+        # (beim Aufbau gibt es root noch nicht)
+        _redraw(getattr(self, "root", None))
 
     def check_answer(self, _event=None):
         if not self.filtered:
@@ -795,6 +801,7 @@ class CardsScreen(Screen):
         self._show_status()
         self._counts(self.count_keys)
         self.app.notify_progress()
+        _redraw(self.root)   # ab 0.63.2 (Z7): Ende von check_answer und rate
 
     def step(self, delta):
         if self.filtered:
@@ -879,6 +886,9 @@ class QuizScreen(Screen):
             self.exam.hide()
         self.exam.visible = mode == "pruefung"
         self.practice_box.visible = not self.exam.visible
+        # Ab 0.63.2 (A12): kam im Ereignis ein Hinweis (abgelaufene Pruefung,
+        # Datenbankfehler), zeichnet Flet den Wechsel sonst nicht
+        _redraw(self.root)
 
     def _on_category(self, category):
         self.topic_pills.set_category(category)
@@ -947,6 +957,7 @@ class QuizScreen(Screen):
         else:
             self.session = random.sample(self.pool, count)
         self._begin()
+        _redraw(self.root)   # ab 0.63.2 (A12): auch nach einem Datenbank-Hinweis
 
     def _begin(self):
         self.index = 0
@@ -991,6 +1002,7 @@ class QuizScreen(Screen):
             else:
                 self.index += 1
                 self.load_question()
+                _redraw(self.root)   # ab 0.63.2 (A12)
             return
         choice = self.options.get()
         if not choice:
@@ -1011,6 +1023,9 @@ class QuizScreen(Screen):
         self.app.notify_progress()
         last = self.index >= len(self.session) - 1
         self.btn_submit.set_text("Auswertung anzeigen" if last else "Nächste Frage")
+        # Ab 0.63.2 (A12): ein Schreibfehler zeigt einen Hinweis, danach
+        # zeichnet Flet Markierung, Erklaerung und Punktzahl nicht von selbst
+        _redraw(self.root)
 
     def cancel_quiz(self, _event=None):
         if not self.running:
@@ -1047,6 +1062,8 @@ class QuizScreen(Screen):
             % (self.score, total, percentage, fr.NOTE_LANG, note, elapsed // 60,
                elapsed % 60, hint))
         self.app.notify_progress()
+        # Ab 0.63.2 (Z7): vor einem Hinweis oder der Rueckfrage zeichnen
+        _redraw(self.root)
         follow_up, self.follow_up = self.follow_up, None
         if follow_up is not None:
             follow_up()
@@ -1553,13 +1570,20 @@ class ExamPanel(ft.Column):
         fp.submit(self.state)
         if self.state["art"] == fp.WISO:
             self._finish_now()
+            if auto:
+                # Ab 0.63.2 (B-G-23): auch bei WiSo melden, nach dem Auswerten
+                # (gleicher Text wie am PC)
+                self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben und "
+                               "ausgewertet.")
             return
         fp.save_running(self.state)
+        self.task_no = 0
+        self.show_grading()
+        # Ab 0.63.2 (A12): erst die Bewertung zeichnen, dann der Hinweis
+        _redraw(self)
         if auto:
             self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
                            "Bewertung.")
-        self.task_no = 0
-        self.show_grading()
 
     # -- Bewertung ----------------------------------------------------------
 
@@ -1652,6 +1676,7 @@ class ExamPanel(ft.Column):
         self.state = None
         self.app.notify_progress()
         self.show_result(art)
+        _redraw(self)   # ab 0.63.2 (Z7/A12): auch nach einem Datenbank-Hinweis
 
     # -- Ergebnis -----------------------------------------------------------
 
@@ -1697,6 +1722,13 @@ class ExamPanel(ft.Column):
 #  SZENARIEN UND TESTPROJEKTE (Liste -> Detailseite)
 # ============================================================================
 
+def _paint_page_buttons(prev, forward, page, pages):
+    """Ab 0.63.2 (B-E-03): Blaetterpfeile auf Seite 1 bzw. der letzten Seite
+    sperren (page zaehlt ab 0, pages ist mindestens 1)."""
+    prev.disabled = page <= 0
+    forward.disabled = page >= pages - 1
+
+
 class PagedListBox:
     """Liste mit Suchfeld, Filter-Pillen und Seiten (gleiche Logik wie am PC,
     siehe fisi_core.filter_positions). Es werden nie mehr als LIST_PAGE_SIZE
@@ -1732,13 +1764,14 @@ class PagedListBox:
         self.lbl_count = ui.text("", size=12, color=C["muted"])
         self.rows = ft.Column(spacing=8, tight=True)
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
-        pager = ft.Row([
-            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
-            self.lbl_page,
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
+        # Seite gesperrt (Flutter zeichnet sie dann blass)
+        self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
+        self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1))
+        pager = ft.Row([self.btn_prev, self.lbl_page, self.btn_next],
+                       alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
                               spacing=10, tight=True)
 
@@ -1777,6 +1810,7 @@ class PagedListBox:
                                               size=13, color=C["muted"])]
         self.lbl_count.value = "%d von %d Aufgaben" % (len(self.filtered), len(self.items))
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
+        _paint_page_buttons(self.btn_prev, self.btn_next, self.page, pages)
 
     def turn(self, delta):
         self.page += delta
@@ -1849,6 +1883,7 @@ class ScenarioScreen(Screen):
             ft.Row([ui.GradientButton("Nächstes Szenario", self.next_item, kind="ghost",
                                       icon=ft.Icons.ARROW_FORWARD_ROUNDED, expand=True)]),
         ])
+        self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
         self.app.push(self.crumbs, content)
 
@@ -1888,6 +1923,7 @@ class ScenarioScreen(Screen):
         self.app.notify_progress()
         self.paged.refresh(keep_page=True)
         self._show_status()
+        _redraw(self.detail, self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def _own_changed(self, event):
         self.own_answers[self.index] = event.control.value
@@ -1914,6 +1950,7 @@ class ScenarioScreen(Screen):
         self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
+        _redraw(self.detail)   # ab 0.63.2 (Z7): _flush kann einen Hinweis zeigen
 
 
 class Ap1ScenarioScreen(ScenarioScreen):
@@ -1988,6 +2025,7 @@ class ProjectScreen(Screen):
             ft.Row([ui.GradientButton("Als Vorlage fürs Abschlussprojekt",
                                       self.use_as_template, kind="ghost", expand=True)]),
         ])
+        self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
         self.app.push(self.crumbs, content)
 
@@ -2030,6 +2068,7 @@ class ProjectScreen(Screen):
         self.app.notify_progress()
         self.on_show()
         self._show_status()
+        _redraw(self.detail, self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def toggle_hints(self, _event=None):
         project = PROJEKTARBEITEN[self.index]
@@ -2050,6 +2089,7 @@ class ProjectScreen(Screen):
         self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
+        _redraw(self.detail)   # ab 0.63.2 (Z7): _flush kann einen Hinweis zeigen
 
     def use_as_template(self, _event=None):
         # Ab 0.53 wie am PC erst die Seite oeffnen, dann uebernehmen - sonst
@@ -2170,6 +2210,7 @@ class FinalProjectScreen(Screen):
             data, mime = fpj.export_text(self.fields).encode("utf-8"), "text/plain"
         self.app.page.run_task(self.app.save_file, fpj.export_name(self.fields, extension),
                                data, mime)
+        _redraw(self.root)   # ab 0.63.2 (Z7): flush kann einen Hinweis zeigen
 
     def use_template(self, position):
         self.flush()
@@ -2219,6 +2260,12 @@ class FinalProjectScreen(Screen):
             self._refresh_derived()
             self.app.sync.schedule()
 
+    def _blurred(self, _event=None):
+        """Feld verlassen: speichern (ab 0.63.2, Z7: danach zeichnen, falls
+        ein Datenbank-Hinweis kam)."""
+        self.flush()
+        _redraw(self.root)
+
     def _set(self, field, value):
         if self.fields.get(field, "") != value:
             self.db.save_project_field(self.project, field, value)
@@ -2247,16 +2294,20 @@ class FinalProjectScreen(Screen):
         box = ui.entry(self.fields.get(field, default), hint=hint, multiline=multiline,
                        min_lines=3 if multiline else 1, keyboard=keyboard,
                        on_change=lambda _e: self._changed(field))
-        box.on_blur = lambda _e: self.flush()
+        box.on_blur = self._blurred
         self.inputs[field] = lambda: (box.value or "").strip() if not multiline \
             else (box.value or "").rstrip()
         return box
 
     def _checklist(self, items):
         return [ui.check_row(text, fpj.checked(self.fields, key),
-                             lambda value, k=key: self._set("check_" + k,
-                                                            "1" if value else "0"))
+                             lambda value, k=key: self._set_check(k, value))
                 for key, text in items]
+
+    def _set_check(self, key, value):
+        """Haken der Checkliste (ab 0.63.2, Z7: danach zeichnen)."""
+        self._set("check_" + key, "1" if value else "0")
+        _redraw(self.root)
 
     @staticmethod
     def _field(caption, control):
@@ -2276,6 +2327,10 @@ class FinalProjectScreen(Screen):
         self.tab_area.controls = [box]
         self.tab_pills.select_value(tab, notify=False)
         self._refresh_derived()
+        # Ab 0.63.2 (Z7): flush oben kann bei einem Datenbankfehler einen
+        # Hinweis zeigen (auch fuer Projektwahl und "Neues Projekt", die hier
+        # enden; beim Aufbau gibt es root noch nicht)
+        _redraw(getattr(self, "root", None))
 
     def _build_uebersicht(self):
         rows = [self._field(label, self._entry(field)) for field, label, _m in
@@ -2339,6 +2394,7 @@ class FinalProjectScreen(Screen):
         self.fg_index = 0
         self.tab_boxes.pop("fachgespraech", None)
         self.derived.pop("fachgespraech", None)
+        _redraw(self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def _build_antrag(self):
         controls = []
@@ -2465,6 +2521,7 @@ class FinalProjectScreen(Screen):
             question = questions[self.fg_index % len(questions)]
             self._set("fg_" + question["id"], "1" if known else "0")
             turn(1)
+            _redraw(self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
         self.derived["fachgespraech"] = paint
         return [
@@ -2521,13 +2578,14 @@ class NotebookScreen(Screen):
         self.rows = ft.Column(spacing=8, tight=True)
         self.list_card = ui.Card("Zu üben", [self.rows], accent=C["red"])
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
-        pager = ft.Row([
-            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
-            self.lbl_page,
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
+        # Seite gesperrt (Flutter zeichnet sie dann blass)
+        self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
+        self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1))
+        pager = ft.Row([self.btn_prev, self.lbl_page, self.btn_next],
+                       alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
                     subtitle="Abgeschlossen = zweimal hintereinander richtig"),
@@ -2652,6 +2710,7 @@ class NotebookScreen(Screen):
             rows = [ui.text(text, size=14, color=C["text_soft"])]
         self.rows.controls = rows
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
+        _paint_page_buttons(self.btn_prev, self.btn_next, self.page, pages)
 
     def _row(self, entry):
         source, item = entry["source"], entry["item"]
@@ -2811,6 +2870,7 @@ class TrainerPanel(ft.Column):
         self.checked = True
         last = self.index >= len(self.tasks) - 1
         self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
+        _redraw(self)   # ab 0.63.2 (Z7): log_trainer kann einen Hinweis zeigen
 
     def advance(self):
         if self.index < len(self.tasks) - 1:
@@ -4514,14 +4574,32 @@ class SettingsScreen(Screen):
         if dashboard is not None:
             dashboard.refresh()
 
+    def _delete_quietly(self, delete):
+        """Ab 0.63.2 (B-D-12, wie am PC): Loeschen mit voruebergehend
+        gesammelten Datenbank-Meldungen. Liefert (geklappt, Meldungstexte);
+        bei einem Fehler zeigt der Aufrufer genau einen Hinweis."""
+        messages = []
+        handler, self.db.error_handler = self.db.error_handler, messages.append
+        try:
+            done = delete()
+        finally:
+            self.db.error_handler = handler
+        return done, messages
+
+    def _nothing_deleted(self, messages):
+        """B-D-12: ein Hinweis "Es wurde nichts geloescht." (+ Datenbanktext)."""
+        self.toast("\n\n".join(["Es wurde nichts gelöscht."] + messages), C["red"])
+
     def clear_history(self, _event=None):
-        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert. Ab 0.63.2
+        (B-D-12) mit Bestaetigung bzw. Fehlerhinweis wie am PC."""
         def confirmed():
-            if self.db.clear_history():
-                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
-                if hint:
-                    self.toast(hint, C["green"])
+            done, messages = self._delete_quietly(lambda: self.db.clear_history())
+            if done:
+                self.toast(self._with_clock_fix("Die Historie wurde gelöscht."), C["green"])
                 self.app.notify_progress()
+            else:
+                self._nothing_deleted(messages)
 
         self.app.confirm("Historie löschen",
                          "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
@@ -4529,10 +4607,13 @@ class SettingsScreen(Screen):
 
     def reset_all(self, _event=None):
         def confirmed():
-            if self.db.reset_all():
+            done, messages = self._delete_quietly(lambda: self.db.reset_all())
+            if done:
                 self.toast(self._with_clock_fix("Alle Lerndaten wurden gelöscht."),
                            C["green"])
                 self.app.notify_progress()
+            else:
+                self._nothing_deleted(messages)   # ab 0.63.2 (B-D-12)
 
         self.app.confirm("Alles zurücksetzen",
                          "Wirklich ALLE Lerndaten unwiderruflich löschen?", confirmed)
@@ -4542,6 +4623,10 @@ class SettingsScreen(Screen):
 #  SUCHE
 # ============================================================================
 
+# Ab 0.63.2 (B-E-04): Hinweis, solange nichts gesucht wurde
+SEARCH_EMPTY_HINT = "Gib oben einen Suchbegriff ein und tippe auf die Lupe."
+
+
 class SearchScreen(Screen):
     crumbs = ("SUCHE", "ERGEBNISSE")
 
@@ -4549,7 +4634,7 @@ class SearchScreen(Screen):
         self.field = ui.entry(hint="Suchen ... (z.B. RAID, DNS, DSGVO)", expand=True)
         self.field.on_submit = lambda _e: self.search(self.field.value or "")
         self.field.autofocus = True
-        self.lbl_info = ui.text("", size=13, color=C["text_dim"])
+        self.lbl_info = ui.text(SEARCH_EMPTY_HINT, size=13, color=C["text_dim"])
         self.results = ft.Column(spacing=8, tight=True)
         return screen_list([
             ft.Row([self.field, ft.Semantics(button=True, label=SEARCH_TEXT, content=ft.Container(
@@ -4563,6 +4648,10 @@ class SearchScreen(Screen):
     def search(self, query):
         query = query.strip()
         if not query:
+            # Ab 0.63.2 (B-E-04): leerer Begriff zeigt den Hinweis statt nichts
+            self.lbl_info.value = SEARCH_EMPTY_HINT
+            self.results.controls = []
+            self.app.page.update()
             return
         # Ab 0.56 zuerst die passenden Hilfe-Abschnitte (wie am PC)
         self.app.last_query = query   # ab 0.59: Optionen-Treffer oeffnen ggf. "Vorlagen"
@@ -5017,7 +5106,11 @@ class FISIMobileApp:
         self.page = page
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
         page.padding = 0
-        self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
+        # Ab 0.63.2 (A12): Datenbank-Meldungen waehrend des Aufbaus sammeln.
+        # Als Hinweis gezeigt haette show_tab("dashboard") sie sofort wieder
+        # geschlossen (close_toast); sie kommen nach dem Aufbau als ein Hinweis.
+        self._start_messages = []
+        self.db = DBManager(error_handler=self._db_error)
         # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
         fsi.remove_stale_temp()
         self.sync = SyncController(self)
@@ -5031,6 +5124,18 @@ class FISIMobileApp:
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
         self.show_tab("dashboard")
+        messages, self._start_messages = self._start_messages, None
+        if messages:
+            self.toast("\n".join(messages), C["red"])
+            self.page.update()
+
+    def _db_error(self, message):
+        """Datenbank-Meldung als Hinweis (ab 0.63.2 waehrend des Aufbaus
+        gesammelt, siehe __init__)."""
+        if self._start_messages is not None:
+            self._start_messages.append(message)
+        else:
+            self.toast(message, C["red"])
 
     def _build_ui(self):
         """Design, Seiten und Navigation (auch zum Neuaufbau nach einem
@@ -5518,6 +5623,8 @@ class FISIMobileApp:
             self.screens["quiz"].exam.save_answers()
             self.screens["abschluss"].flush()
             self.sync.on_leave()
+            # Ab 0.63.2 (Z7): flush kann einen Datenbank-Hinweis zeigen
+            _redraw(self.screens["abschluss"].root)
         elif event.state in (ft.AppLifecycleState.RESUME, ft.AppLifecycleState.SHOW):
             # Android beendet die App im Hintergrund oft nicht: Beim Zurueckholen
             # laeuft main() nicht erneut, daher hier ebenfalls nachsehen.

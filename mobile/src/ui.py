@@ -1285,6 +1285,12 @@ class UpsPicture(ft.Semantics):
 
     @staticmethod
     def _bar(share, color, height=12):
+        # Ab 0.63.2 (B-E-10): nicht endliche Werte nicht abbrechen lassen,
+        # unendlich = voll, NaN = leer (wie am PC, fisi_widgets UpsDiagram)
+        if math.isnan(share):
+            share = 0.0
+        elif math.isinf(share):
+            share = 1.0 if share > 0 else 0.0
         filled = max(0, min(1000, int(round(share * 1000))))
         parts = []
         if filled:
@@ -1297,6 +1303,8 @@ class UpsPicture(ft.Semantics):
 
     def _load_bar(self, share, limit):
         """Auslastung mit Strich bei der Grenze (80 %)."""
+        if math.isnan(share):
+            share = 0.0   # ab 0.63.2 (B-E-10): NaN wie ein leerer Balken
         good = share <= limit
         bar = self._bar(min(share, 100) / 100.0, C["green"] if good else C["red"], 6)
         mark = ft.Row([ft.Container(expand=int(limit)),

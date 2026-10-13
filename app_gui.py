@@ -2495,6 +2495,11 @@ class ExamPanel(ctk.CTkFrame):
         fp.submit(self.state)
         if self.state["art"] == fp.WISO:
             self._finish()
+            if auto:
+                # Ab 0.63.2 (B-G-23): auch bei WiSo melden, nach dem Auswerten
+                # (gleicher Text wie am Handy)
+                messagebox.showinfo("Zeit abgelaufen", "Die Zeit ist um, die Prüfung wurde "
+                                                       "abgegeben und ausgewertet.")
             return
         fp.save_running(self.state)
         if auto:
