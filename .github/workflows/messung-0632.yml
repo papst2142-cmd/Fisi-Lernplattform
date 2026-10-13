@@ -1,0 +1,88 @@
+# Nur Messung (Zweig messung-0632, Plan 0.63.2 A13 / Teilplan S5 Abschnitt 4,
+# Lauf M1): Kopie von messung-0631.yml (c18d902), Staende neu:
+#   0625 = cf4912b (0.62.5, MESS_FASSUNG=vor)
+#   063  = a74712d (0.63,   MESS_FASSUNG=nach, nur zum Einordnen)
+#   0631 = NACHHER = 14b3bd4 (Endstand 0.63.1, Tag v0.63.1, MESS_FASSUNG=nach)
+# Teil 1: 7 Runden abwechselnd, je mit und ohne Vorladen (FISI_VORLADEN=0),
+#         dazu je Runde "erster Wechsel ohne Ruhe" (063, 0631), wie 0.63.1.
+# Teil 2: Zeit je Bauteil (messung_0632/profil_oeffnen.py) ohne Vorladen,
+#         je Stand 0625/0631 3x MESS_ART=teile und 3x MESS_ART=cprofile.
+# Baut nichts, veroeffentlicht nichts, wird nie gemergt.
+name: Messung 0.63.2 A13 (nur Messung)
+
+on:
+  push:
+    branches: [messung-0632]
+    paths: [".github/workflows/messung-0632.yml", "messung_0632/**"]
+  workflow_dispatch:
+
+env:
+  NACHHER: "14b3bd4"
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 300
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Staende 0625 (cf4912b), 063 (a74712d), 0631 (NACHHER)
+        run: |
+          git fetch origin main
+          git worktree add ../st_0625 cf4912b
+          git worktree add ../st_063 a74712d
+          git worktree add ../st_0631 "$NACHHER"
+          for v in 0625 063 0631; do echo "::notice::Stand $v $(git -C ../st_$v log --oneline -1)"; done
+          python -c "import sys, customtkinter, tkinter; print('::notice::Python', sys.version.split()[0], 'customtkinter', customtkinter.__version__, 'Tk', tkinter.TkVersion)"
+      - name: Teil 1 Rechner (7 Runden abwechselnd, mit und ohne Vorladen, dazu ohne Ruhe)
+        continue-on-error: true
+        run: |
+          lauf() {  # STAND FASSUNG VORLADEN ART RUNDE
+            f="$RUNNER_TEMP/m_$1_$4_$3_$5"
+            MESS_STAND=$1 MESS_FASSUNG=$2 FISI_VORLADEN=$3 MESS_ART=$4 timeout 400 python messung_0632/mess_rechner_0631.py ../st_$1 "$f.json" > "$f.txt" 2>&1 || echo "::warning::Lauf $5 $1 $4 $3 Rueckgabe $?"
+            grep -h "^ERG\|^ABBRUCH" "$f.txt" || tail -5 "$f.txt"
+          }
+          for r in 1 2 3 4 5 6 7; do
+            for art in normal 0; do
+              lauf 0625 vor $art voll $r
+              lauf 063 nach $art voll $r
+              lauf 0631 nach $art voll $r
+            done
+            lauf 063 nach 0 ohne_ruhe $r
+            lauf 0631 nach 0 ohne_ruhe $r
+          done
+      - name: Teil 2 Zeit je Bauteil (ohne Vorladen, je Stand 3x teile, 3x cprofile)
+        continue-on-error: true
+        run: |
+          prof() {  # STAND ART RUNDE
+            f="$RUNNER_TEMP/p_$1_$2_0_$3"
+            MESS_STAND=$1 MESS_ART=$2 FISI_VORLADEN=0 timeout 400 python messung_0632/profil_oeffnen.py ../st_$1 "$f.json" > "$f.txt" 2>&1 || echo "::warning::Profil $3 $1 $2 Rueckgabe $?"
+            grep -h "| oeffnen\|^ABBRUCH" "$f.txt" || tail -5 "$f.txt"
+          }
+          for r in 1 2 3; do
+            prof 0625 teile $r
+            prof 0631 teile $r
+          done
+          for r in 1 2 3; do
+            prof 0625 cprofile $r
+            prof 0631 cprofile $r
+          done
+      - name: Rohwerte (JSON) im Log
+        run: |
+          for f in "$RUNNER_TEMP"/m_*.json "$RUNNER_TEMP"/p_*.json; do
+            [ -f "$f" ] || continue
+            echo "ROH $(basename "$f") $(python -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1]))))" "$f")"
+          done
+      - name: Zusammenfassung Teil 1
+        run: python messung_0632/tabelle_0632.py "$RUNNER_TEMP" --notice
+      - name: Zusammenfassung Teil 2 (Bauteile)
+        run: python messung_0632/teile_tabelle.py "$RUNNER_TEMP"
