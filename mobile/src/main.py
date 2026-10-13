@@ -5415,8 +5415,11 @@ class FISIMobileApp:
                 on_yes()
             self.page.update()
 
+        # Ab 0.63.2: scrollable wie beim Rundgang - ein langer Text (Warntext
+        # "Alles ersetzen") laesst sich rollen statt unten abgeschnitten zu
+        # werden; die Knoepfe bleiben stehen. Kurze Texte sehen aus wie bisher.
         self.page.show_dialog(ft.AlertDialog(
-            modal=True, bgcolor=C["card"],
+            modal=True, bgcolor=C["card"], scrollable=True,
             title=ft.Text(title, color=C["text"], size=18, weight=ft.FontWeight.BOLD),
             content=ft.Text(message, color=C["text_dim"], size=14),
             actions=[ft.TextButton("Abbrechen", on_click=lambda _e: answer(False)),
