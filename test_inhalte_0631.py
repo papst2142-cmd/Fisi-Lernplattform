@@ -236,21 +236,58 @@ GEPLANT = {
     "szenarien_ap2.json": {123: [("solution", 0)], 288: [("solution", 2)],
                            293: [("solution", 2)]},
 }
+# Ab 0.63.2 (FG-25): zusaetzlich die Felder der Inhaltskorrekturen 0.63.2
+# (S4: A14/B-C-06, B-C-11 bis B-C-39, B-D-13 "ModeWelt", B-N-13). Einzeln
+# geprueft in test_inhalte_0632.py; hier bleibt alles UEBRIGE gesperrt.
+GEPLANT_0632 = {
+    "karteikarten.json": {58: [("a",), ("options", 0), ("a_full",)], 120: [("q",)],
+                          159: [("a_full",)], 301: [("a",), ("options", 0), ("a_full",)],
+                          740: [("q",)], 858: [("a_full",)], 859: [("a_full",)],
+                          882: [("options", 1), ("a_full",)],
+                          1295: [("a",), ("options", 0), ("a_full",)], 1429: [("q",)]},
+    "projektarbeiten.json": {0: [("aufgaben", 4), ("ausgangssituation",)], 9: [("hinweise", 0)],
+                             21: [("aufgaben", 3), ("hinweise", 3)], 27: [("hinweise", 4)],
+                             37: [("hinweise", 3)], 44: [("rahmenbedingungen", 4)],
+                             47: [("aufgaben", 2)]},
+    "quizfragen.json": {28: [("exp",)], 71: [("exp",), ("q",)], 158: [("q",)],
+                        628: [("options", 0), ("a",)], 777: [("exp",)],
+                        828: [("exp",), ("q",)], 931: [("q",)], 1024: [("q",)],
+                        1323: [("exp",), ("q",)], 1479: [("options", 3), ("exp",)],
+                        1495: [("exp",), ("q",)], 1933: [("exp",), ("q",)], 2102: [("q",)]},
+    "szenarien_ap1.json": {4: [("solution", 2)], 58: [("solution", 4)], 91: [("text", 0)],
+                           143: [("solution", 0)],
+                           207: [("text", 2), ("text", 3), ("text", 4), ("text", 5)]},
+    "szenarien_ap2.json": {0: [("solution", 0), ("solution", 6)],
+                           23: [("text", 1), ("text", 2), ("text", 3)],
+                           25: [("solution", 2), ("solution", 3)],
+                           46: [("text", 1), ("text", 2), ("text", 3), ("text", 4)],
+                           134: [("text", 0), ("solution", 0)],
+                           218: [("text", 10), ("text", 11), ("text", 12)], 223: [("text", 0)],
+                           228: [("text", 1), ("text", 2), ("text", 3), ("text", 4), ("text", 5)],
+                           296: [("text", 2), ("text", 3), ("text", 4), ("text", 5)]},
+}
+for _datei, _felder in GEPLANT_0632.items():
+    for _index, _pfade in _felder.items():
+        GEPLANT.setdefault(_datei, {}).setdefault(_index, []).extend(_pfade)
 ANZAHL = {"karteikarten.json": 1565, "quizfragen.json": 2120, "szenarien_ap1.json": 265,
           "szenarien_ap2.json": 330, "projektarbeiten.json": 50}
 # SHA-256 ueber alle Eintraege, geplante Felder durch "*" ersetzt (Stand 0.62.5, cf4912b;
 # quizfragen.json ohne geplante Felder, B-C-06 zurueckgestellt)
+# Ab 0.63.2 (FG-25): mit den Feldern 0.63.1 UND 0.63.2 als "*". Derselbe Wert ergibt
+# sich auf dem Stand 0.63.1 (14b3bd4): ausserhalb der geplanten Felder ist nichts
+# geaendert. Werte bis 0.63.1: adfb69fb...7165, 7cc29b85...c9c3, 321e2e6e...9a95,
+# d1dc2c96...af35, bfc9e918...00c6.
 PRUEFWERT = {
     "karteikarten.json":
-        "adfb69fb728ccd513b0e781d777794b8e0e71a71f295526b0c308d9976ee7165",
+        "cbd53db8dcb19862ea601aeee64e8bd7e01cf26ea37f5736d1aef700296d0e99",
     "quizfragen.json":
-        "7cc29b855bf441fb1e0d9317b27c97dbf363817c08bc52b3deedcd991b6cc9c3",
+        "84ed04c712799f04c4f9f173165f4b9ad3cba74c26c41317b433f26db3a9acfd",
     "szenarien_ap1.json":
-        "321e2e6e564791532d68da033f38d87fe3b5c14935a7e8c9b2e6bc7000649a95",
+        "13c8429fcc4bd64b66ed854bdcd07d210b482ba22ef442a08f3e2557f9a326c1",
     "szenarien_ap2.json":
-        "d1dc2c96d2327f702cf5a0a562481e84c47ac7514aa41be3b8bd84e672a2af35",
+        "4b7836306538051516a606f0472b87be9ad86ed28509776d8d75d3fb5d249879",
     "projektarbeiten.json":
-        "bfc9e918e2a31ed30d1ef8f385d18b784a42560af581e2d81ecdeab3a51000c6",
+        "eda3cfcd6bd42e9094dc66d779476f898ecf7fa01c3078ff631df190a7727f83",
 }
 PRUEFWERT_UMBENENNUNGEN = "a2ae7b3264d79cf6d82353de5277f03d91f4122507731609e6af031719d0706f"
 P1480_NEU = ("Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB "
@@ -270,8 +307,42 @@ def pruefwert(datei, eintraege):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+# Ab 0.63.2 (FG-25, F7 d): neue Eintraege (Fragetexte B-N-13, B-C-27/-28/-29/-30/-33).
+# Sie werden vor dem Pruefwert entfernt; alle alten Eintraege bleiben so gesperrt
+# wie bisher. Die neuen prueft test_inhalte_0632.UmbenennungenTest einzeln.
+UMBENENNUNGEN_0632 = {
+    "karte": {
+        "Welche Domäne trennt ein Router, ein einfacher Switch aber nicht?",
+        "Welches Geschäft darf ein Prokurist ohne besondere Befugnis nicht abschließen?",
+        "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an "
+        "einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip "
+        "wurde nicht umgesetzt?",
+    },
+    "quiz": {
+        "Welches Protokoll nutzt NFS standardmäßig?",
+        "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft "
+        "mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?",
+        "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder "
+        "Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit "
+        "höchstens gleichzeitig versorgen?",
+        "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für "
+        "IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget "
+        "im dritten Jahr in heutigen Preisen noch wert?",
+        "Welche Phase gehört zum ITIL-Service-Lebenszyklus?",
+        "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?",
+        "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) "
+        "nicht erkannt?",
+        "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?",
+        "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz "
+        "(AGG) nicht geschützt?",
+    },
+}
+
+
 def pruefwert_umbenennungen(daten):
     kopie = json.loads(json.dumps(daten))
+    for art, alte in UMBENENNUNGEN_0632.items():
+        kopie[art] = {alt: neu for alt, neu in kopie[art].items() if alt not in alte}
     kopie["quiz"] = {alt: neu for alt, neu in kopie["quiz"].items() if neu != P1480_NEU}
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -289,6 +360,8 @@ class BestandTest(unittest.TestCase):
 
     def test_umbenennungen_unveraendert(self):
         # B-C-06 zurueckgestellt: kein neuer Eintrag, Datei wie in 0.62.5
+        # Ab 0.63.2 (FG-25): alte Eintraege unveraendert (gleicher Pruefwert wie
+        # bisher), neu nur die 12 geplanten aus UMBENENNUNGEN_0632.
         daten = lade("umbenennungen.json")
         self.assertEqual(pruefwert_umbenennungen(daten), PRUEFWERT_UMBENENNUNGEN)
         self.assertNotIn(P1480_NEU, daten["quiz"].values())

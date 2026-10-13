@@ -7,7 +7,10 @@
     "Was ist eine Business Impact Analyse (BIA)?": "Was ist eine Business-Impact-Analyse (BIA)?",
     "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als erstes formal erledigen?": "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als Erstes formal erledigen?",
     "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als erstes ein ClientHello. Was teilt der Client darin mit?": "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als Erstes ein ClientHello. Was teilt der Client darin mit?",
-    "Beim Installieren von Windows erscheint: Der ausgewählte Datenträger hat den GPT-Partitionsstil. Der PC unterstützt UEFI. Was ist die Ursache?": "Beim Installieren von Windows erscheint: „Der ausgewählte Datenträger hat den GPT-Partitionsstil.“ Der PC unterstützt UEFI. Was ist die Ursache?"
+    "Beim Installieren von Windows erscheint: Der ausgewählte Datenträger hat den GPT-Partitionsstil. Der PC unterstützt UEFI. Was ist die Ursache?": "Beim Installieren von Windows erscheint: „Der ausgewählte Datenträger hat den GPT-Partitionsstil.“ Der PC unterstützt UEFI. Was ist die Ursache?",
+    "Welche Domäne trennt ein Router, ein einfacher Switch aber nicht?": "Welche Domäne trennt ein Router, ein einfacher Switch aber NICHT?",
+    "Welches Geschäft darf ein Prokurist ohne besondere Befugnis nicht abschließen?": "Welches Geschäft darf ein Prokurist ohne besondere Befugnis NICHT abschließen?",
+    "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip wurde nicht umgesetzt?": "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip wurde NICHT umgesetzt?"
   },
   "quiz": {
     "Was ist ein Floating Static Route?": "Was ist eine Floating Static Route?",
@@ -18,6 +21,15 @@
     "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?",
     "Was beschreibt eine Dockerfile?": "Was beschreibt ein Dockerfile?",
     "Was unterscheidet eine differentielle Sicherung von einer inkrementellen Sicherung?": "Was unterscheidet eine differenzielle Sicherung von einer inkrementellen Sicherung?",
-    "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-Live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?"
+    "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-Live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?",
+    "Welches Protokoll nutzt NFS standardmäßig?": "Welchen Port nutzt NFS standardmäßig?",
+    "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern (1 TB = 10^12 Byte)?",
+    "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s (1 MB = 10^6 Byte) bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
+    "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget im dritten Jahr in heutigen Preisen noch wert?": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget nach drei Jahren in heutigen Preisen noch wert?",
+    "Welche Phase gehört zum ITIL-Service-Lebenszyklus?": "Welche Phase gehört zum ITIL-Service-Lebenszyklus (ITIL v3/2011)?",
+    "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?": "Welche Information steht im Ethernet-Frame, aber NICHT im IP-Paket?",
+    "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) nicht erkannt?": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) NICHT erkannt?",
+    "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?": "Bei welchem Onlinekauf hat ein Verbraucher KEIN Widerrufsrecht?",
+    "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) nicht geschützt?": "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) NICHT geschützt?"
   }
 }

@@ -458,9 +458,14 @@ class BenutzerpfadTest(TempDB, unittest.TestCase):
 
 # Fragetexte in Dateireihenfolge, Stand 0.54 (sha256 ueber die Fragen, mit
 # Zeilenumbruch verbunden). Neue Inhalte werden nur angehaengt.
+# Ab 0.63.2 (F7 d, FG-20): Karten und Quizfragen bewusst neu, weil 10 Fragetexte
+# korrigiert sind (K0121, K0741; P0072, P0159, P0829, P0932, P1025, P1324, P1496,
+# P1934), jeder mit Eintrag in inhalte/umbenennungen.json. Stand vorher (0.63.1):
+# Karten 5d94402f...ffa83, Quiz 6c6b5eda...e4296; der neue Wert ist genau der alte
+# Stand mit diesen 10 Umbenennungen (test_inhalte_0632.UmbenennungenTest).
 STAND_054 = {
-    "karteikarten": (1400, "5d94402f4cd4eb4836d3b8e25fb536a474a9f6b8e98318d2974f515abf7ffa83"),
-    "quizfragen": (1946, "6c6b5eda7575fde0ce14d05c2210ddad131d17ecd2bf73d4a4911aa68fae4296"),
+    "karteikarten": (1400, "c561380390f8e0017a47b1ea1d41760d0851b71ccc237a896d4d2bf4853c2759"),
+    "quizfragen": (1946, "d014140dec13a4e19cc334b72994024603ee41c43bb5e1c760d036782a3d492a"),
     "szenarien_ap1": (250, "833fea3f1964c0feaf212c69e6f833bd06499d9342b4ac2923f03589153ec7ff"),
     "szenarien_ap2": (300, "05ad5c7df8a76814617a90a929eac75dc3127d778cfe8148a11466ee0f49d58b"),
     "projektarbeiten": (50, "d64254b71ce4a0d2f812d2e5afdb7da4d328ef7873f01f7226bd7e76553c6e58"),

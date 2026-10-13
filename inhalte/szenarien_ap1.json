@@ -86,7 +86,7 @@
     "solution": [
       "1. Mindestens 3 Kopien der Daten, auf 2 unterschiedlichen Speichermedien, davon 1 Kopie an einem externen/räumlich getrennten Ort.",
       "2. Die Vollsicherung sichert jedes Mal den kompletten Datenbestand, die inkrementelle Sicherung nur die Änderungen seit der letzten Sicherung - das spart Zeit und Speicherplatz, macht die Wiederherstellung aber von mehreren aufeinander aufbauenden Sicherungen abhängig.",
-      "3. Damit ein lokales Ereignis wie Brand, Diebstahl oder ein Wasserschaden nicht gleichzeitig Originaldaten und alle Sicherungskopien vernichtet (Prinzip des Air Gap)."
+      "3. Damit ein lokales Ereignis wie Brand, Diebstahl oder ein Wasserschaden nicht gleichzeitig Originaldaten und alle Sicherungskopien vernichtet (räumlich getrennte Kopie, Schutz vor lokalen Schäden). Davon zu unterscheiden ist ein Air Gap: eine Kopie ohne Verbindung zum Netz und zum Produktivsystem (Offline-Kopie), die z.B. vor Ransomware schützt."
     ]
   },
   {
@@ -1186,7 +1186,7 @@
       "",
       "2. Bei mehr als 6 bis 9 Stunden mindestens 30 Minuten, bei mehr als 9 Stunden mindestens 45 Minuten, aufteilbar in Abschnitte von mindestens 15 Minuten.",
       "",
-      "3. Nach Arbeitsende gilt eine ununterbrochene Ruhezeit von mindestens 11 Stunden, also frühestens am nächsten Tag um 7:00 Uhr."
+      "3. Nach Arbeitsende gilt eine ununterbrochene Ruhezeit von mindestens 11 Stunden (§ 5 ArbZG), rein nach der Ruhezeit also frühestens am nächsten Tag um 7:00 Uhr. Der nächste Tag ist aber ein Sonntag. Dann dürfen Arbeitnehmer grundsätzlich nicht beschäftigt werden (§ 9 ArbZG), außer eine Ausnahme nach § 10 ArbZG greift. Sonst darf er regulär erst am Montag wieder arbeiten."
     ]
   },
   {
@@ -1868,7 +1868,7 @@
     "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
-      "Ein Systemhaus erhält am 25.08.2026 ein verbindliches Angebot eines Distributors über 15 Notebooks mit dem Liefertermin 21.09.2026. Es bestellt am 01.09.2026 zu den angebotenen Bedingungen. Am 28.09.2026 sind die Notebooks immer noch nicht da. Ein anderer Distributor könnte sofort liefern, allerdings für 60 Euro mehr pro Gerät.",
+      "Ein Systemhaus erhält am 25.08.2026 ein verbindliches Angebot eines Distributors über 15 Notebooks mit dem Liefertermin 21.09.2026, gültig bis 15.09.2026. Es bestellt am 01.09.2026 zu den angebotenen Bedingungen. Am 28.09.2026 sind die Notebooks immer noch nicht da. Ein anderer Distributor könnte sofort liefern, allerdings für 60 Euro mehr pro Gerät.",
       "",
       "1. Wann und wodurch ist der Kaufvertrag zustande gekommen?",
       "2. Befindet sich der Distributor im Lieferverzug? Prüfen Sie die Voraussetzungen.",
@@ -3023,7 +3023,7 @@
       "3. Welche technischen und organisatorischen Maßnahmen sind für das Formular und die Ablage nötig? Nennen Sie vier."
     ],
     "solution": [
-      "1. Religionszugehörigkeit ist ein besonders geschütztes Datum (Art. 9 DSGVO) und für die Stelle nicht nötig. Familienstand, Geburtsdatum und Foto sind für die Auswahl nicht erforderlich und können zu Benachteiligungen nach dem AGG führen. Sie werden gestrichen oder höchstens freiwillig abgefragt, das Foto darf kein Pflichtfeld sein. Rechtsgrundlage ist die Anbahnung eines Beschäftigungsverhältnisses (Art. 6 Abs. 1 lit. b DSGVO in Verbindung mit § 26 BDSG). Es dürfen nur Daten verarbeitet werden, die für die Entscheidung über die Einstellung nötig sind.",
+      "1. Religionszugehörigkeit ist ein besonders geschütztes Datum (Art. 9 DSGVO) und für die Stelle nicht nötig. Familienstand, Geburtsdatum und Foto sind für die Auswahl nicht erforderlich und können zu Benachteiligungen nach dem AGG führen. Sie werden gestrichen oder höchstens freiwillig abgefragt, das Foto darf kein Pflichtfeld sein. Rechtsgrundlage ist die Anbahnung eines Beschäftigungsverhältnisses (Art. 6 Abs. 1 lit. b DSGVO; § 26 Abs. 1 Satz 1 BDSG ist nach dem Urteil des EuGH vom 30.03.2023 (C-34/21) zur gleichlautenden hessischen Regelung in vielen Fällen nicht anwendbar). Es dürfen nur Daten verarbeitet werden, die für die Entscheidung über die Einstellung nötig sind.",
       "",
       "2. Frist für die Geltendmachung: 17.03.2027 + 2 Monate = 17.05.2027. Klagefrist danach: + 3 Monate = 17.08.2027. Löschung 6 Monate nach der Absage: 17.09.2027. Der zusätzliche Monat ist Puffer, z.B. für die Zustellung einer Klage. Talentpool: Nur mit Einwilligung der Bewerberin. Sie muss freiwillig und informiert sein, eine feste Dauer nennen (z.B. 2 Jahre) und jederzeit widerrufen werden können.",
       "",
@@ -4468,10 +4468,10 @@
     "text": [
       "Ein Gerüstbauunternehmen mit 85 Beschäftigten nutzt ein Cloud-Office-Paket mit E-Mail, Dateiablage und Chat. Die Lizenz kostet vereinfacht angenommen 12,50 Euro je Benutzer und Monat. Bei einer Prüfung finden Sie 64 lizenzierte Konten. 13 davon gehören Personen, die das Unternehmen im Durchschnitt vor 7 Monaten verlassen haben. Die Personalabteilung meldet Austritte bisher nicht an die IT. Mehrfaktor-Authentifizierung ist nicht eingerichtet. In den Angeboten stehen Namen und Anschriften der Kunden, darunter viele private Bauherren.",
       "Ausschnitt aus dem Anmeldeprotokoll (Kolonnenführer Kai Brandl ist am Freitag, 21.08.2026, ausgeschieden):",
-      "  12.09.2026 02:14  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
-      "  12.09.2026 02:15  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
-      "  14.09.2026 21:47  k.brandl@...  Anmeldung erfolgreich  IP Mobilfunk Deutschland",
-      "  14.09.2026 21:52  k.brandl@...  Download Ordner \"Angebote 2026\" (46 Dateien)",
+      "  - 12.09.2026 02:14  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
+      "  - 12.09.2026 02:15  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
+      "  - 14.09.2026 21:47  k.brandl@...  Anmeldung erfolgreich  IP Mobilfunk Deutschland",
+      "  - 14.09.2026 21:52  k.brandl@...  Download Ordner \"Angebote 2026\" (46 Dateien)",
       "",
       "1. Berechnen Sie den Anteil der verwaisten Konten und die Lizenzkosten, die dafür bisher angefallen sind und pro Jahr weiter anfallen würden. Welche Sicherheitsrisiken entstehen durch solche Konten?",
       "2. Werten Sie den Protokollausschnitt aus. Wie viele Tage nach seinem Austritt hat sich Herr Brandl angemeldet? Was tun Sie jetzt sofort, und muss der Vorfall der Datenschutz-Aufsichtsbehörde gemeldet werden?",
