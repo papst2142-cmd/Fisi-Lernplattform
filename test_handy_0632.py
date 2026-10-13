@@ -282,6 +282,16 @@ class PruefungZeitOeffnenTest(HandyBasis):
         self.assertTrue(snack.open, "Hinweis nach dem Oeffnen sofort geschlossen")
         self.assertEqual([e[1] for e in self.events if e[0] == "toast"], [text])
 
+    def test_zweites_oeffnen_ohne_hinweis(self):
+        """Nachpruefung N-L1: after_open leert den vorgemerkten Hinweis; ein
+        zweites Oeffnen des Pruefungstrainers zeigt ihn nicht erneut."""
+        self.run_open(self.fp.WISO, WISO_TEXT)
+        self.assertIsNone(self.app.screens["quiz"].exam.notice)
+        self.app.show_tab("learn")
+        self.app.open("quiz")
+        self.assertEqual([e[1] for e in self.events if e[0] == "toast"], [WISO_TEXT],
+                         "Hinweis kam beim zweiten Oeffnen erneut")
+
     def test_wiso_ueber_oeffnen(self):
         self.run_open(self.fp.WISO, WISO_TEXT)
 
