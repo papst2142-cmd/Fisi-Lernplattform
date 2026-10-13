@@ -696,10 +696,19 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
                 table, ", ".join(columns), ", ".join("?" * (len(columns) + 1)))
             for record in _records(data, table):
                 cur.execute(sql, [record["uid"]] + [record[c] for c in columns])
+        # Ab 0.63.2 (B-G-08): Loeschungen, die die Sicherung nicht kennt,
+        # sind aufgehoben - auch auf den anderen Geraeten (fisi_sync.LIFT_KEY)
+        meta = dict(cur.execute("SELECT key, value FROM sync_meta"))
+        lifts = fisi_sync.replace_lifts(
+            {key: meta.get(key) for key in MARKERS},
+            {key: meta.get(fisi_sync.LIFT_PREFIX + key) for key in MARKERS}, markers)
         cur.execute("DELETE FROM sync_meta WHERE key IN (%s)" % ", ".join("?" * len(MARKERS)),
                     MARKERS)
         for key, value in markers.items():
             cur.execute("INSERT INTO sync_meta (key, value) VALUES (?, ?)", (key, value))
+        for key, pair in lifts.items():
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        (fisi_sync.LIFT_PREFIX + key, json.dumps(pair)))
         # Ab 0.62.5 (B-G-15): Tagesziel schon vor dem commit in eine
         # Hilfsdatei, direkt danach an ihren Platz - ein Absturz dazwischen
         # laesst sonst den neuen Lernstand mit dem alten Tagesziel zurueck

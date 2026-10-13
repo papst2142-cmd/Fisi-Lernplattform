@@ -452,6 +452,10 @@ def export_local(db):
     }
     if meta.get(MIXED_KEY):
         result[MIXED_KEY] = meta[MIXED_KEY]
+    # Ab 0.63.2 (B-G-08): nur wenn es eine Aufhebung gibt (sonst wie bisher)
+    lifts = _merged_lifts({key: meta.get(LIFT_PREFIX + key) for key in MARKERS}, {})
+    if lifts:
+        result[LIFT_KEY] = lifts
     return result
 
 
@@ -549,6 +553,113 @@ def _merged_markers(local, remote, zone=True):
     return markers
 
 
+# Ab 0.63.2 (B-G-08): "Alles ersetzen" hebt eine schon abgeglichene Loeschung
+# auf. Feld in der Datei: {"reset_at": [alt, neu]} - eine Marke, die nicht
+# nach alt und nach neu liegt, gilt als neu ("" = keine Marke). alt ist die
+# Marke dieses Geraets vor dem Ersetzen, neu die der Sicherung. Ohne das Feld
+# bringen die anderen Geraete die alte Marke zurueck, und der naechste
+# Abgleich loescht den eingespielten Lernstand wieder. Aeltere Geraete
+# ignorieren das Feld (und lassen es beim Hochladen weg). Lokal steht es in
+# sync_meta unter LIFT_PREFIX + Schluessel.
+LIFT_KEY = "aufgehoben"
+LIFT_PREFIX = "aufgehoben:"
+
+
+def _order(first, second, zone=True):
+    """-1, 0 oder 1: Vergleich zweier Marken wie _later (mit Zone in UTC,
+    sonst der Text)."""
+    if zone:
+        one, two = parse_marker(first), parse_marker(second)
+        if one and two and one[1] is not None and two[1] is not None:
+            first, second = one[1], two[1]
+    return (first > second) - (first < second)
+
+
+def _lift_pair(value):
+    """[alt, neu] aus sync_meta (JSON-Text) oder aus der Datei, sonst None.
+    alt ist eine gueltige Marke, neu eine gueltige Marke oder ""."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return None
+    if isinstance(value, list) and len(value) == 2 and all(
+            isinstance(item, str) for item in value) and parse_marker(value[0]) and (
+            value[1] == "" or parse_marker(value[1])):
+        return value
+    return None
+
+
+def _union_lift(first, second, zone=True):
+    """Zwei Aufhebungen zusammen: die spaetere alte und die fruehere neue
+    Marke ("" ist die frueheste). Was eine der beiden aufhebt, bleibt
+    aufgehoben (im Zweifel behalten); in jeder Reihenfolge dasselbe, so
+    kommen alle Geraete auf dieselbe Aufhebung."""
+    if not first or not second:
+        return first or second
+    old = first[0] if _order(first[0], second[0], zone) >= 0 else second[0]
+    if _order(first[0], second[0], zone) == 0:
+        old = max(first[0], second[0])
+    if first[1] == "" or second[1] == "":
+        new = ""
+    elif _order(first[1], second[1], zone) == 0:
+        new = min(first[1], second[1])
+    else:
+        new = first[1] if _order(first[1], second[1], zone) < 0 else second[1]
+    return [old, new]
+
+
+def _merged_lifts(local, remote, zone=True):
+    local = local if isinstance(local, dict) else {}
+    remote = remote if isinstance(remote, dict) else {}
+    lifts = {}
+    for key in MARKERS:
+        pair = _union_lift(_lift_pair(local.get(key)), _lift_pair(remote.get(key)), zone)
+        if pair:
+            lifts[key] = pair
+    return lifts
+
+
+def _lifted(value, pair, zone=True):
+    """Die Marke nach der Aufhebung pair: Liegt sie nicht nach alt, aber nach
+    neu, gilt neu (None fuer ""); sonst bleibt sie."""
+    if not value or not pair:
+        return value
+    old, new = pair
+    if _order(value, old, zone) > 0 or (new and _order(value, new, zone) <= 0):
+        return value
+    return new or None
+
+
+def _apply_lifts(markers, lifts, zone=True):
+    for key, pair in lifts.items():
+        if markers.get(key):
+            value = _lifted(markers[key], pair, zone)
+            if value:
+                markers[key] = value
+            else:
+                del markers[key]
+
+
+def replace_lifts(old_markers, old_lifts, new_markers):
+    """Aufhebungen nach "Alles ersetzen" (ab 0.63.2, B-G-08): je Marke, die
+    vor dem Ersetzen spaeter war als die der Sicherung (oder die Sicherung hat
+    keine), [alt, neu]. Eine fruehere Aufhebung auf diesem Geraet bleibt
+    eingeschlossen (_union_lift). Liefert {Schluessel: [alt, neu]} nur fuer
+    die Marken, deren Aufhebung neu ist oder sich aendert."""
+    lifts = {}
+    for key in MARKERS:
+        old, new = old_markers.get(key), new_markers.get(key) or ""
+        if not (isinstance(old, str) and parse_marker(old)):
+            continue
+        if new and not parse_marker(new):
+            continue
+        if new and _order(old, new) <= 0:
+            continue
+        lifts[key] = _union_lift([old, new], _lift_pair(old_lifts.get(key)))
+    return lifts
+
+
 def _invalid_markers(markers, zone=True):
     """Schluessel mit einem Wert, der keine gueltige Marke ist. Ohne zone
     (Mischbetrieb) nur Werte, die kein Text sind: Einen Text wendet ein Geraet
@@ -606,7 +717,8 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     stats = stats if stats is not None else MergeStats()
     stats.backup = check_future
     LAST_MERGE = stats
-    local_markers = export_local(db)["markers"]
+    local = export_local(db)
+    local_markers = local["markers"]
     remote_markers = dict(remote.get("markers") or {}) if isinstance(
         remote.get("markers"), dict) else {}
     # Mischbetrieb: Hat zuletzt ein Geraet vor 0.62.4 die Datei (bzw. die
@@ -634,6 +746,10 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
             if parsed and parsed[1] is not None and parsed[1] > limit:
                 del remote_markers[key]
                 stats.future += 1
+    # Ab 0.63.2 (B-G-08): Aufhebungen nach "Alles ersetzen" (beide Seiten)
+    lifts = _merged_lifts(local.get(LIFT_KEY), remote.get(LIFT_KEY), zone)
+    for source in (local_markers, remote_markers):
+        _apply_lifts(source, lifts, zone)
     markers = _merged_markers(local_markers, remote_markers, zone)
     reset = markers.get("reset_at")
     cleared = _later(reset, markers.get("history_cleared_at"), zone)
@@ -652,6 +768,9 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
         for key, value in markers.items():
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         (key, value))
+        for key, pair in lifts.items():         # ab 0.63.2 (B-G-08)
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        (LIFT_PREFIX + key, json.dumps(pair)))
         for table, columns in SYNC_TABLES.items():
             if table in SLOT_TABLES or table in PROJECT_TABLES:
                 cutoff = None     # Platz-Zeilen und Abschlussprojekt bleiben

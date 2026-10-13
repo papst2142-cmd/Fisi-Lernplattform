@@ -31,6 +31,10 @@ Abgleich-Kern 0.63.2 (Plan 0.63.2, Bauauftrag S6a; Teilplan S6 1.1, 1.7, 1.8, 2)
           Schritten (Parameter zwischen).
   FP      Abgleich-Fingerabdruck: export_local derselben Datenbank mit v0.63.1
           und mit dem neuen Code -> gleiches kanonisches JSON (sha256).
+  B-G-08  (S6b) "Alles ersetzen" nach abgeglichenem "Alle Lerndaten
+          loeschen": Der naechste Abgleich loescht den eingespielten Stand
+          nicht mehr (Feld "aufgehoben"); BG08Kern im Testprozess,
+          BG08Ersetzen mit Geraeten inkl. T-b/T-c und Geraet v0.63.1.
 
 Geraete wie in test_abgleich.py (eigene Prozesse, Attrappe der GitHub-API,
 Wegwerf-HOME); fuer vollen Inhalt pruefung/abgleich_geraet_voll.py. Der Code
@@ -474,6 +478,100 @@ class BG29AlteDatenbank(unittest.TestCase):
 #  Z4: Beispiel statt echtem Repository
 # ============================================================================
 
+class BG08Kern(unittest.TestCase):
+    """B-G-08 im Testprozess: "Alles ersetzen" merkt sich die Aufhebung
+    (fisi_sicherung.replace_all), der Abgleich wendet sie an
+    (fisi_sync.merge_into_local), export_local schreibt das Feld."""
+    R0 = "2026-09-01 10:00:00+02:00"
+    R1 = "2026-10-03 10:00:00+02:00"
+    R = "2026-10-05 10:00:00+02:00"
+    R2 = "2026-10-07 10:00:00+02:00"
+
+    def db_mit(self, name, marke, karten=()):
+        db = neue_db(name)
+        conn = sqlite3.connect(db.db_path)
+        try:
+            for etikett, zeit in karten:
+                conn.execute("INSERT INTO card_events (timestamp, utc_offset, category, "
+                             "question, mode, correct, uid) VALUES (?, 120, 'Kat', ?, "
+                             "'karte', 1, ?)", (zeit, etikett, "uid-" + etikett))
+            if marke:
+                conn.execute("INSERT INTO sync_meta (key, value) VALUES ('reset_at', ?)",
+                             (marke,))
+            conn.commit()
+        finally:
+            conn.close()
+        return db
+
+    def sicherung(self, marke, karten):
+        db = self.db_mit("sicherung", marke, karten)
+        return fsi.read_backup(fsi.create_backup(db, "test"))
+
+    def ersetzen(self, db, backup):
+        fsi.replace_all(db, backup, os.path.join(os.path.dirname(db.db_path), "kopie"))
+
+    @staticmethod
+    def datei(marke):
+        return {"format": fisi_sync.FORMAT, fisi_sync.WRITER_KEY: fisi_sync.WRITER,
+                "markers": {"reset_at": marke} if marke else {},
+                "columns": {"card_events": list(fisi_sync.SYNC_TABLES["card_events"])},
+                "tables": {"card_events": []}}
+
+    @staticmethod
+    def karten(db):
+        return sorted(r[0] for r in zeilen(db.db_path, "SELECT question FROM card_events"))
+
+    def test_b_g_08_kern_ersetzen_merkt_aufhebung(self):
+        """Ersetzen (Geraet: Marke R, Sicherung: R0) -> Aufhebung [R, R0] in
+        sync_meta und im Feld "aufgehoben"; die Datei mit R loescht nichts;
+        eine spaetere Loeschung R2 gilt wieder."""
+        db = self.db_mit("kern1", self.R)
+        self.ersetzen(db, self.sicherung(self.R0, [("k1", "2026-10-02 12:00:00")]))
+        self.assertEqual(json.loads(db.get_meta("aufgehoben:reset_at")), [self.R, self.R0])
+        self.assertEqual(fisi_sync.export_local(db)["aufgehoben"],
+                         {"reset_at": [self.R, self.R0]})
+        fisi_sync.merge_into_local(db, self.datei(self.R), check_future=False, mixed=False)
+        self.assertEqual(self.karten(db), ["k1"])
+        self.assertEqual(db.get_meta("reset_at"), self.R0)
+        fisi_sync.merge_into_local(db, self.datei(self.R2), check_future=False, mixed=False)
+        self.assertEqual(self.karten(db), [])
+        self.assertEqual(db.get_meta("reset_at"), self.R2)
+
+    def test_b_g_08_kern_zweimal_ersetzen_aeltere_sicherung(self):
+        """Zweimal ersetzen, die zweite Sicherung ist aelter (R1, dann R0):
+        Die Aufhebung umfasst beide ([R, R0]), die Datei mit R loescht keine
+        der eingespielten Karten (k0 liegt zwischen R0 und R1)."""
+        db = self.db_mit("kern2", self.R)
+        self.ersetzen(db, self.sicherung(self.R1, [("k1", "2026-10-04 12:00:00")]))
+        self.assertEqual(json.loads(db.get_meta("aufgehoben:reset_at")), [self.R, self.R1])
+        self.ersetzen(db, self.sicherung(self.R0, [("k0", "2026-10-02 12:00:00"),
+                                                   ("k1", "2026-10-04 12:00:00")]))
+        self.assertEqual(json.loads(db.get_meta("aufgehoben:reset_at")), [self.R, self.R0])
+        fisi_sync.merge_into_local(db, self.datei(self.R), check_future=False, mixed=False)
+        self.assertEqual(self.karten(db), ["k0", "k1"])
+
+    def test_b_g_08_kern_sicherung_kennt_loeschung(self):
+        """Schutz: Sicherung mit derselben Marke wie das Geraet -> keine
+        Aufhebung, export_local ohne das Feld (wie bisher)."""
+        db = self.db_mit("kern3", self.R)
+        self.ersetzen(db, self.sicherung(self.R, [("k1", "2026-10-06 12:00:00")]))
+        self.assertIsNone(db.get_meta("aufgehoben:reset_at"))
+        self.assertNotIn("aufgehoben", fisi_sync.export_local(db))
+        fisi_sync.merge_into_local(db, self.datei(self.R), check_future=False, mixed=False)
+        self.assertEqual(self.karten(db), ["k1"])
+
+    def test_b_g_08_kern_vereinigung_in_jeder_reihenfolge(self):
+        """Zwei Geraete mit verschiedenen Aufhebungen kommen auf dieselbe."""
+        paare = [[self.R, self.R0], [self.R2, self.R1], [self.R1, ""], [self.R, self.R1]]
+        for eins in paare:
+            for zwei in paare:
+                self.assertEqual(fisi_sync._union_lift(eins, zwei),
+                                 fisi_sync._union_lift(zwei, eins), (eins, zwei))
+        self.assertEqual(fisi_sync._union_lift([self.R, self.R0], [self.R2, self.R1]),
+                         [self.R2, self.R0])
+        self.assertEqual(fisi_sync._union_lift([self.R, self.R1], [self.R1, ""]), [self.R, ""])
+
+
 class Z4Beispiel(unittest.TestCase):
 
     def test_z4_meldung_mit_beispiel(self):
@@ -678,10 +776,12 @@ class GeraeteTest(unittest.TestCase):
         self.stabil([a, b])
 
     # ------------------------------------------------------------ T-b / T-c
-    def mischbetrieb(self, code_a, code_b, code_c, a_zuerst=True, zwischen=None, lauf=""):
+    def mischbetrieb(self, code_a, code_b, code_c, a_zuerst=True, zwischen=None, lauf="",
+                     vorher=None, pruefen=True):
         """Ablauf mit drei Geraeten (A = Nicos Geraet, B = zweites Geraet, C =
         Geraet, das waehrend der Loeschungen offline ist):
           1. alle lernen (alle Tabellen), Abgleich A, B, C, A, B
+             vorher(self, a, b, c) - z.B. Sicherung erstellen (S6b)
           2. C lernt offline weiter (vor den Loeschungen)
           3. erster (A oder B) lernt, "Bestenliste loeschen" + Eintrag in
              derselben Sekunde, "Projekt loeschen"; Abgleich
@@ -690,7 +790,10 @@ class GeraeteTest(unittest.TestCase):
              3 Runden Abgleich, Ruhe
           6. zwischen(self, a, b, c) - Platz fuer weitere Schritte (S6b)
           7. C kommt zurueck, lernt, 3 Runden Abgleich mit allen, Ruhe
-        Rueckgabe: Lernstand ohne uid/Zeit (gleich auf allen Geraeten)."""
+        Rueckgabe: Lernstand ohne uid/Zeit (gleich auf allen Geraeten).
+        pruefen=False (S6b, B-G-08 mit Hin und Her): ohne Ruhe und ohne
+        Gleichheit am Ende; Rueckgabe ({Geraet: Lernstand ohne uid/Zeit},
+        (a, b, c))."""
         ordner = self.id().rsplit(".", 1)[-1] + lauf
         a = self.voll("A", code=code_a, ordner=ordner)
         b = self.voll("B", code=code_b, ordner=ordner)
@@ -698,6 +801,8 @@ class GeraeteTest(unittest.TestCase):
         for device in (a, b, c):
             device("fuelle", "1")
         self.alle_sync([a, b, c, a, b], 1)
+        if vorher:
+            vorher(self, a, b, c)
         ta.pause()
         c("fuelle", "2-offline")
         ta.pause()
@@ -721,6 +826,8 @@ class GeraeteTest(unittest.TestCase):
             zwischen(self, a, b, c)
         c("fuelle", "3")
         self.alle_sync([c, a, b], 3)
+        if not pruefen:
+            return {d.name: inhalt_ohne_zeit(d("inhalt")) for d in (a, b, c)}, (a, b, c)
         self.stabil([a, b, c])
         stand = self.gleich_und_ohne_doppelte([a, b, c])
         meta_b = b("meta")["meta"]
@@ -777,6 +884,289 @@ class GeraeteTest(unittest.TestCase):
     def test_t_c_mischbetrieb_neues_geraet_zuerst_offline_alt(self):
         """T-c, das Offline-Geraet hat noch v0.63.1."""
         self._vergleich_mit_v0631(False, self.alter_code(ALT))
+
+
+
+# ============================================================================
+#  B-G-08 (S6b): "Alles ersetzen" nach abgeglichenem "Alle Lerndaten loeschen"
+# ============================================================================
+
+def karten(device, endung):
+    """Zahl der Karteikarten, deren Etikett mit endung endet."""
+    return sum(n for k, n in device.namen().items() if k.endswith(endung))
+
+
+def fehlt_gegen(referenz, stand):
+    """{tabelle: Inhalte, die in referenz stehen, in stand aber fehlen}."""
+    result = {}
+    for table, rows in referenz.items():
+        missing = sorted(set(rows) - set(stand.get(table, [])))
+        if missing:
+            result[table] = missing
+    return result
+
+
+class BG08Ersetzen(unittest.TestCase):
+    """B-G-08 Weg (a), Freigabe F3/FG-12/FG-14: "Alles ersetzen" hebt eine
+    schon abgeglichene Loeschung auf (Feld "aufgehoben" in der Abgleich-Datei).
+    Geraete wie GeraeteTest (eigene Prozesse gegen die Attrappe)."""
+    setUp = GeraeteTest.setUp
+    tearDown = GeraeteTest.tearDown
+    alle_sync = GeraeteTest.alle_sync
+    stabil = GeraeteTest.stabil
+    alter_code = GeraeteTest.alter_code
+    voll = GeraeteTest.voll
+    neu_starten = GeraeteTest.neu_starten
+    gleich_und_ohne_doppelte = GeraeteTest.gleich_und_ohne_doppelte
+    mischbetrieb = GeraeteTest.mischbetrieb
+
+    def pfad(self, device, name="sicherung.fisisicherung"):
+        return os.path.join(device.home, name)
+
+    def ersetzen_nach_loeschen(self, a, n=5, danach=()):
+        """Fall 7: n Karten, Abgleich, Sicherung, "Alle Lerndaten loeschen",
+        Abgleich (auch danach: weitere Geraete), "Alles ersetzen". Liefert das
+        Ergebnis des Abgleichs danach."""
+        eigene = "%s-vorher" % a.name.lower()
+        a("lerne", n, "vorher")
+        a.sync()
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        ta.pause()
+        a.sync()
+        for device in danach:
+            device.sync()
+        self.assertEqual(karten(a, eigene), 0)
+        a("sicherung_ersetzen", self.pfad(a))
+        self.assertEqual(karten(a, eigene), n)
+        return a.sync()
+
+    def test_b_g_08_fall7_ersetzen_nach_loeschen(self):
+        """Fall 7 (Teilplan S6 1.6): nach "Alles ersetzen" bleibt der
+        eingespielte Lernstand beim naechsten Abgleich (heute 5 -> 0 mit
+        "5 Eintraege wegen einer Loeschung entfernt.")."""
+        a = self.voll("A")
+        ergebnis = self.ersetzen_nach_loeschen(a)
+        bericht("B-G-08 Fall 7: %s, Karten danach %d, Datei: %s"
+                % (ergebnis, karten(a, "-vorher"), ta.datei().get("aufgehoben")))
+        self.assertEqual(karten(a, "-vorher"), 5)
+        self.assertEqual(ergebnis["removed"], 0)
+        self.assertNotIn("wegen einer Löschung", ergebnis["meldung"])
+        self.assertEqual(sorted(ta.datei().get("aufgehoben", {})), ["reset_at"])
+        self.assertNotIn("reset_at", ta.datei()["markers"])
+        a.sync()
+        self.assertEqual(karten(a, "-vorher"), 5)
+        self.stabil([a])
+
+    def test_b_g_08_zwei_neue_geraete_konvergieren(self):
+        """Zwei Geraete mit 0.63.2: B hat die Loeschung schon uebernommen und
+        bringt die alte Marke zurueck - sie gilt als aufgehoben. Beide haben
+        danach denselben Lernstand, kein Hin und Her; Bs Eintraege nach der
+        Loeschung bleiben."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        b("lerne", 2, "vorher")
+        self.alle_sync([b, a], 1)
+        ergebnis = self.ersetzen_nach_loeschen(a, danach=[b])
+        self.assertEqual(ergebnis["removed"], 0)
+        self.assertEqual(karten(b, "-vorher"), 0)
+        self.assertTrue(b("meta")["meta"].get("reset_at"))
+        b.sync()            # B: alte Marke reset_at, Datei mit "aufgehoben"
+        ta.pause()
+        b("lerne", 2, "nachher")
+        self.alle_sync([b, a], 2)
+        for device in (a, b):
+            namen = device.namen()
+            self.assertEqual(namen.get("a-vorher"), 5, (device.name, namen))
+            self.assertEqual(namen.get("b-vorher"), 2, (device.name, namen))
+            self.assertEqual(namen.get("b-nachher"), 2, (device.name, namen))
+        self.assertEqual(a("meta")["meta"].get("aufgehoben:reset_at"),
+                         b("meta")["meta"].get("aufgehoben:reset_at"))
+        self.gleich_und_ohne_doppelte([a, b])
+        self.stabil([a, b])
+
+    def test_b_g_08_schutz_offline_geraet_loescht_weiter(self):
+        """Schutz: Gerät war bei der Loeschung offline (kein Ersetzen) - seine
+        Eintraege von vor der Loeschung fallen weiter weg (wie heute)."""
+        a, c = self.voll("A"), self.voll("C", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, c], 1)
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        ta.pause()
+        a("lerne", 1, "nachher")
+        self.alle_sync([c, a], 2)
+        for device in (a, c):
+            namen = device.namen()
+            self.assertEqual(namen, {"a-nachher": 1}, device.name)
+        self.stabil([a, c])
+
+    def test_b_g_08_schutz_sicherung_kennt_loeschung(self):
+        """Schutz: Kennt die Sicherung die Loeschung schon (nach dem Loeschen
+        erstellt), wird nichts aufgehoben - Eintraege eines Offline-Geraets
+        von vor der Loeschung fallen weiter weg."""
+        a, c = self.voll("A"), self.voll("C", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, c], 1)
+        c("lerne", 3, "offline")
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        ta.pause()
+        a("lerne", 1, "nachher")
+        a.sync()
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, c, a], 1)
+        self.assertNotIn("aufgehoben", ta.datei())
+        for device in (a, c):
+            self.assertEqual(device.namen(), {"a-nachher": 1}, device.name)
+        self.stabil([a, c])
+
+    def test_b_g_08_schutz_neue_loeschung_nach_dem_ersetzen(self):
+        """Schutz: Eine Loeschung nach dem Ersetzen gilt wieder auf allen
+        Geraeten."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        self.ersetzen_nach_loeschen(a)
+        self.alle_sync([b, a], 1)
+        self.assertEqual(karten(b, "-vorher"), 5)
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])
+        ta.pause()
+        a("lerne", 1, "danach")
+        self.alle_sync([b, a], 2)
+        for device in (a, b):
+            self.assertEqual(device.namen(), {"a-danach": 1}, device.name)
+        self.stabil([a, b])
+
+    def test_b_g_08_altes_geraet_ignoriert_feld(self):
+        """FG-14: Ein Geraet mit v0.63.1 liest die Datei mit dem Feld
+        "aufgehoben" ohne Fehler und verhaelt sich wie heute (der eingespielte
+        Stand faellt dort weg). Das neue Geraet behaelt ihn (kein groesserer
+        Verlust als heute); solange das alte Geraet mitmacht, laden beide hin
+        und her (Grenze, gezaehlt). Mit 0.63.2 auf beiden: gleich, Ruhe."""
+        a = self.voll("A")
+        b = self.voll("B", code=self.alter_code(ALT))
+        self.ersetzen_nach_loeschen(a, danach=[b])      # B kennt die Loeschung
+        antwort = b("sync")
+        self.assertEqual(antwort["sync"], "ok", antwort)
+        self.assertEqual(karten(b, "-vorher"), 0)
+        vorher = ta.commits()
+        self.alle_sync([a, b], 3)
+        hin_und_her = ta.commits() - vorher
+        bericht("B-G-08 Mischbetrieb v0.63.1: 3 Runden A, B ohne Lernen -> %d Hochladungen; "
+                "Meldung am alten Geraet: %s" % (hin_und_her, b.sync()["meldung"]))
+        self.assertEqual(karten(a, "-vorher"), 5)
+        self.assertEqual(karten(b, "-vorher"), 0)
+        b = self.neu_starten(b, CODE)
+        self.alle_sync([b, a], 2)
+        for device in (a, b):
+            self.assertEqual(karten(device, "-vorher"), 5, device.name)
+        self.gleich_und_ohne_doppelte([a, b])
+        self.stabil([a, b])
+
+    # ------------------------------------------------------------ T-b / T-c mit B-G-08
+    def _bg08_haken(self, ersetzer):
+        """vorher/zwischen fuer mischbetrieb: ersetzer ("A" oder "B") erstellt
+        nach Schritt 1 eine Sicherung und spielt sie nach den Loeschungen mit
+        "Alles ersetzen" ein; danach Abgleich A, B."""
+        def geraet(a, b):
+            return a if ersetzer == "A" else b
+
+        def vorher(test, a, b, c):
+            device = geraet(a, b)
+            device("sicherung_erstellen", self.pfad(device, "s6b.fisisicherung"))
+
+        def zwischen(test, a, b, c):
+            device = geraet(a, b)
+            ta.pause()
+            device("sicherung_ersetzen", self.pfad(device, "s6b.fisisicherung"))
+            test.alle_sync([device, b if device is a else a], 2)
+        return vorher, zwischen
+
+    def _bg08_referenz(self, a_zuerst, ersetzer):
+        alt = self.alter_code(ALT)
+        vorher, zwischen = self._bg08_haken(ersetzer)
+        referenz, _ = self.mischbetrieb(alt, alt, alt, a_zuerst, zwischen=zwischen,
+                                        vorher=vorher, lauf="_nur_alt")
+        for device in list(self.geraete):
+            device.close()
+            self.geraete.remove(device)
+        ta.server_reset()
+        return referenz
+
+    def _bg08_nichts_verloren(self, referenz, staende, text):
+        for name, stand in staende.items():
+            fehlt = fehlt_gegen(referenz, stand)
+            bericht("%s %s: fehlt gegen nur v0.63.1: %s; Zeilen %s" % (
+                text, name, fehlt or "nichts",
+                {t: len(r) for t, r in sorted(stand.items()) if r}))
+            self.assertEqual(fehlt, {}, "%s %s verliert mehr als v0.63.1" % (text, name))
+
+    def _bg08_altes_geraet_ersetzt(self, a_zuerst, code_c):
+        """Nicos Geraet A (v0.63.1) ersetzt: wie heute (nichts aufgehoben),
+        gleich dem Ablauf nur mit v0.63.1 bis auf B-G-17."""
+        referenz = self._bg08_referenz(a_zuerst, "A")
+        vorher, zwischen = self._bg08_haken("A")
+        gemischt, _ = self.mischbetrieb(self.alter_code(ALT), CODE, code_c, a_zuerst,
+                                        zwischen=zwischen, vorher=vorher, lauf="_gemischt")
+        self._bg08_nichts_verloren(referenz, {"alle": gemischt}, "B-G-08 A ersetzt")
+        for table in referenz:
+            if table != "spiel_bestenliste":
+                self.assertEqual(gemischt[table], referenz[table], table)
+        self.assertNotIn("aufgehoben", ta.datei())
+
+    def _bg08_neues_geraet_ersetzt(self, a_zuerst, code_c):
+        """Das neue Geraet B (0.63.2) ersetzt, Nicos Geraet A hat v0.63.1,
+        danach kommt das Offline-Geraet C: Kein Geraet verliert etwas, was es
+        im Ablauf nur mit v0.63.1 behaelt. Solange A alt ist: Hin und Her
+        (gezaehlt). Danach A (und C) auf 0.63.2: alle gleich, Ruhe, der
+        eingespielte Stand ist ueberall da."""
+        alt = self.alter_code(ALT)
+        referenz = self._bg08_referenz(a_zuerst, "B")
+        vorher, zwischen = self._bg08_haken("B")
+        staende, (a, b, c) = self.mischbetrieb(alt, CODE, code_c, a_zuerst, zwischen=zwischen,
+                                               vorher=vorher, lauf="_gemischt", pruefen=False)
+        self._bg08_nichts_verloren(referenz, staende, "B-G-08 B ersetzt, gemischt")
+        vorher_n = ta.commits()
+        self.alle_sync([a, b, c], 2)
+        bericht("B-G-08 B ersetzt: 2 Runden ohne Lernen im Mischbetrieb -> %d Hochladungen"
+                % (ta.commits() - vorher_n))
+        a = self.neu_starten(a, CODE)
+        if code_c != CODE:
+            c = self.neu_starten(c, CODE)
+        self.alle_sync([a, b, c], 3)
+        self.stabil([a, b, c])
+        stand = inhalt_ohne_zeit(self.gleich_und_ohne_doppelte([a, b, c]))
+        self._bg08_nichts_verloren(referenz, {"alle (aktualisiert)": stand},
+                                   "B-G-08 B ersetzt, danach alle 0.63.2")
+        for name in ("a", "b", "c"):
+            self.assertEqual(karten(a, "%s-1" % name), 1, name)
+
+    def test_t_b_b_g_08_neues_geraet_ersetzt_offline_neu(self):
+        """T-b (F3-Zusatz): Nicos Geraet v0.63.1 + neues Geraet 0.63.2 (es
+        ersetzt), dann Offline-Geraet mit 0.63.2."""
+        self._bg08_neues_geraet_ersetzt(True, CODE)
+
+    def test_t_b_b_g_08_neues_geraet_ersetzt_offline_alt(self):
+        """T-b wie oben, das Offline-Geraet hat v0.63.1."""
+        self._bg08_neues_geraet_ersetzt(True, self.alter_code(ALT))
+
+    def test_t_b_b_g_08_altes_geraet_ersetzt(self):
+        """T-b: Nicos Geraet v0.63.1 ersetzt selbst, Offline-Geraet 0.63.2."""
+        self._bg08_altes_geraet_ersetzt(True, CODE)
+
+    def test_t_c_b_g_08_neues_geraet_zuerst_ersetzt(self):
+        """T-c: das neue Geraet loescht zuerst und ersetzt; Offline-Geraet
+        mit 0.63.2."""
+        self._bg08_neues_geraet_ersetzt(False, CODE)
+
+    def test_t_c_b_g_08_altes_geraet_ersetzt_offline_alt(self):
+        """T-c: neues Geraet loescht zuerst, Nicos Geraet v0.63.1 ersetzt,
+        Offline-Geraet v0.63.1."""
+        self._bg08_altes_geraet_ersetzt(False, self.alter_code(ALT))
 
 
 
