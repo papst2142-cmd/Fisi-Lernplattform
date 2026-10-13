@@ -883,14 +883,15 @@ class Ring(ft.Stack):
         # (Logo in der Kopfzeile) bleibt er mit mitwachsen=False fest.
         if mitwachsen:
             size = grow(size)
-        self.size = size
+        self.size = self.wanted = size
         self.thickness = thickness
+        self._last = None
         self.canvas = cv.Canvas(width=size, height=size)
         self.big = ft.Text("", size=big_size, weight=ft.FontWeight.BOLD, color=C["text"],
                            text_align=ft.TextAlign.CENTER)
         self.small = ft.Text("", size=small_size, color=C["text_dim"],
                              text_align=ft.TextAlign.CENTER)
-        center = ft.Container(
+        center = self.center = ft.Container(
             content=ft.Column([self.big, self.small], spacing=0, tight=True,
                               horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=size, height=size, alignment=ft.Alignment.CENTER,
@@ -902,7 +903,21 @@ class Ring(ft.Stack):
                                                        exclude_semantics=True)],
                          width=size, height=size)
 
+    def resize(self, size):
+        """Ab 0.63.2 (B-E-05 a, Nacharbeit M1): neue Groesse (z.B. schmale
+        Ringkarte); ein schon gesetzter Ring wird neu gezeichnet."""
+        size = int(size)
+        if size == self.size:
+            return False
+        self.size = size
+        for control in (self, self.canvas, self.center):
+            control.width = control.height = size
+        if self._last is not None:
+            self.set(*self._last)
+        return True
+
     def set(self, fraction, color_a, color_b=None, big="", small=""):
+        self._last = (fraction, color_a, color_b, big, small)
         fraction = max(0.0, min(1.0, fraction))
         color_b = color_b or color_a
         half = self.thickness / 2

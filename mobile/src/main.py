@@ -236,8 +236,47 @@ class DashboardScreen(Screen):
     DAYS = 14
     ACTIVITIES = 7
     # Ab 0.63.2 (B-E-05 a): Innenbreite einer Ringkarte ohne Rand bei 384 dp
-    # ((384 - 2 x 16 Seitenrand - 12 Abstand) / 2 - 2 x 1 Rahmen)
+    # ((384 - 2 x 16 Seitenrand - 12 Abstand) / 2 - 2 x 1 Rahmen); gilt nur,
+    # solange die echte Breite (Seite bzw. Karte) noch nicht bekannt ist
     RING_CARD_INNER = 168
+    RING_ROW_EXTRA = 2 * 16 + 12     # Seitenrand links/rechts + Abstand der Karten
+    RING_SIDE, RING_SIDE_MIN = 14, 6   # Rand seitlich: Normal 14, hoechstens so eng
+
+    @classmethod
+    def ring_fit(cls, inner, wanted):
+        """Ab 0.63.2 (B-E-05 a, Nacharbeit M1): Ringgroesse und Rand seitlich
+        fuer eine Ringkarte mit dieser Innenbreite (ohne Rahmen). Der Ring
+        waechst mit der Schrift (wanted), aber nie ueber die Karte hinaus -
+        auf schmaleren Handys (z.B. 360 dp) wird er etwas kleiner. Bei 384 dp
+        bleibt alles wie gebaut (Sehr gross 146/11, Gross 129/14, Normal 112/14)."""
+        inner = int(inner)
+        size = max(40, min(wanted, inner - 2 * cls.RING_SIDE_MIN))
+        side = min(cls.RING_SIDE, max(cls.RING_SIDE_MIN, (inner - size) // 2))
+        return size, side
+
+    def _ring_inner_guess(self):
+        """Innenbreite einer Ringkarte aus der Seitenbreite (vor dem ersten
+        Zeichnen); ohne bekannte Breite wie bei 384 dp."""
+        width = getattr(getattr(self.app, "page", None), "width", None)
+        if isinstance(width, (int, float)) and width > self.RING_ROW_EXTRA:
+            return int((width - self.RING_ROW_EXTRA) // 2) - 2
+        return self.RING_CARD_INNER
+
+    def _ring_card_sized(self, event, card, ring):
+        """Ab 0.63.2 (Nacharbeit M1): echte Kartenbreite nach dem Zeichnen -
+        Ring und Rand passen sich an (z.B. Querformat, schmales Handy)."""
+        width = getattr(event, "width", 0) or 0
+        if width <= 2:
+            return
+        size, side = self.ring_fit(width - 2, ring.wanted)
+        if size == ring.size and card.padding.left == side:
+            return
+        ring.resize(size)
+        card.padding = ft.Padding.symmetric(horizontal=side, vertical=14)
+        try:
+            card.update()
+        except RuntimeError:
+            pass   # noch nicht auf der Seite (Tests)
 
     # -- Reinzoom in die Themen eines Fachbereichs --------------------------
 
@@ -300,14 +339,20 @@ class DashboardScreen(Screen):
         self.ring_scen = ui.Ring(size=112)
 
         # Ab 0.63.2 (B-E-05 a): Die Ringe wachsen mit der Schrift (ui.Ring); damit
-        # zwei Karten nebeneinander bei 384 dp Breite passen, wird der Rand
-        # seitlich enger (Normal und Gross unveraendert 14)
-        side = min(14, max(6, (self.RING_CARD_INNER - self.ring_cards.size) // 2))
+        # zwei Karten nebeneinander passen, wird der Rand seitlich enger (Normal
+        # und Gross bei 384 dp unveraendert 14). Nacharbeit M1: Ring und Rand
+        # richten sich nach der echten Breite (vorher fest fuer 384 dp gerechnet,
+        # bei 360 dp ragte der Ring ueber die Karte)
+        size, side = self.ring_fit(self._ring_inner_guess(), self.ring_cards.wanted)
 
         def ring_card(title, ring):
-            return ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
+            ring.resize(size)
+            card = ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
                            expand=True,
                            padding=ft.Padding.symmetric(horizontal=side, vertical=14))
+            card.on_size_change = lambda event: self._ring_card_sized(event, card, ring)
+            card.size_change_interval = 100
+            return card
 
         self.lbl_quote = ui.text("0 %", size=34, color=C["accent"], weight=ft.FontWeight.BOLD)
         self.lbl_quote_sub = ui.text(DASH_QUOTE_EMPTY, size=13, color=C["muted"])
