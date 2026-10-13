@@ -7,22 +7,32 @@ Tests ab 0.63.2 fuer die Spiel-Ansichten (Bauauftrag N5):
           in die sichtbare Breite: bei Normal, Gross und Sehr gross (Faktor
           1,00 / 1,15 / 1,30) und den Fenstern 1120 x 720 (Mindestgroesse),
           1280 x 720, 1366 x 768 und 1360 x 900 gilt in jedem geprueften
-          Zustand:
+          Zustand (genau die Liste ZUSTAENDE, keiner darf fehlen):
             * kein seitlicher Schieberegler (xview == (0.0, 1.0)), der Inhalt
               ist nicht breiter als der sichtbare Bereich,
             * jeder Knopf und jedes Bedienelement liegt ganz im sichtbaren
               Bereich und ist nicht schmaler als verlangt (nicht
-              abgeschnitten).
-          Bei Normal und mindestens 1360 px Breite bleibt alles genau wie
-          gebaut (FitWidth aendert nichts: _fit_changed == 0).
+              abgeschnitten),
+            * wo der Inhalt so, wie er gebaut ist, schon passt, aendert
+              FitWidth nichts (_fit_changed == 0) - unabhaengig von der
+              Schrift,
+            * mit der abgenommenen Schrift (Inter) bleibt bei Normal und
+              mindestens 1360 px Breite alles genau wie gebaut,
+            * der Kredite-Reiter zeigt "Aufnehmen" (kreditwuerdige Firma).
+          Dasselbe mit einer anderen Schrift (SchriftwechselTest: die
+          Standardschrift wird per fontconfig abgelehnt - im Container
+          DejaVu Sans statt Inter, wie auf GitHub; auf GitHub eine dritte).
+          Nach einem Wechsel von 1120 x 720 auf 1360 x 900 ist alles wieder
+          genau wie bei einem frischen Start mit 1360 x 900 (WechselTest).
   B-D-10 Teil b  Weltkarte und Grossansicht (Grundriss) wachsen im breiten
           Fenster mit: bei 1366 x 768 genau wie bisher (Massstab nach der
-          alten Formel), bei 1920 x 1080 groesser, und die Zeichnung passt
-          in den sichtbaren Bereich.
+          alten Formel), bei 1920 x 1080 groesser; die Zeichnung samt
+          Kartenkopf und den Knoepfen darunter ist ohne Bildlauf sichtbar.
 
 Jede Schriftgroesse und jedes Fenster laeuft in einem eigenen Prozess
 (Schriftgroesse und Skalierung gelten ab dem Start); das Ergebnis wird je
-Prozess zwischengespeichert.
+Prozess zwischengespeichert. Ein Prozess darf hoechstens ZEITGRENZE Sekunden
+brauchen (haengt er, ist der Fall rot, bevor der CI-Job abbricht).
 
 Gegen 14b3bd4 (0.63.1) rot: Firma und Reise seitlich verschiebbar (Messung
 N5: +7 bis +603 px), Karte und Grundriss bei 1920 so hoch wie bei 1366.
@@ -44,6 +54,19 @@ sys.path.insert(0, HERE)
 
 STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 FENSTER = ((1120, 720), (1280, 720), (1366, 768), (1360, 900))
+ZEITGRENZE = 300
+ZUSTAENDE = {
+    "firma": ["auftraege", "projekte", "mitarbeiter", "bewerbungen", "gebaeude",
+              "marketing", "zertifizierungen", "finanzen", "kredite",
+              "auftraege_zuschlag", "auftraege_kalkulation", "auftraege_zuweisen",
+              "projekte_details", "mitarbeiter_themen", "mitarbeiter_weiterbildung"],
+    "reise": ["rueckblick", "erfolge"],
+}
+# Wie fisi_widgets.setup_fonts die Schrift waehlt (der Kindprozess meldet die
+# gewaehlte Schrift; weicht sie ab, ist der SchriftwechselTest rot)
+SCHRIFTEN = ["Segoe UI", "Inter", "Ubuntu", "Noto Sans", "DejaVu Sans",
+             "Helvetica Neue", "Helvetica", "Arial"]
+SCHRIFTWECHSEL = ((1.0, 1120, 720), (1.0, 1360, 900), (1.15, 1120, 720), (1.3, 1120, 720))
 BEDIEN = ("NeoButton", "IconButton", "CTkOptionMenu", "CTkEntry", "EntryBox",
           "CTkCheckBox", "CTkSwitch", "CTkTextbox")
 
@@ -72,6 +95,12 @@ def _spielstand(path):
     game.reload()
     game.found_firm("Test IT-Service")
     game.hire(fg.applicants(game.state, game.content)[0]["id"])
+    # 10 Arbeitstage mit Firmenumsatz: kreditwuerdig, der Kredite-Reiter zeigt
+    # "Aufnehmen" (nur Testdaten, wie KreditTest._days in test_spiel.py)
+    for _day in range(10):
+        game._log(fg.EV_DAY_END, {"tag": game.state.day, "gehalt": 0,
+                                  "firma": {"umsatz": 2000, "gehaelter": 0,
+                                            "nebenkosten": 0}})
 
 
 class Ctx:
@@ -79,6 +108,7 @@ class Ctx:
         self.app = app
         self.root = root
         self.ergebnis = {}
+        self.prefix = ""
 
     def pump(self, seconds=0.5):
         end = time.time() + seconds
@@ -99,6 +129,7 @@ class Ctx:
         links = view.canvas.winfo_rootx()
         rechts = links + sicht
         knoepfe = 0
+        texte = []
         stack = [view.inner]
         while stack:
             widget = stack.pop()
@@ -110,6 +141,7 @@ class Ctx:
                     continue
                 if type(child).__name__ in BEDIEN:
                     knoepfe += 1
+                    texte.append(_text(child))
                     x, w = child.winfo_rootx(), child.winfo_width()
                     if x < links - 1 or x + w > rechts + 1:
                         fehler.append("%s %r ausserhalb (x %d..%d, sichtbar %d..%d)" % (
@@ -121,9 +153,13 @@ class Ctx:
                             type(child).__name__, _text(child), w, child.winfo_reqwidth()))
                     continue
                 stack.append(child)
-        self.ergebnis[name] = {"sicht": sicht, "inhalt": inhalt, "knoepfe": knoepfe,
-                               "geaendert": getattr(view, "_fit_changed", None),
-                               "fehler": fehler}
+        self.ergebnis[self.prefix + name] = {
+            "sicht": sicht, "inhalt": inhalt, "hoehe": view.inner.winfo_reqheight(),
+            "knoepfe": knoepfe, "texte": texte,
+            "geaendert": getattr(view, "_fit_changed", None),
+            # Ueberstand so, wie gebaut (vor dem Zurechtruecken)
+            "gebaut": getattr(view, "_fit_built", None),
+            "fehler": fehler}
 
 
 def _text(widget):
@@ -198,6 +234,17 @@ def _reise(ctx):
         ctx.pruefe(view, "reise/" + tab)
 
 
+def _wechsel(ctx):
+    """Fenster auf 1360 x 900 vergroessern und alles noch einmal pruefen
+    (muss genau wie ein frischer Start mit 1360 x 900 aussehen)."""
+    ctx.root.geometry("1360x900+0+0")
+    ctx.pump(1.5)
+    ctx.prefix = "wechsel/"
+    _firma(ctx)
+    _reise(ctx)
+    ctx.prefix = ""
+
+
 def _plaene(ctx):
     """Massstab der Weltkarte und der Grossansicht Zuhause."""
     import fisi_game as fg
@@ -214,7 +261,9 @@ def _plaene(ctx):
     ctx.ergebnis["plan/karte"] = {
         "breite": world.winfo_width(), "hoehe": world.winfo_height(), "scale": world.scale,
         "alt": min(world.winfo_width() / map_w, px(world.MAX_HEIGHT) / map_h),
-        "zeichnung": world.scale * map_w, "sicht_hoehe": gv.canvas.winfo_height()}
+        "zeichnung": world.scale * map_w, "sicht_hoehe": gv.canvas.winfo_height(),
+        "oben": world.winfo_rooty() - gv.canvas.winfo_rooty(),
+        "unten": _unterkante(gv, world, ("Firma öffnen", "Meine Reise"))}
     app.show_view("zuhause")
     ctx.pump(0.8)
     view = app.views["zuhause"]
@@ -225,8 +274,31 @@ def _plaene(ctx):
         "breite": plan.winfo_width(), "hoehe": plan.winfo_height(), "scale": plan.scale,
         "alt": min(plan.winfo_width() / (building["breite"] + 2 * margin),
                    px(plan.max_height) / (building["hoehe"] + 2 * margin)),
-        "zeichnung": plan.scale * building["breite"], "sicht_hoehe": view.canvas.winfo_height()}
+        "zeichnung": plan.scale * building["breite"], "sicht_hoehe": view.canvas.winfo_height(),
+        "oben": plan.winfo_rooty() - view.canvas.winfo_rooty(),
+        "unten": _unterkante(view, plan, ())}
     del gg
+
+
+def _unterkante(view, plan, knoepfe):
+    """Unterkante (relativ zum sichtbaren Bereich, ohne Bildlauf) der
+    Zeichnung und der genannten Knoepfe darunter; fehlt ein Knopf, -1."""
+    view.canvas.yview_moveto(0)
+    view.update_idletasks()
+    top = view.canvas.winfo_rooty()
+    bottom = plan.winfo_rooty() + plan.winfo_height() - top
+    found = {}
+    stack = [view.inner]
+    while stack:
+        widget = stack.pop()
+        for child in widget.winfo_children():
+            stack.append(child)
+            if type(child).__name__ == "NeoButton" and _text(child) in knoepfe \
+                    and child.winfo_ismapped():
+                found[_text(child)] = child.winfo_rooty() + child.winfo_height() - top
+    if set(found) != set(knoepfe):
+        return -1
+    return max([bottom] + list(found.values()))
 
 
 def worker(faktor, breite, hoehe, teile):
@@ -258,13 +330,16 @@ def worker(faktor, breite, hoehe, teile):
     ctx.pump(0.8)
     for teil in teile:
         try:
-            {"firma": _firma, "reise": _reise, "plaene": _plaene}[teil](ctx)
+            {"firma": _firma, "reise": _reise, "wechsel": _wechsel,
+             "plaene": _plaene}[teil](ctx)
         except Exception as error:  # noqa: BLE001
             import traceback
             ctx.ergebnis["%s/ausnahme" % teil] = {"fehler": ["%r\n%s" % (
                 error, traceback.format_exc())]}
     if meldungen:
         ctx.ergebnis["meldungen"] = {"fehler": ["Meldungen: %r" % meldungen]}
+    import fisi_widgets
+    ctx.ergebnis["schrift"] = {"family": fisi_widgets.F.get("family")}
     print("ERG " + json.dumps(ctx.ergebnis, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)
@@ -288,16 +363,60 @@ HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 _ERGEBNISSE = {}
 
 
-def ergebnis(faktor, breite, hoehe, teile=("firma", "reise", "plaene")):
-    key = (faktor, breite, hoehe, tuple(teile))
+def _standardschrift():
+    """Schrift, die fisi_widgets.setup_fonts hier waehlt (oder None)."""
+    import tkinter
+    import tkinter.font as tkfont
+    root = tkinter.Tk()
+    try:
+        families = set(tkfont.families(root))
+    finally:
+        root.destroy()
+    return next((name for name in SCHRIFTEN if name in families), None)
+
+
+def _fc_ohne(family):
+    """fontconfig-Datei, die die System-Einstellungen nutzt, aber family (und
+    ihre Display-Variante) ablehnt."""
+    path = os.path.join(tempfile.mkdtemp(prefix="fisi_fc_"), "fonts.conf")
+    patterns = "".join(
+        "<pattern><patelt name=\"family\"><string>%s</string></patelt></pattern>" % name
+        for name in (family, family + " Display"))
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
+                     '<fontconfig><include ignore_missing="yes">/etc/fonts/fonts.conf'
+                     '</include><selectfont><rejectfont>%s</rejectfont></selectfont>'
+                     '</fontconfig>\n' % patterns)
+    return path
+
+
+def _teile(faktor, breite, hoehe):
+    teile = ["firma", "reise"]
+    if (faktor, breite, hoehe) == (1.0, 1120, 720):
+        teile.append("wechsel")
+    return tuple(teile)
+
+
+def ergebnis(faktor, breite, hoehe, teile=None, ohne=None):
+    """Ergebnis eines Kindprozesses; ohne = abgelehnte Schrift."""
+    teile = teile or _teile(faktor, breite, hoehe)
+    key = (faktor, breite, hoehe, tuple(teile), ohne)
     if key not in _ERGEBNISSE:
-        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
-                               str(faktor), str(breite), str(hoehe)] + list(teile),
-                              capture_output=True, text=True, timeout=1800, cwd=HERE)
-        lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
-        _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
-                            "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:],
-                                                       done.stderr[-4000:]))
+        env = dict(os.environ)
+        if ohne:
+            env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
+        try:
+            done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
+                                   str(faktor), str(breite), str(hoehe)] + list(teile),
+                                  capture_output=True, text=True, timeout=ZEITGRENZE,
+                                  cwd=HERE, env=env)
+            lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
+            _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
+                                "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:],
+                                                            done.stderr[-4000:]))
+        except subprocess.TimeoutExpired as error:
+            _ERGEBNISSE[key] = "kein Ergebnis nach %d s (haengt?):\n%s" % (
+                ZEITGRENZE, (error.stderr or b"")[-4000:])
     return _ERGEBNISSE[key]
 
 
@@ -308,27 +427,39 @@ class BreiteBasis(unittest.TestCase):
             self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
                       "(unter Linux mit xvfb-run starten)")
 
-    def run_case(self, faktor, breite, hoehe):
-        result = ergebnis(faktor, breite, hoehe)
+    def run_case(self, faktor, breite, hoehe, ohne=None):
+        result = ergebnis(faktor, breite, hoehe, ohne=ohne)
         self.assertIsInstance(result, dict, result)
-        name = "%s %dx%d" % (STUFEN[faktor], breite, hoehe)
-        print("\n  %s: %s" % (name, {k: (v.get("inhalt"), v.get("sicht"), v.get("geaendert"))
+        schrift = result.pop("schrift", {}).get("family")
+        name = "%s %dx%d (Schrift %s)" % (STUFEN[faktor], breite, hoehe, schrift)
+        print("\n  %s: %s" % (name, {k: (v.get("inhalt"), v.get("sicht"), v.get("gebaut"),
+                                         v.get("geaendert"))
                                      for k, v in sorted(result.items())
                                      if k.startswith(("firma", "reise"))}))
+        if ohne:
+            self.assertNotEqual(schrift, ohne, "%s: Schrift nicht gewechselt" % name)
         fehler = {k: v["fehler"] for k, v in result.items() if v.get("fehler")}
         self.assertEqual(fehler, {}, name)
+        # genau diese Zustaende (keiner faellt still weg)
+        for teil, namen in ZUSTAENDE.items():
+            self.assertEqual(sorted(k.split("/", 1)[1] for k in result
+                                    if k.startswith(teil + "/")),
+                             sorted(namen), "%s: Zustaende %s" % (name, teil))
         firma = [k for k in result if k.startswith("firma/")]
         reise = [k for k in result if k.startswith("reise/")]
-        # 9 Reiter plus Zustaende (Kalkulation, Zuweisen, Details, Themen,
-        # Weiterbildung), 2 Reiter der Reise
-        self.assertGreaterEqual(len(firma), 9 + 5, sorted(firma))
-        self.assertEqual(len(reise), 2, sorted(reise))
         self.assertTrue(all(result[k]["knoepfe"] for k in firma), "keine Knoepfe gefunden")
-        if faktor == 1.0 and breite >= 1360:
-            # Normal und breit: genau wie gebaut (abgenommenes Aussehen)
+        self.assertIn("Aufnehmen", result["firma/kredite"]["texte"],
+                      "%s: Kredite ohne Aufnehmen" % name)
+        # Wo der Inhalt wie gebaut passt, rueckt FitWidth nichts zurecht
+        unnoetig = {k: (result[k]["gebaut"], result[k]["geaendert"]) for k in firma + reise
+                    if not result[k]["gebaut"] and result[k]["geaendert"]}
+        self.assertEqual(unnoetig, {}, "%s: zurechtgerueckt, obwohl es passte" % name)
+        if faktor == 1.0 and breite >= 1360 and schrift == "Inter":
+            # Normal und breit mit der abgenommenen Schrift: genau wie gebaut
             geaendert = {k: result[k]["geaendert"] for k in firma + reise
                          if result[k]["geaendert"]}
             self.assertEqual(geaendert, {}, "%s: bei Normal zurechtgerueckt" % name)
+        return result
 
 
 def _make(faktor, breite, hoehe):
@@ -345,6 +476,76 @@ for _faktor, _stufe in STUFEN.items():
     for _breite, _hoehe in FENSTER:
         setattr(FirmaReiseBreiteTest, "test_%s_%dx%d" % (_stufe, _breite, _hoehe),
                 _make(_faktor, _breite, _hoehe))
+
+
+class SchriftwechselTest(BreiteBasis):
+    """B-D-01 / B-D-02 mit einer anderen Schrift (andere Schriftmetrik)."""
+
+
+def _make_ohne(faktor, breite, hoehe):
+    def test(self):
+        standard = _standardschrift()
+        self.assertIsNotNone(standard, "keine der Schriften %s vorhanden" % SCHRIFTEN)
+        self.run_case(faktor, breite, hoehe, ohne=standard)
+    return test
+
+
+for _faktor, _breite, _hoehe in SCHRIFTWECHSEL:
+    setattr(SchriftwechselTest, "test_%s_%dx%d" % (STUFEN[_faktor], _breite, _hoehe),
+            _make_ohne(_faktor, _breite, _hoehe))
+
+
+class WechselTest(BreiteBasis):
+    """Nach 1120 x 720 -> 1360 x 900 genau wie ein frischer Start mit 1360 x 900
+    (FitWidth setzt alles zurueck)."""
+
+    def test_1120_dann_1360(self):
+        klein = ergebnis(1.0, 1120, 720)
+        frisch = ergebnis(1.0, 1360, 900)
+        self.assertIsInstance(klein, dict, klein)
+        self.assertIsInstance(frisch, dict, frisch)
+        namen = [k for k in frisch if k.startswith(("firma/", "reise/"))]
+        self.assertEqual(sorted(k[len("wechsel/"):] for k in klein
+                                if k.startswith("wechsel/")), sorted(namen))
+        unterschiede = {}
+        for key in namen:
+            nach = klein["wechsel/" + key]
+            for feld in ("sicht", "inhalt", "hoehe", "geaendert", "texte"):
+                if nach[feld] != frisch[key][feld]:
+                    unterschiede.setdefault(key, {})[feld] = (nach[feld], frisch[key][feld])
+        self.assertEqual(unterschiede, {})
+
+
+class FitWidthEinzelTest(unittest.TestCase):
+    """Einzelne Regeln von FitWidth, die der Spielstand oben nicht sicher
+    trifft (je nach Kundenticket und Schrift)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+
+    def test_leerer_rahmen_hat_feste_breite(self):
+        # Farbstreifen links einer Zeile (tk.Frame ohne Inhalt): zaehlt mit
+        # seiner Breite, sonst kommt die Knopfspalte rechts nicht unter den
+        # Text, obwohl die Zeile nicht passt (GitHub: Ticket zuweisen +6 px)
+        import tkinter
+        os.environ.setdefault("FISI_DB_PATH", os.path.join(tempfile.mkdtemp(), "t.db"))
+        import fisi_game_gui as gg
+        root = tkinter.Tk()
+        try:
+            row = tkinter.Frame(root)
+            row.pack()
+            stripe = tkinter.Frame(row, width=6, height=20)
+            stripe.pack(side="left", padx=(10, 0))
+            tkinter.Label(row, text="Kandidat " * 6).pack(side="left")
+            root.update_idletasks()
+            fit = gg.FitWidth()
+            self.assertEqual(stripe.winfo_reqwidth(), 6)
+            self.assertEqual(fit._fit_hard(stripe), 6)
+            self.assertGreaterEqual(fit._fit_hard(row), 16)
+        finally:
+            root.destroy()
 
 
 class PlanWaechstTest(unittest.TestCase):
@@ -382,8 +583,11 @@ class PlanWaechstTest(unittest.TestCase):
             # Formel und als bei 1366
             self.assertGreater(neu["scale"], 1.25 * neu["alt"], key)
             self.assertGreater(neu["zeichnung"], 1.25 * alt["zeichnung"], key)
-            # und passt in den sichtbaren Bereich
-            self.assertLessEqual(neu["hoehe"], neu["sicht_hoehe"], key)
+            # und passt samt Kartenkopf und Knoepfen darunter ohne Bildlauf
+            # in den sichtbaren Bereich
+            self.assertGreaterEqual(neu["oben"], 0, key)
+            self.assertGreater(neu["unten"], 0, "%s: Knoepfe fehlen" % key)
+            self.assertLessEqual(neu["unten"], neu["sicht_hoehe"], key)
 
 
 if __name__ == "__main__":

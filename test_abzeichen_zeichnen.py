@@ -27,7 +27,8 @@ Handy (mobile/src/spiel.py, Flet-Steuerelemente ohne Seite):
     Abzeichen (Canvas-Formen und Farben gegen badge_shapes).
 
 Reiner Schutztest (Plan-Nachtrag Nr. 15): gegen 14b3bd4 gruen, rot nur bei
-einem Fehler im Zeichnen (Mutationsprobe im Bericht).
+einem Fehler im Zeichnen (Mutationsprobe im Bericht). Wird nie still
+uebersprungen: ohne Anzeige oder ohne flet/spiel.py ist er rot.
 
 Start:  xvfb-run -a python test_abzeichen_zeichnen.py
 """
@@ -142,11 +143,14 @@ def _abzeichen_varianten(items):
 #  PC
 # ---------------------------------------------------------------------------
 
-@unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
 class PcZeichnenTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # nie still ueberspringen: ohne Anzeige ist der Test rot
+        if not HAS_DISPLAY:
+            raise AssertionError("keine Anzeige - dieser Test darf nicht uebersprungen "
+                                 "werden (unter Linux mit xvfb-run starten)")
         cls.folder = tempfile.mkdtemp(prefix="fisi_abzeichen_")
         os.environ["HOME"] = cls.folder
         cls.game = _spielstand(os.path.join(cls.folder, "t.db"))
@@ -357,11 +361,14 @@ def _flet_ok():
         return False
 
 
-@unittest.skipUnless(_flet_ok(), "flet/spiel.py nicht ladbar (mobile/vorbereiten.py)")
 class HandyZeichnenTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # nie still ueberspringen: ohne flet/spiel.py ist der Test rot
+        if not _flet_ok():
+            raise AssertionError("flet/spiel.py nicht ladbar - dieser Test darf nicht "
+                                 "uebersprungen werden (mobile/vorbereiten.py ausfuehren)")
         cls.folder = tempfile.mkdtemp(prefix="fisi_abzeichen_handy_")
         cls.game = _spielstand(os.path.join(cls.folder, "t.db"))
 
