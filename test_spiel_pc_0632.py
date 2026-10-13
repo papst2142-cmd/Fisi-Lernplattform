@@ -22,6 +22,7 @@ Tests ab 0.63.2 fuer die Spiel-Fehler am PC (Bauauftrag N2):
           Ortsschilder der Karte bei jeder Schriftgroesse gleich; "Bahnsteig 1"
           ueberdeckt keinen Automaten; "Platz wechseln" mit Abstand zum
           Suchfeld; Knopftexte "Laufend buchen" / "Einmalig buchen".
+  FG-80   Aufklapplisten im Spiel (Serverfarm) mit Rahmen wie in der App.
 
 Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
 Start:  xvfb-run -a python test_spiel_pc_0632.py
@@ -803,6 +804,48 @@ class SpielansichtGeometrieTest(unittest.TestCase):
     def test_platz_wechseln_mit_abstand_zum_suchfeld(self):
         for key, report in self.reports.items():
             self.assertGreaterEqual(report["gap"], 8, (key, report["gap"], report["button"]))
+
+
+# ============================================================================
+#  FG-80: Aufklapplisten im Spiel (Serverfarm, FitBoard) mit Rahmen
+# ============================================================================
+
+class AufklapplisteRahmenTest(unittest.TestCase):
+    """FG-80: Die Aufklapplisten beim Bestuecken der Server haben wie die
+    uebrigen Aufklapplisten der App 1 px Rahmen in C["field_border"] - auch
+    nach einem Neuzeichnen (gesperrt, andere Groesse)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import customtkinter as ctk
+        import app_gui
+        import fisi_widgets
+        app_gui.apply_appearance()
+        self.root = ctk.CTk()
+        fisi_widgets.setup_fonts(self.root)
+
+    def tearDown(self):
+        self.root.destroy()
+
+    def test_rahmen_in_feldrahmenfarbe(self):
+        import fisi_game as fg
+        import fisi_game_gui as gg
+        from fisi_theme import C
+        task = [item for item in fg.farm_tasks() if item["id"] == "sf-bestueckung"][0]
+        board = gg.FitBoard(self.root, task)
+        board.pack()
+        self.root.update()
+        self.assertTrue(board.menus)
+        for menu in board.menus:
+            menu.configure(state="disabled")   # zeichnet neu
+            menu.configure(width=150)
+            self.root.update()
+            parts = menu._canvas.find_withtag("border_parts")
+            self.assertTrue(parts, "kein Rahmen")
+            self.assertEqual({menu._canvas.itemcget(item, "fill") for item in parts},
+                             {C["field_border"]})
 
 
 if __name__ == "__main__":

@@ -1445,6 +1445,27 @@ class FitBoard(ctk.CTkFrame):
             button_hover_color=C["card_hi"], text_color=C["text"],
             dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
             dropdown_text_color=C["text"], font=F["small"], dropdown_font=F["small"])
+        # Ab 0.63.2 (FG-80): 1 px Rahmen in C["field_border"] wie die
+        # uebrigen Aufklapplisten der App (app_gui.FramedOptionMenu, B-D-11);
+        # CTkOptionMenu kennt keinen Rahmen, die Zeichenhilfe aber schon
+        plain_draw = menu._draw
+
+        def framed_draw(no_color_updates=False):
+            plain_draw(no_color_updates)
+            try:
+                menu._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                    menu._apply_widget_scaling(menu._current_width),
+                    menu._apply_widget_scaling(menu._current_height),
+                    menu._apply_widget_scaling(menu._corner_radius),
+                    menu._apply_widget_scaling(1),
+                    menu._apply_widget_scaling(menu._current_width - menu._current_height))
+                menu._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                        fill=C["field_border"])
+                menu._canvas.tag_lower("border_parts")
+            except (tk.TclError, AttributeError):
+                pass    # ohne Rahmen wie bis 0.63.1
+        menu._draw = framed_draw
+        menu._draw()
         if self.locked:
             menu.configure(state="disabled")
         self.menus.append(menu)
