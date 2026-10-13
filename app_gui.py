@@ -123,6 +123,7 @@ from fisi_widgets import (  # noqa: E402
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
     lesbare_schrift, tabellen_auswahl,
 )
+from fisi_widgets import FlowRow  # noqa: E402  (ab 0.63.2, D2)
 
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und Handy)
 # Versionsschema bis zur Vollversion 1.0:
@@ -1024,6 +1025,201 @@ class View(ScrollArea):
             return False
         self.on_show()
         return True
+
+
+# ============================================================================
+#  AB 0.63.2 (D2): ANSICHTEN PASSEN IN DIE SICHTBARE BREITE
+# ============================================================================
+
+# Formularzeilen (Bezeichnung + Feld/Betrag): umbrochene Teile einer Zeile
+# stehen enger beieinander als an der naechsten Zeile (logische px)
+FORM_FLOW = dict(line_gap=2, wrapped_pad=8)
+
+
+class FitWidthMixin:
+    """Ab 0.63.2 (D2, B-D-01/B-D-02): AP1-/AP2-Szenarien, Testprojekt und
+    Abschlussprojekt passen bei 1120 px und grosser Schrift ohne seitlichen
+    Schieberegler ins Fenster (Muster wie Dashboard 0.58 und Rechner).
+    Reicht die sichtbare Breite nicht, werden nur Anordnung, Umbruch und
+    Breiten angepasst: Knopfzeilen und Formularzeilen brechen um (FlowRow),
+    Unterschriften ruecken unter die Ueberschrift, zwei Spalten stehen
+    untereinander. Bei breitem Fenster bleibt alles wie bisher. Entschieden
+    wird nur aus der sichtbaren Breite und den gewuenschten Breiten der
+    Teile (nie aus der Lage, die sich dadurch aendert: keine Schleife)."""
+
+    CONTENT_PAD = 28   # Seitenrand der Ansicht (View.__init__, logische px)
+    COLUMN_GAP = 16    # Abstand der beiden Spalten (padx 8 + 8, logische px)
+    STACK_GAP = 14     # Abstand untereinander (wie zwischen den Karten)
+    MIN_TEXT = 220     # schmalste Umbruchbreite (ScrollArea._fit_wraplengths)
+    MIN_COLUMN = 440   # rechte Spalte nebeneinander mindestens so breit (logische px)
+
+    def _init_fit(self):
+        self._fit_pending = False
+        self.column_mode = None
+        self.canvas.bind("<Configure>", self._schedule_fit, "+")
+        self.content.bind("<Configure>", self._schedule_fit, "+")
+
+    def _schedule_fit(self, _event=None):
+        if not self._fit_pending:
+            self._fit_pending = True
+            self.after_idle(self._fit)
+
+    def available_width(self):
+        """Sichtbare Breite fuer den Inhalt (echte Pixel, ohne Seitenrand)."""
+        return self.canvas.winfo_width() - 2 * px(self.CONTENT_PAD)
+
+    def _fit(self):
+        self._fit_pending = False
+        try:
+            if self.canvas.winfo_width() <= 1:
+                return
+            changed = self._fit_width(self.available_width())
+        except tk.TclError:
+            return
+        if changed:
+            # neue Mindestbreite an die Bildlaufflaeche melden
+            self.after_idle(self._schedule_fit)
+
+    def _fit_width(self, avail):
+        raise NotImplementedError
+
+    # -- Bausteine ----------------------------------------------------------
+
+    @staticmethod
+    def _head_min(card):
+        """Kopfzeile einer Kachel mit Unterschrift darunter (echte Pixel)."""
+        if card.head is None:
+            return 0
+        title = card.head_width() - card.subtitle_width()
+        return max(title, card.subtitle_width() + card.frame_width())
+
+    @staticmethod
+    def _fit_cards(cards, room):
+        changed = False
+        for card in cards:
+            if card.head is not None:
+                changed |= card.stack_subtitle(card.head_width() > room)
+        return changed
+
+    @staticmethod
+    def _fit_flows(flows, room):
+        """flows: [(Rahmen, Einzug)] - Einzug = Innenabstand der Kachel."""
+        changed = False
+        for frame, inset in flows:
+            if frame.winfo_exists():
+                changed |= FlowRow.of(frame).fit(room - inset)
+        return changed
+
+    def _fit_columns(self, avail, layout, left, right, flows, cards, uniform):
+        """Liste links, Inhalt rechts (Gewichte 2 : 5 wie bisher). Drei Stufen:
+        "breit" wie bisher (gleich breite Raster-Einheiten), "frei" (beide
+        Spalten nebeneinander, die rechte mindestens MIN_COLUMN breit; ihre
+        Knopfzeilen brechen bei Bedarf um) und "gestapelt" (Liste oben,
+        Inhalt darunter, wie die Spalten des Rechners)."""
+        gap = px(self.COLUMN_GAP)
+        left_width = left.winfo_reqwidth()
+        flow_rows = [(FlowRow.of(frame), inset) for frame, inset in flows]
+        # schmalster Text in einer Kachel (Umbruchbreite + Innenabstand)
+        text = px(self.MIN_TEXT + 2 * 18) + 2
+        natural = max([row.natural_width() + inset for row, inset in flow_rows]
+                      + [card.head_width() for card in cards] + [text])
+        narrow = max([row.min_width() + inset for row, inset in flow_rows]
+                     + [self._head_min(card) for card in cards] + [text])
+        if 7 * max(left_width / 2.0, natural / 5.0) + gap <= avail:
+            mode, room = "breit", natural
+            column = avail * 5 // 7 - px(self.COLUMN_GAP // 2)
+        elif avail - left_width - gap >= max(narrow, px(self.MIN_COLUMN)):
+            mode, room = "frei", avail - left_width - gap
+            column = room
+        else:
+            mode, room = "gestapelt", avail
+            column = avail
+        # Spaltenbreite aus der sichtbaren Breite berechnet, nicht gemessen:
+        # die gemessene Breite enthaelt den Text selbst (sonst Schleife)
+        self._fit_texts(mode, column)
+        changed = self._fit_flows(flows, room)
+        changed |= self._fit_cards(cards, room)
+        if mode != self.column_mode:
+            self.column_mode = mode
+            stacked = mode == "gestapelt"
+            group = uniform if mode == "breit" else ""
+            layout.columnconfigure(0, weight=1 if stacked else 2, uniform=group)
+            layout.columnconfigure(1, weight=0 if stacked else 5, uniform=group)
+            left.grid(row=0, column=0, sticky="nsew", padx=(0, 0 if stacked else 8))
+            if stacked:
+                right.grid(row=1, column=0, sticky="nsew", padx=0,
+                           pady=(self.STACK_GAP, 0))
+            else:
+                right.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=0)
+            changed = True
+        return changed
+
+    @staticmethod
+    def own_wrap(label, cap=None):
+        """Umbruchbreite dieses Textes regelt die Ansicht (_fit_texts),
+        nicht ScrollArea._fit_wraplengths. cap: hoechstens so breit
+        (logische px), None = nur durch die Spalte begrenzt."""
+        label._fisi_wrap_own = True
+        label._fisi_wrap_cap = cap
+        return label
+
+    def _fit_text_labels(self):
+        """[(Label, Innenabstand links+rechts in echten px, immer)].
+        immer=True: Umbruchbreite stets an die Spalte gekoppelt (Texte, die
+        es vor 0.63.2 ohne Umbruch gab); sonst nur untereinander."""
+        return []
+
+    def _fit_texts(self, mode, column):
+        """Textbreiten an die Spalte koppeln (Plan D2: "Textbreiten
+        koppeln"). Untereinander ist die Spalte so breit wie die Ansicht;
+        ohne Kopplung braechen Ueberschrift, Meta-Zeile und Hinweis weiter
+        so schmal um wie neben der Liste (bis mitten im Wort). Sonst bleibt
+        die Ueberschrift bei ScrollArea._fit_wraplengths (wie bisher)."""
+        scale = px(1000) / 1000.0
+        release = False
+        for label, inset, always in self._fit_text_labels():
+            if not (always or mode == "gestapelt"):
+                if label.__dict__.get("_fisi_wrap_own"):
+                    label._fisi_wrap_own = False
+                    base = label.__dict__.get("_fisi_wrap")
+                    if base:
+                        label.configure(wraplength=base)
+                    release = True
+                continue
+            if not label.__dict__.get("_fisi_wrap_own"):
+                base = label.__dict__.get("_fisi_wrap")
+                if base is None:
+                    base = label._fisi_wrap = label.cget("wraplength") or 0
+                self.own_wrap(label, base or None)
+            wrap = max(self.MIN_TEXT, int((column - inset) / scale) - 4)
+            cap = label.__dict__.get("_fisi_wrap_cap")
+            if cap:
+                wrap = min(cap, wrap)
+            if wrap != label.cget("wraplength"):
+                label.configure(wraplength=wrap)
+        if release:
+            # zurueck an ScrollArea._fit_wraplengths (wie bisher)
+            self._wrap_width = None
+            self._schedule_wrap()
+
+    def _show_detail(self, detail):
+        """Untereinander (gestapelt): nach der Wahl eines Eintrags (Liste,
+        "Naechstes ...") zum Inhalt unter der Liste rollen."""
+        if self.column_mode != "gestapelt":
+            return
+
+        def scroll():
+            try:
+                top = detail.winfo_rooty() - self.inner.winfo_rooty()
+                self.canvas.yview_moveto(max(0, top - px(8)) / max(1, self.inner.winfo_height()))
+                # Tk rollt in Schritten (yscrollincrement): ragt der Anfang
+                # danach oben heraus, einen Schritt zurueck
+                self.update_idletasks()
+                if detail.winfo_rooty() < self.canvas.winfo_rooty():
+                    self.canvas.yview_scroll(-1, "units")
+            except tk.TclError:
+                pass
+        self.after_idle(scroll)
 
 
 # ============================================================================
@@ -2949,7 +3145,7 @@ def overall_card(parent, db):
 #  AP2-SZENARIEN
 # ============================================================================
 
-class ScenarioViewBase(View):
+class ScenarioViewBase(FitWidthMixin, View):
     """Gemeinsame Basis fuer AP1- und AP2-Szenarien: Liste links, rechts die
     Aufgabenstellung, ein frei wachsendes Feld fuer die eigene schriftliche
     Loesung und darunter die Musterloesung zum Aufdecken.
@@ -3007,10 +3203,14 @@ class ScenarioViewBase(View):
         self.own_card = Card(detail, title="Deine Lösung", accent=C["purple"],
                              subtitle="wächst automatisch mit dem Text")
         self.own_card.pack(fill="x", pady=(14, 0))
-        make_label(self.own_card.body,
-                   "Löse die Aufgabe hier schriftlich, bevor du die "
-                   "Musterlösung aufdeckst.",
-                   font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=(0, 6))
+        # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
+        self.lbl_own_hint = self.own_wrap(make_label(
+            self.own_card.body,
+            "Löse die Aufgabe hier schriftlich, bevor du die "
+            "Musterlösung aufdeckst.",
+            font=F["small"], fg=C["text_dim"], wraplength=760,
+            justify="left", anchor="w"))
+        self.lbl_own_hint.pack(anchor="w", pady=(0, 6))
         self.txt_own = make_autogrow_text(self.own_card.body, min_height=4,
                                           max_height=18)
         self.txt_own.pack(fill="x")
@@ -3030,7 +3230,20 @@ class ScenarioViewBase(View):
         NeoButton(controls, "Nächstes Szenario", self.next_scenario,
                   kind="ghost", icon="arrow_right").pack(side="left", padx=10)
 
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
+        self._fit_parts = (layout, list_card, detail, controls)
+        self._init_fit()
         self.load_scenario(0)
+
+    def _fit_width(self, avail):
+        layout, list_card, detail, controls = self._fit_parts
+        cards = (self.task_card, self.own_card, self.sol_card)
+        flows = ((controls, 0), (self.rate_box, self.sol_card.frame_width()))
+        return self._fit_columns(avail, layout, list_card, detail, flows, cards, "scen")
+
+    def _fit_text_labels(self):
+        return [(self.lbl_title, self.task_card.frame_width(), False),
+                (self.lbl_own_hint, self.own_card.frame_width(), True)]
 
     def _on_own_change(self, _event=None):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
@@ -3079,6 +3292,8 @@ class ScenarioViewBase(View):
         self.paged.refresh(keep_page=True)
         self.paged.show(position)
         self._show_status()
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_solution(self):
         scenario = self.DATA[self.index]
@@ -3128,7 +3343,7 @@ class Ap1ScenarioView(ScenarioViewBase):
 #  TESTPROJEKT
 # ============================================================================
 
-class ProjectView(View):
+class ProjectView(FitWidthMixin, View):
     """Uebt die komplette Projektarbeit an einem realistischen Kundenauftrag:
     Ausgangssituation, Auftrag, Rahmenbedingungen und Arbeitsauftraege zum
     selbststaendigen Bearbeiten, dazu Loesungsansaetze zum Vergleich."""
@@ -3162,7 +3377,12 @@ class ProjectView(View):
         self.header_label = make_label(detail, "", font=F["h2"], fg=C["text"],
                                        wraplength=760, justify="left", anchor="w")
         self.header_label.pack(anchor="w")
-        self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
+        # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
+        # Umbruchbreite = Spaltenbreite (_fit_texts): bei breitem Fenster
+        # eine Zeile wie bisher
+        self.meta_label = self.own_wrap(make_label(
+            detail, "", font=F["small"], fg=C["muted"], wraplength=760,
+            justify="left", anchor="w"))
         self.meta_label.pack(anchor="w", pady=(2, 0))
         self.lbl_status = make_label(detail, "", font=F["small_bold"], fg=C["muted"],
                                      anchor="w")
@@ -3190,7 +3410,19 @@ class ProjectView(View):
         NeoButton(controls, "Als Vorlage fürs Abschlussprojekt", self.use_as_template,
                   kind="ghost").pack(side="right")
 
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
+        self._fit_parts = (layout, list_card, detail, controls)
+        self._init_fit()
         self.load_project(0)
+
+    def _fit_width(self, avail):
+        layout, list_card, detail, controls = self._fit_parts
+        cards = (self.task_card, self.hint_card)
+        flows = ((controls, 0), (self.rate_box, self.hint_card.frame_width()))
+        return self._fit_columns(avail, layout, list_card, detail, flows, cards, "proj")
+
+    def _fit_text_labels(self):
+        return [(self.header_label, 0, False), (self.meta_label, 0, True)]
 
     def on_show(self):
         self._highlight()
@@ -3267,6 +3499,8 @@ class ProjectView(View):
         self.btn_toggle.set_text("Lösungsansätze anzeigen")
         self._highlight()
         self.paged.show(position)
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_hints(self):
         project = PROJEKTARBEITEN[self.index]
@@ -3298,7 +3532,7 @@ PROJECT_SAVE_DELAY = 800      # ms nach dem letzten Tastendruck
 NO_CATEGORY = "Kein Fachbereich"
 
 
-class FinalProjectView(View):
+class FinalProjectView(FitWidthMixin, View):
     """Arbeitsbereich fuers eigene IHK-Abschlussprojekt: Uebersicht, Antrag,
     Zeitplan, Kosten, Dokumentation und Fachgespraech. Jede Eingabe wird
     kurz nach dem Tippen gespeichert (Tabelle abschlussprojekt) und mit dem
@@ -3321,6 +3555,7 @@ class FinalProjectView(View):
 
         top = transparent_frame(self.content)
         top.pack(fill="x")
+        self.top_row = top        # ab 0.63.2 (D2): bricht bei Bedarf um (_fit_width)
         make_label(top, "Projekt", font=F["small"], fg=C["text_dim"]).pack(
             side="left", padx=(0, 10))
         self.menu_project = option_menu(top, ["-"], command=self._choose_project, width=320)
@@ -3343,6 +3578,30 @@ class FinalProjectView(View):
         self.tab_area = transparent_frame(self.content)
         self.tab_area.pack(fill="both", expand=True)
         self._load_project()
+        self._init_fit()
+
+    def _fit_width(self, avail):
+        """Ab 0.63.2 (D2): Kopfzeile und die Zeilen der Reiter (FlowRow)
+        brechen um, Unterschriften ruecken unter die Ueberschrift."""
+        # Reiter (PillGroup, nebeneinander gepackt) brechen wie die Kopfzeile um
+        flows = [(self.top_row, 0), (self.tab_pills, 0)]
+        cards = []
+        for frame in self.tab_frames.values():
+            for card in frame.winfo_children():
+                if not isinstance(card, Card):
+                    continue
+                cards.append(card)
+                stack = [card.body]
+                while stack:
+                    for child in stack.pop().winfo_children():
+                        if isinstance(child, ctk.CTkFrame) and not isinstance(child, Card):
+                            if "_fisi_flow" in child.__dict__:
+                                flows.append((child, card.frame_width()))
+                            else:
+                                stack.append(child)
+        changed = self._fit_flows(flows, avail)
+        changed |= self._fit_cards(cards, avail)
+        return changed
 
     # -- Projekte -----------------------------------------------------------
 
@@ -3536,6 +3795,7 @@ class FinalProjectView(View):
     def _form_row(parent, label):
         row = transparent_frame(parent)
         row.pack(fill="x", pady=4)
+        FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): Feld bei Bedarf unter der Beschriftung
         make_label(row, label, font=F["small"], fg=C["text_dim"], width=340,
                    anchor="w").pack(side="left")
         return row
@@ -3598,6 +3858,7 @@ class FinalProjectView(View):
                                   "Bereits ausgefüllte Felder bleiben unverändert.")
         row = transparent_frame(template.body)
         row.pack(fill="x")
+        FlowRow(row)              # ab 0.63.2 (D2): bricht bei Bedarf um
         titles = [p["title"] for p in PROJEKTARBEITEN]
         category_menu = option_menu(row, list(CATEGORIES), width=230)
         category_menu.pack(side="left")
@@ -3652,6 +3913,7 @@ class FinalProjectView(View):
         for key, name, default in fpj.PHASES:
             row = transparent_frame(card.body)
             row.pack(fill="x", pady=4)
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             if key.startswith("frei"):
                 self._entry(row, "phase_name_" + key, width=40).pack(side="left")
                 make_label(row, "  (weitere Phase, frei benennbar)", font=F["small"],
@@ -3687,6 +3949,7 @@ class FinalProjectView(View):
         material.pack(fill="x", pady=(14, 0))
         head = transparent_frame(material.body)
         head.pack(fill="x")
+        FlowRow(head, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
         make_label(head, "BEZEICHNUNG", font=F["label"], fg=C["muted"], width=388,
                    anchor="w").pack(side="left")
         make_label(head, "BETRAG", font=F["label"], fg=C["muted"]).pack(side="left",
@@ -3694,6 +3957,7 @@ class FinalProjectView(View):
         for number in range(fpj.MATERIAL_ROWS):
             row = transparent_frame(material.body)
             row.pack(fill="x", pady=3)
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             self._entry(row, "material_name_%d" % number, width=40).pack(side="left")
             self._entry(row, "material_betrag_%d" % number, width=10).pack(
                 side="left", padx=(8, 0))
