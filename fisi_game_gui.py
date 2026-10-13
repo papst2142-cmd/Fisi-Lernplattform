@@ -5200,8 +5200,8 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         self._changed()
 
     def _fire(self, item):
-        if not messagebox.askyesno("Entlassen", "%s wirklich entlassen? Die Person bewirbt "
-                                   "sich danach nicht erneut." % item["name"]):
+        if not messagebox.askyesno("Entlassen", self.game.fire_question(item["id"],
+                                                                     item["name"])):
             return
         try:
             self.game.fire(item["id"])
