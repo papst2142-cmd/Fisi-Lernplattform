@@ -609,12 +609,22 @@ def _union_lift(first, second, zone=True):
     return [old, new]
 
 
-def _merged_lifts(local, remote, zone=True):
+def _merged_lifts(local, remote, zone=True, now=None):
+    """now (Uhrzeit von GitHub, bei Sicherungen die Geraeteuhr, sonst None):
+    Eine alte Marke mit Zone, die mehr als CLOCK_TOLERANCE danach liegt (Uhr
+    beim Loeschen vorgestellt), gilt als now - wie _clamp_future_markers die
+    Marken setzt. Sonst hoebe sie echte spaetere Loeschungen auf (A1)."""
     local = local if isinstance(local, dict) else {}
     remote = remote if isinstance(remote, dict) else {}
     lifts = {}
     for key in MARKERS:
         pair = _union_lift(_lift_pair(local.get(key)), _lift_pair(remote.get(key)), zone)
+        if pair and now is not None:
+            old = parse_marker(pair[0])[1]
+            limit = (now.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+                     + datetime.timedelta(seconds=CLOCK_TOLERANCE))
+            if old is not None and old > limit:
+                pair = [format_with_zone(now.astimezone()), pair[1]]
         if pair:
             lifts[key] = pair
     return lifts
@@ -747,7 +757,12 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
                 del remote_markers[key]
                 stats.future += 1
     # Ab 0.63.2 (B-G-08): Aufhebungen nach "Alles ersetzen" (beide Seiten)
-    lifts = _merged_lifts(local.get(LIFT_KEY), remote.get(LIFT_KEY), zone)
+    # Uhrzeit fuer die alte Marke der Aufhebung (A1): im Abgleich die von
+    # GitHub (eben gelesen), bei Sicherungen wie oben die Geraeteuhr
+    deviation = None if check_future else _clock_deviation()
+    now = device_now() if check_future else None if deviation is None else (
+        device_now() - datetime.timedelta(seconds=deviation))
+    lifts = _merged_lifts(local.get(LIFT_KEY), remote.get(LIFT_KEY), zone, now)
     for source in (local_markers, remote_markers):
         _apply_lifts(source, lifts, zone)
     markers = _merged_markers(local_markers, remote_markers, zone)

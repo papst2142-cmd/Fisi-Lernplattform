@@ -49,6 +49,7 @@ Belegdatei des Fingerabdrucks: ABGLEICH_FP_BELEG=<datei.json>
 Nur unter Linux/macOS (Zeitzone je Prozess ueber TZ).
 """
 
+import datetime
 import hashlib
 import json
 import os
@@ -1065,6 +1066,95 @@ class BG08Ersetzen(unittest.TestCase):
         for device in (a, b):
             self.assertEqual(karten(device, "-vorher"), 5, device.name)
         self.gleich_und_ohne_doppelte([a, b])
+        self.stabil([a, b])
+
+    # ------------------------------------------------------------ A1 (gp_s6b M1)
+    def _zukunft(self, code, uhr, abgleich_vorher=False, ordner=None):
+        """Vorlage gp_s6b skripte/bg08_gezielt.py _zukunft: A gleicht mit
+        richtiger Uhr ab, dann wird As Uhr um uhr Sekunden vorgestellt (die
+        Laufzeit-Uhr laeuft weiter: gestellt). A loescht alles (Marke in der
+        Zukunft) und ersetzt VOR dem naechsten Abgleich. Danach gleichen A, B
+        ab, B (richtige Uhr) lernt und loescht WIRKLICH alles. Liefert die
+        Lernstaende von A und B am Ende und die Aufhebung auf A."""
+        a = self.voll("A", code=code, ordner=ordner)
+        b = self.voll("B", tz="UTC", code=code, ordner=ordner)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        a("uhr", uhr, 0)
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        if abgleich_vorher:
+            a.sync()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, b], 2)
+        ta.pause()
+        b("lerne", 2, "spaeter")
+        b.sync()
+        ta.pause()
+        self.assertTrue(b("reset_all")["ok"])
+        self.alle_sync([b, a], 3)
+        return {"A": a.namen(), "B": b.namen(),
+                "aufhebung": a("meta")["meta"].get("aufgehoben:reset_at")}
+
+    def _a1(self, uhr):
+        """v0.63.1 im selben Ablauf: A {}, B {} (Schutzprobe). 0.63.2: ebenso -
+        die echte Loeschung auf B gilt, die Aufhebung haelt sie nicht auf."""
+        alt = self._zukunft(self.alter_code(ALT), uhr, ordner="%s_alt" % uhr)
+        for device in list(self.geraete):
+            device.close()
+            self.geraete.remove(device)
+        ta.server_reset()
+        neu = self._zukunft(CODE, uhr, ordner="%s_neu" % uhr)
+        bericht("A1 Uhr %+d s: v0.63.1 %s | 0.63.2 %s" % (uhr, alt, neu))
+        self.assertEqual((alt["A"], alt["B"]), ({}, {}))
+        self.assertEqual((neu["A"], neu["B"]), ({}, {}))
+        self.assertTrue(neu["aufhebung"])
+
+    def test_b_g_08_a1_zukunftsmarke_eine_stunde(self):
+        """A1 (gp_s6b M1): Uhr 1 h vorgestellt ("Winterzeit von Hand")."""
+        self._a1(3600)
+
+    def test_b_g_08_a1_zukunftsmarke_zehn_tage(self):
+        """A1 (gp_s6b M1): Uhr 10 Tage vorgestellt."""
+        self._a1(10 * 86400)
+
+    def test_b_g_08_a1_schutz_abgleich_vor_dem_ersetzen(self):
+        """Schutz (gp Test 6): A gleicht vor dem Ersetzen ab (Marke gekappt) -
+        Bs Loeschung danach gilt (wie bisher)."""
+        e = self._zukunft(CODE, 10 * 86400, abgleich_vorher=True)
+        self.assertEqual((e["A"], e["B"]), ({}, {}))
+
+    def test_b_g_08_a1_schutz_eingespieltes_bleibt(self):
+        """Schutz: Die gekappte Aufhebung hebt die eigene Loeschung weiter auf -
+        nach dem Ersetzen mit vorgestellter Uhr bleibt der eingespielte Stand
+        auf A und B (ohne neue Loeschung)."""
+        a = self.voll("A")
+        b = self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        self.alle_sync([a, b], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])
+        self.alle_sync([a, b], 1)            # Loeschung abgeglichen
+        self.assertEqual(karten(b, "-vorher"), 0)
+        a("uhr", 10 * 86400, 0)
+        ta.pause()
+        self.assertTrue(a("reset_all")["ok"])          # Zukunftsmarke
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, b], 2)
+        b("lerne", 1, "neu")
+        self.alle_sync([b, a], 2)
+        paar = json.loads(a("meta")["meta"]["aufgehoben:reset_at"])
+        bericht("A1 Schutz eingespielt: A %s, B %s, Aufhebung %s"
+                % (a.namen(), b.namen(), paar))
+        for device in (a, b):
+            self.assertEqual(device.namen(), {"a-vorher": 2, "b-neu": 1}, device.name)
+        # gekappt auf die Uhrzeit von GitHub (nicht 10 Tage voraus)
+        alt = fisi_sync.parse_marker(paar[0])[1]
+        jetzt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        self.assertLess(alt, jetzt + datetime.timedelta(seconds=fisi_core.CLOCK_TOLERANCE))
         self.stabil([a, b])
 
     # ------------------------------------------------------------ T-b / T-c mit B-G-08
