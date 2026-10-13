@@ -254,6 +254,11 @@ class BD15HinweisTest(unittest.TestCase):
         self.assertIn(HINWEIS, text)
         text = fc.ups_calculate("empfehlung", dict(felder, last="1,5"))["text"]
         self.assertNotIn(HINWEIS, text)
+        # Nacharbeit (Gegenpruefung L1): "empfehlung" liest auch nenn_w und
+        # block_ah (parallel hat hoechstens 20, kein Tausenderpunkt moeglich)
+        for key, wert in (("nenn_w", "1.000"), ("block_ah", "7.200")):
+            text = fc.ups_calculate("empfehlung", dict(felder, **{key: wert}))["text"]
+            self.assertIn(HINWEIS, text, key)
 
 
 class RR12Test(Meldung):
@@ -274,6 +279,14 @@ class RR16Test(Meldung):
         for tiefe in ("-5", "0", "-8", "65", "100"):
             self.assertMeldung(lambda: fc.screen_report("1920", "1080", tiefe, "30"),
                                "Bitte eine Farbtiefe von 1 bis 64 Bit wählen.")
+        # Nacharbeit (Gegenpruefung L2): erst Lesefehler, dann Farbtiefe
+        for tiefe in ("0", "65"):
+            self.assertMeldung(lambda: fc.screen_report("1920", "1080", tiefe, "abc"),
+                               "Bitte eine Zahl eingeben: Bildrate (fps). "
+                               "Zum Beispiel 1.000 oder 1,5.")
+            self.assertMeldung(lambda: fc.screen_report("abc", "1080", tiefe, "30"),
+                               "Bitte eine Zahl eingeben: Breite (Pixel). "
+                               "Zum Beispiel 1.000.")
         for tiefe in (1, 8, 16, 24, 32, 64):
             text = fc.screen_report("1920", "1080", str(tiefe), "30")
             self.assertEqual(zeile(text, "Farbtiefe"), "%d Bit/Pixel" % tiefe)
