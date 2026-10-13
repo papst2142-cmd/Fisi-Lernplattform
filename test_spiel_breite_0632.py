@@ -15,13 +15,17 @@ Tests ab 0.63.2 fuer die Spiel-Ansichten (Bauauftrag N5):
               abgeschnitten).
           Bei Normal und mindestens 1360 px Breite bleibt alles genau wie
           gebaut (FitWidth aendert nichts: _fit_changed == 0).
+  B-D-10 Teil b  Weltkarte und Grossansicht (Grundriss) wachsen im breiten
+          Fenster mit: bei 1366 x 768 genau wie bisher (Massstab nach der
+          alten Formel), bei 1920 x 1080 groesser, und die Zeichnung passt
+          in den sichtbaren Bereich.
 
 Jede Schriftgroesse und jedes Fenster laeuft in einem eigenen Prozess
 (Schriftgroesse und Skalierung gelten ab dem Start); das Ergebnis wird je
 Prozess zwischengespeichert.
 
 Gegen 14b3bd4 (0.63.1) rot: Firma und Reise seitlich verschiebbar (Messung
-N5: +7 bis +603 px).
+N5: +7 bis +603 px), Karte und Grundriss bei 1920 so hoch wie bei 1366.
 
 Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
 Start:  xvfb-run -a python test_spiel_breite_0632.py
@@ -194,6 +198,37 @@ def _reise(ctx):
         ctx.pruefe(view, "reise/" + tab)
 
 
+def _plaene(ctx):
+    """Massstab der Weltkarte und der Grossansicht Zuhause."""
+    import fisi_game as fg
+    import fisi_game_gui as gg
+    from fisi_widgets import px
+    app = ctx.app
+    gv = app.views["game"]
+    fg.set_map_list_mode(False)
+    app.show_view("game")
+    gv.render()
+    ctx.pump(0.8)
+    world = gv.world
+    map_w, map_h = fg.map_size()
+    ctx.ergebnis["plan/karte"] = {
+        "breite": world.winfo_width(), "hoehe": world.winfo_height(), "scale": world.scale,
+        "alt": min(world.winfo_width() / map_w, px(world.MAX_HEIGHT) / map_h),
+        "zeichnung": world.scale * map_w, "sicht_hoehe": gv.canvas.winfo_height()}
+    app.show_view("zuhause")
+    ctx.pump(0.8)
+    view = app.views["zuhause"]
+    plan = view.plan
+    building = plan.content()["gebaeude"]
+    margin = fg.PLAN_MARGIN
+    ctx.ergebnis["plan/zuhause"] = {
+        "breite": plan.winfo_width(), "hoehe": plan.winfo_height(), "scale": plan.scale,
+        "alt": min(plan.winfo_width() / (building["breite"] + 2 * margin),
+                   px(plan.max_height) / (building["hoehe"] + 2 * margin)),
+        "zeichnung": plan.scale * building["breite"], "sicht_hoehe": view.canvas.winfo_height()}
+    del gg
+
+
 def worker(faktor, breite, hoehe, teile):
     home = tempfile.mkdtemp(prefix="fisi_spielbreite_")
     os.environ.update(HOME=home, APPDATA=home, FISI_DB_PATH=os.path.join(home, "t.db"),
@@ -223,7 +258,7 @@ def worker(faktor, breite, hoehe, teile):
     ctx.pump(0.8)
     for teil in teile:
         try:
-            {"firma": _firma, "reise": _reise}[teil](ctx)
+            {"firma": _firma, "reise": _reise, "plaene": _plaene}[teil](ctx)
         except Exception as error:  # noqa: BLE001
             import traceback
             ctx.ergebnis["%s/ausnahme" % teil] = {"fehler": ["%r\n%s" % (
@@ -253,7 +288,7 @@ HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 _ERGEBNISSE = {}
 
 
-def ergebnis(faktor, breite, hoehe, teile=("firma", "reise")):
+def ergebnis(faktor, breite, hoehe, teile=("firma", "reise", "plaene")):
     key = (faktor, breite, hoehe, tuple(teile))
     if key not in _ERGEBNISSE:
         done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
@@ -310,6 +345,45 @@ for _faktor, _stufe in STUFEN.items():
     for _breite, _hoehe in FENSTER:
         setattr(FirmaReiseBreiteTest, "test_%s_%dx%d" % (_stufe, _breite, _hoehe),
                 _make(_faktor, _breite, _hoehe))
+
+
+class PlanWaechstTest(unittest.TestCase):
+    """B-D-10 Teil b: Karte und Grundriss wachsen bei 1920 mit."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+
+    def _plaene(self, breite, hoehe, faktor=1.0):
+        result = ergebnis(faktor, breite, hoehe, ("plaene",))
+        self.assertIsInstance(result, dict, result)
+        self.assertEqual({k: v["fehler"] for k, v in result.items() if v.get("fehler")}, {})
+        return result
+
+    def test_bis_1366_wie_bisher(self):
+        for faktor in (1.0, 1.3):
+            result = self._plaene(1366, 768, faktor)
+            for key in ("plan/karte", "plan/zuhause"):
+                item = result[key]
+                print("\n  %s %s 1366: %s" % (key, STUFEN[faktor], item))
+                self.assertAlmostEqual(item["scale"], item["alt"], places=6, msg=key)
+
+    def test_1920_groesser_und_sichtbar(self):
+        klein = self._plaene(1366, 768)
+        gross = self._plaene(1920, 1080)
+        for key in ("plan/karte", "plan/zuhause"):
+            alt, neu = klein[key], gross[key]
+            print("\n  %s: 1366 Zeichnung %.0f px (Hoehe %d), 1920 Zeichnung %.0f px "
+                  "(Hoehe %d, sichtbar %d)" % (key, alt["zeichnung"], alt["hoehe"],
+                                               neu["zeichnung"], neu["hoehe"],
+                                               neu["sicht_hoehe"]))
+            # waechst mit: mindestens ein Viertel groesser als nach der alten
+            # Formel und als bei 1366
+            self.assertGreater(neu["scale"], 1.25 * neu["alt"], key)
+            self.assertGreater(neu["zeichnung"], 1.25 * alt["zeichnung"], key)
+            # und passt in den sichtbaren Bereich
+            self.assertLessEqual(neu["hoehe"], neu["sicht_hoehe"], key)
 
 
 if __name__ == "__main__":

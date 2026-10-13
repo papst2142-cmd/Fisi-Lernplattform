@@ -308,12 +308,36 @@ class FloorPlan(tk.Canvas):
         # verzerrt; bei sehr breitem Fenster wird es mittig gesetzt.
         margin = fg.PLAN_MARGIN
         self.scale = min(width / (building["breite"] + 2 * margin),
-                         px(self.max_height) / (building["hoehe"] + 2 * margin))
+                         self._height_cap() / (building["hoehe"] + 2 * margin))
         self.offset = (width - self.scale * building["breite"]) / 2.0
         self.offset_y = margin * self.scale
         height = int(round(self.scale * (building["hoehe"] + 2 * margin)))
         if abs(int(self.cget("height")) - height) > 2:
             self.configure(height=height)
+
+    # Ab 0.63.2 (B-D-10 Teil b): Grossansicht und Weltkarte wachsen in einem
+    # breiten Fenster mit. Bis GROW_FROM logische px Breite bleibt die Hoehe
+    # bei max_height (wie bisher); darueber waechst die erlaubte Hoehe im
+    # gleichen Verhaeltnis wie die Breite, hoechstens bis die Zeichnung samt
+    # Kartenkopf (GROW_RESERVE) in den sichtbaren Bereich passt.
+    GROW = False
+    GROW_FROM = 1040
+    GROW_RESERVE = 120
+
+    def _height_cap(self):
+        cap = px(self.max_height)
+        if not self.GROW:
+            return cap
+        factor = self.winfo_width() / float(px(self.GROW_FROM))
+        if factor <= 1.0:
+            return cap
+        area = self.master
+        while area is not None and not isinstance(area, ScrollArea):
+            area = area.master
+        if area is None:
+            return cap
+        room = area.canvas.winfo_height() - px(self.GROW_RESERVE)
+        return max(cap, min(int(cap * factor), room))
 
     def _building(self, with_player=True):
         profile = self.state.profile
@@ -456,6 +480,7 @@ class WalkPlan(FloorPlan):
     genau wie auf dem Handy. on_click(x, y) darf einen Klick selbst behandeln
     (True zurueckgeben), z.B. beim Einrichten der Wohnung."""
 
+    GROW = True            # ab 0.63.2 (B-D-10 Teil b): waechst im breiten Fenster mit
     SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
     TICK = 16              # Millisekunden pro Bild
 
@@ -596,6 +621,7 @@ class WorldMap(FloorPlan):
     ein Gebaeude oder sein Schild ruft on_place(ort) auf."""
 
     MAX_HEIGHT = 620
+    GROW = True            # ab 0.63.2 (B-D-10 Teil b): waechst im breiten Fenster mit
 
     def __init__(self, parent, on_place, bg=None, max_height=None):
         super().__init__(parent, lambda _room: None, bg=bg, max_height=max_height)
@@ -611,7 +637,7 @@ class WorldMap(FloorPlan):
     def _layout(self):
         width = self.winfo_width()
         map_w, map_h = fg.map_size()
-        self.scale = min(width / map_w, px(self.max_height) / map_h)
+        self.scale = min(width / map_w, self._height_cap() / map_h)
         self.offset = (width - self.scale * map_w) / 2.0
         self.offset_y = 0.0
         height = int(round(self.scale * map_h))
