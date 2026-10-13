@@ -2872,8 +2872,12 @@ class GameView(ReusableView, ScrollArea):
                 NeoButton(body, "Firma gründen", lambda: self.app.show_view("firma"),
                           kind="primary").pack(anchor="w", pady=(8, 0))
 
-        for task, status in tickets:
+        # Ab 0.63.2 (B-F-03): hoechstens TICKET_PAGE Eintraege je Seite. Mit
+        # 150 und mehr Eintraegen wurde die Ansicht so hoch, dass X das Bild
+        # ablehnte und das Programm endete. Die Kopfzeile zaehlt weiter alle.
+        for task, status in self._ticket_page(tickets):
             self._ticket_row(body, task, status)
+        self._ticket_pager(body, tickets)
 
         if not item:
             footer = _frame(body)
@@ -2889,6 +2893,43 @@ class GameView(ReusableView, ScrollArea):
                     "Heute ist nichts mehr zu tun.")
             make_label(footer, hint, font=F["small"], fg=C["muted"]).pack(side="left",
                                                                           padx=14)
+
+    # Ab 0.63.2 (B-F-03): Eintraege je Seite in "Tickets heute" bzw. im Raum.
+    # Im normalen Spiel sind es hoechstens etwa 37 an einem Tag, dort
+    # erscheint also nie ein Blaettern.
+    TICKET_PAGE = 50
+
+    def _ticket_page(self, tickets):
+        """Sichtbarer Ausschnitt der Ticketliste. Die Seite gilt fuer den
+        Arbeitstag und den Raum, in dem geblaettert wurde; sonst Seite 1."""
+        where = (self.game.state.day, self.room)
+        mark = getattr(self, "ticket_page", None)
+        page = mark[1] if isinstance(mark, tuple) and mark[0] == where else 0
+        pages = max(1, -(-len(tickets) // self.TICKET_PAGE))
+        page = max(0, min(page, pages - 1))
+        self.ticket_page = (where, page)
+        return tickets[page * self.TICKET_PAGE:(page + 1) * self.TICKET_PAGE]
+
+    def _ticket_pager(self, body, tickets):
+        """Blaettern wie in den Listen der Lernplattform (app_gui, Pfeile und
+        "Seite x / y"); nur bei mehr als TICKET_PAGE Eintraegen."""
+        pages = -(-len(tickets) // self.TICKET_PAGE)
+        if pages <= 1:
+            return
+        from fisi_widgets import IconButton   # nur fuer dieses Blaettern
+        pager = _frame(body)
+        pager.pack(fill="x", pady=(10, 0))
+        IconButton(pager, "arrow_left", lambda: self._turn_tickets(-1),
+                   parent_bg=C["card"]).pack(side="left")
+        make_label(pager, "Seite %d / %d" % (self.ticket_page[1] + 1, pages),
+                   font=F["small_bold"], fg=C["text_dim"]).pack(side="left", expand=True)
+        IconButton(pager, "arrow_right", lambda: self._turn_tickets(1),
+                   parent_bg=C["card"]).pack(side="right")
+
+    def _turn_tickets(self, delta):
+        where, page = self.ticket_page
+        self.ticket_page = (where, page + delta)
+        self.render(keep_scroll=True)
 
     def _build_warehouse(self, parent, state):
         """Lager: was unterwegs ist, was da ist und was ausgeliefert wurde."""
