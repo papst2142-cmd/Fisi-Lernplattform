@@ -104,7 +104,7 @@
    "id": "a17",
    "cat": null,
    "q": "Welche Qualitätsmerkmale hat Ihre Lösung?",
-   "hinweis": "Z.B. Verfügbarkeit, Wartbarkeit, Skalierbarkeit, Benutzerfreundlichkeit; wie geprüft."
+   "hinweis": "Z. B. Verfügbarkeit, Wartbarkeit, Skalierbarkeit, Benutzerfreundlichkeit; wie geprüft."
   },
   {
    "id": "a18",
@@ -128,7 +128,7 @@
    "id": "a21",
    "cat": null,
    "q": "Welche Lizenzmodelle kamen in Ihrem Projekt vor?",
-   "hinweis": "Z.B. pro Gerät, pro Nutzer, Abonnement, Open Source (Pflichten der Lizenz beachten)."
+   "hinweis": "Z. B. pro Gerät, pro Nutzer, Abonnement, Open Source (Pflichten der Lizenz beachten)."
   },
   {
    "id": "a22",
@@ -170,7 +170,7 @@
    "id": "a28",
    "cat": null,
    "q": "Welche Normen oder Vorgaben waren für Ihr Projekt wichtig?",
-   "hinweis": "Z.B. DSGVO, BSI IT-Grundschutz, ISO 27001, Verkabelungsnormen, Herstellervorgaben."
+   "hinweis": "Z. B. DSGVO, BSI IT-Grundschutz, ISO 27001, Verkabelungsnormen, Herstellervorgaben."
   },
   {
    "id": "a29",
@@ -206,7 +206,7 @@
    "id": "net04",
    "cat": "netzwerk",
    "q": "Wie funktioniert die Redundanz in Ihrem Netz?",
-   "hinweis": "Z.B. zweite Leitung, Link-Aggregation, Spanning Tree, VRRP/HSRP; Ausfall getestet."
+   "hinweis": "Z. B. zweite Leitung, Link-Aggregation, Spanning Tree, VRRP/HSRP; Ausfall getestet."
   },
   {
    "id": "net05",

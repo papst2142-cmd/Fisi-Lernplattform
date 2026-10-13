@@ -241,7 +241,7 @@
       "Welche Kennzahlen kann die Geschäftsführung künftig auswerten?"
     ],
     "hinweise": [
-      "Z.B. Ticket-Erfassung per E-Mail und Webportal, Anmeldung per Active Directory (SSO), Kategorien und Prioritäten, Zuweisung an Bearbeiter, Statusverfolgung für den Anwender, Wissensdatenbank, Berichte, deutschsprachige Oberfläche, DSGVO-konformer Betrieb (Serverstandort EU, Auftragsverarbeitungsvertrag).",
+      "Z. B. Ticket-Erfassung per E-Mail und Webportal, Anmeldung per Active Directory (SSO), Kategorien und Prioritäten, Zuweisung an Bearbeiter, Statusverfolgung für den Anwender, Wissensdatenbank, Berichte, deutschsprachige Oberfläche, DSGVO-konformer Betrieb (Serverstandort EU, Auftragsverarbeitungsvertrag).",
       "Cloud: schnell verfügbar, keine eigene Wartung, laufende Lizenzkosten, Datenschutz über Auftragsverarbeitungsvertrag klären. On-Premises: volle Datenhoheit, aber Aufwand für Server, Updates und Backup. Entscheidung per Nutzwertanalyse mit Blick auf nur zwei IT-Mitarbeiter.",
       "Meldung (Portal/E-Mail) - Erfassung und Kategorisierung - Priorisierung nach Auswirkung und Dringlichkeit (z. B. Prio 1: Standort arbeitsunfähig) - Zuweisung - Bearbeitung mit Statusinformationen an den Anwender - Lösung und Dokumentation - Rückmeldung/Abschluss durch den Anwender. Wiederkehrende Störungen an das Problem-Management übergeben.",
       "Kurze Einführung für alle Mitarbeiter, einfache Anleitung, eindeutige Regel \"Nur Tickets werden bearbeitet\" mit Unterstützung der Geschäftsführung, Übergangsphase, in der Anrufe von der IT selbst als Ticket erfasst werden, und schnelle, sichtbare Bearbeitung als Motivation.",
@@ -273,7 +273,7 @@
     ],
     "hinweise": [
       "Geräteliste mit Standort, MAC- und IP-Adresse, Switchport, Funktion und Kommunikationsbedarf. Hilfreich sind Switch-Tabellen (MAC-Adressen pro Port), ein Netzwerkscan und Gespräche mit Produktion und Herstellern.",
-      "Z.B. VLAN 10 Verwaltung 10.20.10.0/24, VLAN 20 Produktion 10.20.20.0/24, VLAN 30 Kameras 10.20.30.0/24, VLAN 40 Drucker 10.20.40.0/24, VLAN 50 Server 10.20.50.0/24, VLAN 99 Gäste 10.20.99.0/24, VLAN 100 Management 10.20.100.0/24. Die dritte Stelle entspricht der VLAN-ID, das erleichtert die Übersicht.",
+      "Z. B. VLAN 10 Verwaltung 10.20.10.0/24, VLAN 20 Produktion 10.20.20.0/24, VLAN 30 Kameras 10.20.30.0/24, VLAN 40 Drucker 10.20.40.0/24, VLAN 50 Server 10.20.50.0/24, VLAN 99 Gäste 10.20.99.0/24, VLAN 100 Management 10.20.100.0/24. Die dritte Stelle entspricht der VLAN-ID, das erleichtert die Übersicht.",
       "Grundsatz Default Deny. Verwaltung darf auf Server und Drucker, aber nicht direkt auf die Produktion. Produktion nur auf die benötigten Server (z. B. Auftragsdaten). Kameras nur zum Videorekorder. Gäste nur ins Internet. Management nur von Admin-Arbeitsplätzen erreichbar.",
       "Kein dauerhaft offener Zugang. Fernwartung über ein VPN oder einen Fernwartungs-Gateway mit Freischaltung nur bei Bedarf (Vier-Augen-Prinzip), MFA, Zugriff nur auf die jeweilige Maschine, Protokollierung der Sitzungen und vertragliche Regelung mit dem Hersteller.",
       "Vorher: Konfigurationen sichern, Switch-Konfigurationen vorbereiten und testen, Ansprechpartner der Produktion vor Ort. Reihenfolge: Server und Management, dann Verwaltung, zuletzt Produktion. Rückfallplan: gesicherte Konfiguration zurückspielen, Zeitpunkt für die Entscheidung zum Abbruch festlegen.",
@@ -370,7 +370,7 @@
       "Einkauf: 890 + 2 * 310 + 1.450 = 2.960 Euro. Mit 20 % Aufschlag: 2.960 * 1,2 = 3.552 Euro netto.",
       "Dienstleistung: 12 * 95 = 1.140 Euro. Gesamt netto: 3.552 + 1.140 = 4.692 Euro. Umsatzsteuer: 4.692 * 19 % = 891,48 Euro. Brutto: 5.583,48 Euro.",
       "Absender und Empfänger, Datum und Angebotsnummer, genaue Beschreibung der Leistungen und Mengen, Einzel- und Gesamtpreise netto, Umsatzsteuer und Bruttobetrag, Liefer- und Zahlungsbedingungen, Gültigkeitsdauer (Bindefrist), ggf. Hinweis auf AGB.",
-      "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z.B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
+      "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z. B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
       "Wartungsvertrag mit Updates für Firewall und Access Points, Monitoring, Firewall-Lizenzverlängerung, Schulung der Mitarbeiter, Backup-Lösung, später Erweiterung um ein Gäste-WLAN."
     ]
   },

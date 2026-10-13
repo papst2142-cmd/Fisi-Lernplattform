@@ -509,7 +509,7 @@
     "solution": [
       "1. 64 - 48 = 16 Bit, also 2^16 = 65.536 Subnetze.",
       "",
-      "2. Z.B. das vierte Hextet als Subnetz-ID nutzen, passend zur VLAN-ID: Verwaltung VLAN 10 = 2001:db8:4c00:10::/64, Produktion VLAN 20 = 2001:db8:4c00:20::/64, Gäste VLAN 99 = 2001:db8:4c00:99::/64.",
+      "2. Z. B. das vierte Hextet als Subnetz-ID nutzen, passend zur VLAN-ID: Verwaltung VLAN 10 = 2001:db8:4c00:10::/64, Produktion VLAN 20 = 2001:db8:4c00:20::/64, Gäste VLAN 99 = 2001:db8:4c00:99::/64.",
       "",
       "3. SLAAC (Router Advertisements) und DHCPv6, auch kombiniert. Vorteil: Dienste bleiben über IPv4 erreichbar, während IPv6 schrittweise eingeführt und getestet wird."
     ]
@@ -733,7 +733,7 @@
       "3. Wie reagieren Sie, wenn der Kunde den Preis Ihres Angebots für zu hoch hält?"
     ],
     "solution": [
-      "1. Z.B. \"Bei welchen Tätigkeiten merken Sie die Langsamkeit besonders?\", \"Mit welchen Programmen arbeiten Sie täglich?\", \"Wie viele Mitarbeiter arbeiten an den Geräten?\", \"Welche Pläne haben Sie für die nächsten Jahre?\"",
+      "1. Z. B. \"Bei welchen Tätigkeiten merken Sie die Langsamkeit besonders?\", \"Mit welchen Programmen arbeiten Sie täglich?\", \"Wie viele Mitarbeiter arbeiten an den Geräten?\", \"Welche Pläne haben Sie für die nächsten Jahre?\"",
       "",
       "2. Offene Fragen (W-Fragen) laden zum Erzählen ein und liefern Informationen, z. B. \"Wie sichern Sie Ihre Daten?\". Geschlossene Fragen lassen sich mit Ja/Nein beantworten und dienen der Bestätigung, z. B. \"Haben Sie ein Backup?\".",
       "",

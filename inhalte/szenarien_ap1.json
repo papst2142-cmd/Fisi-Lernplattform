@@ -488,7 +488,7 @@
     "solution": [
       "1. Beispiel: Planung (Ist-Aufnahme der Arbeitsplätze, Hardwareauswahl), Vorbereitung (Image erstellen, Software und Treiber testen), Rollout (Geräte aufstellen, Benutzerdaten migrieren), Abschluss (Altgeräte sicher entsorgen, Dokumentation und Übergabe).",
       "",
-      "2. Z.B. \"Standard-Image freigegeben\" und \"Alle 40 Arbeitsplätze umgestellt\". Meilensteine haben keine Dauer, sie markieren einen wichtigen Zwischenstand.",
+      "2. Z. B. \"Standard-Image freigegeben\" und \"Alle 40 Arbeitsplätze umgestellt\". Meilensteine haben keine Dauer, sie markieren einen wichtigen Zwischenstand.",
       "",
       "3. Beispiel: \"Bis zum 30.11. sind alle 40 Arbeitsplätze der Behörde mit neuen PCs unter Windows 11 ausgestattet, die Benutzerdaten sind vollständig übernommen und die Kosten bleiben unter 48.000 Euro.\""
     ]
@@ -774,7 +774,7 @@
       "",
       "2. Empfang von anderen Mailservern: TCP 25 (SMTP). Für die Clients: TCP 587 (Submission mit STARTTLS) oder 465 (SMTPS) zum Senden und TCP 993 (IMAPS) zum Abrufen.",
       "",
-      "3. Z.B. TCP 3389 (RDP), TCP 445 (SMB), TCP 22 (SSH ohne Einschränkung), Datenbankports wie 3306. Fernzugriff gehört hinter ein VPN."
+      "3. Z. B. TCP 3389 (RDP), TCP 445 (SMB), TCP 22 (SSH ohne Einschränkung), Datenbankports wie 3306. Fernzugriff gehört hinter ein VPN."
     ]
   },
   {
