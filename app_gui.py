@@ -5016,14 +5016,25 @@ CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 class CalcView(View):
     def build(self):
+        # Ab 0.63.2 (A13, erstes Oeffnen schneller): Die Ansicht bekommt ihre
+        # Groesse VOR dem Fuellen (verdeckt, ganz unten wie in LazyViews).
+        # Vorher war der sichtbare Bereich waehrend des Aufbaus 1 px breit:
+        # Jede neue Karte war "zu breit", der seitliche Schieberegler wurde
+        # ein- und ausgeblendet, und jede dieser Runden ordnete die ganze
+        # Seite neu an. Am fertigen Aussehen aendert sich nichts.
+        hold_size(self, self.master)
+        self.lower()
+        self.update_idletasks()
         self.info_visible = {"raid": False, "screen": False, "ups": False}
         self.info_frames = {}
         self.info_buttons = {}
 
-        # Ab 0.51: Umschalter Rechner / Trainer
+        # Ab 0.51: Umschalter Rechner / Trainer. Ab 0.63.2 (A13) entsteht der
+        # Trainer erst beim ersten Bedarf (Reiter "Trainer" oder Vorladen,
+        # siehe trainer/prepare), nicht schon beim Oeffnen des Rechners.
         self.tab_pills = PillGroup(self.content, CALC_TABS, on_change=self._on_tab)
         self.tab_pills.pack(anchor="w", pady=(0, 14))
-        self.trainer = TrainerPanel(self.content, self.app)
+        self._trainer = None
 
         layout = self.calc_layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
@@ -5114,6 +5125,19 @@ class CalcView(View):
         self.subnet_gap = 0
         self.canvas.bind("<Configure>", self._schedule_fit, "+")
         self.content.bind("<Configure>", self._schedule_fit, "+")
+        # Ab 0.63.2 (A13): Die Ansicht hat ihre Groesse schon vor dem Aufbau
+        # (siehe oben); deshalb einmal selbst anpassen, statt auf ein
+        # <Configure> des sichtbaren Bereichs zu warten
+        self._schedule_fit()
+
+    @property
+    def trainer(self):
+        """Ab 0.63.2 (A13): Der Rechen-Trainer wird beim ersten Zugriff gebaut
+        (Reiter "Trainer", Vorladen); vorher entstand er unsichtbar schon beim
+        Oeffnen des Rechners."""
+        if self._trainer is None:
+            self._trainer = TrainerPanel(self.content, self.app)
+        return self._trainer
 
     # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
     #
@@ -5282,7 +5306,8 @@ class CalcView(View):
             self.calc_layout.pack_forget()
             self.trainer.pack(fill="both", expand=True)
         else:
-            self.trainer.pack_forget()
+            if self._trainer is not None:   # ab 0.63.2 (A13): nur, wenn gebaut
+                self._trainer.pack_forget()
             self.calc_layout.pack(fill="both", expand=True)
         self.to_top()     # ab 0.53, wie im Abschlussprojekt
 
@@ -5328,8 +5353,15 @@ class CalcView(View):
     # Ansichten, die beim Oeffnen nicht mehr gebaut werden (IPv4 "aufteilen"
     # und "bedarf", IPv6 "aufteilen"), damit sich mit Vorladen nichts
     # verschlechtert.
+    # Ab 0.63.2 (A13): Im selben Schritt entsteht auch der Trainer (beim
+    # Oeffnen ohne Vorladen erst beim ersten Wechsel auf "Trainer"). Die
+    # Rueckgabe bleibt wie bisher die von build_rest; der Trainer kommt nur
+    # in einem Schritt dazu, der ohnehin baut.
     def prepare(self):
-        return self.subnet.build_rest()
+        worked = self.subnet.build_rest()
+        if worked and self._trainer is None:
+            self.trainer    # baut ihn (Eigenschaft, siehe oben)
+        return worked
 
     def calc_raid(self):
         try:
