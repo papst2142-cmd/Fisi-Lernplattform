@@ -318,11 +318,12 @@ class FloorPlan(tk.Canvas):
     # Ab 0.63.2 (B-D-10 Teil b): Grossansicht und Weltkarte wachsen in einem
     # breiten Fenster mit. Bis GROW_FROM logische px Breite bleibt die Hoehe
     # bei max_height (wie bisher); darueber waechst die erlaubte Hoehe im
-    # gleichen Verhaeltnis wie die Breite, hoechstens bis die Zeichnung samt
-    # Kartenkopf (GROW_RESERVE) in den sichtbaren Bereich passt.
+    # gleichen Verhaeltnis wie die Breite, hoechstens so weit, dass alles
+    # darueber (Kopf, Kartenkopf), die Zeichnung und GROW_BELOW logische px
+    # darunter (z. B. Knoepfe unter der Karte) ohne Bildlauf sichtbar sind.
     GROW = False
     GROW_FROM = 1040
-    GROW_RESERVE = 120
+    GROW_BELOW = 8
 
     def _height_cap(self):
         cap = px(self.max_height)
@@ -334,9 +335,11 @@ class FloorPlan(tk.Canvas):
         area = self.master
         while area is not None and not isinstance(area, ScrollArea):
             area = area.master
-        if area is None:
+        if area is None or not self.winfo_ismapped():
             return cap
-        room = area.canvas.winfo_height() - px(self.GROW_RESERVE)
+        # Abstand vom oberen Rand des Inhalts (unabhaengig vom Bildlauf)
+        top = self.winfo_rooty() - area.inner.winfo_rooty()
+        room = area.canvas.winfo_height() - top - px(self.GROW_BELOW)
         return max(cap, min(int(cap * factor), room))
 
     def _building(self, with_player=True):
@@ -622,6 +625,7 @@ class WorldMap(FloorPlan):
 
     MAX_HEIGHT = 620
     GROW = True            # ab 0.63.2 (B-D-10 Teil b): waechst im breiten Fenster mit
+    GROW_BELOW = 60        # Knoepfe "Firma oeffnen" / "Meine Reise" unter der Karte
 
     def __init__(self, parent, on_place, bg=None, max_height=None):
         super().__init__(parent, lambda _room: None, bg=bg, max_height=max_height)
