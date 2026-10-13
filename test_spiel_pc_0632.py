@@ -14,6 +14,9 @@ Tests ab 0.63.2 fuer die Spiel-Fehler am PC (Bauauftrag N2):
           eine Meldung (Fenster und fehler.log ueber report_callback_exception),
           der halb gebaute Inhalt verschwindet, Reiterzeile und Inhalt zeigen
           wieder den zuletzt funktionierenden Reiter.
+  B-I-05  Eingebaute Leistungsmessung: Seitenwechsel bis fertig gezeichnet,
+          Zaehlen der Elemente ausserhalb der Dauer, Feld "messart" (2) und
+          getrennte Auswertung alter und neuer Messart (fisi_leistung).
 
 Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
 Start:  xvfb-run -a python test_spiel_pc_0632.py
@@ -383,6 +386,151 @@ class FirmaReiterFehlerTest(ReiterFehlerTest):
             restore()
         self.assertEqual(len(self.shown), len(tabs) - 1, self.shown)
         self.assertEqual(len(self.errors), len(tabs) - 1)
+
+
+# ============================================================================
+#  B-I-05: eingebaute Leistungsmessung (Seitenwechsel bis fertig gezeichnet)
+# ============================================================================
+
+class LeistungsMessartTest(AppCase):
+    """B-I-05: Die Dauer eines Seitenwechsels reicht bis die Seite fertig
+    gezeichnet ist (auch Arbeit, die erst durch die Groessen-Ereignisse beim
+    Zeichnen entsteht), das Zaehlen der Elemente liegt ausserhalb, und die
+    Zeile traegt messart 2. Alte Messdateien ohne Spalte werden gelesen, die
+    Auswertung vergleicht nur gleiche Messart."""
+
+    LOAD = 0.4    # kuenstliche Zeichenlast in Sekunden
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        super().setUp()
+        import fisi_leistung
+        self.fle = fisi_leistung
+        self.stop_preloader()
+        self.app.perf.set_active(True)
+        self.show("settings")
+
+    def tearDown(self):
+        try:
+            self.app.perf.set_active(False)
+        except Exception:   # noqa: BLE001
+            pass
+        super().tearDown()
+
+    def show(self, key):
+        # wie ein Klick: ueber die Ereignisschleife
+        self.root.after(0, lambda: self.app.show_view(key))
+        self.pump(0.6)
+
+    def _pages(self):
+        self.app.perf.rec.flush()
+        return [row for row in self.fle.read_rows()
+                if row["ereignis"] == self.fle.EVENT_PAGE]
+
+    def _with_load(self, view):
+        """Beim Zeigen einen Rahmen einhaengen, dessen erstes Groessen-Ereignis
+        (entsteht erst beim Zeichnen, nach dem ersten Leerlauf) LOAD dauert."""
+        import tkinter as tk
+        original = view.on_show
+        seen = []
+
+        def on_show():
+            original()
+            frame = tk.Frame(view, width=50, height=50)
+
+            def slow(_event):
+                if not seen:
+                    seen.append(1)
+                    time.sleep(self.LOAD)
+            frame.bind("<Configure>", slow)
+            # erst im Leerlauf einhaengen: Geometrie und Groessen-Ereignis
+            # entstehen dann erst beim Zeichnen, nach dem ersten Leerlauf
+            # (wie bei Bedienelementen, die sich beim Zeichnen neu aufbauen)
+            view.after_idle(lambda: frame.place(x=0, y=0))
+        view.on_show = on_show
+        return seen
+
+    def test_dauer_bis_fertig_gezeichnet(self):
+        seen = self._with_load(self.app.views["dashboard"])
+        self.show("dashboard")
+        self.assertEqual(seen, [1], "kuenstliche Zeichenlast lief nicht")
+        row = self._pages()[-1]
+        self.assertEqual((row["von"], row["nach"]), ("settings", "dashboard"))
+        self.assertGreaterEqual(self.fle._duration(row), self.LOAD * 1000, row)
+        self.assertEqual(self.fle.messart_of(row), self.fle.MESSART_GEZEICHNET)
+        self.assertEqual(row["messart"], "2")
+        self.assertTrue(row["elemente"] and row["aufgaben"])
+
+    def test_zaehlen_ausserhalb_der_messung(self):
+        perf = self.app.perf
+        original = perf.elements
+
+        def slow_count():
+            time.sleep(1.5)
+            return original()
+        perf.elements = slow_count
+        try:
+            self.show("dashboard")
+            self.pump(1.8)
+        finally:
+            perf.elements = original
+        row = self._pages()[-1]
+        self.assertEqual(row["nach"], "dashboard")
+        self.assertTrue(row["elemente"])
+        self.assertLess(self.fle._duration(row), 1500, row)
+
+    def test_andere_ereignisse_ohne_messart(self):
+        # Messart aendert kein Verhalten bestehender Messungen (FG-40):
+        # Start, Darstellung usw. bleiben ohne Kennzeichnung
+        self.show("dashboard")
+        self.app.perf.rec.flush()
+        rows = self.fle.read_rows()
+        others = [row for row in rows if row["ereignis"] != self.fle.EVENT_PAGE]
+        self.assertTrue(others)
+        for row in others:
+            self.assertEqual(row["messart"], "", row)
+
+    def test_alte_datei_und_getrennte_auswertung(self):
+        fle = self.fle
+        # Messdatei von 0.63.1 (ohne Spalte messart)
+        old_header = ";".join(fle.COLUMNS[:-1])
+        old_path = os.path.join(self.folder, "alt.csv")
+        with open(old_path, "w", encoding="utf-8") as handle:
+            handle.write(old_header + "\n")
+            for ms in ("36,0", "40,0", "38,0"):
+                handle.write(";".join(["2026-10-01T10:00:00.000", "0.63.1", "PC", "Linux",
+                                       "seite", "settings", "dashboard", ms] +
+                                      [""] * (len(fle.COLUMNS) - 9)) + "\n")
+        old_rows = fle.read_rows(old_path)
+        self.assertEqual(len(old_rows), 3)
+        self.assertNotIn("messart", old_rows[0])
+        self.assertEqual({fle.messart_of(row) for row in old_rows}, {fle.MESSART_ALT})
+        self.assertEqual(fle.page_times(old_rows, fle.MESSART_ALT),
+                         {"dashboard": [36.0, 40.0, 38.0]})
+        # neue Messung mit dem Programm
+        self.show("dashboard")
+        new_rows = self._pages()
+        self.assertTrue(new_rows)
+        # alt gegen neu: keine gemeinsame Messart -> kein Vergleich
+        self.assertEqual(fle.compare_pages(old_rows, new_rows), {})
+        # gleiche Messart wird verglichen
+        both = fle.compare_pages(new_rows, new_rows)
+        self.assertEqual(list(both), [fle.MESSART_GEZEICHNET])
+        self.assertIn("dashboard", both[fle.MESSART_GEZEICHNET])
+        self.assertEqual(fle.compare_pages(old_rows, old_rows),
+                         {fle.MESSART_ALT: {"dashboard": (38.0, 38.0)}})
+        # Eine alte Messdatei bekommt beim Weiterschreiben die neue Kopfzeile,
+        # ihre Zeilen bleiben alte Messart
+        rec = fle.Recorder("0.63.2", "PC", path=old_path)
+        rec.active = True
+        rec.record(fle.EVENT_PAGE, von="a", nach="b", dauer_ms=1.0,
+                   messart=fle.MESSART_GEZEICHNET, speicher=False)
+        rec.flush()
+        rows = fle.read_rows(old_path)
+        self.assertEqual([fle.messart_of(row) for row in rows],
+                         [fle.MESSART_ALT] * 3 + [fle.MESSART_GEZEICHNET])
 
 
 if __name__ == "__main__":
