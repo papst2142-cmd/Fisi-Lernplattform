@@ -244,17 +244,30 @@ class BindungTest(unittest.TestCase):
             for zeichen in range(20, len(value) + 2):
                 rows = fc.fit_lines(raw, zeichen).split("\n")
                 start = rows.index("Adressen gesamt:")
+                # Ab 0.63.2 (FG-75, S2c): der Wert ist "2^n = Zahl". Z9 gilt fuer
+                # die Zahl: in ihr nur VOR einem Tausenderpunkt umbrechen. Vor der
+                # Zahl ("2^n", "=") darf nur an den Leerzeichen umbrochen werden.
+                # Beides prueft das Zusammensetzen: Folgezeile mit "." direkt
+                # anhaengen, sonst mit genau einem Leerzeichen; das Ergebnis muss
+                # zeichengleich der Wert sein (ein Umbruch in der Zahl ohne "."
+                # erzeugte ein Leerzeichen in der Zahl und waere rot).
+                def zusammen(parts):
+                    text = parts[0] if parts else ""
+                    for part in parts[1:]:
+                        text += part if part.startswith(".") else " " + part
+                    return text
                 parts = []
                 for row in rows[start + 1:]:
                     if not row.startswith("  ") or row.startswith("   "):
                         break
                     parts.append(row[2:])
-                    if "".join(parts) == value:
+                    if zusammen(parts) == value:
                         break
-                self.assertEqual("".join(parts), value, (net, zeichen, parts))
+                self.assertEqual(zusammen(parts), value, (net, zeichen, parts))
                 for upper, lower in zip(parts, parts[1:]):
-                    self.assertTrue(lower.startswith("."), (net, zeichen, parts))
                     self.assertFalse(upper.endswith("."), (net, zeichen, parts))
+                # A5 auch fuer diese Zeile (vor der Zahl nur erlaubte Umbrueche)
+                self.assertEqual(problems(raw, zeichen)[0], [], (net, zeichen))
 
     def test_hilfe_selbst(self):
         self.assertEqual(ends_bound("a = b ="), (["="], ["a", "=", "b"]))
