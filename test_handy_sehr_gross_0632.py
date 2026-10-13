@@ -287,7 +287,10 @@ class EinzelwortTest(_Faktor):
         card = ui.Card("Projekt", [ft.Text("x")],
                        subtitle="Dein IHK-Projekt vom Antrag bis zum Fachgespräch")
         header = card.content.controls[0]
-        spalte = header.controls[1]
+        # Nacharbeit L3: Strich und Spalte (Titel/Unterschrift) in einer eigenen
+        # Zeile, damit der Strich oben auf Hoehe des Titels steht
+        links = header.controls[0]
+        spalte = links.controls[1]
         self.assertIsInstance(spalte, ft.Column)
         self.assertEqual(spalte.controls, [card.title_text, card.subtitle_text])
         self.assertIsNone(card.subtitle_text.expand)
@@ -297,6 +300,28 @@ class EinzelwortTest(_Faktor):
         self.assertTrue(card.subtitle_text.visible)
         ohne = ui.Card("Stand", [ft.Text("x")])
         self.assertFalse(ohne.subtitle_text.visible)
+
+    def test_strich_auf_hoehe_des_titels(self):
+        """Nacharbeit L3: Bei Sehr gross steht der Akzentstrich oben neben der
+        ersten Titelzeile (nicht mittig zwischen Titel und Unterschrift); eine
+        Aktion rechts bleibt mittig."""
+        aktion = ft.Text("Liste")
+        card = ui.Card("Projekt", [ft.Text("x")], subtitle="Vom Antrag bis zum Fachgespräch",
+                       action=aktion)
+        header = card.content.controls[0]
+        self.assertEqual(header.vertical_alignment, ft.CrossAxisAlignment.CENTER)
+        self.assertIs(header.controls[-1], aktion)
+        links = header.controls[0]
+        self.assertIsInstance(links, ft.Row)
+        self.assertEqual(links.vertical_alignment, ft.CrossAxisAlignment.START)
+        self.assertTrue(links.expand)
+        halter = links.controls[0]
+        self.assertIs(halter.content, card.tick)
+        # Strich 14 hoch mittig zur ersten Titelzeile (11 x 1,3 = 14,3 Schrift)
+        zeile = ui.fs(11) * 1.17
+        mitte_strich = halter.padding.top + card.tick.height / 2
+        self.assertAlmostEqual(mitte_strich, zeile / 2, delta=0.5)
+        self.assertEqual(card.tick.bgcolor, ui.C["accent"])
 
     def test_platzhalter_bricht_um(self):
         feld = ui.entry(hint=fc.NOTEBOOK_SEARCH_HINT)

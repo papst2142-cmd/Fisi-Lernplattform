@@ -113,20 +113,36 @@ class Card(ft.Container):
             self.tick = ft.Container(width=4, height=14, border_radius=2, bgcolor=accent)
             self.title_text = ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD,
                                       color=accent, expand=3)
-            middle = [self.title_text, self.subtitle_text]
+            middle = [self.tick, self.title_text, self.subtitle_text]
             self.stacked = FONT_FACTOR[0] >= self.STACK_FACTOR
             if self.stacked:
                 self.title_text.expand = self.subtitle_text.expand = None
                 self.subtitle_text.text_align = ft.TextAlign.LEFT
                 self.subtitle_text.visible = bool(subtitle)
-                middle = [ft.Column(middle, spacing=2, tight=True, expand=True)]
-            header = ft.Row([self.tick] + middle + ([action] if action is not None else []),
+                # Nacharbeit L3: Strich auf Hoehe der (ersten) Titelzeile statt
+                # mittig neben Titel und Unterschrift; eine Aktion rechts bleibt
+                # wie bisher mittig
+                middle = [ft.Row([
+                    ft.Container(content=self.tick,
+                                 padding=ft.Padding.only(top=self.tick_top())),
+                    ft.Column(middle[1:], spacing=2, tight=True, expand=True),
+                ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.START, expand=True)]
+            header = ft.Row(middle + ([action] if action is not None else []),
                             spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             column = [header, self.body]
         super().__init__(
             content=ft.Column(column, spacing=12, tight=True),
             bgcolor=C["card"], border_radius=16,
             border=ft.Border.all(1, C["border"]), padding=padding, expand=expand)
+
+    TICK_HEIGHT = 14
+    LINE_HEIGHT = 1.17   # Zeilenhoehe der Schrift (Roboto) je Schriftgroesse
+
+    @classmethod
+    def tick_top(cls):
+        """Ab 0.63.2 (Nacharbeit L3): Abstand oben, damit der 14 hohe Strich
+        mittig zur ersten Titelzeile (11 x Faktor) steht."""
+        return max(0.0, round((fs(11) * cls.LINE_HEIGHT - cls.TICK_HEIGHT) / 2, 1))
 
     def set_subtitle(self, value, color=None):
         self.subtitle_text.value = value
