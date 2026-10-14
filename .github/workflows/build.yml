@@ -241,7 +241,7 @@ jobs:
           "$RUNNER_TEMP/audit/bin/python" -m pip install --retries 10 --timeout 60 --quiet --require-hashes -r requirements-lock-pip-audit.txt
           python pruefung/pip_audit_lauf.py --pip-audit "$RUNNER_TEMP/audit/bin/pip-audit" \
             requirements-lock-bau.txt requirements-lock-tests.txt requirements-lock-flet.txt \
-            requirements-lock-certifi.txt requirements-lock-pip-audit.txt
+            requirements-lock-certifi.txt requirements-lock-pip-audit.txt pruefung/probe_luecke.txt
 
       # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
       # Unter macOS laeuft sonst keine Testsammlung.
