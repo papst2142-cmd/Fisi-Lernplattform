@@ -22,6 +22,7 @@ SHARED_FILES = ["fisi_core.py", "fisi_theme.py", "fisi_update.py", "fisi_sync.py
                 "fisi_leistung.py",   # ab 0.58.1: Leistungsmessung
                 "fisi_optionen.py",   # ab 0.59: Aufbau und Suche der Optionen
                 "fisi_rechtliches.py",   # ab 0.62: Lizenz, Hinweistext, Erststart
+                "fisi_trennung.py",   # ab 0.63.2 (N8): Umbruch langer Titel
                 "LICENSE.txt"]
 SHARED_DIRS = ["inhalte"]
 # Ab 0.62: Hinweise zu Fremdbestandteilen der Handy-App. Die Datei im Repo

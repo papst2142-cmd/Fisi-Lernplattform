@@ -37,6 +37,7 @@ mobile/src/fisi_hilfe.py
 mobile/src/fisi_leistung.py
 mobile/src/fisi_optionen.py
 mobile/src/fisi_rechtliches.py
+mobile/src/fisi_trennung.py
 mobile/src/LICENSE.txt
 mobile/src/THIRD_PARTY_NOTICES.txt
 mobile/src/inhalte/

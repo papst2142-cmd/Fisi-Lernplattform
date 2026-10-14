@@ -355,6 +355,7 @@ Programmdateien (PC):
   fisi_hilfe.py         Rundgang und Hilfe (Texte fuer PC und Handy)
   fisi_leistung.py      Leistungsmessung (leistungsmessung.csv)
   fisi_optionen.py      Aufbau der Optionen (PC und Handy gleich)
+  fisi_trennung.py      Umbruch langer Titel (PC und Handy gleich, ab 0.63.2)
   fisi_verknuepfung.py  Desktop-Verknuepfung unter Linux
 
 Weitere Dateien:

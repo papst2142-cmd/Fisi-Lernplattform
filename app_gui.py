@@ -29,6 +29,7 @@ import time
 import traceback
 import webbrowser
 import tkinter as tk
+import tkinter.font as tkfont   # ab 0.63.2 (N8): Titelbreiten messen
 import _tkinter
 from tkinter import ttk, messagebox
 
@@ -112,6 +113,7 @@ from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
+import fisi_trennung  # noqa: E402  (ab 0.63.2, N8 B-D-06: Umbruch der Listentitel)
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
@@ -556,6 +558,10 @@ class PagedList:
         self.lbl_empty = make_label(self.rows_box, "Keine Treffer für diese Auswahl.",
                                     font=F["small"], fg=C["muted"])
         self.rows = [self._make_row(slot) for slot in range(LIST_PAGE_SIZE)]
+        # Ab 0.63.2 (N8, B-D-06): Breite der Zeilen geaendert -> Titel neu
+        # umbrechen (nur bei geaenderter Breite, nicht bei neuer Hoehe)
+        for row in self.rows:
+            row["title_box"].bind("<Configure>", self._rewrap_titles, add="+")
 
         pager = transparent_frame(parent)
         pager.pack(fill="x", pady=(10, 0))
@@ -569,18 +575,77 @@ class PagedList:
                                    parent_bg=C["card"], name=PAGE_NEXT)
         self.btn_next.pack(side="right")
 
+    # Ab 0.63.2 (N8, B-D-06): bisherige feste Umbruchbreite der Titel; sie
+    # bleibt die Breite, die der Titel fuer die Anordnung der Ansicht
+    # verlangt (Spaltenbreiten wie bisher). Umbrochen wird an der wirklichen
+    # Breite der Zeile (fisi_trennung, PC und Handy eine Regel).
+    TITLE_WRAP = 190
+
     def _make_row(self, slot):
         row, marker, inner = clickable_row(self.rows_box, C["purple"])
-        title = ctk.CTkLabel(inner, text="", text_color=C["text_dim"],
+        # Ab 0.63.2 (N8, B-D-06): Titel in einem Rahmen mit fester verlangter
+        # Breite (TITLE_WRAP) - der Titel selbst liegt per place darin und
+        # nutzt die ganze Zeilenbreite, ohne die Spalte breiter zu machen
+        # (sonst wuerde die Anordnung der Ansicht vom Titel abhaengen)
+        title_box = transparent_frame(inner, width=self.TITLE_WRAP, height=1,
+                                      cursor="hand2")
+        title_box.pack(fill="x")
+        title = ctk.CTkLabel(title_box, text="", text_color=C["text_dim"],
                              font=F["small_bold"], height=0, anchor="w",
-                             justify="left", wraplength=190, cursor="hand2")
-        title.pack(anchor="w")
+                             justify="left", wraplength=self.TITLE_WRAP, cursor="hand2")
+        title.place(x=0, y=0, relwidth=1)
         sub = ctk.CTkLabel(inner, text="", text_color=C["muted"], font=F["tiny"],
                            anchor="w", height=0, cursor="hand2")
         sub.pack(anchor="w")
-        bind_click((row, inner, title, sub, marker), lambda _e, s=slot: self._clicked(s))
+        bind_click((row, inner, title, sub, marker, title_box),
+                   lambda _e, s=slot: self._clicked(s))
         return {"frame": row, "marker": marker, "title": title, "sub": sub,
-                "position": None}
+                "title_box": title_box, "raw": "", "position": None}
+
+    def _title_width(self, row):
+        """Breite, in der der Titel umbricht (echte Pixel): die Breite der
+        Zeile; vor dem ersten Zeichnen die bisherige feste Breite."""
+        width = row["title_box"].winfo_width()
+        if width <= 1:
+            width = px(self.TITLE_WRAP)
+        return width
+
+    def _set_title(self, row, text):
+        """Ab 0.63.2 (N8, B-D-06): Titel umbrechen - Umbruchbreite folgt der
+        Zeile, ein zu langes Wort wird nach der Regel aus fisi_trennung
+        geteilt, die Nummer bleibt beim Titel. Passt der Titel mit dem
+        gewoehnlichen Umbruch, bleibt der Text unveraendert."""
+        row["raw"] = text
+        width = self._title_width(row)
+        font = tkfont.Font(font=tk_font(F["small_bold"]))
+        shown = fisi_trennung.anzeige_text(text, width, font.measure)
+        title = row["title"]
+        scale = px(1000) / 1000.0 or 1.0
+        wrap = width / scale
+        if title.cget("text") != shown or abs((title.cget("wraplength") or 0) - wrap) > 0.5:
+            title.configure(text=shown, wraplength=wrap)
+        height = title.winfo_reqheight()
+        if abs(row["title_box"].winfo_reqheight() - height) > 0:
+            row["title_box"].configure(height=height / scale)
+
+    def _rewrap_titles(self, event=None):
+        if event is not None:
+            if event.width == event.widget.__dict__.get("_fisi_title_width"):
+                return
+            event.widget._fisi_title_width = event.width
+        if getattr(self, "_rewrap_pending", False):
+            return
+        self._rewrap_pending = True
+
+        def run():
+            self._rewrap_pending = False
+            try:
+                for row in self.rows:
+                    if row["position"] is not None:
+                        self._set_title(row, row["raw"])
+            except tk.TclError:
+                pass
+        self.rows_box.after_idle(run)
 
     def _clicked(self, slot):
         position = self.rows[slot]["position"]
@@ -617,8 +682,8 @@ class PagedList:
             status, level = self.statuses.get(position, (Q_OPEN, ""))
             mark = " ✓" if status == Q_DONE else ""
             row["position"] = position
-            row["title"].configure(text="%d. %s%s" % (position + 1, item["title"], mark),
-                                   text_color=C["text"] if active else C["text_dim"])
+            row["title"].configure(text_color=C["text"] if active else C["text_dim"])
+            self._set_title(row, "%d. %s%s" % (position + 1, item["title"], mark))
             sub = self.subtitle(item)
             if status != Q_OPEN:
                 sub += "  ·  " + Q_STATUS_NAME[status]
