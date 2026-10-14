@@ -636,7 +636,13 @@ class ProjektLoeschenTest(unittest.TestCase):
         self.assertTrue(local.startswith("„Netzplan“ löschen?"))
         self.assertIn("alle seine Eingaben werden gelöscht", local)
         self.assertIn("Ältere Sicherungsdateien", local)
-        self.assertNotIn("GitHub", local)
+        # ab 0.63.2 (F31 (b)): frueher genutzter Abgleich, GitHub genau einmal,
+        # keine Zusage zur Weitergabe
+        self.assertIn("Falls du den Abgleich früher genutzt hast, enthalten frühere "
+                      "Stände im Abgleich-Repository auf GitHub die Eingaben weiterhin.", local)
+        self.assertEqual(local.count("GitHub"), 1)
+        self.assertNotIn("nach dem Abgleich", local)
+        self.assertNotIn("anderen Geräten", local)
         with open(os.path.join(CODE, "app_gui.py"), encoding="utf-8") as handle:
             pc = handle.read()
         with open(os.path.join(CODE, "mobile", "src", "main.py"), encoding="utf-8") as handle:
