@@ -5,6 +5,7 @@
 # 5 Runden abwechselnd vorher/nachher auf einem fest gesaeten grossen Lernstand
 # (20.000 Karteikarten-Ereignisse, 50.000 Quizantworten): Dashboard nach je
 # 3 Quizantworten, 3 Karteikarten und ohne Aenderung, gesamt und "faellig".
+# Dazu Worst Case (W44 Nachtrag 2.1): Index mit altem Fragetext, always_full gesetzt.
 name: Messung 0.63.2 FG-107+FG-110 (nur Messung)
 
 on:
@@ -48,6 +49,15 @@ jobs:
             if [ $((r % 2)) = 1 ]; then a=base; b=neu; else a=neu; b=base; fi
             for s in $a $b; do
               timeout 900 python messung_0632_fg110/fg110_messung.py "$(cd ../st_$s && pwd)" "$RUNNER_TEMP/gross.db" "$RUNNER_TEMP/fg110.jsonl" $s $r || echo "::warning::Runde $r $s Rueckgabe $?"
+            done
+          done
+      - name: Messung Worst Case (alter Fragetext, always_full; 5 Runden abwechselnd)
+        continue-on-error: true
+        run: |
+          for r in 1 2 3 4 5; do
+            if [ $((r % 2)) = 1 ]; then a=base; b=neu; else a=neu; b=base; fi
+            for s in $a $b; do
+              timeout 900 python messung_0632_fg110/fg110_messung.py "$(cd ../st_$s && pwd)" "$RUNNER_TEMP/gross.db" "$RUNNER_TEMP/fg110.jsonl" $s $r worst || echo "::warning::Worst Runde $r $s Rueckgabe $?"
             done
           done
       - name: Rohwerte im Log
