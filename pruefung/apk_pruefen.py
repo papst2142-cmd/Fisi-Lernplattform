@@ -28,7 +28,9 @@ import zipfile
 
 PACKAGE = "io.github.papst2142cmd.fisi_lernplattform"
 # Ab 0.62: Lizenz und Hinweise zu Fremdbestandteilen muessen in der App liegen
-APP_FILES = ("LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "fisi_rechtliches.pyc")
+# Ab 0.63.2 (N8, B3 a): gemeinsame Umbruchregel fisi_trennung (SHARED_FILES)
+APP_FILES = ("LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "fisi_rechtliches.pyc",
+             "fisi_trennung.pyc")
 LABEL = "FI Lernplattform"
 SIGNATURE_IDS = {0x7109871A: "v2", 0xF05368C0: "v3"}
 

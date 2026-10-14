@@ -5,9 +5,8 @@ Handy), ohne Anzeige.
 
 Weisung zu Meldung 38/40 B3 (a): eigenes ungeschuetztes Modul, Eintrag in
 mobile/vorbereiten.py SHARED_FILES (die Handy-App bekommt es), Kopie in
-.gitignore. Die Pruefung, dass die fertige APK es enthaelt
-(pruefung/apk_pruefen.py APP_FILES), braucht eine Aenderung an
-apk_pruefen.py -> FG-97-Antrag (bau_0.63.2/n8), hier nicht gebaut.
+.gitignore. Die APK-Pruefung verlangt es in app.zip (pruefung/apk_pruefen.py
+APP_FILES, FG-97, Weisung zu Meldung 42 Frage 5).
 
 Regel (Testplan N8 K2, K4, K5, A-N8-05) mit fester Zeichenbreite gemessen:
   * jede Zeile passt in die Breite (Wortliste x Breiten 80..400 px)
@@ -113,6 +112,12 @@ class HandyPaketTest(unittest.TestCase):
         sys.path.insert(0, os.path.join(HERE, "mobile"))
         import vorbereiten
         self.assertIn("fisi_trennung.py", vorbereiten.SHARED_FILES)
+
+    def test_apk_pruefung_kennt_modul(self):
+        """B3 (a): Die APK-Pruefung verlangt fisi_trennung.pyc in app.zip."""
+        sys.path.insert(0, os.path.join(HERE, "pruefung"))
+        import apk_pruefen
+        self.assertIn("fisi_trennung.pyc", apk_pruefen.APP_FILES)
 
     def test_gitignore(self):
         with open(os.path.join(HERE, ".gitignore"), encoding="utf-8") as handle:
