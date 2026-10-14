@@ -26,6 +26,9 @@ Was verglichen wird (Auflage P-14):
      jeder Vergleich "gleich" (Lauf gegen Lauf nur zur Info, wie 3).
   6. Alter Fingerabdruck (spiel/bericht_0.54/werkzeuge/fingerabdruck.py) mit
      beiden Codes, Soll f2b59ce8...6656.
+Ab 0.63.2 (E-5) wird je Stand auch der Rueckblick verglichen (journey,
+journey_stats, run_metrics): ohne Doppel muss er gleich sein, in D5 ist der
+Unterschied erwartet.
 Jeder Unterschied ausser in 2. ist ein Befund ("ABWEICHUNG").
 
 Aufruf (Python 3.12):
@@ -85,6 +88,19 @@ def _plain(value):
     return repr(value)
 
 
+def _rueckblick(fg, state):
+    """Ab 0.63.2 (E-5): Rueckblick (Meine Reise) - Tagebuch, Statistik und
+    Kennzahlen. Mit Weg A rechnen sie ohne Doppel; bei Staenden ohne Doppel
+    muessen sie alt und neu gleich sein."""
+    out = {}
+    for name in ("journey", "journey_stats", "run_metrics"):
+        try:
+            out[name] = _plain(getattr(fg, name)(state))
+        except Exception as exc:  # noqa: BLE001 - wird verglichen und gemeldet
+            out[name] = "%s: %s" % (type(exc).__name__, exc)
+    return out
+
+
 def rechne(code, eingabe, ausgabe):
     """Kindprozess: Ereignislisten aus eingabe (JSON: {name: [[ts, typ,
     daten], ...]}) mit dem Code in code berechnen, Ergebnis nach ausgabe."""
@@ -102,7 +118,8 @@ def rechne(code, eingabe, ausgabe):
             result[name] = {"kern": {"tage": state.days_done, "tag": state.day,
                                      "geld": state.money, "tickets": state.tickets_done,
                                      "firma": bool(state.firm)},
-                            "alle": _plain(werte)}
+                            "alle": _plain(werte),
+                            "rueckblick": _rueckblick(fg, state)}
         except Exception as exc:  # noqa: BLE001 - wird verglichen und gemeldet
             result[name] = {"fehler": "%s: %s" % (type(exc).__name__, exc)}
     with open(ausgabe, "w", encoding="utf-8") as handle:
@@ -245,6 +262,11 @@ def vergleiche(staende, alt, neu, erwartet=None):
         if not gleich and "alle" in a and "alle" in n:
             eintrag["unterschiede"] = sorted(key for key in set(a["alle"]) | set(n["alle"])
                                              if a["alle"].get(key) != n["alle"].get(key))[:40]
+            # ab 0.63.2 (E-5): auch Unterschiede im Rueckblick nennen
+            eintrag["unterschiede"] += sorted(
+                "rueckblick." + key for key in set(a.get("rueckblick", {})) |
+                set(n.get("rueckblick", {}))
+                if a.get("rueckblick", {}).get(key) != n.get("rueckblick", {}).get(key))
         if name in erwartet:
             eintrag["erwartet"] = erwartet[name]
             eintrag["ok"] = (eintrag["alt"] and eintrag["neu"] and
@@ -339,6 +361,10 @@ def main():
     ap.add_argument("--stufe", choices=("schnell", "voll"), default="schnell")
     ap.add_argument("--nur", default="1,2,3,4,5,6")
     ap.add_argument("--teil4", default=TEIL4)
+    # Ab 0.63.2 (E-5): Mit alt = 0.63.1 (B-G-26 schon drin) sind die
+    # Kopfzahlen von D5 alt und neu gleich (2 Tage, 300); verschieden ist dann
+    # nur der Rueckblick (erwartet). Aufruf dafuer mit --d5-alt 2,300.
+    ap.add_argument("--d5-alt", default="3,450")
     args = ap.parse_args()
     alt, neu = os.path.abspath(args.alt), os.path.abspath(args.neu)
     arbeit = os.path.abspath(args.arbeit)
@@ -392,7 +418,8 @@ def main():
             _rechne_mit(neu, staende, arbeit, "abzug_neu")))
     if "2" in teile:
         staende = d5_staende()
-        erwartet = {name: {"alt": [3, 450], "neu": [2, 300]} for name in staende}
+        d5_alt = [int(part) for part in args.d5_alt.split(",")]
+        erwartet = {name: {"alt": d5_alt, "neu": [2, 300]} for name in staende}
         melde("2 Fall D5 (Unterschied erwartet)", vergleiche(
             staende, _rechne_mit(alt, staende, arbeit, "d5_alt"),
             _rechne_mit(neu, staende, arbeit, "d5_neu"), erwartet))

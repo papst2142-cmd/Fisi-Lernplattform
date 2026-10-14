@@ -521,8 +521,15 @@ FAILED_TEXT = ("Das Update auf Version %(neu)s wurde nicht installiert. Installi
                "ist weiterhin Version %(alt)s. Dein Lernstand ist davon nicht "
                "betroffen.\n\n%(grund)s\n\nDas Protokoll liegt hier:\n%(pfad)s\n"
                "Es steht auch unter Optionen › Diagnose und Werkzeuge › Problem melden.\n\n"
-               "Tipp: PC neu starten und das Update erneut versuchen. Klappt es "
-               "dann nicht, den Installer von der Download-Seite von Hand starten.")
+               "%(tipp)s")
+# Tipp je System (ab 0.63.2): Das Fenster erscheint nur unter Windows und
+# beim AppImage (nur dort merkt sich install() ein laufendes Update).
+FAILED_TIP_WINDOWS = ("Tipp: PC neu starten und das Update erneut versuchen. Klappt es "
+                      "dann nicht, den Installer von der Download-Seite von Hand starten.")
+FAILED_TIP_APPIMAGE = ("Tipp: Das Update später erneut versuchen. Klappt es dann nicht, "
+                       "die neue AppImage-Datei von der Download-Seite laden, ausführbar "
+                       "machen (z. B. chmod +x) und von Hand starten. Die bisherige Datei "
+                       "erst löschen, wenn die neue läuft.")
 REASON_ROLLBACK = ("Der Installer konnte nicht alle Dateien ersetzen und hat alle "
                    "Änderungen rückgängig gemacht.")
 REASON_UNKNOWN = "Der Installer hat die Installation nicht abgeschlossen."
@@ -624,11 +631,13 @@ def finish_pending_update(current_version):
                      % (target, current_version))
     if backup:
         reason = REASON_APPIMAGE
+        tip = FAILED_TIP_APPIMAGE
     else:
         reason = REASON_ROLLBACK if _installer_rolled_back() else REASON_UNKNOWN
+        tip = FAILED_TIP_WINDOWS
     return "fehler", FAILED_TEXT % {
         "neu": target, "alt": current_version, "grund": reason,
-        "pfad": update_log_path()}
+        "pfad": update_log_path(), "tipp": tip}
 
 
 # ============================================================================
