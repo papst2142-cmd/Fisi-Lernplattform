@@ -13,6 +13,9 @@ Regel (Testplan N8 K2, K4, K5, A-N8-05) mit fester Zeichenbreite gemessen:
   * ein zu langes Wort wird nach einem vorhandenen Bindestrich geteilt
   * die Nummer "4." bleibt beim ersten Wort
   * passt der Titel mit dem gewoehnlichen Umbruch, bleibt der Text gleich
+  * jedes Wort ueber 18 Zeichen in Titeln, Listentiteln, Beschriftungen und
+    Rechenwegen hat einen Listeneintrag (Weisung zu Meldung 43, 2.1; rot bei
+    jedem fehlenden Wort), maschinelle Vorpruefung aller Eintraege (i)-(iv)
   * Silbentrennung nur nach der bestaetigten Liste (Weisung zu Meldung 42,
     Fragen 11-13, Meldung 42 Anhang A): alle 33 Woerter mit genau ihren
     Stellen, "nie trennen", mindestens 2 Buchstaben je Seite, bevorzugte
@@ -23,6 +26,7 @@ Start:  python test_trennung_0632.py
 
 import ast
 import os
+import re
 import sys
 import unittest
 
@@ -186,7 +190,7 @@ class ListeTest(unittest.TestCase):
         """Frage 11 (b): ein Wort ausserhalb der Liste bekommt nur Stellen nach
         einem vorhandenen Bindestrich (keine Silbenregel)."""
         listenwoerter = {erwartung(e)[0].lower() for e in ANHANG_A}
-        self.assertEqual({w.lower() for w in (erwartung(e)[0] for e in ft.WOERTER)},
+        self.assertEqual({w.lower() for w in (erwartung(e)[0] for e in ft.ANHANG_A)},
                          listenwoerter)
         for wort in ("Kundenzufriedenheitsanalyse", "Datensicherungskonzept",
                      "Wirtschaftlichkeit", "Anpassung", "Netzwerk"):
@@ -268,6 +272,182 @@ class ListeTest(unittest.TestCase):
     def test_nummer_titel_handy(self):
         self.assertEqual(ft.nummer_titel(4, "Wirtschaftlichkeit", " ✓"),
                          "4. Wirtschaftlichkeit ✓")
+
+
+# ---------------------------------------------------------------------------
+#  Lange Woerter (Weisung zu Meldung 43, 2.1)
+# ---------------------------------------------------------------------------
+GRENZE = 18
+# Dateien, deren Zeichenketten als Titel/Beschriftung erscheinen (AST)
+QUELL_DATEIEN = ("app_gui.py", "fisi_widgets.py", "fisi_optionen.py", "fisi_hilfe.py",
+                 "fisi_projekt.py", "mobile/src/main.py", "mobile/src/ui.py")
+TITEL_KW = {"title", "subtitle", "heading", "kicker"}
+TEXT_KW = {"text", "label", "caption", "placeholder", "placeholder_text", "hint",
+           "tooltip", "value"}
+TEXT_AUFRUFE = {"make_label", "NeoButton", "Card", "CTkLabel", "CTkButton",
+                "section_title", "Text", "label"}
+# Anker: muessen gefunden werden (Grenze und alle vier Quellen wirken)
+ANKER = {"Tabellenkalkulation": "Listentitel", "Ausbildungsverordnung": "Titel",
+         "Schnittstellenkennung": "Rechenwege", "Netzwerkmodernisierung": "Listentitel"}
+
+
+def _konstanten(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return [node.value]
+    if isinstance(node, ast.JoinedStr):
+        return [v.value for v in node.values if isinstance(v, ast.Constant)]
+    if isinstance(node, ast.BinOp):
+        return _konstanten(node.left) + _konstanten(node.right)
+    return []
+
+
+def quelltexte():
+    """{Gruppe: [Text, ...]} fuer Titel, Listentitel, Beschriftungen,
+    Rechenwege (Muster werkzeug/lange_woerter.py der Meldung 43)."""
+    sys.path.insert(0, os.path.join(HERE, "pruefung"))
+    import fisi_core as fc
+    import fisi_lernen as fl
+    import rechenweg_texte as rt
+    texte = {"Listentitel": [], "Titel": [], "Beschriftungen": [], "Rechenwege": []}
+    for daten in (fc.AP1_SZENARIEN, fc.SZENARIEN, fc.PROJEKTARBEITEN):
+        texte["Listentitel"] += [item["title"] for item in daten]
+    for datei in QUELL_DATEIEN:
+        with open(os.path.join(HERE, datei), encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                for kw in node.keywords:
+                    if kw.arg in TITEL_KW:
+                        texte["Titel"] += _konstanten(kw.value)
+                    elif kw.arg in TEXT_KW:
+                        texte["Beschriftungen"] += _konstanten(kw.value)
+                name = getattr(node.func, "attr", getattr(node.func, "id", ""))
+                if name in TEXT_AUFRUFE and len(node.args) > 1:
+                    texte["Beschriftungen"] += _konstanten(node.args[1])
+            if isinstance(node, ast.Assign) and len(node.targets) == 1 and \
+                    getattr(node.targets[0], "id", "") in ("NAV_ITEMS", "VIEW_TITLES"):
+                for sub in ast.walk(node.value):
+                    texte["Titel"] += [t for t in _konstanten(sub)
+                                       if not t.isidentifier() or t.isupper()]
+    texte["Rechenwege"] += list(rt.erzeuge(fc, fl).values())
+    for kind, _name in fl.TRAINER_KINDS:
+        for level, _label in fl.TRAINER_LEVELS:
+            for seed in range(rt.TRAINER_SEEDS):
+                task = fl.trainer_task(kind, level, "e3-%d" % seed)
+                if kind not in rt.ALTE_ARTEN:
+                    texte["Rechenwege"].append(rt.trainer_text(task))
+                if seed < 5:
+                    texte["Beschriftungen"] += [label for _key, label in task.fields]
+    return texte
+
+
+def lange_woerter(texte):
+    """{Wort: {Gruppen}} aller Woerter ueber GRENZE Zeichen (Satzzeichen am
+    Rand ab), ohne Zahlen/Adressen ("nie trennen") und ohne Woerter, die ein
+    vorhandener Bindestrich in Stuecke <= GRENZE teilt."""
+    funde = {}
+    for gruppe, liste in texte.items():
+        for text in liste:
+            for token in re.split(r"\s+", text):
+                anfang, ende = ft._kern(token)
+                kern = token[anfang:ende]
+                if len(kern) <= GRENZE:
+                    continue
+                if re.fullmatch(r"[0-9A-Fa-f:./x^()]+", kern) or \
+                        sum(z.isalpha() for z in kern) < len(kern) / 2:
+                    continue
+                if "-" in kern and all(len(t) <= GRENZE for t in kern.split("-")) and \
+                        ft.trennstellen(kern):
+                    continue
+                funde.setdefault(kern, set()).add(gruppe)
+    return funde
+
+
+NIE_IN = ("ch", "ck", "ie", "ei", "au", "eu")
+
+
+def vorpruefung(eintraege, quellwoerter=None):
+    """Maschinelle Vorpruefung (Weisung zu Meldung 43, 2.1). Liefert eine
+    Liste von Befunden (leer = bestanden):
+      (i)   die Teile ergeben zusammen das Wort; mit quellwoerter: das Wort
+            steht genau so in einer Quelle
+      (ii)  mindestens 2 Buchstaben links und rechts jeder Stelle
+      (iii) keine Stelle in ch, sch, ie, ei, au, eu, ck und keine in einer
+            Abkuerzung mit Ziffer ("nie trennen")
+      (iv)  kein Wort doppelt"""
+    befunde, gesehen = [], {}
+    for eintrag in eintraege:
+        teile = re.split("[‖|]", eintrag)
+        wort = "".join(teile)
+        alle = ft._liste([eintrag])[wort.lower()][0]
+        if not all(teile) or not re.fullmatch(r"[\w-]+", wort) or "_" in wort:
+            befunde.append("(i) %s: leere oder fremde Teile" % eintrag)
+        if quellwoerter is not None and wort not in quellwoerter:
+            befunde.append("(i) %s: %r steht so in keiner Quelle" % (eintrag, wort))
+        for stelle in alle:
+            if sum(z.isalpha() for z in wort[:stelle]) < 2 or \
+                    sum(z.isalpha() for z in wort[stelle:]) < 2:
+                befunde.append("(ii) %s: Stelle %d mit weniger als 2 Buchstaben"
+                               % (eintrag, stelle))
+            paar = wort[stelle - 1:stelle + 1].lower()
+            if paar in NIE_IN or wort[stelle - 1:stelle + 2].lower() == "sch":
+                befunde.append("(iii) %s: Stelle %d in %r" % (eintrag, stelle, paar))
+            links = wort[:stelle].rsplit("-", 1)[-1]
+            rechts = wort[stelle:].split("-", 1)[0]
+            if links and rechts and re.search(r"\d", links + rechts):
+                befunde.append("(iii) %s: Stelle %d in einer Abkuerzung mit Ziffer"
+                               % (eintrag, stelle))
+        if wort.lower() in gesehen:
+            befunde.append("(iv) %s: doppelt (auch %s)" % (eintrag, gesehen[wort.lower()]))
+        gesehen[wort.lower()] = eintrag
+    return befunde
+
+
+class LangeWoerterTest(unittest.TestCase):
+    """Weisung zu Meldung 43, 2.1: jedes Wort ueber 18 Zeichen in Titeln,
+    Listentiteln, Beschriftungen und Rechenwegen hat einen Listeneintrag.
+    Endet ROT bei jedem fehlenden Wort (nicht abgeschwaecht)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.funde = lange_woerter(quelltexte())
+
+    def test_anker_gefunden(self):
+        """Grenze und Quellen wirken (sonst waere der Test still leer)."""
+        for wort, gruppe in ANKER.items():
+            self.assertIn(gruppe, self.funde.get(wort, set()), wort)
+
+    def test_jedes_lange_wort_hat_einen_eintrag(self):
+        liste = {w.lower() for w in ft._LISTE}
+        fehlen = sorted("%s (%s)" % (wort, ", ".join(sorted(gruppen)))
+                        for wort, gruppen in self.funde.items()
+                        if wort.lower() not in liste)
+        self.assertEqual(fehlen, [], "%d lange Woerter ohne Eintrag in "
+                         "fisi_trennung.WOERTER" % len(fehlen))
+
+
+class VorpruefungTest(unittest.TestCase):
+    """Maschinelle Vorpruefung (i)-(iv) ueber alle Eintraege der Liste."""
+
+    def test_alle_eintraege(self):
+        self.assertEqual(vorpruefung(ft.WOERTER), [])
+
+    def test_neue_woerter_stehen_so_in_den_quellen(self):
+        """(i) fuer die Woerter aus Meldung 43: Schreibweise wie in der Quelle."""
+        quellwoerter = set(lange_woerter(quelltexte()))
+        self.assertEqual(vorpruefung(ft.LANGE_WOERTER, quellwoerter), [])
+        self.assertEqual(len(ft.LANGE_WOERTER), 94)
+
+    def test_pruefung_greift(self):
+        """Die Pruefung selbst erkennt jeden Fall (eigene Kontrollfehler)."""
+        self.assertTrue(vorpruefung(["Rec|hner"]))            # (iii) ch
+        self.assertTrue(vorpruefung(["Wa|sche"]) == [])       # vor sch erlaubt
+        self.assertTrue(vorpruefung(["Was|che"]))             # (iii) s|ch
+        self.assertTrue(vorpruefung(["Zu|cker", "Zuc|ker"])[0].startswith("(iii)"))
+        self.assertTrue(vorpruefung(["U|ni|ver|si|tät"]))     # (ii)
+        self.assertTrue(vorpruefung(["IPv|6-‖Adres|se"]))     # (iii) Ziffer
+        self.assertTrue(vorpruefung(["Re|chen", "re|chen"]))  # (iv)
+        self.assertTrue(vorpruefung(["Re||chen"]))            # (i)
 
 
 class HandyPaketTest(unittest.TestCase):
