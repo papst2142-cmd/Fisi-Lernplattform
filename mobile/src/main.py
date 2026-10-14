@@ -3361,6 +3361,8 @@ class CalcScreen(Screen):
             panel["page_text"].value = fc.SUBNET_PAGE_OF % (fc.de_int(page), fc.de_int(pages))
             for where, button in panel["page_buttons"].items():
                 button.disabled = page == 1 if where in ("first", "back") else page == pages
+                # Ab 0.63.2 (N-h, FG-71): gesperrt gedaempft wie _paint_page_buttons
+                button.icon_color = C["muted"] if button.disabled else C["accent"]
 
     @staticmethod
     def _fold(parts):
