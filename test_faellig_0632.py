@@ -14,12 +14,16 @@ wie ein voller Neuaufbau.
   * T5 Lernstand unveraendert, T6 Rueckfall, T9 Waechter "kein UPDATE"
   * KF15: Schreiben zwischen Stempel und Zeilen
   * T7 Dashboard (Fenster): Zaehlprobe und Wechsel der Datenbank
+  * FG-110: alte Fragetexte, die apply_question_renames an Ort und Stelle
+    umschreibt (B1), und Tabellen ohne AUTOINCREMENT (B2)
 
 Kein skip: Fehlt die Anzeige, endet die Fensterklasse mit ERROR.
 Aufruf:  xvfb-run -a python test_faellig_0632.py
 """
 import datetime
+import gzip
 import hashlib
+import json
 import os
 import random
 import re
@@ -42,6 +46,8 @@ os.environ["FISI_VORLADEN"] = "0"
 
 import fisi_core as fc  # noqa: E402
 import fisi_lernen as fl  # noqa: E402
+import fisi_sicherung  # noqa: E402
+import fisi_sync  # noqa: E402
 
 # ReviewPlan aus 1e7965a (fisi_lernen.py Zeilen 91-167, ganze Klasse), woertlich. Der Hash
 # sichert, dass die Referenz nicht nachgezogen wird.
@@ -510,7 +516,11 @@ class IndexTest(Base):
 
     def test_t9_waechter_kein_update_im_lernstand(self):
         """Der Index sieht keine Aenderung an Ort und Stelle. Erlaubt sind nur
-        die drei bekannten UPDATE-Stellen (keine trifft schon gelesene Zeilen)."""
+        die drei bekannten UPDATE-Stellen. uid und utc_offset liest der Index
+        nicht. apply_question_renames trifft auch schon gelesene Zeilen (nach
+        "Alles ersetzen" mit alten Texten oder aus einem zweiten Prozess);
+        deshalb baut der Index voll auf, solange er alte Texte haelt (FG-110,
+        FG110Test)."""
         allowed = {("fisi_core.py", "UPDATE %s SET question = ? WHERE question = ?"),
                    ("fisi_core.py", "UPDATE %s SET uid = lower(hex(randomblob(16))) "),
                    ("fisi_sync.py", "UPDATE %s SET utc_offset = ? WHERE rowid = ?")}
@@ -594,6 +604,122 @@ class IndexTest(Base):
                                                if k[0] in fl.SR_SOURCES})
         self.assertIn(injected[-1], ("gesperrt", "geschrieben"))
         KF15_EINSCHUB.append(injected[-1])
+
+
+class FG110Test(Base):
+    """FG-110: Zeilen, die apply_question_renames an Ort und Stelle
+    umschreibt (B1), und Tabellen ohne AUTOINCREMENT (B2)."""
+
+    @staticmethod
+    def renamed(table, valid):
+        return next((old, new) for old, new in fc.QUESTION_RENAMES[table].items()
+                    if new in valid and old not in valid)
+
+    def backup_with(self, rows):
+        """Sicherung eines anderen Geraets (aeltere Version) mit diesen Zeilen."""
+        other = fc.DBManager(os.path.join(self.dir, "anderes_%d.db" % len(os.listdir(self.dir))))
+        conn = sqlite3.connect(other.db_path)
+        for table, timestamp, key, correct in rows:
+            insert(conn, table, timestamp, key, correct)
+        conn.commit()
+        conn.close()
+        return json.loads(gzip.decompress(fisi_sicherung.create_backup(other, "0.63.1")))
+
+    def assertAllDays(self, index, msg):
+        for today in HEUTE:
+            self.assertSame(index, today=today, msg="%s %s" % (msg, today))
+        self.assertEqual(index.results, {k: v for k, v in self.db.question_results().items()
+                                         if k[0] in fl.SR_SOURCES}, msg)
+
+    def test_b1_alles_ersetzen_dann_abgleich(self):
+        old, new = self.renamed("quiz_answers", set(QUIZ))
+        self.fill(random.Random(110))
+        index = fl.ReviewIndex(self.db)
+        self.assertSame(index)
+        backup = self.backup_with([("quiz_answers", "2026-10-12 10:00:00", old, 0),
+                                   ("quiz_answers", "2026-10-02 09:00:00", old, 1),
+                                   ("quiz_answers", "2026-10-03 09:00:00", QUIZ[3], 1)])
+        fisi_sicherung.replace_all(self.db, backup, os.path.join(self.dir, "sich"))
+        self.assertAllDays(index, "nach Alles ersetzen")
+        fisi_sync.merge_into_local(self.db, {"tables": {}, "markers": {}})
+        self.assertAllDays(index, "nach Abgleich")
+        self.assertIn((fl.SRC_QUIZ, new), index.results)
+
+    def test_b1_alles_ersetzen_dann_zusammenfuehren_karte(self):
+        old, new = self.renamed("card_events", set(CARDS))
+        self.fill(random.Random(111))
+        index = fl.ReviewIndex(self.db)
+        self.assertSame(index)
+        backup = self.backup_with([("card_events", "2026-10-12 10:00:00", old, 0),
+                                   ("card_events", "2026-10-01 08:00:00", old, 1)])
+        fisi_sicherung.replace_all(self.db, backup, os.path.join(self.dir, "sich"))
+        self.assertAllDays(index, "nach Alles ersetzen")
+        fisi_sicherung.merge_backup(self.db, self.backup_with([]))
+        self.assertAllDays(index, "nach Zusammenfuehren")
+        self.assertIn((fl.SRC_CARD, new), index.results)
+
+    def test_b1_zweiter_prozess_benennt_um(self):
+        """Ein aelteres Programm schreibt alte Texte, ein zweiter Start
+        (_migrate) benennt sie um, waehrend dieser Index lebt."""
+        old, new = self.renamed("quiz_answers", set(QUIZ))
+        self.fill(random.Random(112))
+        index = fl.ReviewIndex(self.db)
+        self.assertSame(index)
+        conn = sqlite3.connect(self.db.db_path)
+        insert(conn, "quiz_answers", "2026-10-12 10:00:00", old, 0)
+        conn.commit()
+        conn.close()
+        steps = index.steps
+        self.assertAllDays(index, "alter Text neu")
+        self.assertEqual(index.steps, steps + 1)
+        fc.DBManager(self.db.db_path)            # _migrate: apply_question_renames
+        self.assertAllDays(index, "nach zweitem Start")
+
+    def test_nach_umbenennen_wieder_schrittweise(self):
+        old, _new = self.renamed("quiz_answers", set(QUIZ))
+        self.fill(random.Random(113))
+        conn = sqlite3.connect(self.db.db_path)
+        insert(conn, "quiz_answers", "2026-10-12 10:00:00", old, 0)
+        conn.commit()
+        conn.close()
+        index = fl.ReviewIndex(self.db)
+        self.assertSame(index)
+        fc.DBManager(self.db.db_path)
+        self.assertSame(index)                   # voll, alte Texte sind weg
+        full, steps = index.full_builds, index.steps
+        self.db.log_quiz_answer("x", QUIZ[5], True)
+        self.assertSame(index)
+        self.assertEqual((index.full_builds, index.steps), (full, steps + 1))
+
+    def test_b2_tabelle_ohne_autoincrement(self):
+        """Lernstand mit Tabellen ohne AUTOINCREMENT (vermutet: sehr alte
+        Version). Der Start laesst die Tabellen so; eine geloeschte hoechste
+        Nummer kommt mit anderem Inhalt wieder."""
+        path = os.path.join(self.dir, "ohne_ai.db")
+        conn = sqlite3.connect(path)
+        conn.execute("CREATE TABLE card_events (id INTEGER PRIMARY KEY, timestamp TEXT NOT NULL,"
+                     " category TEXT NOT NULL, question TEXT NOT NULL, mode TEXT NOT NULL,"
+                     " correct INTEGER)")
+        conn.execute("CREATE TABLE quiz_answers (id INTEGER PRIMARY KEY, timestamp TEXT NOT NULL,"
+                     " category TEXT NOT NULL, question TEXT NOT NULL, correct INTEGER NOT NULL)")
+        conn.commit()
+        conn.close()
+        self.db = fc.DBManager(path)
+        conn = sqlite3.connect(path)
+        sql = conn.execute("SELECT sql FROM sqlite_master WHERE name = 'quiz_answers'").fetchone()[0]
+        self.assertNotIn("AUTOINCREMENT", sql.upper())
+        conn.close()
+        self.fill(random.Random(114))
+        index = fl.ReviewIndex(self.db)
+        self.assertSame(index)
+        conn = sqlite3.connect(path)
+        top = conn.execute("SELECT MAX(rowid) FROM quiz_answers").fetchone()[0]
+        conn.execute("DELETE FROM quiz_answers WHERE rowid = ?", (top,))
+        insert(conn, "quiz_answers", "2026-10-12 10:00:00", QUIZ[1], 0)
+        self.assertEqual(conn.execute("SELECT MAX(rowid) FROM quiz_answers").fetchone()[0], top)
+        conn.commit()
+        conn.close()
+        self.assertAllDays(index, "gleiche Nummer, anderer Inhalt")
 
 
 KF15_EINSCHUB = []

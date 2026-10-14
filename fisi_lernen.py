@@ -23,7 +23,8 @@ import random
 import sqlite3
 import sys
 
-from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
+from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUESTION_RENAMES,
+                       QUIZ_QUESTIONS,
                        SRC_CARD, SRC_QUIZ, TOPIC_NAME, StatusBook, learning_streak,
                        plural)
 
@@ -203,7 +204,13 @@ class ReviewIndex:
     ihre Fragen neu berechnet. Jede andere Aenderung (geloeschte Zeilen,
     "Alles ersetzen", Abgleich mit Loeschmarke) baut alles neu auf, ein
     Fehler faellt auf ReviewPlan.from_db zurueck. Das Ergebnis ist immer
-    dasselbe wie ReviewPlan.from_db(db, today)."""
+    dasselbe wie ReviewPlan.from_db(db, today).
+
+    Ab FG-110: Haelt der Index alte Fragetexte (umbenennungen.json), kann
+    apply_question_renames sie an Ort und Stelle umschreiben (Abgleich nach
+    "Alles ersetzen", Start eines zweiten Programms); ohne AUTOINCREMENT
+    kann eine geloeschte Nummer wiederkommen. In beiden Faellen baut der
+    Index bei jedem Aufruf alles neu auf (always_full)."""
 
     TABLES = ((SRC_CARD, "card_events"), (SRC_QUIZ, "quiz_answers"))
 
@@ -214,6 +221,7 @@ class ReviewIndex:
         self.infos = {}
         self.book = _IndexBook(results=self.results)
         self.full_builds = self.steps = 0
+        self.always_full = False     # FG-110
 
     def plan(self, today=None):
         try:
@@ -230,10 +238,10 @@ class ReviewIndex:
             stamp = {table: tuple(conn.execute(
                 "SELECT COUNT(*), MAX(rowid) FROM %s" % table).fetchone())
                 for _source, table in self.TABLES}
-            if stamp == self.stamp:
+            if stamp == self.stamp and not self.always_full:
                 return
-            new_rows = {}
-            if self.stamp is not None:
+            new_rows = None if self.always_full else {}
+            if self.stamp is not None and new_rows is not None:
                 for _source, table in self.TABLES:
                     count, top = self.stamp[table]
                     rows = conn.execute(
@@ -256,10 +264,17 @@ class ReviewIndex:
         self.results.clear()
         self.infos.clear()
         self.book.forget(list(self.book._cache))
+        self.always_full = False
         for source, table in self.TABLES:
+            sql = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table'"
+                               " AND name = ?", (table,)).fetchone()
+            if "AUTOINCREMENT" not in str(sql and sql[0]).upper():
+                self.always_full = True
+            old = QUESTION_RENAMES.get(table, {})
             for timestamp, key, correct in conn.execute(
                     "SELECT timestamp, question, correct FROM %s ORDER BY timestamp, id"
                     % table):
+                self.always_full = self.always_full or key in old
                 value = None if correct is None else bool(correct)
                 self.results.setdefault((source, key), []).append((timestamp, value))
         self._recompute(self.results)
@@ -270,9 +285,11 @@ class ReviewIndex:
         self.steps += 1
         touched = set()
         for source, table in self.TABLES:
+            old = QUESTION_RENAMES.get(table, {})
             for timestamp, key, correct in new_rows[table]:
                 if not isinstance(timestamp, str):
                     raise TypeError("timestamp")
+                self.always_full = self.always_full or key in old
                 value = None if correct is None else bool(correct)
                 entries = self.results.setdefault((source, key), [])
                 times = [t for t, _v in entries]
