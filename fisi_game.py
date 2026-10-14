@@ -1927,11 +1927,16 @@ def leasing_values(data):
 
 
 def _num(value):
-    """Zahl deutsch formatiert: 1.234,5 - ohne ueberfluessige Nachkommastellen."""
+    """Zahl deutsch formatiert: 1.234,5 - ohne ueberfluessige Nachkommastellen.
+    Ab 0.63.2 (B-F-04): nan und inf als "–", auf 0 gerundet ohne Vorzeichen."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return "–"
     if isinstance(value, float) and not value.is_integer():
         text = ("%.2f" % value).rstrip("0").rstrip(".")
     else:
         text = "%d" % int(round(value))
+    if text == "-0":
+        text = "0"
     whole, _sep, frac = text.partition(".")
     sign = "-" if whole.startswith("-") else ""
     whole = whole.lstrip("-")
@@ -2129,7 +2134,9 @@ def parse_number(text):
         text = text.replace(".", "").replace(",", ".")
     elif "," in text:
         text = text.replace(",", ".")
-    elif re.fullmatch(r"-?\d{1,3}(\.\d{3})+", text):
+    elif re.fullmatch(r"-?[1-9]\d{0,2}(\.\d{3})+", text):
+        # Ab 0.63.2 (B-P-02): Tausenderpunkt nur ohne fuehrende Null -
+        # "0.125" ist 0,125, "1.234" und "12.500" bleiben Tausender.
         text = text.replace(".", "")
     try:
         return float(text)
@@ -4161,11 +4168,21 @@ class GameState:
 
     def founding_progress(self):
         """Fortschritt zum eigenen Unternehmen (0.0 bis 1.0) - Kapital und
-        Mindest-Reputation muessen beide erreicht sein."""
+        Mindest-Reputation muessen beide erreicht sein. Ab 0.63.2 (B-F-07)
+        zaehlen auch die erledigten Bitweiche-Auftraege (wenn "alle_erledigt"
+        gilt), und 1.0 (angezeigt "100 %") gibt es nur, wenn
+        founding_missing() leer ist - sonst hoechstens 0.99."""
         goal = self.content["balancing"]["gruendung"]
         capital = min(1.0, max(0, self.money) / float(goal["startkapital"]))
         reputation = min(1.0, self.mean_reputation / float(goal["mindest_reputation"]))
-        return min(capital, reputation)
+        progress = min(capital, reputation)
+        tasks = self.content["aufgaben"]
+        if goal.get("alle_erledigt") and tasks:
+            done = sum(1 for task in tasks if task["id"] in self.solved)
+            progress = min(progress, done / float(len(tasks)))
+        if progress > 0.99 and self.founding_missing():
+            progress = 0.99
+        return progress
 
     # -- Eigenes Unternehmen (ab 0.33) ---------------------------------------
 
@@ -5392,6 +5409,29 @@ class Game:
         payload = {"id": staff_id, "tag": self.state.day}
         self._log(EV_FIRED, payload)
         return payload
+
+    def fire_projects(self, staff_id):
+        """Ab 0.63.2 (B-F-01 Rest): Die laufenden Projekte, in deren Team die
+        Person ist - nur lesend, fuer die Rueckfrage beim Entlassen."""
+        return [item for item in self.state.running_projects() if staff_id in item["team"]]
+
+    def fire_question(self, staff_id, name):
+        """Ab 0.63.2 (B-F-01 Rest): Rueckfrage beim Entlassen, PC und Handy
+        gleich. Arbeitet die Person in einem laufenden Projekt, nennt die
+        Rueckfrage es; sonst bleibt der Text wie bis 0.63.1. Ab 0.63.2
+        (Frage 26 b): Ist die Person das einzige Teammitglied, steht statt
+        "laeuft ohne diese Person weiter" der Satz zum Projekt ohne Team."""
+        text = "%s wirklich entlassen? Die Person bewirbt sich danach nicht erneut." % name
+        for project in self.fire_projects(staff_id):
+            if any(person != staff_id for person in project["team"]):
+                text += (" %s arbeitet im Projekt „%s“. Das Projekt läuft ohne diese Person "
+                         "weiter; das Team änderst du unter „Team ändern“." % (
+                             name, project.get("titel") or project["projekt"]))
+            else:
+                text += (" %s arbeitet im Projekt „%s“. Das Projekt bleibt bestehen, kommt "
+                         "aber ohne Team nicht voran; das Team änderst du unter "
+                         "„Team ändern“." % (name, project.get("titel") or project["projekt"]))
+        return text
 
     def train(self, staff_id, target):
         """Abstrakte Weiterbildung: kostet Geld und Arbeitstage ohne Umsatz,
@@ -7594,8 +7634,14 @@ def clamp_loan_amount(state, amount, content=None):
 
 
 def percent_text(value):
-    """8.5 -> "8,5 %", 10.0 -> "10 %" """
-    text = ("%.2f" % float(value)).rstrip("0").rstrip(".")
+    """8.5 -> "8,5 %", 10.0 -> "10 %"; ab 0.63.2 (B-F-04): nan und inf als
+    "–", auf 0 gerundet ohne Vorzeichen."""
+    value = float(value)
+    if not math.isfinite(value):
+        return "–"
+    text = ("%.2f" % value).rstrip("0").rstrip(".")
+    if text == "-0":
+        text = "0"
     return "%s %%" % text.replace(".", ",")
 
 

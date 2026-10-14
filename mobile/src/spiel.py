@@ -3629,8 +3629,8 @@ class GameScreen:
                 return
             self._firm_changed()
 
-        self.app.confirm("Entlassen", "%s wirklich entlassen? Die Person bewirbt sich danach "
-                         "nicht erneut." % item["name"], confirmed)
+        self.app.confirm("Entlassen", self.game.fire_question(item["id"], item["name"]),
+                         confirmed)
 
     def _firm_bewerbungen(self, state):
         found = fg.applicants(state)
