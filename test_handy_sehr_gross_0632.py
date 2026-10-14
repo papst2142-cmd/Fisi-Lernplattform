@@ -12,6 +12,8 @@ Tests fuer 0.63.2, Bauer S2d (Handy, Schrift "Sehr gross"):
     zweizeilig, letztes Wort im Banner nicht allein
   * B-E-05 (f) AP-Liste: Suchfeld ueber die volle Breite (STRETCH)
   * B-E-09 Schutz: Farbtiefe-Pillen brechen um (kein Selbst-Scrollen)
+  * FG-114 Schalter der Optionen: bei mehrzeiligem Text oben (erste Zeile),
+    einzeilig wie bisher mittig; es gibt nur diesen einen Schalter-Baustein
 
 Die Flet-Steuerelemente werden nur aufgebaut, nicht angezeigt (kein Display
 noetig). Vorher einmal: python mobile/vorbereiten.py
@@ -396,6 +398,70 @@ class FarbtiefeTest(_Faktor):
         screen.build()
         self.assertIs(screen.depth_pills.umbrechen, True)
         self.assertIsNone(screen.depth_pills.mask)
+
+
+class SchalterErsteZeileTest(unittest.TestCase):
+    """FG-114 (Nico): Bricht der Text neben einem Schalter um, steht der
+    Schalter oben an der ersten Zeile (wie die Haken, ui.check_row). Die Zeile
+    ist so hoch wie das Hoehere von Schalter und Text (intrinsic_height), der
+    Schalter steht oben, der Text bleibt in seiner Spalte senkrecht mittig:
+    einzeilig sieht es also aus wie bisher, mehrzeilig beginnen Schalter und
+    Text oben."""
+    LANG = ("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
+            "Verlassen der App)")
+
+    def _pruefe(self, row, caption, faktor):
+        self.assertIsInstance(row, ft.Row)
+        self.assertIs(row.intrinsic_height, True)
+        self.assertEqual(row.vertical_alignment, ft.CrossAxisAlignment.STRETCH)
+        self.assertEqual(row.spacing, 8)
+        links, rechts = row.controls
+        self.assertIsInstance(links, ft.Container)
+        self.assertEqual(links.alignment, ft.Alignment.TOP_LEFT)
+        self.assertIsInstance(links.content, ft.Semantics)
+        self.assertEqual(links.content.label, caption)
+        self.assertIsInstance(links.content.content, ft.Switch)
+        self.assertIsInstance(rechts, ft.Container)
+        self.assertIs(rechts.expand, True)
+        self.assertEqual(rechts.alignment, ft.Alignment.CENTER_LEFT)
+        self.assertIsInstance(rechts.content, ft.Text)
+        self.assertEqual(rechts.content.value, caption)
+        self.assertEqual(rechts.content.size, round(13 * faktor, 1) if faktor != 1.0 else 13)
+
+    def test_alle_stufen(self):
+        for faktor in (1.0, 1.15, 1.3, 1.6, 2.0):
+            with self.subTest(faktor=faktor):
+                ui.set_font_factor(faktor)
+                try:
+                    for caption in (self.LANG, "Tagesziel anzeigen"):
+                        self._pruefe(handy.SettingsScreen._switch(caption, True, None),
+                                     caption, faktor)
+                finally:
+                    ui.set_font_factor(1.0)
+
+    def test_schalter_wert_und_handler(self):
+        handler = lambda _e: None  # noqa: E731
+        row = handy.SettingsScreen._switch("Messung aufzeichnen", False, handler)
+        switch = row.controls[0].content.content
+        self.assertIs(switch.value, False)
+        self.assertIs(switch.on_change, handler)
+
+    def test_nur_ein_schalter_baustein(self):
+        """Wache: jeder Schalter der Handy-App entsteht in _switch (sonst
+        stuende ein neuer Schalter wieder mittig)."""
+        import ast
+        gefunden = []
+        for name in ("main.py", "ui.py", "spiel.py"):
+            pfad = os.path.join(HERE, "mobile", "src", name)
+            baum = ast.parse(open(pfad, encoding="utf-8").read())
+            for funktion in ast.walk(baum):
+                if not isinstance(funktion, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                for knoten in ast.walk(funktion):
+                    if (isinstance(knoten, ast.Call) and isinstance(knoten.func, ast.Attribute)
+                            and knoten.func.attr in ("Switch", "CupertinoSwitch")):
+                        gefunden.append((name, funktion.name))
+        self.assertEqual(gefunden, [("main.py", "_switch")])
 
 
 if __name__ == "__main__":
