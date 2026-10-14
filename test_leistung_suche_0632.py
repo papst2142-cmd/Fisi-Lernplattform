@@ -1116,5 +1116,10 @@ class HandyTest(unittest.TestCase):
         self.assertEqual(texts, [fisi_theme.BUSY_TITLE, fisi_theme.BUSY_TEXT])
 
 
+def tearDownModule():
+    """Eigenen Testordner (Datenbank, Einstellungen, Sicherungen) loeschen."""
+    shutil.rmtree(_TMP, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
