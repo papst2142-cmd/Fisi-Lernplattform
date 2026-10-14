@@ -1827,14 +1827,38 @@ class ExamPanel(ft.Column):
 #  SZENARIEN UND TESTPROJEKTE (Liste -> Detailseite)
 # ============================================================================
 
+# Ab 0.63.2 (Nico, Meldung 39 Frage 14b): In diesen Grundfarben liegen im
+# Hellen die gedaempfte Farbe C["muted"] und die Akzentfarbe fast gleich hell
+# und im Farbton nah (Abstand nur ~17, auf dem Foto kaum zu unterscheiden).
+# Gesperrte Blaetterpfeile nehmen dort C["muted"], zu LOCKED_SOFT_MIX zur
+# Kartenflaeche hin aufgehellt (gleicher Farbton, blasser). Alle anderen
+# Farbwelten, eigene Farben und der PC bleiben unveraendert.
+LOCKED_SOFT_PRESETS = ("lila_magenta", "blau_tuerkis")
+LOCKED_SOFT_MIX = 0.4
+
+
+def _locked_arrow_color():
+    """Farbe eines gesperrten Blaetterpfeils (Handy-Listen und Blaettern im
+    Rechner): C["muted"], ausser in LOCKED_SOFT_PRESETS im Hellen (ohne
+    eigene Farben), siehe oben."""
+    mode = fisi_theme.current_mode
+    values = fisi_theme.custom_colors.get(mode)
+    custom = bool(values) and values != fisi_theme.custom_start(mode)
+    if fisi_theme.light and not custom and fisi_theme.current_preset in LOCKED_SOFT_PRESETS:
+        return mix(C["muted"], C["card"], LOCKED_SOFT_MIX)
+    return C["muted"]
+
+
 def _paint_page_buttons(prev, forward, page, pages):
     """Ab 0.63.2 (B-E-03): Blaetterpfeile auf Seite 1 bzw. der letzten Seite
     sperren (page zaehlt ab 0, pages ist mindestens 1). Nacharbeit: Die
     Fotoprobe zeigte, dass Flet gesperrte Knoepfe mit icon_color weiter in der
-    Akzentfarbe zeichnet; gesperrt darum in der gedaempften Farbe C["muted"]."""
+    Akzentfarbe zeichnet; gesperrt darum in der gedaempften Farbe
+    (_locked_arrow_color, meist C["muted"])."""
+    locked_color = _locked_arrow_color()
     for button, locked in ((prev, page <= 0), (forward, page >= pages - 1)):
         button.disabled = locked
-        button.icon_color = C["muted"] if locked else C["accent"]
+        button.icon_color = locked_color if locked else C["accent"]
 
 
 class PagedListBox:
@@ -3362,10 +3386,11 @@ class CalcScreen(Screen):
         if pages > 1:
             page = panel["page"]
             panel["page_text"].value = fc.SUBNET_PAGE_OF % (fc.de_int(page), fc.de_int(pages))
+            locked_color = _locked_arrow_color()
             for where, button in panel["page_buttons"].items():
                 button.disabled = page == 1 if where in ("first", "back") else page == pages
                 # Ab 0.63.2 (N-h, FG-71): gesperrt gedaempft wie _paint_page_buttons
-                button.icon_color = C["muted"] if button.disabled else C["accent"]
+                button.icon_color = locked_color if button.disabled else C["accent"]
 
     @staticmethod
     def _fold(parts):

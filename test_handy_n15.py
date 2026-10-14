@@ -15,6 +15,8 @@ N-b  Z7 im Spiel (mobile/src/spiel.py): Ereignisse, die schreiben und danach
      haengt. Bestandsaufnahme aller self.game.<m>(-Aufrufe als Tabelle.
 N-h  Subnetting-Blaettern: gesperrte Pfeile in C["muted"], freie in
      C["accent"] (gleiche Regel wie _paint_page_buttons, B-E-03).
+     Ab Nico 14b (Meldung 39): in Lila/Magenta und Blau/Tuerkis hell gesperrt
+     C["muted"] zu 40 % zur Karte aufgehellt (PfeilFarbe14bTest).
 
 Eigenstaendig lauffaehig (eigene FakePage/Basis, kein Import aus anderen
 Testdateien). Geprueft werden Modell und Reihenfolge (Aufzeichnung), nicht
@@ -1009,6 +1011,26 @@ class SpielSeitenwechselTest(SpielBasis):
 # ============================================================================
 
 PROBE_NETZ = ("10.0.0.0/8", "256")           # 32 Seiten wie die Foto-Probe
+
+# Nico 14b (Meldung 39): gesperrte Pfeile in Lila/Magenta und Blau/Tuerkis hell
+# = C["muted"] zu 40 % zur Karte (#FFFFFF) gemischt. Feste Sollwerte je
+# Hintergrund (unabhaengig vom Code nachgerechnet, Tabelle im Ergebnis N15,
+# Nachtrag 14b). Alle anderen Faelle: C["muted"] unveraendert.
+SOLL_14B = {"violett": "#A49BB8", "nachtblau": "#9AA3B9", "tannengruen": "#94A7A0",
+            "aubergine": "#B098A7", "anthrazit": "#9D9DA5", "schwarz": "#9B9BA2"}
+GEAENDERT_14B = ("lila_magenta", "blau_tuerkis")
+
+
+def soll_gesperrt():
+    """Sollfarbe gesperrter Pfeile fuer den aktuellen Farbstand."""
+    import fisi_theme
+    mode = fisi_theme.current_mode
+    eigene = fisi_theme.custom_colors.get(mode)
+    eigene = bool(eigene) and eigene != fisi_theme.custom_start(mode)
+    if (mode == fisi_theme.MODE_LIGHT and not eigene
+            and fisi_theme.current_preset in GEAENDERT_14B):
+        return SOLL_14B[fisi_theme.current_background]
+    return fisi_theme.C["muted"]
 GROSS_NETZ = ("2001:db8:abcd::/48", "65536")  # 8.192 Seiten (main.selftest)
 
 
@@ -1031,7 +1053,7 @@ class BlaetterFarbeTest(N15Basis):
         for where, button in panel["page_buttons"].items():
             locked = page == 1 if where in ("first", "back") else page == pages
             self.assertEqual(button.disabled, locked, (label, where))
-            self.assertEqual(button.icon_color, C["muted"] if locked else C["accent"],
+            self.assertEqual(button.icon_color, soll_gesperrt() if locked else C["accent"],
                              (label, where, page, pages))
 
     def test_seiten_direkt(self):
@@ -1105,6 +1127,175 @@ class BlaetterFarbeTest(N15Basis):
             fisi_theme.apply_preset(saved[0])
             self.app._build_ui()
         self.assertEqual(len(seen), len(fisi_theme.PRESET_IDS) * len(fisi_theme.MODE_IDS))
+
+
+# ============================================================================
+#  Nico 14b (Meldung 39): gesperrt und frei unterscheidbar in allen Farbwelten
+# ============================================================================
+
+# Mindestabstand gesperrt <-> frei (CIE76, fisi_theme.color_distance). 29 =
+# knapp unter dem kleinsten Abstand, den die Messung K44 als gut sichtbar
+# zeigte (Blau/Tuerkis dunkel 29,7); Nico sah 17,1/17,5 als zu schwach.
+MIN_ABSTAND = 29.0
+# Fuer die geaenderten Faelle zusaetzlich: WCAG-Kontrast gesperrt <-> frei
+# (vorher 1,00 bis 1,28:1) und gesperrt auf der Karte (Pfeil bleibt sichtbar)
+MIN_KONTRAST_14B = 1.9
+MIN_KARTE_14B = 2.4
+# Bekannte Grenze (nicht Teil von 14b, an Nico gemeldet): unveraenderte
+# Farbwelten hell mit anderem Hintergrund unter MIN_ABSTAND (Messwert).
+UNTER_MIN_UNVERAENDERT = {
+    ("cyan_pink", "tannengruen"): 18.6, ("gruen_lime", "tannengruen"): 21.2,
+    ("cyan_pink", "anthrazit"): 24.4, ("rot_pink", "aubergine"): 24.5,
+    ("cyan_pink", "schwarz"): 24.6, ("cyan_pink", "nachtblau"): 25.1,
+}
+
+
+@unittest.skipUnless(_flet_ok(), "flet fehlt")
+class PfeilFarbe14bTest(N15Basis):
+
+    def setUp(self):
+        super().setUp()
+        import fisi_theme
+        self.theme = fisi_theme
+        self.calc = self.app.screens["calc"]
+        saved = (fisi_theme.current_preset, fisi_theme.current_background,
+                 fisi_theme.current_mode, dict(fisi_theme.custom_colors))
+
+        def restore():
+            fisi_theme.custom_colors.clear()
+            fisi_theme.custom_colors.update(saved[3])
+            fisi_theme.apply_mode(saved[2])
+            fisi_theme.apply_background(saved[1])
+            fisi_theme.apply_preset(saved[0])
+        self.restore = restore
+        self.addCleanup(restore)
+        panel = self.calc.subnet_panels[("ipv4", "aufteilen")]
+        panel["net"].value, panel["count"].value = PROBE_NETZ
+        self.calc.calc_split("ipv4")
+        self.panel = panel
+
+    def welt(self, preset, background, mode):
+        self.theme.apply_mode(mode)
+        self.theme.apply_background(background)
+        self.theme.apply_preset(preset)
+
+    def farben(self):
+        """(gesperrt, frei) aus der Oberflaeche: Rechner-Blaettern auf Seite 1
+        und Handy-Liste (_paint_page_buttons) auf Seite 1; beide gleich."""
+        ft = self.main.ft
+        panel = self.panel
+        panel["page"] = 1
+        self.calc._paint_pager(panel)
+        buttons = panel["page_buttons"]
+        self.assertTrue(buttons["back"].disabled and not buttons["next"].disabled)
+        prev, forward = ft.IconButton(ft.Icons.CHEVRON_LEFT), ft.IconButton(ft.Icons.CHEVRON_RIGHT)
+        self.main._paint_page_buttons(prev, forward, 0, 3)
+        self.assertEqual((prev.icon_color, forward.icon_color),
+                         (buttons["back"].icon_color, buttons["next"].icon_color))
+        self.assertEqual(buttons["first"].icon_color, buttons["back"].icon_color)
+        self.assertEqual(buttons["last"].icon_color, buttons["next"].icon_color)
+        return buttons["back"].icon_color, buttons["next"].icon_color
+
+    def alle(self):
+        for mode in self.theme.MODE_IDS:
+            for background in self.theme.BACKGROUND_IDS:
+                for preset in self.theme.PRESET_IDS:
+                    yield preset, background, mode
+
+    def test_14b_geaenderte_faelle(self):
+        """Lila/Magenta und Blau/Tuerkis hell, je Hintergrund: Sollfarbe,
+        Mindestabstand, Kontrast gesperrt<->frei und auf der Karte."""
+        t = self.theme
+        for preset in GEAENDERT_14B:
+            for background in t.BACKGROUND_IDS:
+                self.welt(preset, background, t.MODE_LIGHT)
+                gesperrt, frei = self.farben()
+                name = (preset, background)
+                self.assertEqual(gesperrt, SOLL_14B[background], name)
+                self.assertEqual(frei, t.C["accent"], name)
+                self.assertGreaterEqual(t.color_distance(gesperrt, frei), MIN_ABSTAND, name)
+                self.assertGreaterEqual(t.contrast(gesperrt, frei), MIN_KONTRAST_14B, name)
+                self.assertGreaterEqual(t.contrast(gesperrt, t.C["card"]), MIN_KARTE_14B, name)
+
+    def test_unveraenderte_farbwelten_gleich(self):
+        """Alle anderen Faelle (dunkel; hell in den vier anderen Grundfarben)
+        gesperrt genau C["muted"] wie gebaut, frei C["accent"]."""
+        n = 0
+        for preset, background, mode in self.alle():
+            if mode == self.theme.MODE_LIGHT and preset in GEAENDERT_14B:
+                continue
+            self.welt(preset, background, mode)
+            self.assertEqual(self.farben(), (self.theme.C["muted"], self.theme.C["accent"]),
+                             (preset, background, mode))
+            n += 1
+        self.assertEqual(n, 60)
+
+    def test_mindestabstand_alle_farbwelten(self):
+        """Alle Grundfarben x Hintergruende x hell/dunkel: Abstand gesperrt <->
+        frei mindestens MIN_ABSTAND; Ausnahmen nur die gemessene, gemeldete
+        Liste UNTER_MIN_UNVERAENDERT (genau diese, Wert auf 0,1 genau)."""
+        t = self.theme
+        unter = {}
+        for preset, background, mode in self.alle():
+            self.welt(preset, background, mode)
+            gesperrt, frei = self.farben()
+            abstand = t.color_distance(gesperrt, frei)
+            if abstand < MIN_ABSTAND:
+                self.assertEqual(mode, t.MODE_LIGHT, (preset, background, mode, abstand))
+                unter[(preset, background)] = round(abstand, 1)
+        self.assertEqual(unter, UNTER_MIN_UNVERAENDERT)
+
+    def test_standard_hintergrund_ohne_ausnahme(self):
+        """Hintergrund Violett/Flieder (Standard, Messung K44 und Fotos):
+        alle sechs Grundfarben hell und dunkel ohne Ausnahme >= MIN_ABSTAND."""
+        t = self.theme
+        for mode in t.MODE_IDS:
+            for preset in t.PRESET_IDS:
+                self.welt(preset, "violett", mode)
+                gesperrt, frei = self.farben()
+                self.assertGreaterEqual(t.color_distance(gesperrt, frei), MIN_ABSTAND,
+                                        (preset, mode))
+
+    def test_eigene_farben_unveraendert(self):
+        """Eigene Farben (Regler verschoben) in Lila/Magenta hell: C["muted"]."""
+        t = self.theme
+        self.welt("lila_magenta", "violett", t.MODE_LIGHT)
+        values = t.custom_start(t.MODE_LIGHT)
+        h, s, l = values["akzent1"]
+        values["akzent1"] = ((h + 20) % 360, s, l)
+        t.apply_custom(t.MODE_LIGHT, values)
+        self.assertTrue(t.custom_colors.get(t.MODE_LIGHT))
+        self.assertEqual(self.farben(), (t.C["muted"], t.C["accent"]))
+        # Regler auf dem Startwert = Farbwelt exakt ("sanft") -> wie 14b
+        t.apply_custom(t.MODE_LIGHT, t.custom_start(t.MODE_LIGHT))
+        self.assertEqual(self.farben()[0], SOLL_14B["violett"])
+
+    def test_nach_neuaufbau(self):
+        """Nach dem Neuaufbau (_build_ui, wie beim Farbwechsel): Liste einer
+        Ansicht (PagedListBox) und Rechner zeigen die neue Farbe."""
+        t = self.theme
+        try:
+            for preset in ("lila_magenta", "blau_tuerkis", "cyan_pink"):
+                self.welt(preset, "violett", t.MODE_LIGHT)
+                self.app._build_ui()
+                self.calc = self.app.screens["calc"]
+                panel = self.calc.subnet_panels[("ipv4", "aufteilen")]
+                panel["net"].value, panel["count"].value = PROBE_NETZ
+                self.calc.calc_split("ipv4")
+                self.panel = panel
+                soll = SOLL_14B["violett"] if preset in GEAENDERT_14B else t.C["muted"]
+                self.assertEqual(self.farben()[0], soll, preset)
+                main = self.main
+                items = [{"title": "Aufgabe %d" % n, "cat": main.CATEGORIES[0], "theme": "T"}
+                         for n in range(2 * main.fc.LIST_PAGE_SIZE + 1)]
+                box = main.PagedListBox(items, lambda _p: None, subtitle=lambda item: "",
+                                        status_source=dict)
+                box.refresh()
+                self.assertEqual((box.btn_prev.icon_color, box.btn_next.icon_color),
+                                 (soll, t.C["accent"]), preset)
+        finally:
+            self.restore()
+            self.app._build_ui()
 
 
 if __name__ == "__main__":
