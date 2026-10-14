@@ -1074,7 +1074,8 @@ class ReleaseWiederholungTest(ReleaseNachholenTest):
 
 class CacheTest(unittest.TestCase):
 
-    AUSDRUCK = "          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}"
+    # N10-F3 (Weisung 38/40, Abschnitt 4): auch Vorab-Testversionen ohne Cache
+    AUSDRUCK = "          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}"
 
     def test_jedes_setup_python_mit_cache_ausser_release(self):
         zeilen = _lesen(BUILD).splitlines()
@@ -1088,14 +1089,34 @@ class CacheTest(unittest.TestCase):
         self.assertNotIn("cache", _lesen(RELEASE))
 
     def test_ausdruck_release_ohne_cache(self):
-        # GitHub-Ausdruck nachgerechnet: a && b || c
-        def werte(is_release):
+        # GitHub-Ausdruck nachgerechnet: a && !v && b || c
+        # (inputs.vorab: "" ohne Testversion, None beim Tag-Push/release.yml)
+        def werte(is_release, vorab):
             a = is_release != "true"
-            return ("pip" if a else False) or ""
-        self.assertEqual(werte("true"), "")
-        self.assertEqual(werte("false"), "pip")
+            return ("pip" if (a and not vorab) else False) or ""
+        self.assertEqual(werte("true", None), "")
+        self.assertEqual(werte("true", ""), "")
+        self.assertEqual(werte("false", ""), "pip")
+        self.assertEqual(werte("false", None), "pip")
         self.assertIn("  IS_RELEASE: ${{ inputs.tag != '' || startsWith(github.ref, 'refs/tags/v') }}",
                       _lesen(BUILD))
+
+    def test_vorab_testversion_ohne_cache(self):
+        # N10-F3: Testversion (Feld "vorab" gesetzt) baut wie ein Release ohne
+        # Cache, an allen 6 Stellen (5x pip, 1x Android-Werkzeug)
+        def werte(is_release, vorab):
+            return ("pip" if (is_release != "true" and not vorab) else False) or ""
+        self.assertEqual(werte("false", "0.63.2-test1"), "")
+        text = _lesen(BUILD)
+        self.assertEqual(text.count("!inputs.vorab"), 6)
+        self.assertEqual(text.count(self.AUSDRUCK + "\n"), 5)
+        self.assertEqual(text.count("        if: env.IS_RELEASE != 'true' && !inputs.vorab\n"), 1)
+        # vorab gibt es nur beim Hand-Lauf; beim Aufruf aus release.yml ist
+        # es leer (dort gilt ohnehin IS_RELEASE)
+        self.assertIn("  workflow_dispatch:\n    inputs:\n      vorab:\n", text)
+        self.assertIn("        default: \"\"\n", text)
+        # Vorab-Job haengt an genau diesem Feld
+        self.assertIn("inputs.vorab != ''", "\n".join(_jobs(text)["vorab"]))
 
     def test_android_werkzeug_cache_nur_normal(self):
         jobs = _jobs(_lesen(BUILD))
@@ -1103,7 +1124,7 @@ class CacheTest(unittest.TestCase):
         m = re.search(r"      - uses: actions/cache@v6\n((?:        .*\n|          .*\n)+)", text + "\n")
         self.assertIsNotNone(m)
         block = m.group(1)
-        self.assertIn("        if: env.IS_RELEASE != 'true'\n", block)
+        self.assertIn("        if: env.IS_RELEASE != 'true' && !inputs.vorab\n", block)
         for pfad in ("~/flutter", "~/.flet/cache", "~/.gradle/caches", "~/.gradle/wrapper"):
             self.assertIn("            %s\n" % pfad, block)
         self.assertIn("key: android-werkzeug-${{ runner.os }}-flet-1.0.1-"

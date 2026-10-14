@@ -113,7 +113,7 @@ jobs:
           python-version: "3.12"
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
-          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: requirements-build.txt
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
@@ -221,7 +221,7 @@ jobs:
           python-version: "3.12"
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
-          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: .github/workflows/build.yml
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
@@ -235,11 +235,13 @@ jobs:
           python -c "import build; build.check_versions('$VERSION')"
 
       # Ab 0.63.2 (B-M-08): Flutter, Flet-Cache und Gradle-Zwischenspeicher
-      # nur in normalen Laeufen wiederverwenden, Release-Laeufe bauen ohne
-      # Cache. Die Laufzeit-Dateien prueft der Schritt "Android-Laufzeit
-      # vorab laden und pruefen" auch nach dem Wiederherstellen.
+      # nur in normalen Laeufen wiederverwenden, Release-Laeufe und
+      # Testversionen (Feld "vorab" gesetzt, N10-F3) bauen ohne Cache - wie
+      # der pip-Cache in allen setup-python-Schritten. Die Laufzeit-Dateien
+      # prueft der Schritt "Android-Laufzeit vorab laden und pruefen" auch
+      # nach dem Wiederherstellen.
       - uses: actions/cache@v6
-        if: env.IS_RELEASE != 'true'
+        if: env.IS_RELEASE != 'true' && !inputs.vorab
         with:
           path: |
             ~/flutter
@@ -459,7 +461,7 @@ jobs:
           python-version: "3.12"
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
-          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: |
             requirements.txt
             .github/workflows/build.yml
@@ -498,7 +500,7 @@ jobs:
           python-version: "3.12"
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
-          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: |
             requirements.txt
             .github/workflows/build.yml
@@ -530,7 +532,7 @@ jobs:
           python-version: "3.12"
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
-          cache: ${{ env.IS_RELEASE != 'true' && 'pip' || '' }}
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: .github/workflows/build.yml
 
       - name: Alte Version bestimmen (letztes normales Release)
