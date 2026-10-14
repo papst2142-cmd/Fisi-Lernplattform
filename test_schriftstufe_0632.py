@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Tests 0.63.2 N9 (B-J-06, B-E-06): Schriftstufen 160 % und 200 %.
+"""Tests 0.63.2 N9 (B-J-06, B-E-06): Schriftstufen 160 % ("Extra groß") und
+200 % ("Maximal").
 
 Plan-Nachtrag 0.63.2, Nr. 25 (B-J-06) und Nr. 27 (B-E-06), F22 (b):
   * Stufenliste: die drei bisherigen Stufen unveraendert, dazu 1,6 und 2,0;
@@ -65,6 +66,37 @@ class StufenTest(unittest.TestCase):
         self.assertEqual(th.FONT_IDS, [s["id"] for s in th.FONT_SIZES])
         self.assertEqual(len(set(th.FONT_IDS)), 5)
         self.assertTrue(all(s["name"] for s in th.FONT_SIZES))
+
+    def test_namen_b4(self):
+        """Weisung zu Meldung 38/40, B4: Namen wortgleich, ohne Prozent, PC =
+        Handy (eine Liste); die gespeicherten Kennungen bleiben, damit der
+        Rueckweg zu 0.63.1 (unbekannte Kennung -> Normal) gleich bleibt."""
+        th = self.th
+        self.assertEqual([s["name"] for s in th.FONT_SIZES],
+                         ["Normal", "Groß", "Sehr groß", "Extra groß", "Maximal"])
+        self.assertEqual(th.FONT_IDS, ["normal", "gross", "sehr_gross", "extra_gross", "riesig"])
+        self.assertEqual(th.FONT_CHOICES, [(s["id"], s["name"]) for s in th.FONT_SIZES])
+        for item in th.FONT_SIZES:
+            self.assertNotIn("%", item["name"])
+            self.assertFalse(any(z.isdigit() for z in item["name"]), item["name"])
+        # Gespeichert wird die Kennung, nie der Name
+        import fisi_update
+        home = tempfile.mkdtemp(prefix="fisi_stufe_name_")
+        alt = os.environ.get("HOME"), os.environ.get("APPDATA")
+        os.environ["HOME"] = os.environ["APPDATA"] = home
+        try:
+            for item in th.FONT_SIZES[3:]:
+                settings = fisi_update.load_settings()
+                settings[th.FONT_KEY] = th.apply_font_size(item["id"])
+                fisi_update.save_settings(settings)
+                self.assertEqual(fisi_update.load_settings()[th.FONT_KEY], item["id"])
+                self.assertEqual(th.saved_font_size(), item["id"])
+        finally:
+            for key, value in zip(("HOME", "APPDATA"), alt):
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     def test_kennungen(self):
         th = self.th
