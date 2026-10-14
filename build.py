@@ -317,6 +317,9 @@ def build_app(version):
     elif sys.platform == "darwin":
         command += ["--icon", "icon.png",
                     "--osx-bundle-identifier", "de.fisi.lernplattform"]
+        # NUR PROBE N11 (Frage 19): Universal-Bau auf dem Arm-Mac
+        if platform.machine() == "arm64":
+            command += ["--target-arch", "universal2"]
     command.append("start.py")
 
     info("Anwendung wird mit PyInstaller gebaut ...")

@@ -200,7 +200,7 @@ jobs:
         # vorinstalliert, Runner-Bild windows-2025 20260925). Ist eine andere
         # oder keine da, wird genau diese installiert; sonst bricht der Bau ab.
         run: |
-          $soll = "6.7.1"
+          $soll = "6.7.99"   # NUR PROBE N11 (Frage 21): Fassung, die es nicht gibt
           # Fassung aus dem Uninstall-Eintrag (ISCC.exe selbst traegt keine
           # Produktfassung, gemessen: 0.0.0.0)
           $schluessel = @("HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1",
@@ -242,6 +242,35 @@ jobs:
           python pruefung/pip_audit_lauf.py --pip-audit "$RUNNER_TEMP/audit/bin/pip-audit" \
             requirements-lock-bau.txt requirements-lock-tests.txt requirements-lock-flet.txt \
             requirements-lock-certifi.txt requirements-lock-pip-audit.txt
+
+      # NUR PROBE N11 (Frage 19): Pillow universal2 aus den beiden offiziellen
+      # Raedern (Pruefsummen aus requirements-lock-bau.txt) mit delocate-merge
+      - name: "PROBE: Pillow universal2 aus den offiziellen Raedern"
+        if: matrix.label == 'macos-arm64'
+        run: |
+          set -x
+          F="$RUNNER_TEMP/fuse"; rm -rf "$F"; mkdir -p "$F/arm" "$F/x86" "$F/out"
+          echo "pillow==12.3.0 --hash=sha256:ffd0c5368496f41b0944be820fcb7a838aa6e623d250b01acf2643939c3f99d7" > "$F/arm.txt"
+          echo "pillow==12.3.0 --hash=sha256:ba09209fbe443b4acccebe845d8a138b89a8f4fbaeedd44953490b5315d5e965" > "$F/x86.txt"
+          python -m pip download --retries 10 --timeout 60 --no-deps --only-binary=:all: --platform macosx_11_0_arm64 --python-version 3.12 --implementation cp --abi cp312 --require-hashes -r "$F/arm.txt" -d "$F/arm"
+          python -m pip download --retries 10 --timeout 60 --no-deps --only-binary=:all: --platform macosx_10_13_x86_64 --python-version 3.12 --implementation cp --abi cp312 --require-hashes -r "$F/x86.txt" -d "$F/x86"
+          shasum -a 256 "$F"/arm/*.whl "$F"/x86/*.whl
+          python -m venv "$RUNNER_TEMP/delocate"
+          "$RUNNER_TEMP/delocate/bin/python" -m pip install --retries 10 --timeout 60 --require-hashes -r pruefung/probe_delocate.txt
+          "$RUNNER_TEMP/delocate/bin/delocate-merge" --help | head -n 5
+          "$RUNNER_TEMP/delocate/bin/delocate-merge" "$F"/arm/*.whl "$F"/x86/*.whl -w "$F/out"
+          ls -l "$F/out"
+          shasum -a 256 "$F"/out/*.whl
+          python -m pip install --no-deps --force-reinstall "$F"/out/*.whl
+          PIL=$(python -c "import os, PIL; print(os.path.dirname(PIL.__file__))")
+          n=0; fehler=0
+          for f in $(find "$PIL" -type f \( -name "*.so" -o -name "*.dylib" \)); do
+            n=$((n+1)); a=$(lipo -archs "$f")
+            case " $a " in *" x86_64 "*" arm64 "*|*" arm64 "*" x86_64 "*) ;; *) echo "NICHT universal: $f ($a)"; fehler=1;; esac
+          done
+          echo "Pillow: $n Binaerdateien, fehlerhaft: $fehler"
+          python -c "import PIL, PIL.Image, PIL._imaging; print('Pillow', PIL.__version__, 'laedt')"
+          exit $fehler
 
       # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
       # Unter macOS laeuft sonst keine Testsammlung.
@@ -305,11 +334,55 @@ jobs:
           if [ "$FEHLER" = 0 ]; then echo "Paketinhalt geprueft: ohne .DS_Store, Startdatei und Hinweisdatei je Paketart richtig"; fi
           exit "$FEHLER"
 
+      - name: "PROBE: jede Mach-O-Datei der App universal (lipo)"
+        if: matrix.label == 'macos-arm64'
+        run: |
+          n=0; fehler=0
+          while IFS= read -r f; do
+            if file -b "$f" | grep -q "Mach-O"; then
+              n=$((n+1)); a=$(lipo -archs "$f")
+              case " $a " in *" x86_64 "*" arm64 "*|*" arm64 "*" x86_64 "*) ;; *) echo "NICHT universal: $f ($a)"; fehler=1;; esac
+            fi
+          done < <(find dist/FISI-Lernplattform.app -type f)
+          echo "App: $n Mach-O-Dateien, alle universal: $([ $fehler = 0 ] && echo ja || echo nein)"
+          exit $fehler
+
       - uses: actions/upload-artifact@v7
         with:
           name: installer-${{ matrix.label }}
           path: installer_output/*
           if-no-files-found: error
+
+  # NUR PROBE N11 (Frage 19): dieselbe Universal-dmg auf dem Intel-Mac starten
+  probe-universal-intel:
+    name: "PROBE: Universal-App auf Intel"
+    needs: build
+    # auch wenn der Windows-Bau (Probe Frage 21) rot ist
+    if: ${{ !cancelled() }}
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer-macos-arm64
+          path: dmg
+      - name: Starttests der Universal-App auf Intel
+        run: |
+          uname -m
+          ls -l dmg
+          hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/vol" dmg/*-macOS-arm64.dmg
+          cp -R "$RUNNER_TEMP/vol/FISI-Lernplattform.app" "$RUNNER_TEMP/"
+          hdiutil detach "$RUNNER_TEMP/vol"
+          APP="$RUNNER_TEMP/FISI-Lernplattform.app"
+          lipo -archs "$APP/Contents/MacOS/FISI-Lernplattform"
+          python -c "import sys, build; a = sys.argv[1]; build.check_macos_bundle(a, build.app_version()); build.smoke_test(a); build.smoke_test_data_dir(a)" "$APP"
 
   android:
     name: android
