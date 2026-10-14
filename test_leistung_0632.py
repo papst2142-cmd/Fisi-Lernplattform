@@ -613,6 +613,7 @@ class PartsPreloadTest(AppCase):
         self.pump(0.1)
         old = dict.pop(app.views, key)
         old.destroy()
+        app._cancel_orphaned_timers()   # wie nach einem Abbau in der App
         self.pump(0.1)
         view = app.views[key]
         if key == "calc":
@@ -627,6 +628,9 @@ class PartsPreloadTest(AppCase):
         old = dict.pop(self.app.views, key, None)
         if old is not None:
             old.destroy()
+            # wie die App nach einem Abbau (_recolor_step): Zeitgeber der
+            # zerstoerten Ansicht abbrechen
+            self.app._cancel_orphaned_timers()
             self.pump(0.05)
         return self.app.views.build_in_parts(key)
 
