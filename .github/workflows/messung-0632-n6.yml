@@ -1,0 +1,67 @@
+# Nur Messung (Zweig messung-0632-n6, Plan 0.63.2 N6, Weisung N6-F5),
+# Vorgehen wie messung-0632 (S5c). Wird nie gemergt, baut und
+# veroeffentlicht nichts.
+#   VORHER  = e0f9c7e (origin/version-0632, Abzweig von N6)
+#   NACHHER = N6-Stand (version-0632-n6)
+# 5 Runden abwechselnd vorher/nachher:
+#   start   Vorladen nach dem Start, je Schritt die laengste Blockade
+#           (die 4 Gruppen Karteikarten/Szenarien AP1+AP2/Projekt/Rechner
+#           und "abschluss" einzeln)
+#   wechsel Schrift Gross/Normal, Hell/Dunkel, Grundfarbe mit offenem
+#           Bereich "Optische Anpassungen": bedienbar, fertig, laengstes
+#           Ereignis
+# Befund laut Weisung: Windows ueber 150 ms.
+name: Messung 0.63.2 N6 (nur Messung)
+
+on:
+  push:
+    branches: [messung-0632-n6]
+    paths: [".github/workflows/messung-0632-n6.yml", "messung_0632_n6/**"]
+  workflow_dispatch:
+
+env:
+  VORHER: "e0f9c7e"
+  NACHHER: "b119259"
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Staende vorher/nachher
+        run: |
+          git worktree add ../st_vorher "$VORHER"
+          git worktree add ../st_nachher "$NACHHER"
+          for v in vorher nachher; do echo "::notice::Stand $v $(git -C ../st_$v log --oneline -1)"; done
+          python -c "import sys, customtkinter, tkinter; print('::notice::Python', sys.version.split()[0], 'customtkinter', customtkinter.__version__, 'Tk', tkinter.TkVersion)"
+      - name: Messung (5 Runden abwechselnd)
+        continue-on-error: true
+        run: |
+          lauf() {  # STAND MODUS RUNDE
+            f="$RUNNER_TEMP/n6_$1_$2_$3.jsonl"
+            N6_HOME="$RUNNER_TEMP/home_$1_$2_$3" N6_N=1 N6_RUNDE=$3 timeout 900 python messung_0632_n6/n6_messung.py ../st_$1 "$f" $2 || echo "::warning::Lauf $3 $1 $2 Rueckgabe $?"
+          }
+          for r in 1 2 3 4 5; do
+            if [ $((r % 2)) = 1 ]; then a=vorher; b=nachher; else a=nachher; b=vorher; fi
+            lauf $a start $r; lauf $b start $r
+            lauf $a wechsel $r; lauf $b wechsel $r
+          done
+      - name: Rohwerte im Log
+        run: |
+          for f in "$RUNNER_TEMP"/n6_*.jsonl; do
+            [ -f "$f" ] || continue
+            while IFS= read -r line; do echo "ROHN6 $line"; done < "$f"
+          done
+      - name: Tabelle
+        run: python messung_0632_n6/n6_tabelle.py "$RUNNER_TEMP"/n6_*.jsonl
