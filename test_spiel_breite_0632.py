@@ -43,6 +43,7 @@ Start:  xvfb-run -a python test_spiel_breite_0632.py
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -406,6 +407,7 @@ def worker(faktor, breite, hoehe, teile):
     ctx.ergebnis["schrift"] = {"family": fisi_widgets.F.get("family")}
     print("ERG " + json.dumps(ctx.ergebnis, ensure_ascii=False))
     sys.stdout.flush()
+    shutil.rmtree(home, ignore_errors=True)    # Spielstand des Prozesses
     os._exit(0)
 
 
