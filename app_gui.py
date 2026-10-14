@@ -2550,6 +2550,7 @@ class ExamPanel(ctk.CTkFrame):
         self.timer_job = None
         self.save_job = None
         self.result = None
+        self._start_rows = []   # ab 0.63.2 (N8, K33): Startzeilen der Auswahl
         self.body = transparent_frame(self)
         self.body.pack(fill="both", expand=True)
 
@@ -2557,6 +2558,7 @@ class ExamPanel(ctk.CTkFrame):
 
     def _clear(self):
         self._stop_timer()
+        self._start_rows = []
         for child in self.body.winfo_children():
             child.destroy()
 
@@ -2612,17 +2614,76 @@ class ExamPanel(ctk.CTkFrame):
             row.pack(fill="x", pady=(10, 0))
             text = transparent_frame(row)
             text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
-            make_label(text, exam["name"], font=F["body_bold"], fg=C["text"]).pack(anchor="w")
+            name = make_label(text, exam["name"], font=F["body_bold"], fg=C["text"],
+                              justify="left")
+            name.pack(anchor="w")
             detail = ("%d Minuten · %d Auswahlfragen · 100 Punkte" % (exam["minuten"],
                                                                       fp.WISO_COUNT)
                       if exam["art"] == fp.WISO else
                       "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
-            make_label(text, detail, font=F["small"], fg=C["muted"]).pack(anchor="w")
+            detail = make_label(text, detail, font=F["small"], fg=C["muted"], justify="left")
+            detail.pack(anchor="w")
             # Ab 0.63.2 (N8, B-J-N3): "<Kurzname> starten" statt viermal "Starten"
             # (Wortlaut Weisung 38/40 N8-F4, am Handy gleich)
-            NeoButton(row, EXAM_START_TEXT % exam["kurz"], lambda a=exam["art"]: self.start(a),
-                      kind="primary").pack(side="right", padx=14)
+            button = NeoButton(row, EXAM_START_TEXT % exam["kurz"],
+                               lambda a=exam["art"]: self.start(a), kind="primary")
+            button.pack(side="right", padx=14)
+            self._start_rows.append((row, (name, detail), button))
         self._results_cards(self.body)
+        self._schedule_fit_start()
+
+    # -- Ab 0.63.2 (N8, B-J-N3 K33): Startzeilen passen in die Seite --------
+    # Der laengere Knopftext "<Kurzname> starten" machte die Zeilen bei Sehr
+    # gross und schmalem Fenster breiter als den sichtbaren Bereich. Passen
+    # Name und Angaben nicht links neben den Knopf, brechen sie um (nur
+    # dann; sonst bleibt alles wie bisher, ohne Umbruchbreite).
+
+    def _schedule_fit_start(self):
+        if not getattr(self, "_start_pending", False):
+            self._start_pending = True
+            self.after_idle(self._fit_start_rows)
+
+    def _fit_start_rows(self):
+        self._start_pending = False
+        try:
+            rows = [entry for entry in self._start_rows if entry[0].winfo_exists()]
+            if not rows:
+                return
+            canvas = self.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is None:
+                return
+            if getattr(self, "_start_canvas", None) is not canvas:
+                self._start_canvas = canvas
+                canvas.bind("<Configure>", lambda _e: self._schedule_fit_start(), add="+")
+            self.update_idletasks()
+            inner = canvas.winfo_children()[0]
+            scale = px(1000) / 1000.0 or 1.0
+            changed = False
+            for row, labels, button in rows:
+                # rechter Rand der Zeile im sichtbaren Bereich (der Abstand
+                # der Zeile zum rechten Rand des Inhalts bleibt fest)
+                pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
+                          - (row.winfo_rootx() + row.winfo_width()))
+                right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+                # Polster: Textbereich und Knopf je 14 links und rechts
+                room = (right - row.winfo_rootx() - button.winfo_reqwidth()
+                        - 4 * px(14) - 2 * max(1, px(1)))
+                for label in labels:
+                    font = tkfont.Font(font=tk_font(label.cget("font")))
+                    need = font.measure(str(label.cget("text")))
+                    wrap = 0 if need <= room else max(px(120), room) / scale
+                    if abs(float(label.cget("wraplength") or 0) - wrap) > 0.5:
+                        label.configure(wraplength=wrap)
+                        changed = True
+            if changed:
+                self.update_idletasks()
+                area = canvas.master
+                if hasattr(area, "_refit_width"):
+                    area.after(40, area._refit_width)
+        except tk.TclError:
+            pass
 
     def _results_cards(self, parent):
         history = self.db.exams()

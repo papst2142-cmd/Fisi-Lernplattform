@@ -119,15 +119,18 @@ def worker(faktor):
                 continue
             item = paged.items[row["position"]]
             title = row["title"]
-            raw = row.get("raw") or ""
+            # (alter Stand ohne "raw"/"title_box": der Titel steht ungeteilt
+            # im Label, der Textbereich ist das Elternelement - so misst der
+            # Test auch dort das Verhalten, nicht den Aufbau)
+            raw = row.get("raw") or str(title.cget("text"))
             shown = str(title.cget("text"))
             fall = "%s #%d" % (name, row["position"] + 1)
             if not raw.startswith("%d. %s" % (row["position"] + 1, item["title"])):
                 found.append("%s: Titeltext %r unerwartet" % (fall, raw))
                 continue
             wrap = float(title._label.cget("wraplength"))
-            box_w = row["title_box"].winfo_width()
-            inner_w = title.master.master.winfo_width()
+            box_w = row.get("title_box", title.master).winfo_width()
+            inner_w = row.get("title_box", title).master.winfo_width()
             werte.setdefault(name, []).append([round(wrap), box_w])
             # K1
             if abs(wrap - box_w) > 2 or abs(box_w - inner_w) > 2:
@@ -212,7 +215,7 @@ def worker(faktor):
         root.geometry("%dx%d+0+0" % (breite, hoehe))
         pump(1.2)
         row = paged.rows[0]
-        breiten.append(row["title_box"].winfo_width())
+        breiten.append(row.get("title_box", row["title"].master).winfo_width())
         pruefe_seite("%s %dx%d gezogen %d" % (FAKTOREN[faktor], breite, hoehe, schritt + 1),
                      paged)
     # (je nach Stufe ist die Liste bei 1920 breiter oder - nebeneinander statt
