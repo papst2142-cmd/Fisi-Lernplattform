@@ -1237,6 +1237,12 @@ class DashboardView(View):
     def build(self):
         self.totals = content_totals()
         self.total_content = sum(self.totals.values())
+        # Ab 0.63.2 (N7, B-I-03): Zwischenspeicher je Abfrage, Zaehler
+        self._dash_cache = {}
+        self._painted = {}
+        self.query_counts = {}
+        self.refresh_count = 0
+        self._refresh_job = None
 
         # --- Banner --------------------------------------------------------
         self.hero = GradientPanel(self.content, height=118)
@@ -1371,7 +1377,8 @@ class DashboardView(View):
         cal_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         self.calendar = CalendarPanel(cal_card.body, bg=C["card"])
         self.calendar.pack(fill="both", expand=True)
-        self.calendar.set_provider(self.db.month_activity)
+        # Ab 0.63.2 (N7, B-I-03): ueber den Zwischenspeicher (_month_activity)
+        self.calendar.set_provider(self._month_activity)
 
         # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
         row5 = self.row5 = transparent_frame(self.content)
@@ -1543,10 +1550,99 @@ class DashboardView(View):
         return (stamp, datetime.date.today(), self.zoom_category,
                 tuple(sorted(learning_settings().items())))
 
-    def _refresh_today(self):
+    # -- Ab 0.63.2 (N7, B-I-03): nur die betroffenen Teile neu abfragen ------
+    #
+    # Bei sehr grossem Lernstand dauerte jede Neuberechnung fast eine Sekunde,
+    # auch wenn sich nur eine Tabelle geaendert hatte. Jede Abfrage des
+    # Dashboards merkt sich ihr Ergebnis zusammen mit dem Stempel (Anzahl und
+    # hoechste Nummer, DBManager.change_stamp) der Tabellen, die sie liest,
+    # und - wenn ihr Ergebnis vom Datum abhaengt - dem heutigen Tag. Nur wenn
+    # sich davon etwas geaendert hat, wird sie neu ausgefuehrt. Die Tabellen
+    # zaehlen ihre Nummern weiter (AUTOINCREMENT), auch nach "Alles
+    # ersetzen" (fisi_sicherung.replace_all) - jede neue oder geloeschte Zeile
+    # aendert den Stempel. Zuordnung Aenderungsart -> Abfragen: Bericht N7
+    # (K11), geprueft in test_leistung_suche_0632.py.
+    DASH_DAY_TABLES = ("card_events", "quiz_answers", "scenario_events",
+                       "project_events", "ap1_events", "trainer_aufgaben")
+    DASH_ACTIVITY_TABLES = ("card_events", "quiz_answers", "scenario_events",
+                            "project_events", "ap1_events", "test_results")
+    # Name -> (gelesene Tabellen, haengt vom Datum ab)
+    DASH_QUERIES = {
+        "karten": (("card_events",), False),         # distinct_cards_learned
+        "quiz": (("quiz_answers",), False),          # distinct_quiz_questions
+        "quote": (("quiz_answers",), False),         # quiz_success_rate
+        "ap1": (("ap1_events",), False),             # distinct_ap1
+        "ap2": (("scenario_events",), False),        # distinct_scenarios
+        "tagesziel": (DASH_DAY_TABLES, True),        # DailyGoal (activity_days)
+        "faellig": (("card_events", "quiz_answers", "ap1_events", "scenario_events",
+                     "project_events"), True),       # ReviewPlan (question_results)
+        "serie": (DASH_DAY_TABLES, True),            # streak (activity_days)
+        "verlauf": (DASH_DAY_TABLES, True),          # daily_counts
+        "abdeckung": (("quiz_answers", "card_events"), False),   # category_coverage
+        "fachbereiche": (("quiz_answers", "card_events"), False),  # category_stats
+        "aktivitaeten": (DASH_ACTIVITY_TABLES, False),   # recent_activities
+        "kalender": (DASH_ACTIVITY_TABLES, False),   # month_activity (je Monat)
+        "themen_ap2": (("scenario_events",), False),  # theme_progress
+        "themen_ap1": (("ap1_events",), False),      # theme_progress AP1
+        "reinzoom": (("card_events", "quiz_answers"), True),  # topic_*, topic_knowledge
+    }
+
+    def _dash_stamps(self):
+        """{tabelle: (Anzahl, hoechste Nummer)} in einer Abfrage, None ohne
+        Stempel (dann wird alles neu abgefragt, wie bis 0.63.1)."""
+        if not hasattr(self.db, "change_stamp"):
+            return None
+        tables = sorted({table for tables, _dated in self.DASH_QUERIES.values()
+                         for table in tables})
+        stamp = self.db.change_stamp(tables)
+        if stamp is None or len(stamp) != 2 * len(tables):
+            return None
+        return {table: tuple(stamp[2 * i:2 * i + 2]) for i, table in enumerate(tables)}
+
+    def _dash_query(self, name, func, *args, stamps=None):
+        """Ergebnis von func(*args), aus dem Zwischenspeicher, solange sich die
+        Tabellen von name (und ggf. das Datum) nicht geaendert haben."""
+        if not hasattr(self, "_dash_cache"):
+            self._dash_cache, self.query_counts = {}, {}
+        key = None
+        if stamps is not None:
+            tables, dated = self.DASH_QUERIES[name]
+            key = (tuple(stamps[table] for table in tables),
+                   datetime.date.today() if dated else None, args)
+            cached = self._dash_cache.get(name)
+            if cached is not None and cached[0] == key:
+                return cached[1]
+        self.query_counts[name] = self.query_counts.get(name, 0) + 1
+        value = func(*args)
+        if key is not None:
+            self._dash_cache[name] = (key, value)
+        return value
+
+    def _month_activity(self, year, month):
+        """Kalender (provider): Lerntage eines Monats ueber den Zwischenspeicher."""
+        return self._dash_query("kalender", self.db.month_activity, year, month,
+                                stamps=self._dash_stamps())
+
+    def schedule_refresh(self):
+        """Ab 0.63.2 (N7, B-I-03): Neuberechnung gebuendelt - mehrere
+        Aenderungsmeldungen in derselben Ereignisrunde (notify_progress)
+        rechnen das Dashboard nur einmal neu, sobald Tk Zeit hat."""
+        if getattr(self, "_refresh_job", None) is None:
+            self._refresh_job = self.after_idle(self._scheduled_refresh)
+
+    def _scheduled_refresh(self):
+        self._refresh_job = None
+        try:
+            if self.winfo_exists():
+                self.refresh()
+        except tk.TclError:
+            pass    # Ansicht wurde inzwischen abgebaut (Farb-/Schriftwechsel)
+
+    def _refresh_today(self, stamps=None):
         """Kachel "Heute" (ab 0.51)."""
         settings = learning_settings()
-        goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
+        goal = self._dash_query("tagesziel", DailyGoal.from_db, self.db,
+                                settings["ziel_anzahl"], stamps=stamps)
         show_goal = settings["ziel_an"]
         self.goal_visible = show_goal
         self._place_today()
@@ -1559,25 +1655,38 @@ class DashboardView(View):
         else:
             self.goal_ring.pack_forget()
             self.lbl_goal.pack_forget()
-        plan = ReviewPlan.from_db(self.db)
+        plan = self._dash_query("faellig", ReviewPlan.from_db, self.db, stamps=stamps)
         self.lbl_due.configure(text=due_text(plan))
         self.btn_review.set_enabled(plan.count() > 0)
 
     def refresh(self):
+        # Ab 0.63.2 (N7, B-I-03): eine noch geplante gebuendelte
+        # Neuberechnung ist damit erledigt
+        job = getattr(self, "_refresh_job", None)
+        if job is not None:
+            self._refresh_job = None
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
+        self.refresh_count = getattr(self, "refresh_count", 0) + 1
+        stamps = self._dash_stamps()
+        query = self._dash_query
         total_cards = len(KARTEIKARTEN)
         total_quiz = len(QUIZ_QUESTIONS)
         total_ap1 = len(AP1_SZENARIEN)
         total_scen = len(SZENARIEN)
 
-        learned_cards = self.db.distinct_cards_learned()
-        quiz_distinct = self.db.distinct_quiz_questions()
-        ap1_done = self.db.distinct_ap1()
-        scen_done = self.db.distinct_scenarios()
+        learned_cards = query("karten", self.db.distinct_cards_learned, stamps=stamps)
+        quiz_distinct = query("quiz", self.db.distinct_quiz_questions, stamps=stamps)
+        ap1_done = query("ap1", self.db.distinct_ap1, stamps=stamps)
+        scen_done = query("ap2", self.db.distinct_scenarios, stamps=stamps)
 
-        rate, correct, answered = self.db.quiz_success_rate()
+        rate, correct, answered = query("quote", self.db.quiz_success_rate, stamps=stamps)
         learned = learned_cards + quiz_distinct
-        self._refresh_today()
-        streak = ("Lernserie: %s   ·   " % plural(self.db.streak(), "Tag", "Tage")
+        self._refresh_today(stamps)
+        streak = ("Lernserie: %s   ·   " % plural(query("serie", self.db.streak,
+                                                         stamps=stamps), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
@@ -1617,7 +1726,7 @@ class DashboardView(View):
                           "%s / %s" % (de_int(scen_done), de_int(total_scen)))
 
         # Lernverlauf
-        daily = self.db.daily_counts(self.DAYS)
+        daily = query("verlauf", self.db.daily_counts, self.DAYS, stamps=stamps)
         labels = [day.strftime("%d.%m") for day, _count in daily]
         values = [count for _day, count in daily]
         self.chart.set_data(labels, [
@@ -1625,8 +1734,8 @@ class DashboardView(View):
         ])
 
         # Fachbereiche
-        coverage = self.db.category_coverage(self.totals)
-        stats = self.db.category_stats()
+        coverage = query("abdeckung", self.db.category_coverage, self.totals, stamps=stamps)
+        stats = query("fachbereiche", self.db.category_stats, stamps=stamps)
         for category in CATEGORIES:
             ring, detail, name = self.fach_rings[category]
             name.configure(text_color=CATEGORY_COLOR[category]
@@ -1641,10 +1750,31 @@ class DashboardView(View):
             else:
                 detail.configure(text="noch nicht\nbearbeitet")
 
-        # Aktivitaeten
+        # Aktivitaeten (ab 0.63.2, N7: Zeilen nur neu bauen, wenn sich die
+        # Liste geaendert hat - Abbau und Aufbau kosteten die meiste Zeit)
+        activities = query("aktivitaeten", self.db.recent_activities, 7, stamps=stamps)
+        if self._painted.get("aktivitaeten") != activities:
+            self._painted["aktivitaeten"] = activities
+            self._paint_activities(activities)
+
+        self.calendar.refresh()
+        self._refresh_zoom(stamps)
+
+        progress = query("themen_ap2", self.db.theme_progress, theme_totals(), stamps=stamps)
+        self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
+                                for name in AP2_THEMES])
+
+        progress_ap1 = query("themen_ap1", self._theme_progress_ap1, stamps=stamps)
+        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
+                                     THEME_COLOR[name]) for name in AP1_THEMES])
+
+    def _theme_progress_ap1(self):
+        return self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
+                                      table="ap1_events")
+
+    def _paint_activities(self, activities):
         for child in self.activity_box.winfo_children():
             child.destroy()
-        activities = self.db.recent_activities(7)
         if not activities:
             make_label(self.activity_box,
                        # ab 0.58 dreizeilig, damit es bei 1360 px auch bei
@@ -1655,18 +1785,6 @@ class DashboardView(View):
         else:
             for timestamp, kind, detail, extra in activities:
                 self._activity_row(timestamp, kind, detail, extra)
-
-        self.calendar.refresh()
-        self._refresh_zoom()
-
-        progress = self.db.theme_progress(theme_totals())
-        self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
-                                for name in AP2_THEMES])
-
-        progress_ap1 = self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
-                                              table="ap1_events")
-        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
-                                     THEME_COLOR[name]) for name in AP1_THEMES])
 
     # -- Reinzoom in die Themen eines Fachbereichs ---------------------------
 
@@ -1716,16 +1834,15 @@ class DashboardView(View):
             bar.pack(fill="x", pady=(4, 0))
             self.zoom_bars[topic] = bar
 
-    def _refresh_zoom(self):
+    def _refresh_zoom(self, stamps=None):
         category = self.zoom_category
         if not category or self.zoom_card is None:
             return
         color = CATEGORY_COLOR[category]
-        matrix = self.db.topic_daily(category, self.DAYS)
+        matrix, levels, stats = self._dash_query("reinzoom", self._zoom_data, category,
+                                                 stamps=stamps)
         self.zoom_heatmap.set_data([(TOPIC_SHORT[topic], color, matrix[topic])
                                     for topic in TOPICS[category]], self.DAYS)
-        levels = fisi_game.topic_knowledge(self.db)
-        stats = self.db.topic_stats()
         for topic, bar in self.zoom_bars.items():
             answered = stats[topic]["answered"]
             if answered:
@@ -1734,6 +1851,12 @@ class DashboardView(View):
             else:
                 note = "noch nicht bearbeitet"
             bar.set(levels[topic], note)
+
+    def _zoom_data(self, category):
+        """Abfragen des Reinzooms (ab 0.63.2 gebuendelt fuer den
+        Zwischenspeicher, Reihenfolge wie bis 0.63.1)."""
+        return (self.db.topic_daily(category, self.DAYS), fisi_game.topic_knowledge(self.db),
+                self.db.topic_stats())
 
     def _activity_row(self, timestamp, kind, detail, extra):
         row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
@@ -4217,15 +4340,46 @@ class NotebookView(View):
             self.query = query
             return
         self.query = query
-        self.entries = notebook_search(self.all_entries, query)
+        self.entries = self._search_prepared(query)   # ab 0.63.2 (N7)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         self.page = 0
         self._paint_practice()
         self._paint()
 
+    # -- Ab 0.63.2 (N7, B-I-03): vorbereiteter Suchtext, Lernstand gemerkt ----
+    # Die Stichwortsuche lief je Tastendruck ueber alle Eintraege (Suchtext je
+    # Eintrag nachschlagen, fisi_core.notebook_search). Jetzt wird die Liste
+    # (Eintrag, Suchtext) einmal je refresh gebildet; die Suche prueft nur
+    # noch, ob das Stichwort darin vorkommt - gleiche Regel (search_key),
+    # gleiche Reihenfolge, ein Test vergleicht mit notebook_search. Der
+    # Lernstand (StatusBook) wird nur neu berechnet, wenn sich die Antwort-
+    # Tabellen geaendert haben (change_stamp), nicht bei jedem Filterwechsel.
+
+    def _prepare_search(self):
+        self.search_prepared = getattr(self, "search_prepared", 0) + 1
+        text_of = fisi_core._entry_search_text
+        self._search_texts = [(entry, text_of(entry)) for entry in self.all_entries]
+
+    def _search_prepared(self, query):
+        needle = fisi_core.search_key(query)
+        if not needle:
+            return list(self.all_entries)
+        return [entry for entry, text in self._search_texts if needle in text]
+
+    def _status_book(self):
+        stamp = (self.db.change_stamp(fisi_core.DBManager.ANSWER_TABLES)
+                 if hasattr(self.db, "change_stamp") else None)
+        cached = getattr(self, "_book_stamp", None)
+        if stamp is not None and cached is not None and cached[0] == stamp:
+            return cached[1]
+        self.book_builds = getattr(self, "book_builds", 0) + 1
+        book = StatusBook(self.db)
+        self._book_stamp = (stamp, book) if stamp is not None else None
+        return book
+
     def refresh(self, keep_page=False):
-        self.book = StatusBook(self.db)
+        self.book = self._status_book()
         category = self.cat_pills.get()
         topic = self.topic_menu.get()
         source = self.source_pills.get()
@@ -4233,7 +4387,8 @@ class NotebookView(View):
         self.all_entries = notebook_entries(
             self.book, status=status, category=category, topic=topic,
             sources=None if source == FILTER_ALL else [source])
-        self.entries = notebook_search(self.all_entries, self.query)
+        self._prepare_search()
+        self.entries = self._search_prepared(self.query)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         if not keep_page:
@@ -5887,6 +6042,12 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
                        anchor="w", fill=map_colors["schrift"], font=tk_font(F["small_bold"]))
 
 
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
@@ -6781,13 +6942,22 @@ class SettingsView(View):
             filetypes=[(fsi.FILE_TYPE, "*" + fsi.BACKUP_EXT)])
         if not path:
             return
+        # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht; vor jeder
+        # Meldung wieder weg
+        overlay = self.app._show_busy(WAIT_BACKUP_TEXT, single=True)
         try:
             data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
             # Ab 0.62.5 (B-G-02): ueber eine Hilfsdatei - bei voller Platte
             # bleibt eine vorhandene alte Sicherung heil
             fsi.save_file(path, data)
         except OSError as error:
-            messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
+            failure = str(error)
+        else:
+            failure = None
+        finally:
+            self.app._hide_busy(overlay)
+        if failure is not None:
+            messagebox.showerror(fsi.SAVE_ERROR_TITLE, failure)
             return
         show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
 
@@ -6828,13 +6998,23 @@ class SettingsView(View):
         if not messagebox.askyesno(fsi.REPLACE_CONFIRM_TITLE, fsi.REPLACE_CONFIRM,
                                    icon="warning", default="no"):
             return
+        # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird; vor
+        # jeder Meldung wieder weg
+        overlay = self.app._show_busy(WAIT_REPLACE_TEXT, single=True)
+        failure = None
         try:
-            path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
-                                   APP_VERSION, SyncController.device())
-        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+            try:
+                path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
+                                       APP_VERSION, SyncController.device())
+            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+                failure = fsi.restore_error_text(error)
+            if failure is None:
+                self._after_restore()
+        finally:
+            self.app._hide_busy(overlay)
+        if failure is not None:
+            messagebox.showerror(fsi.ERROR_TITLE, failure)
             return
-        self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
 
     def _after_restore(self):
@@ -6905,6 +7085,53 @@ class SettingsView(View):
 #  SUCHE
 # ============================================================================
 
+# Ab 0.63.2 (N7, B-I-02): Suchtext der Inhalte einmal je Programmlauf.
+# Die Lerninhalte aendern sich zur Laufzeit nicht; bis 0.63.1 bildete jede
+# Suche fuer alle Karten, Fragen und Szenarien den Text in Kleinbuchstaben
+# neu (fisi_core.search_content). Gleiche Felder, gleiche Art (lower), gleiche
+# Reihenfolge wie dort - ein Test vergleicht beide fuer eine feste Liste von
+# Suchbegriffen. fisi_core bleibt unveraendert (Handy nutzt es weiter).
+_CONTENT_INDEX = []
+CONTENT_INDEX_BUILDS = [0]     # Zaehler fuer den Test (einmal je Lauf)
+
+
+def content_search_index():
+    """[(treffer, (suchtexte ...))] in der Reihenfolge von search_content."""
+    if not CONTENT_INDEX_BUILDS[0]:
+        index = []
+        for card in KARTEIKARTEN:
+            index.append((("Karteikarte", card["cat"], card["q"], card["a_full"]),
+                          (card["q"].lower(), card["a_full"].lower())))
+        for question in QUIZ_QUESTIONS:
+            index.append(((KIND_QUIZ, question["cat"], question["q"], question["exp"]),
+                          (question["q"].lower(), question["exp"].lower())))
+        for kind, scenarios in (("AP2-Szenario", SZENARIEN), ("AP1-Szenario", AP1_SZENARIEN)):
+            for scenario in scenarios:
+                haystack = scenario["title"] + scenario["text"] + scenario["solution"]
+                index.append(((kind, scenario["cat"], scenario["title"],
+                               scenario["text"].split("\n")[0]), (haystack.lower(),)))
+        _CONTENT_INDEX[:] = index
+        CONTENT_INDEX_BUILDS[0] += 1
+    return _CONTENT_INDEX
+
+
+def search_content_prepared(query):
+    """Wie fisi_core.search_content(query), auf dem vorbereiteten Suchtext."""
+    needle = query.lower()
+    return [hit for hit, texts in content_search_index()
+            if any(needle in text for text in texts)]
+
+
+# Ab 0.63.2 (N7, B-I-02): Trefferzeilen in Schritten. Die ersten sofort, der
+# Rest ueber Zeitgeber (dazwischen kommen Klicks und Tasten dran). Eine neue
+# Suche bricht die noch geplanten Schritte der alten ab. Hoechstens 60
+# Zeilen wie bisher.
+SEARCH_MAX_ROWS = 60
+SEARCH_FIRST_ROWS = 12
+SEARCH_STEP_ROWS = 12
+SEARCH_STEP_MS = 15
+
+
 class SearchView(View):
     def build(self):
         self.header_card = Card(self.content, title="Suchergebnisse",
@@ -6916,10 +7143,30 @@ class SearchView(View):
 
         self.results_box = transparent_frame(self.content)
         self.results_box.pack(fill="both", expand=True, pady=(14, 0))
+        self._pending = None      # ab 0.63.2 (N7): geplanter naechster Schritt
+        self._rest = []
+        self._more = 0
+
+    def _cancel_rows(self):
+        """Noch geplante Trefferzeilen einer frueheren Suche verwerfen."""
+        job, self._pending = getattr(self, "_pending", None), None
+        self._rest = []
+        if job is not None:
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
 
     def search(self, query):
-        for child in self.results_box.winfo_children():
-            child.destroy()
+        self._cancel_rows()
+        # Ab 0.63.2 (N7): die alten Zeilen sofort ausblenden und erst danach
+        # in kleinen Schritten abbauen (der Abbau von 60 Zeilen kostete fast
+        # so viel Zeit wie ihr Aufbau)
+        old = self.results_box
+        self.results_box = transparent_frame(self.content)
+        self.results_box.pack(fill="both", expand=True, pady=(14, 0))
+        old.pack_forget()
+        self.after(SEARCH_STEP_MS, lambda: self._discard(old))
 
         # Ab 0.56 zuerst die passenden Hilfe-Abschnitte
         hits = [(fh.SEARCH_KIND, None, title, text)
@@ -6927,7 +7174,7 @@ class SearchView(View):
         # Ab 0.59 (E5): Bereiche der Optionen
         hits += [(fo.SEARCH_KIND, None, title, text)
                  for _id, title, text, _templates in fo.search_options(query, pc=True)]
-        hits += search_content(query)
+        hits += search_content_prepared(query)   # ab 0.63.2 (N7): vorbereitet
         self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
@@ -6935,12 +7182,49 @@ class SearchView(View):
                        font=F["body"], fg=C["muted"]).pack(anchor="w")
             return
 
-        for kind, category, title, detail in hits[:60]:
-            self._result_row(kind, category, title, detail)
-        if len(hits) > 60:
+        shown = hits[:SEARCH_MAX_ROWS]
+        self._more = len(hits) - len(shown)
+        self._rest = shown[SEARCH_FIRST_ROWS:]
+        for hit in shown[:SEARCH_FIRST_ROWS]:
+            self._result_row(*hit)
+        self._next_rows()
+
+    def _discard(self, box):
+        """Baut einen ausgeblendeten Trefferbereich schrittweise ab."""
+        try:
+            children = box.winfo_children()
+            for child in children[:SEARCH_STEP_ROWS]:
+                child.destroy()
+            if len(children) > SEARCH_STEP_ROWS:
+                self.after(SEARCH_STEP_MS, lambda: self._discard(box))
+            else:
+                box.destroy()
+        except tk.TclError:
+            pass     # Ansicht oder Fenster schon abgebaut
+
+    def _next_rows(self):
+        """Plant den naechsten Schritt oder setzt den Abschluss (Hinweis auf
+        weitere Treffer) unter die letzte Zeile."""
+        if self._rest:
+            self._pending = self.after(SEARCH_STEP_MS, self._add_rows)
+            return
+        self._pending = None
+        if self._more > 0:
             make_label(self.results_box,
-                       "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60),
+                       "... weitere %d Treffer nicht angezeigt." % self._more,
                        font=F["small"], fg=C["muted"]).pack(anchor="w", pady=8)
+
+    def _add_rows(self):
+        self._pending = None
+        try:
+            if not self.winfo_exists():
+                return
+            batch, self._rest = self._rest[:SEARCH_STEP_ROWS], self._rest[SEARCH_STEP_ROWS:]
+            for hit in batch:
+                self._result_row(*hit)
+            self._next_rows()
+        except tk.TclError:
+            self._rest = []      # Fenster geschlossen oder Ansicht abgebaut
 
     def _result_row(self, kind, category, title, detail):
         row, marker, inner = clickable_row(
@@ -8811,10 +9095,12 @@ class FISIApp:
             fhg.vorgang(task)
         self.perf.theme(before, _theme_name(), measured)
 
-    def _show_busy(self, title=None, text=None):
+    def _show_busy(self, title=None, text=None, single=False):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
         deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
-        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
+        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt.
+        single (ab 0.63.2, N7): nur die eine Zeile title (Bitte-warten-Hinweis
+        bei Sicherung und "Alles ersetzen"), ohne zweiten Text."""
         overlay = tk.Frame(self.root, bg=C["bg"], cursor="watch")
         overlay.place(x=0, y=0, relwidth=1, relheight=1)
         card = ctk.CTkFrame(overlay, fg_color=C["card"], corner_radius=px(18),
@@ -8826,12 +9112,17 @@ class FISIApp:
                                           C["accent"], C["ring_bg"]), px(56), px(56))
         ring.create_image(px(28), px(28), image=ring._photo)
         ring.pack(pady=(px(26), px(10)))
-        make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
-                   bg=C["card"]).pack(padx=px(40))
-        make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"],
-                   bg=C["card"],
-                   wraplength=px(440), justify="center").pack(padx=px(40),
-                                                               pady=(px(6), px(26)))
+        if single:
+            make_label(card, title, font=F["h2"], fg=C["text"], bg=C["card"],
+                       wraplength=px(440), justify="center").pack(padx=px(40),
+                                                                  pady=(0, px(26)))
+        else:
+            make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+                       bg=C["card"]).pack(padx=px(40))
+            make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"],
+                       fg=C["text_dim"], bg=C["card"],
+                       wraplength=px(440), justify="center").pack(padx=px(40),
+                                                                   pady=(px(6), px(26)))
         overlay.lift()
         try:
             overlay.grab_set()
@@ -9275,7 +9566,9 @@ class FISIApp:
             if hasattr(self, "sync"):
                 self.sync.schedule()
             if self.current == "dashboard":
-                self.views["dashboard"].refresh()
+                # Ab 0.63.2 (N7, B-I-03): gebuendelt - mehrere Meldungen in
+                # derselben Ereignisrunde rechnen das Dashboard einmal neu
+                self.views["dashboard"].schedule_refresh()
         # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
         self.root.after(400, self.show_unlocks)
 

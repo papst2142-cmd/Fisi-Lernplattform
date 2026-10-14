@@ -3942,6 +3942,12 @@ def custom_preview(palette, map_colors, categories, block):
         vertical_alignment=ft.CrossAxisAlignment.START))
 
 
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
 class SettingsScreen(Screen):
     crumbs = ("SYSTEM", "OPTIONEN")
 
@@ -4580,7 +4586,12 @@ class SettingsScreen(Screen):
 
     def create_backup(self, _event=None):
         self._flush_inputs()
-        data = fsi.create_backup(self.db, APP_VERSION, "Handy")
+        # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht
+        overlay = self.app.show_wait(WAIT_BACKUP_TEXT)
+        try:
+            data = fsi.create_backup(self.db, APP_VERSION, "Handy")
+        finally:
+            self.app.hide_wait(overlay)
         self.app.page.run_task(self.app.save_file, fsi.default_name(), data,
                                "application/octet-stream")
 
@@ -4671,13 +4682,24 @@ class SettingsScreen(Screen):
 
     def _replace_backup(self, backup):
         def replace():
+            # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird;
+            # vor jeder Meldung wieder weg
+            overlay = self.app.show_wait(WAIT_REPLACE_TEXT)
+            failure = None
             try:
-                path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
-                                       APP_VERSION, "Handy")
-            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-                self.app.info(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+                try:
+                    path = fsi.replace_all(self.db, backup,
+                                           os.path.dirname(self.db.db_path),
+                                           APP_VERSION, "Handy")
+                except fsi.RESTORE_ERRORS as error:   # ab 0.62.5 auch DB-Fehler (B-G-05)
+                    failure = fsi.restore_error_text(error)
+                if failure is None:
+                    self._after_restore()
+            finally:
+                self.app.hide_wait(overlay)
+            if failure is not None:
+                self.app.info(fsi.ERROR_TITLE, failure)
                 return
-            self._after_restore()
             self.app.info(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
 
         self.app.confirm(fsi.REPLACE_TITLE, fsi.replace_question(backup),
@@ -5371,6 +5393,21 @@ class FISIMobileApp:
             self.page.update()
         self.perf.theme(before, _theme_name(), measured)
 
+    def show_wait(self, text):
+        """Ab 0.63.2 (N7, B-I-03): Bitte-warten-Hinweis (wie am PC), sofort
+        gezeigt; Rueckgabe fuer hide_wait."""
+        overlay = self._busy_overlay(text, None)
+        self.page.overlay.append(overlay)
+        self._lock_bars(True)
+        self.page.update()
+        return overlay
+
+    def hide_wait(self, overlay):
+        if overlay in self.page.overlay:
+            self.page.overlay.remove(overlay)
+        self._lock_bars(False)
+        self.page.update()
+
     def _lock_bars(self, locked):
         """Kopfzeile und Navigationsleiste liegen nicht unter der Abdeckung -
         sie werden waehrend des Farbwechsels deshalb eigens gesperrt."""
@@ -5381,16 +5418,20 @@ class FISIMobileApp:
 
     @staticmethod
     def _busy_overlay(title=fisi_theme.BUSY_TITLE, message=fisi_theme.BUSY_TEXT):
-        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
+        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC).
+        Ab 0.63.2 (N7): message=None zeigt nur die eine Zeile title
+        (Bitte-warten-Hinweis bei Sicherung und "Alles ersetzen")."""
+        texts = [ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
+                         color=C["text"], text_align=ft.TextAlign.CENTER)]
+        if message is not None:
+            texts.append(ft.Text(message, size=13, color=C["text_dim"],
+                                 text_align=ft.TextAlign.CENTER))
         card = ft.Container(
             content=ft.Column([
                 ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
                                 bgcolor=C["ring_bg"]),
-                ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
-                        color=C["text"], text_align=ft.TextAlign.CENTER),
-                ft.Text(message, size=13, color=C["text_dim"],
-                        text_align=ft.TextAlign.CENTER),
-            ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            ] + texts, spacing=12, tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
             bgcolor=C["card"], border_radius=18, border=ft.Border.all(1, C["border_hi"]))
         return ft.Container(content=card, left=0, top=0, right=0, bottom=0,
