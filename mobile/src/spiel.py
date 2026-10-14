@@ -2838,7 +2838,7 @@ class GameScreen:
             diary.append(ui.text("Noch keine Einträge - dein erster Arbeitstag wartet.",
                                  size=14, color=C["text_soft"]))
         if pages > 1:
-            diary.append(ft.Row([
+            diary.append((_stack_large if ui.large() else ft.Row)([
                 ui.GradientButton("Neuere", lambda _e: self._journey_turn(-1), kind="ghost",
                                   height=36),
                 ui.text("Seite %d / %d" % (self.journey_page + 1, pages), size=13,
@@ -3079,7 +3079,7 @@ class GameScreen:
             ft.Row([ui.GradientButton("Angebot abschicken",
                                       lambda _e: self._send_offer(inquiry, project), height=40,
                                       expand=True)]),
-            ft.Row([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
+            (_stack_large if ui.large() else ft.Row)([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
                                       lambda _e: self._toggle_offer_help(), kind="ghost",
                                       height=38, expand=True), cancel], spacing=8)]
         return controls
@@ -4193,7 +4193,7 @@ class GameScreen:
             repay = ui.GradientButton("Ablösen", lambda _e, i=item: self._repay_loan(i),
                                       kind="ghost", height=38, expand=True)
             repay.set_enabled(state.money >= item["abloesen"]["gesamt"])
-            parts.append(ft.Row([
+            parts.append((_stack_large if ui.large() else ft.Row)([
                 ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
                                   lambda _e, i=item["id"]: self._toggle_plan(i), kind="ghost",
                                   height=38, expand=True), repay], spacing=8))

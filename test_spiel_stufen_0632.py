@@ -15,6 +15,8 @@ auf None).
   S4 Ticket und Serverfarm: "Lösung einreichen" und "Hilfe" untereinander
   S5 Uebersicht: Bild der Spielfigur ueber dem Text
   S6 Wissensluecke: Knopf "Karteikarten zu ..." in voller Breite
+  FG-111 (Vorschlag): Angebot "Hilfe"/"Abbrechen", Kredit "Tilgungsplan"/
+  "Abloesen", Reise "Neuere"/Seite/"Aeltere" ab 160 % untereinander
 
 Die echten Methoden von mobile/src/spiel.GameScreen laufen gegen ein echtes
 Spiel (Wegwerf-Datenbank, Spielstand mit Firma und einem Mitarbeiter, wie
@@ -384,6 +386,94 @@ class StufenwechselTest(_Basis):
         reihe, sp = weg[-3], weg[-2]
         self.assertIsInstance(reihe, ft.Row)
         self.assertTrue(sp.expand)
+
+
+
+class _Reihe(_Basis):
+    """FG-111 (Vorschlag): Reihe bis Sehr gross wie bisher, ab 160 %
+    untereinander in voller Breite (_stack_large)."""
+
+    def reihe(self, wurzel, caption):
+        funde = finde(wurzel, knopf(caption))
+        self.assertEqual(len(funde), 1, caption)
+        return funde[0][1]
+
+    def pruefen(self, reihe, faktor, anzahl, spacing, expand):
+        if faktor in KLEIN:
+            self.assertIsInstance(reihe, ft.Row, faktor)
+            self.assertEqual(len(reihe.controls), anzahl)
+            if spacing is not None:
+                self.assertEqual(reihe.spacing, spacing)
+            knoepfe = [k for k in reihe.controls if isinstance(k, ui.GradientButton)]
+            self.assertEqual([bool(k.expand) for k in knoepfe], [expand] * len(knoepfe))
+        else:
+            self.assertIsInstance(reihe, ft.Column, faktor)
+            self.assertEqual(len(reihe.controls), anzahl)
+            self.assertEqual(reihe.horizontal_alignment, ft.CrossAxisAlignment.STRETCH)
+            self.assertFalse(any(getattr(k, "expand", None) for k in reihe.controls))
+
+
+class AngebotReiheTest(_Reihe):
+    """spiel.py _offer_calc: "Hilfe"/"Abbrechen" (Maximal: "Abbrech/en")."""
+
+    def test_alle_stufen(self):
+        for faktor in KLEIN + GROSS:
+            with self.subTest(faktor=faktor):
+                gs, _app = self.screen(faktor)
+                gs.markup = fg.offer_rules()["zuschlaege"][0]
+                gs.offer_help, gs.offer_board = False, None
+                anfrage = gs.game.state.inquiries()[0]
+                reihe = self.reihe(baum(gs._offer_calc(anfrage)), "Hilfe")
+                self.assertIs(finde(reihe, knopf("Abbrechen"))[0][1], reihe)
+                self.pruefen(reihe, faktor, 2, 8, True)
+
+
+class KreditReiheTest(_Reihe):
+    """spiel.py _running_loans: "Tilgungsplan"/"Abloesen" (Maximal: "Ablöse/n")."""
+
+    @classmethod
+    def setUpClass(cls):
+        # eigener Spielstand mit einem laufenden Kredit (direkt als Ereignis;
+        # take_loan prueft die Kreditwuerdigkeit)
+        cls.db = fisi_core.DBManager(os.path.join(tempfile.mkdtemp(dir=_TMP), "k.db"))
+        _spielstand(cls.db)
+        game = spiel.GameScreen(_App(cls.db)).game
+        game.reload()
+        paket = fg.loan_rules(game.content)["pakete"][0]
+        angebot = fg.loan_offer(game.state, paket["summe"], paket["laufzeit"], paket,
+                                game.content)
+        game._log(fg.EV_LOAN, {
+            "kredit": "%s%d:1" % (fg.LOAN_PREFIX, game.state.day), "tag": game.state.day,
+            "name": angebot["name"], "paket": angebot["paket"], "summe": angebot["summe"],
+            "laufzeit": angebot["laufzeit"], "zins": angebot["zins"], "rate": angebot["rate"]})
+
+    def test_alle_stufen(self):
+        for faktor in KLEIN + GROSS:
+            with self.subTest(faktor=faktor):
+                ui.set_font_factor(faktor)
+                gs = spiel.GameScreen(_App(self.db))
+                gs.game.reload()
+                karte = gs._running_loans(gs.game.state)
+                reihe = self.reihe(karte, "Tilgungsplan")
+                self.assertIs(finde(reihe, knopf("Ablösen"))[0][1], reihe)
+                self.pruefen(reihe, faktor, 2, 8, True)
+
+
+class ReiseSeitenTest(_Reihe):
+    """spiel.py _fill_journey: "Neuere"/Seite/"Aeltere" (Maximal: "Älte…"
+    rechts angeschnitten)."""
+
+    def test_alle_stufen(self):
+        for faktor in KLEIN + GROSS:
+            with self.subTest(faktor=faktor):
+                gs, _app = self.screen(faktor)
+                gs.journey_tab, gs.journey_page = "rueckblick", 0
+                gs.open_journey()
+                reihe = self.reihe(baum(gs.journey_box.controls), "Neuere")
+                self.assertIs(finde(reihe, knopf("Ältere"))[0][1], reihe)
+                self.pruefen(reihe, faktor, 3, None, False)
+                if faktor in KLEIN:
+                    self.assertEqual(reihe.alignment, ft.MainAxisAlignment.SPACE_BETWEEN)
 
 
 if __name__ == "__main__":
