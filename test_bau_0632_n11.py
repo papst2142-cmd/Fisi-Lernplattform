@@ -377,7 +377,7 @@ class GlibcTest(unittest.TestCase):
         setup = build[build.index("      - uses: actions/setup-python@v7\n"):]
         setup = setup[:setup.index("\n\n")]
         self.assertIn("        env:\n          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && "
-                      "'/opt/hostedtoolcache' || '' }}", setup)
+                      "'/opt/werkzeuge-jammy' || '' }}", setup)
         self.assertEqual(text.count("AGENT_TOOLSDIRECTORY"), 1)
         # der Container-Schritt laeuft vor checkout (dort fehlt sonst git)
         self.assertLess(build.index("- name: Linux-Werkzeuge installieren"),

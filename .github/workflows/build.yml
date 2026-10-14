@@ -148,9 +148,11 @@ jobs:
           cache-dependency-path: requirements-lock-bau.txt
         # Ab 0.63.2 (B-M-06): im Container NICHT das Python des Runners
         # (eingehaengt unter /__t, gebaut fuer Ubuntu 24.04), sondern das fuer
-        # Ubuntu 22.04 gebaute aus dem Python-Verzeichnis von GitHub laden
+        # Ubuntu 22.04 gebaute aus dem Python-Verzeichnis von GitHub laden.
+        # Eigener Ordner: /opt/hostedtoolcache uebersetzt der Runner wieder
+        # auf /__t (Lauf 38504675476)
         env:
-          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && '/opt/hostedtoolcache' || '' }}
+          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && '/opt/werkzeuge-jammy' || '' }}
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
