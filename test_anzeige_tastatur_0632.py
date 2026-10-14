@@ -164,14 +164,14 @@ class NcTexteTest(unittest.TestCase):
          "N8-F7: Handy-Zeile wuerde 27 > 26 Zeichen - gemeldet, PC und Handy gleich"),
         ("fisi_core.py", "RECHENWEG\nBILDSCHIRM-DATENVOLUMEN",
          "N8-F7: Zeile ' (z. B. 8 Bit = 256 Farben,' 27 > 26 - gemeldet"),
-        ("fisi_lernen.py", "Teile das Netz %s nach VLSM",
-         "Bestandstest test_rechenweg TrainerTest.test_9_pc_text - gemeldet"),
     ]
     GEAENDERT = [
         ("fisi_core.py", "RECHENWEG SUBNETTING\nAm Beispiel 192"),
         ("fisi_core.py", "RECHENWEG SUBNETTING\nAm Beispiel\n"),
         ("fisi_projekt.py", "Anforderungen, Alternativen"),
         ("fisi_sync.py", "Das Repository bitte"),
+        # ab Weisung zu Meldung 42 (FG-105): VLSM-Aufgabentext mit "z. B."
+        ("fisi_lernen.py", "Teile das Netz %s nach VLSM"),
     ]
 
     @staticmethod
