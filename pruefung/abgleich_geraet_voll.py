@@ -27,6 +27,16 @@ Zusaetzliche Befehle (je Zeile ein JSON-Befehl, wie abgleich_geraet.py):
   db_sha                 sha256 und Groesse der Datenbankdatei, dazu ob
                          -wal/-journal liegen
   schluessel             Zahl der Eintraege je Tabelle
+Ab 0.63.2 (S6b, Weisung zu Meldung 37: Spielstaende/Projekte beim Ersetzen,
+Vorlage gp_meldung_37 skripte/geraet_m37.py):
+  spiel_anlegen PLATZ LAUF N  Spielplatz PLATZ mit Durchgang LAUF und N
+                         Spielereignissen
+  spiel_loeschen PLATZ LAUF   db.delete_run - wie "Spielstand zuruecksetzen"
+                         (Game.reset) und Platz loeschen in der Oberflaeche
+  spielzahl              {lauf: Zahl der Spielereignisse}
+  projekt_anlegen ID     Projekt ID mit Titel (save_project_field)
+  projekte               sichtbare Projekt-IDs (fisi_projekt.projects)
+  bestenzahl             Schluessel der Bestenliste-Eintraege
 """
 
 import sys
@@ -106,6 +116,33 @@ def run(name, *args):
         finally:
             conn.close()
         return {"ok": ok, "marke": marke, "eintraege": [row[0] for row in zeile]}
+    if name == "spiel_anlegen":
+        slot, lauf, n = int(args[0]), args[1], int(args[2])
+        db.log_slot(slot, lauf, "angelegt", json.dumps({"name": lauf}), g.NAME)
+        for i in range(n):
+            db.log_game_event("ticket", json.dumps({"i": i}), g.NAME, lauf)
+        return {"ok": True}
+    if name == "spiel_loeschen":
+        return {"ok": bool(db.delete_run(int(args[0]), args[1], g.NAME))}
+    if name == "spielzahl":
+        conn = g._conn()
+        try:
+            rows = conn.execute("SELECT lauf, COUNT(*) FROM spiel_ereignisse GROUP BY 1").fetchall()
+        finally:
+            conn.close()
+        return {"spiel": {str(row[0]): row[1] for row in rows}}
+    if name == "projekt_anlegen":
+        db.save_project_field(args[0], "titel", "Titel " + args[0])
+        return {"ok": True}
+    if name == "projekte":
+        return {"projekte": sorted(fisi_projekt.projects(db))}
+    if name == "bestenzahl":
+        conn = g._conn()
+        try:
+            rows = conn.execute("SELECT schluessel FROM spiel_bestenliste").fetchall()
+        finally:
+            conn.close()
+        return {"besten": sorted(row[0] for row in rows)}
     if name == "projekt_loeschen":
         fisi_projekt.delete_project(db, args[0])
         return {"ok": True}

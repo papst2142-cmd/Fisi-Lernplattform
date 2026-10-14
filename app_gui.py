@@ -125,6 +125,7 @@ from fisi_widgets import (  # noqa: E402
     ScrollArea, ShareBars, ThemeTimeline, UpsDiagram, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo, _text_height,
+    _display_line_count,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
     lesbare_schrift, tabellen_auswahl,
 )
@@ -5929,6 +5930,29 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
                        anchor="w", fill=map_colors["schrift"], font=tk_font(F["small_bold"]))
 
 
+# Ab 0.63.2 (FG-77): Schreibsperre (read_only_reason) waehrend "Sicherung
+# einspielen" -> "Zusammenfuehren". SyncError kommt nur aus merge_into_local,
+# vor dessen Schreibblock: nichts uebernommen, die normale Sicherungs-Meldung.
+# Entsteht die Sperre erst waehrend des Vorgangs und kommt BackupError, kann
+# das Zusammenfuehren schon geschrieben sein (Pruefung vor dem Wiederherstellen
+# geloeschter Spielstaende): ehrlicher Satz. PC und Handy gleich (Test).
+MSG_MERGE_INTERRUPTED = ("Das Zusammenführen wurde unterbrochen. Ein Teil der Sicherung "
+                         "kann schon übernommen sein; es geht nichts verloren. %s Ist das "
+                         "behoben, spiele die Sicherung noch einmal mit „Zusammenführen“ ein.")
+
+
+def merge_error_text(db, error, locked_before):
+    """Meldung zu einem Fehler beim Zusammenfuehren (ab 0.63.2, FG-77);
+    locked_before: read_only_reason vor dem Aufruf."""
+    reason = getattr(db, "read_only_reason", None)
+    line = DB_READ_ONLY_LINES.get(reason, "") if reason else ""
+    if isinstance(error, fisi_sync.SyncError):
+        return (fsi.MSG_READ_ONLY % line).strip()
+    if reason and not locked_before:
+        return " ".join((MSG_MERGE_INTERRUPTED % line).split())
+    return fsi.restore_error_text(error)
+
+
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
@@ -6869,19 +6893,21 @@ class SettingsView(View):
         runs = fsi.deleted_runs(self.db, backup)
         if runs and not messagebox.askyesno(fsi.DELETED_TITLE, fsi.deleted_question(runs)):
             runs = []
+        locked = getattr(self.db, "read_only_reason", None)
         try:
             count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
                                      SyncController.device())
-        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+        except fsi.RESTORE_ERRORS + (fisi_sync.SyncError,) as error:  # ab 0.63.2 (FG-77)
+            messagebox.showerror(fsi.ERROR_TITLE, merge_error_text(self.db, error, locked))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE,
                             fsi.merge_message(count, [item["name"] for item in runs]))
 
     def _replace_backup(self, backup):
-        if not messagebox.askyesno(fsi.REPLACE_TITLE, fsi.replace_question(backup),
-                                   icon="warning"):
+        # Ab 0.63.2: eigener Dialog mit Bildlauf - im Tk-Dialog war der lange
+        # Warntext abgeschnitten (kleine Bildschirme, "Sehr gross")
+        if not ask_long_question(self.app, fsi.REPLACE_TITLE, fsi.replace_question(backup)):
             return
         if not messagebox.askyesno(fsi.REPLACE_CONFIRM_TITLE, fsi.REPLACE_CONFIRM,
                                    icon="warning", default="no"):
@@ -8187,6 +8213,130 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_main.set_text("Erneut versuchen")
         self.btn_main.set_enabled(True)
         self.btn_later.set_enabled(True)
+
+
+class LongQuestionDialog(ctk.CTkToplevel):
+    """Ab 0.63.2 (Warntext "Alles ersetzen"): Rueckfrage Ja/Nein mit langem
+    Text. Der Tk-Dialog (messagebox.askyesno) wird bei langem Text hoeher als
+    der Bildschirm, Tk staucht ihn dann und schneidet den Text ab - ohne
+    Bildlauf; "Sehr gross" wirkt dort nicht. Hier steht der Text wie die
+    Neuerungen im Update-Fenster in einem Textfeld mit Bildlaufleiste, die
+    Knoepfe stehen unten und bleiben immer ganz sichtbar; das Fenster ist nie
+    groesser als der Bildschirm (Raender wie beim Update-Fenster).
+    Antwort in self.answer: True nur nach "Ja"; Esc, "Nein" und Schliessen
+    des Fensters ergeben False (wie bisher). default: Knopf mit dem Fokus
+    (Eingabetaste)."""
+
+    _scales = UpdateDialog._scales
+    _keep_on_screen = UpdateDialog._keep_on_screen
+
+    def __init__(self, root, title, message, default="no"):
+        super().__init__(root, fg_color=C["bg"])
+        self.answer = False
+        self.title(title)
+        self.resizable(True, True)
+        self.transient(root)
+        self.after(250, lambda: _apply_window_icon(self))
+        card = Card(self, title=title, accent=C["red"])
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        self.card = card
+        # Knoepfe zuerst und von unten: reicht der Platz nicht, schrumpft das
+        # Textfeld (es hat eine Bildlaufleiste), nie die Knopfzeile
+        self.buttons = transparent_frame(card.body)
+        self.buttons.pack(fill="x", pady=(12, 0), side="bottom")
+        self.btn_yes = NeoButton(self.buttons, "Ja", lambda: self._close(True),
+                                 kind="danger")
+        self.btn_yes.pack(side="left")
+        self.btn_no = NeoButton(self.buttons, "Nein", lambda: self._close(False),
+                                kind="ghost")
+        self.btn_no.pack(side="left", padx=10)
+        self.text = make_text(card.body, height=6, font=F["body"])
+        self.text.pack(fill="both", expand=True, side="top")
+        set_text(self.text, message)
+        self.text.configure(state="disabled")
+        # Testplan Dialog D5: per Tab erreichbar (schreibgeschuetzte Felder
+        # ueberspringt Tk sonst), dann rollen Pfeile/Bild/Strg+Ende den Text
+        self.text._textbox.configure(takefocus=1)
+        self.text.yview_moveto(0)
+        self._default = self.btn_yes if default == "yes" else self.btn_no
+        self.protocol("WM_DELETE_WINDOW", lambda: self._close(False))
+        self.bind("<Escape>", lambda _e: self._close(False))
+        self._fit_to_screen()
+        self.after(100, self._focus)
+        self.after(300, self._keep_on_screen)
+
+    def _fit_to_screen(self):
+        """Breite wie das Update-Fenster (560 mal Schriftfaktor), Hoehe nach
+        dem Text, beides nie groesser als der Bildschirm abzueglich der
+        Raender (UPDATE_SCREEN_MARGIN_X/_Y). Das Fenster steht mittig."""
+        window, widget = self._scales()
+        screen_w = self.winfo_screenwidth() / window
+        screen_h = self.winfo_screenheight() / window
+        width = min(int(round(UPDATE_WINDOW_BASE[0] * fisi_theme.font_factor())),
+                    max(1, int(screen_w) - 2 * UPDATE_SCREEN_MARGIN_X))
+        self.geometry("%dx%d" % (width, UPDATE_WINDOW_BASE[1]))
+        self.update_idletasks()
+        lines = _display_line_count(self.text)
+        text_now = self.text.winfo_reqheight() / window
+        text_need = _text_height(F["body"], lines) * widget / window
+        outer = 2 * 18 * widget / window              # Abstand der Card
+        need = self.card.winfo_reqheight() / window + outer - text_now + text_need
+        height = int(round(min(need, max(1, int(screen_h) - UPDATE_SCREEN_MARGIN_Y))))
+        rest = need - text_need + _text_height(F["body"], 2) * widget / window
+        self.minsize(min(width, UPDATE_MIN_WIDTH), min(height, int(round(rest))))
+        x = max(0, int((screen_w - width) / 2))
+        y = max(0, int((screen_h - height - UPDATE_SCREEN_MARGIN_Y / 2) / 2))
+        self.geometry("%dx%d+%d+%d" % (width, height, x, y))
+        self._planned_size = (width, height)
+
+    def _focus(self):
+        try:
+            self.lift()
+            self.focus_force()
+            # Fokus auf den Knopf selbst (dort liegen Eingabe/Leertaste)
+            focus_widget(self._default, keyboard=False)
+        except tk.TclError:
+            pass
+
+    def _close(self, answer):
+        self.answer = bool(answer)
+        try:
+            self.grab_release()
+        except tk.TclError:
+            pass
+        if self.winfo_exists():
+            self.destroy()
+
+
+def ask_long_question(app, title, message, default="no"):
+    """Ab 0.63.2: Rueckfrage Ja/Nein mit langem Text (LongQuestionDialog),
+    wartet auf die Antwort wie messagebox.askyesno. Ohne Hauptfenster
+    (app.root fehlt, z. B. Attrappe in Tests) wie bisher der Tk-Dialog."""
+    root = getattr(app, "root", None)
+    if root is None:
+        return messagebox.askyesno(title, message, icon="warning")
+    dialog = LongQuestionDialog(root, title, message, default)
+
+    def grab(tries=20):
+        # Erst wenn das Fenster sichtbar ist, nimmt es alle Klicks an sich
+        # (Hauptfenster gesperrt wie beim Tk-Dialog)
+        try:
+            if dialog.winfo_exists():
+                dialog.grab_set()
+        except tk.TclError as error:
+            if tries:
+                dialog.after(50, lambda: grab(tries - 1))
+            else:
+                # Ab 0.63.2 (Testplan Dialog V7): nicht still - der Dialog
+                # bleibt offen und antwortet wie sonst, nur das Hauptfenster
+                # ist dann nicht gesperrt; das steht in fehler.log
+                write_error_log("Rueckfrage \"%s\": Fenster liess sich nicht sperren "
+                                "(grab_set: %s), Hauptfenster bleibt bedienbar."
+                                % (title, error))
+
+    dialog.after(50, grab)
+    root.wait_window(dialog)
+    return dialog.answer
 
 
 def _orphaned_timers(root):
