@@ -3425,164 +3425,221 @@ class GameState:
         # ohne gueltige Tagesangabe wird nichts geraten und nichts uebersprungen.
         counted_once = set()
         for timestamp, kind, data in events:
-            if kind == EV_SOLVED:
-                double = (kind, data.get("aufgabe"), data.get("tag"))
-                if not (isinstance(double[1], str) and double[1] and
-                        type(double[2]) is int and double[2] > 0):
-                    double = None
-            elif kind == EV_DAY_END:
-                double = (kind, data.get("tag"))
-                if not (type(double[1]) is int and double[1] > 0):
-                    double = None
-            else:
-                double = None
-            if double is not None:
-                if double in counted_once:
-                    continue
-                counted_once.add(double)
-            self.history.append((timestamp, kind, data))
-            if self.first_event is None:
-                self.first_event = str(timestamp)
-            today = int(data.get("tag") or 0) if isinstance(data.get("tag"), int) else 0
-            today = today or self.days_done + 1
-            if kind in FIRM_EVENTS:
-                self._apply_firm(kind, data, today)
-            if kind in FARM_EVENTS:
-                self._apply_farm(kind, data, today)
-            if kind == EV_DIFFICULTY and self.difficulty is None and \
-                    data.get("stufe") in (DIFF_EASY, DIFF_NORMAL):
-                self.difficulty = data["stufe"]
-            if kind == EV_ACHIEVEMENT:
-                key = (data.get("erfolg"), int(data.get("stufe", 0) or 0))
-                if key[0] and key[1] and key not in self.achievements:
-                    self.achievements[key] = dict(data)
-            if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
-                self.seen_incidents.add(data.get("aufgabe"))
-                incident = task_by_id(data.get("aufgabe"), self.content) or {}
-                kind_id = incident.get("gruppe", data.get("aufgabe"))
-                self.incident_days[kind_id] = max(self.incident_days.get(kind_id, 0),
-                                                  int(data.get("tag", 0) or 0))
-            if kind == EV_SPARE_ORDER:
-                self.money += int(data.get("geld", 0))
-                self._book(today, BOOK_GOODS, data.get("geld", 0))
-                item = {"teil": data.get("teil"), "menge": 1, "ankunft": data.get("ankunft", 0),
-                        "aufgabe": data.get("aufgabe"), "haendler": data.get("haendler", ""),
-                        "nachbestellt": True}
-                self.deliveries.append(item)
-                self.spare_orders.append(dict(data))
-            if kind in (EV_MOVE, EV_BUY, EV_SELL):
-                self._book(today, BOOK_HOME, data.get("geld", 0))
-            if kind == EV_MOVE:
-                self.money += int(data.get("geld", 0))
-                self.home_id = data.get("wohnung", self.home_id)
-                self.rent = int(data.get("miete", 0))
-                self.deposit = int(data.get("kaution", 0))
-            elif kind == EV_BUY:
-                self.money += int(data.get("geld", 0))
-                self.furniture[data.get("stueck")] = data.get("moebel")
-            elif kind == EV_SELL:
-                self.money += int(data.get("geld", 0))
-                self.furniture.pop(data.get("stueck"), None)
-            elif kind == EV_LAYOUT:
-                self.layouts[data.get("wohnung")] = data
-            if kind == EV_PROFILE:
-                # Der juengste Eintrag gewinnt (Ereignisse sind sortiert)
-                self.profile = {"name": data.get("name", ""),
-                                "aussehen": normalize_appearance(data.get("aussehen"))}
-            elif kind in (EV_SOLVED, EV_DEFERRED):
-                # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
-                self._apply_reputation(data.get("reputation") or {})
-                self.money += int(data.get("geld", 0))
-                self._book(today, BOOK_TASKS, data.get("geld", 0))
-                if kind == EV_SOLVED:
-                    self.tickets_done += 1
-                    if data.get("fehllieferung"):
-                        # Falsch bestellt - die Ware kommt trotzdem ins Lager
-                        items = [dict(item, aufgabe=data.get("aufgabe"), falsch=True)
-                                 for item in data.get("lieferung") or []]
-                        self.deliveries += items
-                        self.wrong_orders[data.get("aufgabe")] = items
-                    for part_id, count in (data.get("ruecksendung") or {}).items():
-                        self.used[part_id] = self.used.get(part_id, 0) + int(count)
-                    if data.get("richtig") and data.get("falschlieferung"):
-                        self.wrong_orders.pop(data["falschlieferung"], None)
-                        self.returned_orders.add(data["falschlieferung"])
-                    if data.get("richtig"):
-                        self.solved.add(data.get("aufgabe"))
-                        for item in data.get("lieferung") or []:
-                            self.deliveries.append(dict(item, aufgabe=data.get("aufgabe")))
-                        for part_id in data.get("aus_lager") or []:
-                            self.used[part_id] = self.used.get(part_id, 0) + 1
-            elif kind == EV_DAY_END:
-                # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
-                self.days_done += 1
-                self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
-                self._book(today, BOOK_SALARY, data.get("gehalt", 0))
-                self._book(today, BOOK_HOME, -int(data.get("miete", 0)))
-                firm = data.get("firma") or {}
-                # Ab 0.43 wirken Macken beim Lernen und die Stimmung aendert sich -
-                # nur bei Feierabenden mit firma.personal (alte Tage bleiben, wie sie waren)
-                self._live = "personal" in firm
-                # Wer heute im Projekt oder in der Weiterbildung war, macht keine Routine
-                busy = {person for item in self.running_projects() for person in item["team"]}
-                busy |= set(self.farm_team())
-                self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
-                    - int(firm.get("nebenkosten", 0))
-                self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
-                self._book(today, BOOK_WAGES, -int(firm.get("gehaelter", 0)))
-                self._book(today, BOOK_COSTS, -int(firm.get("nebenkosten", 0)))
-                for item in firm.get("tickets") or []:
-                    if item.get("ticket") in self.ticket_results:
-                        continue
-                    self.ticket_results[item.get("ticket")] = dict(item)
-                    self.money += int(item.get("geld", 0))
-                    self._book(today, BOOK_TICKETS, item.get("geld", 0))
-                    self._apply_reputation(item.get("reputation") or {})
-                    if item.get("erfolg"):
-                        self._learn_from_ticket(item, today)
-                    elif self._live:
-                        self._mood_after_failure(item, today)
-                for item in firm.get("projekte") or []:
-                    if self._apply_project_day(item, today) and item.get("fertig"):
-                        self._learn_from_project(item, today)
-                # Ab 0.52: Serverfarm (Freischaltung, Team-Punkte, Phasen, Abnahme)
-                if firm.get("serverfarm_frei") and self.farm_unlocked is None and self.firm:
-                    self.farm_unlocked = today
-                if firm.get("serverfarm"):
-                    self._apply_farm_day(firm["serverfarm"], today)
-                self._learn_routine(busy, today)
-                if self._live:
-                    self._personal_day(today, firm.get("personal") or [])
-                self._live = False
-                if self.firm and len(self.staff) >= 3:
-                    self.mood_log.append((today, sum(self.mood_of(staff_id) for staff_id in
-                                                     self.staff) / float(len(self.staff))))
-                # Ab 0.44: Wer ein Rueckhol-Angebot angenommen hat, geht nach
-                # diesem Feierabend zurueck zum Mitbewerber
-                for staff_id, until in list(self.leaving.items()):
-                    if until <= today and staff_id in self.staff:
-                        data = self._staff_leaves(staff_id)
-                        self.returned_staff[staff_id] = (today, self.answers.get(
-                            "leaving:" + staff_id, {}).get("firma", ""), data.get("name", ""))
-                        self.leaving.pop(staff_id, None)
-                if self.firm:
-                    # Ab 0.42: laufende Werbung, dann Kreditraten, dann Umsatzsteuer -
-                    # geplatzte Zahlungen landen in derselben Mahnstufe
-                    self._ads_day(today)
-                    failed = self._loan_day(today)
-                    if firm.get("ust"):
-                        failed += self._tax_day(today)
-                    self._dunning_day(today, failed)
-                self.balances.append((today, self.money))
-                self.start_reputation = self.mean_reputation
-                self.day_log.append((today, round(self.mean_reputation, 1)))
-                if self.firm is None:
-                    rank = rank_for(self.mean_reputation, balancing, self.day)
-                    if rank != self._rank_seen:
-                        self.rank_log.append((self.day, rank))
-                        self._rank_seen = rank
+            self.apply_event(timestamp, kind, data, counted_once)
+        self._mark_handled()
 
-        # Tickets des laufenden Tages (Tag steht in den Nutzdaten)
+    @staticmethod
+    def double_of(kind, data):
+        """Schluessel eines eindeutigen Doppels (E-5) oder None - ab 0.63.2
+        (B-F-02) aus dem Schleifenrumpf herausgezogen, Regeln unveraendert."""
+        if kind == EV_SOLVED:
+            double = (kind, data.get("aufgabe"), data.get("tag"))
+            if not (isinstance(double[1], str) and double[1] and
+                    type(double[2]) is int and double[2] > 0):
+                double = None
+        elif kind == EV_DAY_END:
+            double = (kind, data.get("tag"))
+            if not (type(double[1]) is int and double[1] > 0):
+                double = None
+        else:
+            double = None
+        return double
+
+    def counted_once(self):
+        """Die Doppel-Merker zum jetzigen Stand, aus history (ab 0.63.2,
+        B-F-02): Jeder Schluessel kam beim Anwenden genau dann dazu, wenn das
+        Ereignis in history aufgenommen wurde. Kein Feld des Spielstands (E-5)."""
+        keys = (self.double_of(kind, data) for _timestamp, kind, data in self.history)
+        return {key for key in keys if key is not None}
+
+    def apply_event(self, timestamp, kind, data, counted_once):
+        """Ein Ereignis auf den Spielstand anwenden - der Rumpf der
+        Ereignis-Schleife, ab 0.63.2 (B-F-02) unveraendert herausgeloest. Der
+        Neuaufbau (__init__) ruft es fuer jedes Ereignis in Zeitreihenfolge auf,
+        Game._log nach dem Schreiben nur fuer das neue Ereignis (siehe
+        Game._apply_written). Danach gehoert note_handled dazu. counted_once:
+        die Doppel-Merker (E-5), beim Neuaufbau eine lokale Menge. False: als
+        eindeutiges Doppel uebersprungen (E-5, siehe oben)."""
+        double = self.double_of(kind, data)
+        if double is not None:
+            if double in counted_once:
+                return False
+            counted_once.add(double)
+        self.history.append((timestamp, kind, data))
+        if self.first_event is None:
+            self.first_event = str(timestamp)
+        today = int(data.get("tag") or 0) if isinstance(data.get("tag"), int) else 0
+        today = today or self.days_done + 1
+        if kind in FIRM_EVENTS:
+            self._apply_firm(kind, data, today)
+        if kind in FARM_EVENTS:
+            self._apply_farm(kind, data, today)
+        if kind == EV_DIFFICULTY and self.difficulty is None and \
+                data.get("stufe") in (DIFF_EASY, DIFF_NORMAL):
+            self.difficulty = data["stufe"]
+        if kind == EV_ACHIEVEMENT:
+            key = (data.get("erfolg"), int(data.get("stufe", 0) or 0))
+            if key[0] and key[1] and key not in self.achievements:
+                self.achievements[key] = dict(data)
+        if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
+            self.seen_incidents.add(data.get("aufgabe"))
+            incident = task_by_id(data.get("aufgabe"), self.content) or {}
+            kind_id = incident.get("gruppe", data.get("aufgabe"))
+            self.incident_days[kind_id] = max(self.incident_days.get(kind_id, 0),
+                                              int(data.get("tag", 0) or 0))
+        if kind == EV_SPARE_ORDER:
+            self.money += int(data.get("geld", 0))
+            self._book(today, BOOK_GOODS, data.get("geld", 0))
+            item = {"teil": data.get("teil"), "menge": 1, "ankunft": data.get("ankunft", 0),
+                    "aufgabe": data.get("aufgabe"), "haendler": data.get("haendler", ""),
+                    "nachbestellt": True}
+            self.deliveries.append(item)
+            self.spare_orders.append(dict(data))
+        if kind in (EV_MOVE, EV_BUY, EV_SELL):
+            self._book(today, BOOK_HOME, data.get("geld", 0))
+        if kind == EV_MOVE:
+            self.money += int(data.get("geld", 0))
+            self.home_id = data.get("wohnung", self.home_id)
+            self.rent = int(data.get("miete", 0))
+            self.deposit = int(data.get("kaution", 0))
+        elif kind == EV_BUY:
+            self.money += int(data.get("geld", 0))
+            self.furniture[data.get("stueck")] = data.get("moebel")
+        elif kind == EV_SELL:
+            self.money += int(data.get("geld", 0))
+            self.furniture.pop(data.get("stueck"), None)
+        elif kind == EV_LAYOUT:
+            self.layouts[data.get("wohnung")] = data
+        if kind == EV_PROFILE:
+            # Der juengste Eintrag gewinnt (Ereignisse sind sortiert)
+            self.profile = {"name": data.get("name", ""),
+                            "aussehen": normalize_appearance(data.get("aussehen"))}
+        elif kind in (EV_SOLVED, EV_DEFERRED):
+            # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
+            self._apply_reputation(data.get("reputation") or {})
+            self.money += int(data.get("geld", 0))
+            self._book(today, BOOK_TASKS, data.get("geld", 0))
+            if kind == EV_SOLVED:
+                self.tickets_done += 1
+                if data.get("fehllieferung"):
+                    # Falsch bestellt - die Ware kommt trotzdem ins Lager
+                    items = [dict(item, aufgabe=data.get("aufgabe"), falsch=True)
+                             for item in data.get("lieferung") or []]
+                    self.deliveries += items
+                    self.wrong_orders[data.get("aufgabe")] = items
+                for part_id, count in (data.get("ruecksendung") or {}).items():
+                    self.used[part_id] = self.used.get(part_id, 0) + int(count)
+                if data.get("richtig") and data.get("falschlieferung"):
+                    self.wrong_orders.pop(data["falschlieferung"], None)
+                    self.returned_orders.add(data["falschlieferung"])
+                if data.get("richtig"):
+                    self.solved.add(data.get("aufgabe"))
+                    for item in data.get("lieferung") or []:
+                        self.deliveries.append(dict(item, aufgabe=data.get("aufgabe")))
+                    for part_id in data.get("aus_lager") or []:
+                        self.used[part_id] = self.used.get(part_id, 0) + 1
+        elif kind == EV_DAY_END:
+            # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
+            self.days_done += 1
+            self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
+            self._book(today, BOOK_SALARY, data.get("gehalt", 0))
+            self._book(today, BOOK_HOME, -int(data.get("miete", 0)))
+            firm = data.get("firma") or {}
+            # Ab 0.43 wirken Macken beim Lernen und die Stimmung aendert sich -
+            # nur bei Feierabenden mit firma.personal (alte Tage bleiben, wie sie waren)
+            self._live = "personal" in firm
+            # Wer heute im Projekt oder in der Weiterbildung war, macht keine Routine
+            busy = {person for item in self.running_projects() for person in item["team"]}
+            busy |= set(self.farm_team())
+            self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
+                - int(firm.get("nebenkosten", 0))
+            self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
+            self._book(today, BOOK_WAGES, -int(firm.get("gehaelter", 0)))
+            self._book(today, BOOK_COSTS, -int(firm.get("nebenkosten", 0)))
+            for item in firm.get("tickets") or []:
+                if item.get("ticket") in self.ticket_results:
+                    continue
+                self.ticket_results[item.get("ticket")] = dict(item)
+                self.money += int(item.get("geld", 0))
+                self._book(today, BOOK_TICKETS, item.get("geld", 0))
+                self._apply_reputation(item.get("reputation") or {})
+                if item.get("erfolg"):
+                    self._learn_from_ticket(item, today)
+                elif self._live:
+                    self._mood_after_failure(item, today)
+            for item in firm.get("projekte") or []:
+                if self._apply_project_day(item, today) and item.get("fertig"):
+                    self._learn_from_project(item, today)
+            # Ab 0.52: Serverfarm (Freischaltung, Team-Punkte, Phasen, Abnahme)
+            if firm.get("serverfarm_frei") and self.farm_unlocked is None and self.firm:
+                self.farm_unlocked = today
+            if firm.get("serverfarm"):
+                self._apply_farm_day(firm["serverfarm"], today)
+            self._learn_routine(busy, today)
+            if self._live:
+                self._personal_day(today, firm.get("personal") or [])
+            self._live = False
+            if self.firm and len(self.staff) >= 3:
+                self.mood_log.append((today, sum(self.mood_of(staff_id) for staff_id in
+                                                 self.staff) / float(len(self.staff))))
+            # Ab 0.44: Wer ein Rueckhol-Angebot angenommen hat, geht nach
+            # diesem Feierabend zurueck zum Mitbewerber
+            for staff_id, until in list(self.leaving.items()):
+                if until <= today and staff_id in self.staff:
+                    data = self._staff_leaves(staff_id)
+                    self.returned_staff[staff_id] = (today, self.answers.get(
+                        "leaving:" + staff_id, {}).get("firma", ""), data.get("name", ""))
+                    self.leaving.pop(staff_id, None)
+            if self.firm:
+                # Ab 0.42: laufende Werbung, dann Kreditraten, dann Umsatzsteuer -
+                # geplatzte Zahlungen landen in derselben Mahnstufe
+                self._ads_day(today)
+                failed = self._loan_day(today)
+                if firm.get("ust"):
+                    failed += self._tax_day(today)
+                self._dunning_day(today, failed)
+            self.balances.append((today, self.money))
+            self.start_reputation = self.mean_reputation
+            self.day_log.append((today, round(self.mean_reputation, 1)))
+            if self.firm is None:
+                rank = rank_for(self.mean_reputation, self.content["balancing"], self.day)
+                if rank != self._rank_seen:
+                    self.rank_log.append((self.day, rank))
+                    self._rank_seen = rank
+        return True
+
+    def differences(self, other):
+        """Namen der Felder, in denen sich zwei Spielstaende unterscheiden (ab
+        0.63.2, B-F-02: Absicherung und Differenztest). Nicht verglichen
+        werden die Inhalte und reine Zwischenspeicher (_pressure); bei
+        _topic_base muessen gemeinsame Eintraege gleich sein."""
+        mine, theirs = vars(self), vars(other)
+        fields = [key for key in sorted(set(mine) | set(theirs))
+                  if key not in ("content", "_pressure", "_topic_base") and
+                  (key not in mine or key not in theirs or
+                   not self._same(mine[key], theirs[key]))]
+        base, other_base = mine.get("_topic_base", {}), theirs.get("_topic_base", {})
+        if any(not self._same(base[key], other_base[key])
+               for key in set(base) & set(other_base)):
+            fields.append("_topic_base")
+        return fields
+
+    @staticmethod
+    def _same(left, right):
+        """Gleich samt Typ und Reihenfolge (1 ist nicht 1.0, {a, b} wie [a, b])."""
+        if type(left) is not type(right):
+            return False
+        if isinstance(left, dict):
+            return list(left) == list(right) and \
+                all(GameState._same(value, right[key]) for key, value in left.items())
+        if isinstance(left, (list, tuple)):
+            return len(left) == len(right) and all(map(GameState._same, left, right))
+        return left == right
+
+    def _mark_handled(self):
+        """Tickets des laufenden Tages (Tag steht in den Nutzdaten) - ab 0.63.2
+        (B-F-02) als eigene Funktion, sonst unveraendert."""
+        self.handled = {}
         for _timestamp, kind, data in self.history:
             if kind in (EV_SOLVED, EV_DEFERRED, EV_SPARE_ORDER) and \
                     data.get("tag") == self.day:
@@ -3593,6 +3650,23 @@ class GameState:
                 else:
                     status = ST_RIGHT if data.get("richtig") else ST_WRONG
                 self.handled[data.get("aufgabe")] = status
+
+    def note_handled(self, kind, data, day_before):
+        """Nach apply_event eines einzelnen neuen Ereignisses (ab 0.63.2,
+        B-F-02): wie _mark_handled, ohne jedes Mal die ganze Liste zu lesen.
+        Das neue Ereignis steht zuletzt in history; hat sich der Arbeitstag
+        geaendert (Feierabend), wird die Liste wie beim Neuaufbau gelesen."""
+        if self.day != day_before:
+            self._mark_handled()
+            return
+        if kind in (EV_SOLVED, EV_DEFERRED, EV_SPARE_ORDER) and data.get("tag") == self.day:
+            if kind == EV_DEFERRED:
+                status = ST_DEFERRED
+            elif kind == EV_SPARE_ORDER:
+                status = ST_WAITING
+            else:
+                status = ST_RIGHT if data.get("richtig") else ST_WRONG
+            self.handled[data.get("aufgabe")] = status
 
     def _book(self, day, kind, amount):
         amount = int(amount or 0)
@@ -5001,6 +5075,7 @@ class Game:
             stamp = self._event_stamp()
         self.state = GameState(events, self.content)
         self._stamp = (self.run, stamp) if stamp is not None else None
+        self._incremental = 0      # ab 0.63.2 (B-F-02): Schritte seit dem Neuaufbau
         return self.state
 
     def _event_stamp(self):
@@ -5177,12 +5252,130 @@ class Game:
         return levels
 
     def _log(self, kind, data):
+        """Ein Spielereignis schreiben. Ab 0.63.2 (B-F-02) wird danach nur das
+        neue Ereignis auf den vorhandenen Spielstand angewendet (dieselbe
+        Funktion wie beim Neuaufbau, GameState.apply_event), statt alle
+        Ereignisse neu zu rechnen. Voll neu gerechnet wird wie bisher, wenn
+        sich das Protokoll sonst geaendert hat (Abgleich-Eingang, anderer
+        Platz, Zuruecksetzen) oder das neue Ereignis nicht ans Ende sortiert
+        (Uhr zurueckgestellt). Am Feierabend sichert ein Vergleich mit dem
+        vollstaendigen Neuaufbau ab (_verify_state)."""
         self._ensure_run()
-        self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device,
-                               self.run)
-        self.reload()
+        text = json.dumps(data, ensure_ascii=False)
+        before = self._current_stamp()
+        self.db.log_game_event(kind, text, self.device, self.run)
+        if not self._apply_written(before, kind, text):
+            self.reload()
+        elif kind == EV_DAY_END:
+            self._verify_state()
         if kind != EV_ACHIEVEMENT:
             self.check_achievements(day_end=kind == EV_DAY_END)
+
+    # Ab 0.63.2 (B-F-02): Der schrittweise Weg rechnet auf einer Kopie des
+    # Spielstands (neues Objekt wie beim Neuaufbau). False: auf dem
+    # vorhandenen Objekt (schneller, aber ein vorher gemerktes game.state
+    # aendert sich dann mit).
+    STATE_COPY = True
+
+    def _current_stamp(self):
+        """Stempel des Protokolls, wenn der Spielstand genau dazu passt (sonst
+        None: dann wird nach dem Schreiben voll neu gerechnet)."""
+        if self.state is None or self._stamp is None or self._stamp[0] != self.run:
+            return None
+        stamp = self._event_stamp()
+        if not stamp or (self.run, stamp) != self._stamp:
+            return None
+        return stamp
+
+    def _apply_written(self, before, kind, text):
+        """Das eben geschriebene Ereignis schrittweise anwenden (ab 0.63.2,
+        B-F-02). Nur wenn sicher ist, dass seit dem Stempel `before` genau
+        diese eine Zeile dazukam und sie in der Sortierung des Neuaufbaus
+        (Zeitstempel, dann Nummer) zuletzt steht. Liefert False, wenn voll neu
+        gerechnet werden muss."""
+        execute = getattr(self.db, "_execute", None)
+        if before is None or execute is None or not self.run:
+            return False
+        after = self._event_stamp()
+        if not after or after[0] != before[0] + 1:
+            return False
+        if self.run == LEGACY_RUN:
+            where, params = "(lauf IS NULL OR lauf = '')", ()
+        else:
+            where, params = "lauf = ?", (self.run,)
+        rows = execute("SELECT id, timestamp, typ, daten FROM spiel_ereignisse WHERE %s"
+                       " AND id > ? ORDER BY id" % where, params + (before[1] or 0,),
+                       fetch="all", default=None)
+        if not rows or len(rows) != 1:
+            return False
+        number, timestamp, row_kind, row_text = rows[0]
+        if (number != after[1] or row_kind != kind or row_text != text or
+                not isinstance(timestamp, str) or timestamp != after[2] or
+                (before[2] is not None and not (isinstance(before[2], str) and
+                                                timestamp >= before[2]))):
+            return False
+        try:
+            payload = json.loads(text) if text else {}
+        except ValueError:
+            return False
+        if not isinstance(payload, dict):
+            return False
+        state = self.state
+        once = getattr(self, "_once", None)
+        marks = once[1] if once is not None and once[0] is state else state.counted_once()
+        if self.STATE_COPY:
+            # Wie bisher ein neues Spielstand-Objekt: wer das alte haelt (z.B.
+            # "state = game.state" vor einer Aktion), sieht weiter den alten Stand
+            state = copy.deepcopy(state, {id(state.content): state.content})
+            marks = set(marks)
+        try:
+            day_before = state.day
+            # Ein uebersprungenes Doppel (E-5, False) kommt nicht in history
+            # und zaehlt deshalb auch nicht fuer die Tagestickets
+            if state.apply_event(timestamp, kind, payload, marks):
+                state.note_handled(kind, payload, day_before)
+        except Exception:
+            # Nicht (ganz) angewendet: neu rechnen (wirft dann wie bisher,
+            # falls das Ereignis selbst den Fehler ausloest)
+            self._stamp = None
+            self._once = None
+            return False
+        self.state = state
+        self._once = (state, marks)
+        self._stamp = (self.run, after)
+        self._incremental = getattr(self, "_incremental", 0) + 1
+        return True
+
+    def _verify_state(self):
+        """Absicherung im Betrieb (ab 0.63.2, B-F-02): Am Feierabend wird der
+        schrittweise fortgeschriebene Spielstand mit einem vollstaendigen
+        Neuaufbau verglichen. Weicht er ab, gilt der Neuaufbau, und eine
+        Zeile geht nach fehler.log (neben der Datenbank)."""
+        if not getattr(self, "_incremental", 0):
+            return
+        stamp = self._event_stamp()
+        events = self.db.game_events(self.run) if self.run else []
+        if not stamp or self._stamp != (self.run, stamp):
+            self._stamp = None
+            self.reload()
+            return
+        rebuilt = GameState(events, self.content)
+        fields = self.state.differences(rebuilt)
+        self._incremental = 0
+        if not fields:
+            return
+        self.state = rebuilt
+        try:
+            from fisi_core import ERROR_LOG_NAME, write_error_log
+            folder = os.path.dirname(os.path.abspath(self.db.db_path)) \
+                if getattr(self.db, "db_path", None) else None
+            write_error_log("Spiel: Der schrittweise berechnete Spielstand wich am Feierabend"
+                            " (Arbeitstag %d, %d Ereignisse) vom vollständigen Neuaufbau ab:"
+                            " %s. Es gilt der Neuaufbau." % (
+                                rebuilt.days_done, len(events), ", ".join(fields)),
+                            os.path.join(folder, ERROR_LOG_NAME) if folder else None)
+        except Exception:
+            pass
 
     # -- Erfolge und Bestenliste (ab 0.46) --------------------------------------
 
