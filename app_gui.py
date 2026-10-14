@@ -148,6 +148,14 @@ def _resource_path(filename):
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, filename)
 
+# Ab 0.63.2 (N8, B-J-N3): Namen der Symbolknoepfe (Tooltip und Beschriftung
+# beim Tab-Fokus) - wie am Handy (main.PAGE_PREV/PAGE_NEXT, ui.py Kalender,
+# Zahlenfeld "Weniger"/"Mehr") - und Text der vier Startknoepfe der Pruefung
+# (Weisung 38/40 N8-F4: "<Kurzname> starten", PC = Handy)
+PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+STEP_LESS, STEP_MORE = "Weniger", "Mehr"
+EXAM_START_TEXT = "%s starten"
+
 NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
     ("cards", "cards", "Karteikarten", CATEGORIES),
@@ -264,13 +272,13 @@ class NumberStepper(ctk.CTkFrame):
         self.step = step
 
         IconButton(self, "minus", lambda: self._change(-self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_LESS).pack(side="left")
         self.label = ctk.CTkLabel(self, text=str(value), fg_color=C["card_alt"],
                                   corner_radius=10, text_color=C["text"],
                                   font=F["body_bold"], width=58, height=34)
         self.label.pack(side="left", padx=6)
         IconButton(self, "plus", lambda: self._change(self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_MORE).pack(side="left")
 
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
@@ -553,12 +561,12 @@ class PagedList:
         pager.pack(fill="x", pady=(10, 0))
         # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
         self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_PREV)
         self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
         self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_NEXT)
         self.btn_next.pack(side="right")
 
     def _make_row(self, slot):
@@ -935,7 +943,7 @@ class Header(ctk.CTkFrame):
         self.search_entry = ctk.CTkEntry(self.search_box, width=250, height=36,
                                          border_width=0, fg_color=C["card"],
                                          text_color=C["text"],
-                                         placeholder_text="Suchen ...  (Strg+F)",
+                                         placeholder_text="Suchen …  (Strg+F)",   # ab 0.63.2 (N-c): …
                                          placeholder_text_color=C["muted"],
                                          font=F["small"])
         self.search_entry.pack(side="left", padx=(6, 12), pady=2)
@@ -1348,6 +1356,10 @@ class DashboardView(View):
                 widget.configure(cursor="hand2")
                 widget.bind("<Button-1>",
                             lambda _e, cat=category: self._toggle_zoom(cat))
+            # Ab 0.63.2 (N8, B-J-05): Kachel per Tab erreichbar, Eingabe-,
+            # Ziffernblock-Eingabe- und Leertaste wie ein Klick; den
+            # Fokusrahmen zeichnet wie bei den uebrigen Elementen focus_ring
+            make_focusable(column, lambda cat=category: self._toggle_zoom(cat))
             self.fach_rings[category] = (ring, detail, name)
 
         # --- Reinzoom: Themen eines Fachbereichs (ab 0.37) ----------------
@@ -2534,7 +2546,9 @@ class ExamPanel(ctk.CTkFrame):
                       if exam["art"] == fp.WISO else
                       "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
             make_label(text, detail, font=F["small"], fg=C["muted"]).pack(anchor="w")
-            NeoButton(row, "Starten", lambda a=exam["art"]: self.start(a),
+            # Ab 0.63.2 (N8, B-J-N3): "<Kurzname> starten" statt viermal "Starten"
+            # (Wortlaut Weisung 38/40 N8-F4, am Handy gleich)
+            NeoButton(row, EXAM_START_TEXT % exam["kurz"], lambda a=exam["art"]: self.start(a),
                       kind="primary").pack(side="right", padx=14)
         self._results_cards(self.body)
 
@@ -2561,12 +2575,22 @@ class ExamPanel(ctk.CTkFrame):
         overall_card(parent, self.db)
 
     def start(self, art):
+        # Ab 0.63.2 (N8, B-D-14, F23 a): Laeuft schon eine Pruefung (gespeichert,
+        # auch "bewerten"), wird sie gezeigt und nie ueberschrieben - vor und
+        # nach der Rueckfrage (sie kann waehrenddessen entstanden sein).
+        # Keine neue Meldung (F23 a: durch Absicherung geschlossen).
+        if fp.load_running() is not None:
+            self.show()
+            return
         exam = fp.EXAM[art]
         if not messagebox.askyesno(
                 "Prüfung starten",
                 "%s\n\nDie Zeit (%d Minuten) läuft sofort und lässt sich nicht anhalten - "
                 "auch nicht, wenn du das Programm schließt. Jetzt starten?"
                 % (exam["name"], exam["minuten"])):
+            return
+        if fp.load_running() is not None:
+            self.show()
             return
         self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
         fp.save_running(self.state)
@@ -4165,12 +4189,12 @@ class NotebookView(View):
         pager.pack(fill="x", pady=(10, 0))
         # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
         self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_PREV)
         self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
         self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_NEXT)
         self.btn_next.pack(side="right")
         self.refresh()
         # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
@@ -6939,7 +6963,7 @@ class SearchView(View):
             self._result_row(kind, category, title, detail)
         if len(hits) > 60:
             make_label(self.results_box,
-                       "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60),
+                       "… weitere %d Treffer nicht angezeigt." % (len(hits) - 60),   # ab 0.63.2 (N-c)
                        font=F["small"], fg=C["muted"]).pack(anchor="w", pady=8)
 
     def _result_row(self, kind, category, title, detail):
@@ -8074,7 +8098,7 @@ class UpdateDialog(ctk.CTkToplevel):
             if self._downloading and self.winfo_exists():
                 self.progress.set(state["loaded"] / state["total"])
                 self.lbl_status.configure(   # ab 0.63.2 (B-D-05): Dezimalkomma
-                    text="Update wird heruntergeladen ... %s von %s MB"
+                    text="Update wird heruntergeladen … %s von %s MB"   # ab 0.63.2 (N-c)
                          % (fisi_core.de_number(state["loaded"] / 1048576, 1),
                             fisi_core.de_number(state["total"] / 1048576, 1)))
                 self.after(200, refresh)

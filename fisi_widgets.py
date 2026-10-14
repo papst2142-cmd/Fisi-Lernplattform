@@ -849,11 +849,85 @@ class NeoButton(ctk.CTkLabel):
         self._render()
 
 
+class Tooltip:
+    """Ab 0.63.2 (N8, B-J-N3): Name eines Symbolknopfs als kleines Schild
+    unter dem Knopf - bei Mausberuehrung nach DELAY ms und sofort beim
+    Tab-Fokus (Tastatur), weg beim Verlassen, Klick, Fokusverlust,
+    Ausblenden und Abbau des Knopfs. Ein Zeitgeber wird immer abgebrochen,
+    es bleibt kein Fenster stehen."""
+
+    DELAY = 600   # ms bis zum Schild bei Mausberuehrung
+    GAP = 6       # Abstand unter dem Knopf (logische Pixel)
+
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.window = None
+        self._job = None
+        for sequence, handler in (("<Enter>", self._enter), ("<Leave>", self.hide),
+                                  ("<Button-1>", self.hide), ("<FocusOut>", self.hide),
+                                  ("<Unmap>", self.hide), ("<Destroy>", self.hide),
+                                  ("<FocusIn>", self._focus)):
+            tk.Misc.bind(widget, sequence, handler, "+")
+
+    def _cancel(self):
+        if self._job is not None:
+            try:
+                self.widget.after_cancel(self._job)
+            except tk.TclError:
+                pass
+            self._job = None
+
+    def _enter(self, _event=None):
+        self._cancel()
+        try:
+            self._job = self.widget.after(self.DELAY, self.show)
+        except tk.TclError:
+            self._job = None
+
+    def _focus(self, _event=None):
+        if _keyboard[0]:
+            self.show()
+
+    def show(self):
+        self._job = None
+        if self.window is not None or not self.text:
+            return
+        try:
+            if not self.widget.winfo_ismapped():
+                return
+            window = tk.Toplevel(self.widget)
+            window.wm_overrideredirect(True)
+            window.configure(bg=C["border"])
+            tk.Label(window, text=self.text, bg=C["card_hi"], fg=C["text"],
+                     font=tk_font(F["small"]), padx=px(8), pady=px(4)).pack(
+                         padx=max(1, px(1)), pady=max(1, px(1)))
+            x = self.widget.winfo_rootx()
+            y = self.widget.winfo_rooty() + self.widget.winfo_height() + px(self.GAP)
+            window.wm_geometry("+%d+%d" % (x, y))
+            self.window = window
+        except tk.TclError:
+            self.window = None
+
+    def hide(self, _event=None):
+        self._cancel()
+        if self.window is not None:
+            try:
+                self.window.destroy()
+            except tk.TclError:
+                pass
+            self.window = None
+
+
 class IconButton(tk.Canvas):
-    """Kleiner, runder Symbolknopf (z.B. Pfeile im Kalender)."""
+    """Kleiner, runder Symbolknopf (z.B. Pfeile im Kalender).
+
+    Ab 0.63.2 (N8, B-J-N3): name = Name des Knopfs (z. B. "Vorherige Seite"),
+    als Tooltip und beim Tab-Fokus gezeigt (Tooltip)."""
 
     def __init__(self, parent, icon, command=None, size=30, parent_bg=None,
-                 color=None, icon_size=None, press_color=None):
+                 color=None, icon_size=None, press_color=None, name=""):
+        self.name = name
         self.parent_bg = parent_bg or _bg_of(parent)
         self.icon = icon
         self.command = command
@@ -874,6 +948,7 @@ class IconButton(tk.Canvas):
         self.bind("<Button-1>", self._on_press)
         self.bind("<ButtonRelease-1>", lambda e: self._set_pressed(False))
         make_focusable(self, self._on_key)   # ab 0.56
+        self.tooltip = Tooltip(self, name)   # ab 0.63.2 (N8, B-J-N3)
         self._draw()
 
     def _on_key(self):
@@ -2111,6 +2186,10 @@ def darken_bg(color):
 #  KALENDER
 # ============================================================================
 
+# Ab 0.63.2 (N8, B-J-N3): Namen der Monatspfeile (wie am Handy, ui.py)
+MONTH_PREV, MONTH_NEXT = "Vorheriger Monat", "Nächster Monat"
+
+
 class CalendarPanel(ctk.CTkFrame):
     """Monatskalender, der Lerntage hervorhebt."""
 
@@ -2128,13 +2207,16 @@ class CalendarPanel(ctk.CTkFrame):
 
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x")
+        # Ab 0.63.2 (N8, B-J-N3): Namen wie am Handy (ui.py Kalender)
         IconButton(header, "arrow_left", self._prev_month, parent_bg=self.bg,
-                   color=C["accent"], press_color=C["green"]).pack(side="left")
+                   color=C["accent"], press_color=C["green"],
+                   name=MONTH_PREV).pack(side="left")
         self.lbl_month = ctk.CTkLabel(header, text="", text_color=C["text"],
                                       font=F["h3"], height=0)
         self.lbl_month.pack(side="left", expand=True)
         IconButton(header, "arrow_right", self._next_month, parent_bg=self.bg,
-                   color=C["accent"], press_color=C["green"]).pack(side="right")
+                   color=C["accent"], press_color=C["green"],
+                   name=MONTH_NEXT).pack(side="right")
 
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 height=px(190), width=px(160))

@@ -726,7 +726,7 @@ def sync(db, settings=None, device=""):
         raise SyncError("Der Abgleich ist noch nicht eingerichtet.")
     if repo.count("/") != 1:
         raise SyncError("Das Repository bitte als „Benutzer/Name“ angeben, "
-                        "z.B. papst2142-cmd/fisi-lernstand.")
+                        "z. B. papst2142-cmd/fisi-lernstand.")
     refuse_read_only(db)        # ab 0.62.5 (M-1): vor jedem Zugriff aufs Netz
 
     received = 0
