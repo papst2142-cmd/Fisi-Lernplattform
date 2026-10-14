@@ -1942,6 +1942,14 @@ class CardsView(View):
         self._counts([card["q"] for card in base])
         self.update_ui()
 
+    def part_waits(self):
+        """Ab 0.63.2 (N6, B-I-04): Der letzte Teil (apply_filter) braucht die
+        Zuordnung zum Rahmenplan. Rechnet frp.warm_up (ab 0.55) sie gerade
+        noch im Hintergrund, wartet das Vorladen darauf, statt sie im Teil
+        am Stueck selbst zu rechnen (ViewPreloader._part_waits)."""
+        return bool(self._parts) and self._parts[0] == self.apply_filter \
+            and not frp._ITEM_POINTS and fresh_order(SRC_CARD) is not None
+
     def _counts(self, keys):
         self.count_keys = keys
         self.lbl_counts.configure(text=count_text(self.book.counts(SRC_CARD, keys)))
@@ -8410,6 +8418,7 @@ PRELOAD_START_MS = 800    # nach dem ersten Zeichnen des Dashboards (bis 0.60: 1
 PRELOAD_START_MS_060 = 1500
 PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
 PRELOAD_PART_GAP_MS = 20  # ab 0.60.1: Pause zwischen zwei Teilen derselben Ansicht
+PRELOAD_PART_WAIT_MS = 5000  # ab 0.63.2 (N6): so lange wartet ein Teil hoechstens (part_waits)
 PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste/Mausrad, bevor der naechste Schritt laeuft
 PRELOAD_WAIT_TASK = "vorladen:start"   # ab 0.59.3: Vorgang bis zum ersten Schritt
 # Ab 0.60.1: Notschalter (nur Umgebungsvariable, im LIESMICH beschrieben):
@@ -8487,6 +8496,7 @@ class ViewPreloader:
         self.steps_done = 0
         self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
         self.block_ms = {}          # ab 0.60.1: Schritt -> Dauer bis gezeichnet (laengster)
+        self._wait_since = None     # ab 0.63.2 (N6): seit wann ein Teil wartet (_part_waits)
         self.started_at = None      # ab 0.60.1: Beginn dieser Runde (perf_counter)
         self.finished_ms = None     # ab 0.60.1: Runde fertig nach ... ms
         self.last_input = 0.0
@@ -8553,6 +8563,9 @@ class ViewPreloader:
             self._schedule(max(PRELOAD_GAP_MS,
                                int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
             return
+        if self.queue and self._part_waits(self.queue[0]):
+            self._schedule(PRELOAD_GAP_MS)
+            return
         task = None
         while self.queue:
             task = self.queue.pop(0)
@@ -8567,6 +8580,23 @@ class ViewPreloader:
             self.finished_ms = round((time.perf_counter() - self.started_at) * 1000) \
                 if self.started_at is not None else None
             app.perf.preload_done(self.finished_ms)
+
+    def _part_waits(self, task):
+        """Ab 0.63.2 (N6, B-I-04): Wartet der naechste Teil einer Ansicht auf
+        eine Rechnung im Hintergrund (view.part_waits)? Hoechstens
+        PRELOAD_PART_WAIT_MS lang, danach laeuft er trotzdem."""
+        view = self.app.views.built(task[1]) if task[0] == "part" else None
+        waits = getattr(view, "part_waits", None)
+        if waits is None or not waits():
+            self._wait_since = None
+            return False
+        now = time.monotonic()
+        if self._wait_since is None:
+            self._wait_since = now
+        if (now - self._wait_since) * 1000 < PRELOAD_PART_WAIT_MS:
+            return True
+        self._wait_since = None
+        return False
 
     def _release_task(self, label, before, task=None, started=None):
         """Ab 0.59.3 (K3, nur Diagnose): Tk berechnet Groessen und zeichnet

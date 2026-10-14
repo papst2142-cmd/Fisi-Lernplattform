@@ -745,6 +745,62 @@ class PartsPreloadTest(AppCase):
             self.assertTrue(app.views.built(key).parts_pending, key)
         self.assertEqual(self.errors, [])
 
+    def test_h_karten_warten_auf_rahmenplan(self):
+        """B-I-04: Der letzte Karteikarten-Teil (apply_filter) wartet, solange
+        die Zuordnung zum Rahmenplan noch im Hintergrund rechnet, statt sie
+        selbst am Stueck zu rechnen - hoechstens PRELOAD_PART_WAIT_MS lang."""
+        self.wait_preload()
+        self.stop_preloader()
+        app, pre, frp = self.app, self.app.preloader, self.app_gui.frp
+        saved = dict(frp._ITEM_POINTS)
+        self.assertTrue(saved, "Zuordnung nach dem Vorladen berechnet")
+
+        def last_part_only():
+            view = self.fresh_parts("cards")
+            while len(view._parts) > 1:
+                view.build_next()
+            pre.queue = [("part", "cards")]
+            pre.done = False
+            pre.last_input = 0
+            return view
+
+        def step():
+            if pre.job is not None:
+                self.root.after_cancel(pre.job)
+                pre.job = None
+            pre._step()
+
+        try:
+            # (1) Hintergrund rechnet noch: warten, nichts bauen, nichts rechnen
+            view = last_part_only()
+            frp._ITEM_POINTS.clear()
+            self.assertTrue(view.part_waits())
+            step()
+            step()
+            self.assertTrue(view.parts_pending)
+            self.assertEqual(frp._ITEM_POINTS, {})
+            self.assertEqual(pre.queue, [("part", "cards")])
+            # Hintergrund fertig: der Teil laeuft im naechsten Schritt
+            frp._ITEM_POINTS.update(saved)
+            self.assertFalse(view.part_waits())
+            step()
+            self.assertFalse(view.parts_pending)
+            self.assertTrue(pre.done)
+            # (2) Hintergrund kommt nie: nach der Frist laeuft der Teil trotzdem
+            view = last_part_only()
+            frp._ITEM_POINTS.clear()
+            step()
+            self.assertTrue(view.parts_pending)
+            pre._wait_since -= self.app_gui.PRELOAD_PART_WAIT_MS / 1000.0 + 0.1
+            step()
+            self.assertFalse(view.parts_pending)
+            self.assertTrue(frp._ITEM_POINTS)
+            self.assertIsNone(pre._wait_since)
+        finally:
+            frp._ITEM_POINTS.clear()
+            frp._ITEM_POINTS.update(saved)
+        self.assertEqual(self.errors, [])
+
 
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
 class PartsPreloadSmallTest(PartsPreloadTest):
@@ -759,7 +815,7 @@ class PartsPreloadSmallTest(PartsPreloadTest):
 
     test_d_klick_hat_vorrang = test_e_sichtbare_ansicht_unberuehrt = \
         test_f_rechner_rechnet_gleich = test_g_eingaben_sichern_bei_halber_ansicht = \
-        test_a_teile_und_grenze
+        test_h_karten_warten_auf_rahmenplan = test_a_teile_und_grenze
 
 
 # ============================================================================
