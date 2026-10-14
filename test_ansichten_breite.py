@@ -866,25 +866,54 @@ def _fc_ohne(family):
     return path
 
 
+_LAUFEND = {}
+
+
+def _starte(faktor, breite, hoehe, ohne, z3_aus):
+    """Startet den Prozess fuer einen Fall (noch nicht abgewartet)."""
+    key = (faktor, breite, hoehe, ohne, z3_aus)
+    if key in _ERGEBNISSE or key in _LAUFEND:
+        return
+    # gleicher Ablauf in beiden Laeufen (Vergleich mit z3_aus): feste
+    # Hash-Reihenfolge und dieselben vorangehenden Ansichten
+    env = dict(os.environ, PYTHONHASHSEED="0")
+    if ohne:
+        env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
+    namen = list(ANSICHTEN)
+    # Ausgaben in Dateien: ein Rohr koennte volllaufen, solange der andere
+    # Prozess abgewartet wird
+    out, err = tempfile.TemporaryFile("w+"), tempfile.TemporaryFile("w+")
+    lauf = subprocess.Popen(
+        [sys.executable, os.path.abspath(__file__), "--fall", str(faktor), str(breite), str(hoehe)]
+        + (["--z3-aus"] if z3_aus else []) + namen,
+        stdout=out, stderr=err, text=True, cwd=HERE, env=env)
+    _LAUFEND[key] = (lauf, out, err)
+
+
 def ergebnis(faktor, breite, hoehe, ohne=None, z3_aus=False):
     """Alle angemeldeten Ansichten fuer eine Schriftgroesse und ein Fenster
     (ein Prozess, Ergebnis zwischengespeichert); ohne = abgelehnte Schrift;
-    z3_aus: dieselben Ansichten, aber ohne Anpassung bei Normal."""
+    z3_aus: dieselben Ansichten, aber ohne Anpassung bei Normal. Bei Normal
+    laeuft der Vergleichslauf z3_aus gleichzeitig mit (CI-Laufzeit)."""
     key = (faktor, breite, hoehe, ohne, z3_aus)
     if key not in _ERGEBNISSE:
-        # gleicher Ablauf in beiden Laeufen (Vergleich mit z3_aus): feste
-        # Hash-Reihenfolge und dieselben vorangehenden Ansichten
-        env = dict(os.environ, PYTHONHASHSEED="0")
-        if ohne:
-            env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
-        namen = list(ANSICHTEN)
-        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
-                               str(faktor), str(breite), str(hoehe)]
-                              + (["--z3-aus"] if z3_aus else []) + namen,
-                              capture_output=True, text=True, timeout=900, cwd=HERE, env=env)
-        lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
+        _starte(faktor, breite, hoehe, ohne, z3_aus)
+        if faktor == 1.0 and not z3_aus:
+            _starte(faktor, breite, hoehe, ohne, True)
+        lauf, out_datei, err_datei = _LAUFEND.pop(key)
+        try:
+            lauf.wait(timeout=900)
+        except subprocess.TimeoutExpired:
+            lauf.kill()
+            lauf.wait()
+        out_datei.seek(0)
+        err_datei.seek(0)
+        out, err = out_datei.read(), err_datei.read()
+        out_datei.close()
+        err_datei.close()
+        lines = [line for line in out.splitlines() if line.startswith("ERG ")]
         _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
-                            "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:], done.stderr[-4000:]))
+                            "kein Ergebnis:\n%s\n%s" % (out[-2000:], err[-4000:]))
     return _ERGEBNISSE[key]
 
 
