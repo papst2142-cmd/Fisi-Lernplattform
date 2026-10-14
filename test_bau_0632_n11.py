@@ -231,6 +231,11 @@ class LockTest(unittest.TestCase):
         schritt = "\n".join(_schritt(_lesen(BUILD_YML), "Inno Setup bereitstellen"))
         self.assertIn('$soll = "%s"' % INNO, schritt)
         self.assertIn("choco install innosetup --version $soll -y", schritt)
+        # Fassung aus dem Uninstall-Eintrag (ISCC.exe meldet 0.0.0.0,
+        # R3-Lauf 38504069175), vor und nach choco
+        self.assertIn("Uninstall\\Inno Setup 6_is1", schritt)
+        self.assertIn("(Get-ItemProperty $s).DisplayVersion", schritt)
+        self.assertEqual(schritt.count("$ist = Fassung"), 2)
         self.assertIn('if ($ist -ne $soll) { Write-Host "Inno Setup $ist statt $soll"; exit 1 }',
                       schritt)
         self.assertEqual(len(re.findall(r"choco install", _lesen(BUILD_YML))), 1)
@@ -367,6 +372,13 @@ class GlibcTest(unittest.TestCase):
         self.assertIn("if: runner.os == 'Linux'", schritt)
         self.assertIn("run: python pruefung/glibc_pruefen.py dist/FISI-Lernplattform "
                       "installer_output/*.deb installer_output/*.AppImage", schritt)
+        # im Container das Python fuer Ubuntu 22.04, nicht das eingehaengte
+        # des Runners (Ubuntu 24.04, R3-Lauf 38504069175: pip fehlte)
+        setup = build[build.index("      - uses: actions/setup-python@v7\n"):]
+        setup = setup[:setup.index("\n\n")]
+        self.assertIn("        env:\n          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && "
+                      "'/opt/hostedtoolcache' || '' }}", setup)
+        self.assertEqual(text.count("AGENT_TOOLSDIRECTORY"), 1)
         # der Container-Schritt laeuft vor checkout (dort fehlt sonst git)
         self.assertLess(build.index("- name: Linux-Werkzeuge installieren"),
                         build.index("- uses: actions/checkout@"))

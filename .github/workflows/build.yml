@@ -146,6 +146,11 @@ jobs:
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: requirements-lock-bau.txt
+        # Ab 0.63.2 (B-M-06): im Container NICHT das Python des Runners
+        # (eingehaengt unter /__t, gebaut fuer Ubuntu 24.04), sondern das fuer
+        # Ubuntu 22.04 gebaute aus dem Python-Verzeichnis von GitHub laden
+        env:
+          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && '/opt/hostedtoolcache' || '' }}
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
@@ -189,8 +194,15 @@ jobs:
         # oder keine da, wird genau diese installiert; sonst bricht der Bau ab.
         run: |
           $soll = "6.7.1"
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          $ist = if (Test-Path $iscc) { (Get-Item $iscc).VersionInfo.ProductVersion } else { "fehlt" }
+          # Fassung aus dem Uninstall-Eintrag (ISCC.exe selbst traegt keine
+          # Produktfassung, gemessen: 0.0.0.0)
+          $schluessel = @("HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1",
+                          "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1")
+          function Fassung {
+            foreach ($s in $schluessel) { if (Test-Path $s) { return (Get-ItemProperty $s).DisplayVersion } }
+            return "fehlt"
+          }
+          $ist = Fassung
           Write-Host "Inno Setup vorhanden: $ist"
           if ($ist -ne $soll) {
             foreach ($versuch in 1..3) {
@@ -200,9 +212,10 @@ jobs:
               Write-Host "Wiederholung wegen Netzfehler (choco, Versuch $versuch)"
               Start-Sleep -Seconds 10
             }
-            $ist = (Get-Item $iscc).VersionInfo.ProductVersion
+            $ist = Fassung
           }
           if ($ist -ne $soll) { Write-Host "Inno Setup $ist statt $soll"; exit 1 }
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { Write-Host "ISCC.exe fehlt"; exit 1 }
           Write-Host "Inno Setup $ist (fest)"
 
       # Ab 0.63.2 (B-M-05): nur aus der Lock-Datei, jedes Paket mit Pruefsumme
