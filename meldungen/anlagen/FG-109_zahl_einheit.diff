@@ -1,0 +1,96 @@
+diff --git a/fisi_game.py b/fisi_game.py
+index 220a0e4..0c9ffd1 100644
+--- a/fisi_game.py
++++ b/fisi_game.py
+@@ -6222,8 +6222,8 @@ def staff_money_text(item, content=None):
+     revenue = item.get("umsatz")
+     if revenue is None:
+         revenue = staff_revenue(item["werte"], content)
+-    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro(item["gehalt"]),
+-                                                     _whole_euro(revenue))
++    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro_shown(item["gehalt"]),
++                                                     _whole_euro_shown(revenue))
+ 
+ 
+ def training_text(state, item):
+@@ -8072,10 +8072,11 @@ def tax_status_lines(item):
+         "Dieser Zeitraum (%s): Umsatzsteuer %s aus %s Einnahmen, Vorsteuer %s aus %s "
+         "Ausgaben, Zahllast bisher %s" % (
+             "noch kein Feierabend" if not item["tage"] else
+-            term_text(item["tage"]), _whole_euro(item["ust"]), _whole_euro(item["umsatz"]),
+-            _whole_euro(item["vorsteuer"]), _whole_euro(item["ausgaben"]),
+-            ("Erstattung " + _whole_euro(-item["zahllast"])) if item["zahllast"] < 0 else
+-            _whole_euro(item["zahllast"]))]
++            term_text(item["tage"]), _whole_euro_shown(item["ust"]),
++            _whole_euro_shown(item["umsatz"]),
++            _whole_euro_shown(item["vorsteuer"]), _whole_euro_shown(item["ausgaben"]),
++            ("Erstattung " + _whole_euro_shown(-item["zahllast"])) if item["zahllast"] < 0 else
++            _whole_euro_shown(item["zahllast"]))]
+     if item["anzahl"]:
+         lines.append("Bisher %d Voranmeldungen · gezahlt %s%s" % (
+             item["anzahl"], _whole_euro(item["gezahlt"]),
+@@ -8297,8 +8298,9 @@ def ad_price_text(item):
+     """ "Laufend 110 € pro Arbeitstag · Einmalig 900 € für 10 Arbeitstage" """
+     once = item["einmalig"]
+     return "Laufend %s pro Arbeitstag · einmalig %s für %s (%s pro Tag)" % (
+-        _whole_euro(item["laufend"]), _whole_euro(once["preis"]), term_text(once["tage"]),
+-        _whole_euro(int(round(once["preis"] / float(once["tage"])))))
++        _whole_euro_shown(item["laufend"]), _whole_euro_shown(once["preis"]),
++        term_text(once["tage"]),
++        _whole_euro_shown(int(round(once["preis"] / float(once["tage"])))))
+ 
+ 
+ def ad_confirm_text(offer, content=None):
+@@ -13935,6 +13937,15 @@ def _whole_euro(value):
+     return "%s €" % "{:,.0f}".format(value).replace(",", ".")
+ 
+ 
++def _whole_euro_shown(value):
++    """Ab 0.63.2 (FG-109): wie _whole_euro, aber mit geschuetztem Leerzeichen
++    vor "€" - nur fuer die Anzeige staff_money_text, tax_status_lines (Zeile
++    "Dieser Zeitraum") und ad_price_text, damit "€" am Handy bei 200 % nicht
++    allein umbricht. _whole_euro selbst bleibt (steckt u. a. im Kreditnamen im
++    Ereignis EV_LOAN)."""
++    return _whole_euro(value).replace(" €", "\u00a0€")
++
++
+ def move_texts(state, home, rent, content=None):
+     """Anzeige fuer einen Umzug (PC und Handy gleich): (Preiszeile,
+     Rueckfrage vor dem Umzug)."""
+diff --git a/fisi_projekt.py b/fisi_projekt.py
+index 9471b70..f2413f5 100644
+--- a/fisi_projekt.py
++++ b/fisi_projekt.py
+@@ -275,7 +275,7 @@ def to_number(text, default=0.0):
+ 
+ def euro(value):
+     text = "{:,.2f}".format(value).replace(",", "X").replace(".", ",").replace("X", ".")
+-    return text + " €"
++    return text + "\u00a0€"  # ab 0.63.2 (FG-109): geschuetztes Leerzeichen
+ 
+ 
+ def hours_text(value):
+diff --git a/mobile/src/spiel.py b/mobile/src/spiel.py
+index 758605a..222e0b9 100644
+--- a/mobile/src/spiel.py
++++ b/mobile/src/spiel.py
+@@ -62,7 +62,9 @@ def cat_color(key):
+ 
+ 
+ def euro(value):
+-    return "%s €" % "{:,.0f}".format(value).replace(",", ".")
++    # Ab 0.63.2 (FG-109): geschuetztes Leerzeichen, damit "€" am Handy nicht
++    # allein in die naechste Zeile rutscht
++    return "%s\u00a0€" % "{:,.0f}".format(value).replace(",", ".")
+ 
+ 
+ def screen_list(controls, spacing=14):
+@@ -3007,7 +3009,7 @@ class GameScreen:
+         for ticket in tickets:
+             rows.append(self._customer_ticket_box(state, ticket, levels))
+         return [ui.Card("Kundenanfragen", offers, accent=C["pink"],
+-                        subtitle="Handlungskosten %d %%, USt %d %%"
++                        subtitle="Handlungskosten %d\u00a0%%, USt %d\u00a0%%"
+                         % (rules["handlungskosten"], rules["ust"])),
+                 ui.Card("Kundentickets", rows, accent=C["accent"],
+                         subtitle="%d von %d verteilt" % (len(tickets) - free, len(tickets)))]

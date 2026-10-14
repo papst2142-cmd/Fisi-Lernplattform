@@ -1,0 +1,85 @@
+diff --cc app_gui.py
+index 9740bcb,6ae519b..0000000
+--- a/app_gui.py
++++ b/app_gui.py
+@@@ -5139,11 -5214,37 +5239,42 @@@ class CalcView(View)
+          self.subnet_gap = 0
+          self.canvas.bind("<Configure>", self._schedule_fit, "+")
+          self.content.bind("<Configure>", self._schedule_fit, "+")
+ +        # Ab 0.63.2 (CI Welle 3b): neuer Knopftext ("Lösung ausblenden")
+ +        # aendert nur die Breite, nicht die Hoehe - Knopfzeilen neu anpassen
+ +        for row in self.ups_button_rows:
+ +            for widget in row.winfo_children():
+ +                tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
++         # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
++         # (LazyViews), ein <Configure> kommt evtl. nicht mehr
++         if self._in_parts:
++             self._schedule_fit()
++             # ... und die uebrigen Subnetting-Ansichten (sonst prepare, siehe
++             # unten) entstehen ebenfalls je eine in einem eigenen Teil
++             self.add_parts([self._build_rest_part] * self._rest_count())
++ 
++     def _rest_count(self):
++         """Ab 0.63.2 (N6): Wie viele Teile der Subnetting-Karte fehlen noch
++         (je Modus die Pillenzeile mit "netzdaten", je weitere Ansicht eine)?"""
++         subnet = self.subnet
++         count = 0
++         for mode, _name in SUBNET_MODES:
++             if not subnet.built(mode):
++                 count += 1
++             count += sum(1 for key, _name in SUBNET_VIEWS[mode]
++                          if key != "netzdaten" and (mode, key) not in subnet.views)
++         return count
++ 
++     def _build_rest_part(self):
++         """Ab 0.63.2 (N6, B-I-04): einen fehlenden Teil der Subnetting-Karte
++         bauen (verdeckt, wie build_rest - nur einen statt aller)."""
++         subnet = self.subnet
++         for mode, _name in SUBNET_MODES:
++             if subnet.build_mode(mode):
++                 return
++             for key, _name in SUBNET_VIEWS[mode]:
++                 if (mode, key) not in subnet.views:
++                     subnet._build_view(mode, key)
++                     return
+  
+      # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
+      #
+@@@ -5180,18 -5281,12 +5311,22 @@@
+                  card.grid_configure(padx=(0, gap))
+              card.stack_subtitle(card.head_width() > avail)
+              self._fit_ups(avail)
+ +            # Ab 0.63.2 (CI Welle 3b): Knopfzeilen der USV-Karte brechen um,
+ +            # wenn sie nicht in die Karte passen (FlowRow; mit Inter passen
+ +            # sie immer, mit DejaVu Sans bei Sehr gross und 1120 px nicht)
+ +            room = avail - self.ups_card.frame_width()
+ +            changed = False
+ +            for row in self.ups_button_rows:
+ +                changed |= FlowRow.of(row).fit(room)
+          except tk.TclError:
+              return
+ +        if changed:
+ +            # neue Breite der Karte: Abstand der Subnetting-Karte neu rechnen
+ +            self.after_idle(self._schedule_fit)
++         if self._in_parts:
++             # Ab 0.63.2 (N6): wie FitWidthMixin._fit - Breite der
++             # Bildlaufflaeche nachziehen, wenn die Seite schmaler wurde
++             self.after_idle(self._refit_width)
+  
+      def _fit_ups(self, avail):
+          """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
+@@@ -5253,9 -5348,13 +5388,14 @@@
+                  if key == "last":
+                      self.ups_unit = PillGroup(box, UPS_UNITS, initial=0)
+                      self.ups_unit.grid(row=row, column=2, sticky="w")
++ 
++     def _build_ups_rest(self):
++         """Ab 0.63.2 (N6, B-I-04): zweiter Teil der USV-Karte (Knoepfe, Bild,
++         Ergebnis, Rechenweg, Uebungsaufgaben) - beim Vorladen ein eigener Teil."""
++         ups = self.ups_card
+          buttons = transparent_frame(ups.body)
+          buttons.pack(anchor="w", pady=(14, 0))
+ +        self.ups_button_rows = [buttons]   # ab 0.63.2: brechen bei Bedarf um (_fit)
+          for mode, caption in UPS_MODES:
+              NeoButton(buttons, caption, lambda m=mode: self.calc_ups(m),
+                        kind="accent" if mode == "empfehlung" else "primary").pack(

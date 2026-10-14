@@ -1,0 +1,269 @@
+--- a/fisi_lernen.py
++++ b/fisi_lernen.py
+@@ -15,10 +15,12 @@
+ Die Oberflaechen (app_gui.py, mobile/src/main.py) zeichnen nur.
+ """
+ 
++import bisect
+ import datetime
+ import hashlib
+ import ipaddress
+ import random
++import sqlite3
+ import sys
+ 
+ from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
+@@ -88,12 +90,26 @@
+     return _md5(("%s|%s" % (source, key)).encode("utf-8")).hexdigest()
+ 
+ 
++def review_info(entries, start):
++    """Ab 0.63.2 (FG-107): was ReviewPlan je Frage aus ihren Antworten
++    (aelteste zuerst) braucht. None, wenn keine bewertet ist, sonst
++    (stufe, faellig_am, alt, erster_neuer_tag): alt = bewertet vor start,
++    erster_neuer_tag = Tag der ersten Bewertung ab start oder None."""
++    graded = [(t, v) for t, v in entries if v is not None]
++    if not graded:
++        return None
++    stage, due = review_state(graded)
++    days = [_date(t) for t, _v in graded]
++    new = [day for day in days if day >= start]
++    return stage, due, any(day < start for day in days), (new[0] if new else None)
++
++
+ class ReviewPlan:
+     """Faellige Wiederholungen fuer einen Tag, einmal aus dem StatusBook
+     berechnet. due[quelle] = Liste der faelligen Schluessel (zuerst die am
+     laengsten ueberfaelligen)."""
+ 
+-    def __init__(self, book, today=None, valid=None):
++    def __init__(self, book, today=None, valid=None, infos=None):
+         self.today = today or datetime.date.today()
+         start = datetime.date.fromisoformat(SR_START)
+         if valid is None:
+@@ -105,17 +121,18 @@
+         for (source, key), entries in book.results.items():
+             if source not in SR_SOURCES or key not in valid[source]:
+                 continue
+-            graded = [(t, v) for t, v in entries if v is not None]
+-            if not graded:
++            # Ab 0.63.2 (FG-107): Teil je Frage in review_info, mit infos
++            # (ReviewIndex) schon fertig berechnet - Ergebnis gleich
++            info = infos[(source, key)] if infos is not None else \
++                review_info(entries, start)
++            if info is None:
+                 continue
+-            stage, due = review_state(graded)
++            stage, due, old, first_new = info
+             self.state[(source, key)] = (stage, due)
+-            old = [t for t, _v in graded if _date(t) < start]
+-            new = [t for t, _v in graded if _date(t) >= start]
+-            if old and not new:
++            if old and first_new is None:
+                 legacy.append((source, key))
+                 continue
+-            if old and new and _date(new[0]) == self.today:
++            if old and first_new == self.today:
+                 migrated_today += 1
+             if due <= self.today:
+                 regular.append((due, source, key))
+@@ -167,6 +184,112 @@
+         return None
+ 
+ 
++class _IndexBook(StatusBook):
++    """StatusBook ueber den Antworten eines ReviewIndex; vergisst den Stand
++    einzelner Fragen, wenn neue Antworten dazukommen."""
++
++    def forget(self, keys):
++        for key in keys:
++            self._cache.pop(key, None)
++
++
++class ReviewIndex:
++    """Ab 0.63.2 (FG-107, B-I-03): ReviewPlan.from_db schrittweise.
++
++    Haelt die Antworten zu Karteikarten und Pruefungstrainer (wie
++    question_results, nur SR_SOURCES) und je Frage review_info. Kamen seit
++    dem letzten Mal nur neue Zeilen dazu (Anzahl waechst genau um die Zeilen
++    mit hoeherer Nummer; AUTOINCREMENT), werden nur diese gelesen und nur
++    ihre Fragen neu berechnet. Jede andere Aenderung (geloeschte Zeilen,
++    "Alles ersetzen", Abgleich mit Loeschmarke) baut alles neu auf, ein
++    Fehler faellt auf ReviewPlan.from_db zurueck. Das Ergebnis ist immer
++    dasselbe wie ReviewPlan.from_db(db, today)."""
++
++    TABLES = ((SRC_CARD, "card_events"), (SRC_QUIZ, "quiz_answers"))
++
++    def __init__(self, db):
++        self.db = db
++        self.stamp = None            # {tabelle: (Anzahl, hoechste Nummer)}
++        self.results = {}
++        self.infos = {}
++        self.book = _IndexBook(results=self.results)
++        self.full_builds = self.steps = 0
++
++    def plan(self, today=None):
++        try:
++            self._update()
++        except (sqlite3.Error, TypeError, ValueError):
++            self.stamp = None        # naechstes Mal alles neu
++            return ReviewPlan.from_db(self.db, today=today)
++        return ReviewPlan(self.book, today=today, infos=self.infos)
++
++    def _update(self):
++        conn = self.db.get_connection()
++        try:
++            conn.execute("BEGIN")    # ein Lesestand fuer Stempel und Zeilen
++            stamp = {table: tuple(conn.execute(
++                "SELECT COUNT(*), MAX(rowid) FROM %s" % table).fetchone())
++                for _source, table in self.TABLES}
++            if stamp == self.stamp:
++                return
++            new_rows = {}
++            if self.stamp is not None:
++                for _source, table in self.TABLES:
++                    count, top = self.stamp[table]
++                    rows = conn.execute(
++                        "SELECT timestamp, question, correct FROM %s WHERE rowid > ?"
++                        " ORDER BY timestamp, id" % table, (top or 0,)).fetchall()
++                    if count + len(rows) != stamp[table][0]:
++                        new_rows = None      # etwas wurde geloescht: alles neu
++                        break
++                    new_rows[table] = rows
++            if new_rows is None or self.stamp is None:
++                self._full(conn)
++            else:
++                self._step(new_rows)
++            self.stamp = stamp
++        finally:
++            conn.close()
++
++    def _full(self, conn):
++        self.full_builds += 1
++        self.results.clear()
++        self.infos.clear()
++        self.book.forget(list(self.book._cache))
++        for source, table in self.TABLES:
++            for timestamp, key, correct in conn.execute(
++                    "SELECT timestamp, question, correct FROM %s ORDER BY timestamp, id"
++                    % table):
++                value = None if correct is None else bool(correct)
++                self.results.setdefault((source, key), []).append((timestamp, value))
++        self._recompute(self.results)
++
++    def _step(self, new_rows):
++        """Neue Zeilen haben hoehere Nummern: bei gleicher Zeit kommen sie
++        nach den vorhandenen (wie ORDER BY timestamp, id)."""
++        self.steps += 1
++        touched = set()
++        for source, table in self.TABLES:
++            for timestamp, key, correct in new_rows[table]:
++                if not isinstance(timestamp, str):
++                    raise TypeError("timestamp")
++                value = None if correct is None else bool(correct)
++                entries = self.results.setdefault((source, key), [])
++                times = [t for t, _v in entries]
++                entries.insert(bisect.bisect_right(times, timestamp), (timestamp, value))
++                touched.add((source, key))
++        self.book.forget(touched)
++        self._recompute(touched)
++
++    def _recompute(self, keys):
++        start = datetime.date.fromisoformat(SR_START)
++        for item in keys:
++            entries = self.results[item]
++            if any(not isinstance(t, str) for t, _v in entries):
++                raise TypeError("timestamp")
++            self.infos[item] = review_info(entries, start)
++
++
+ def due_text(plan):
+     """Anzeigetext fuer Dashboard/Start."""
+     cards, quiz = plan.count(SRC_CARD), plan.count(SRC_QUIZ)
+--- a/app_gui.py
++++ b/app_gui.py
+@@ -92,7 +92,8 @@
+     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
+     TRAINER_KIND_NAME,
+     TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
+-    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
++    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewIndex, ReviewPlan, daily_series,
++    daily_summary,
+     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
+     practice_next_text, reminder_due, reminder_text, save_learning_settings,
+     topic_practice_parts, trainer_round,
+@@ -1618,6 +1619,14 @@
+             self._dash_cache[name] = (key, value)
+         return value
+ 
++    def _review_plan(self):
++        """Ab 0.63.2 (FG-107): "faellig" schrittweise (fisi_lernen.ReviewIndex),
++        Ergebnis gleich ReviewPlan.from_db(self.db)."""
++        index = getattr(self, "_review_index", None)
++        if index is None or index.db is not self.db:
++            index = self._review_index = ReviewIndex(self.db)
++        return index.plan()
++
+     def _month_activity(self, year, month):
+         """Kalender (provider): Lerntage eines Monats ueber den Zwischenspeicher."""
+         return self._dash_query("kalender", self.db.month_activity, year, month,
+@@ -1655,7 +1664,7 @@
+         else:
+             self.goal_ring.pack_forget()
+             self.lbl_goal.pack_forget()
+-        plan = self._dash_query("faellig", ReviewPlan.from_db, self.db, stamps=stamps)
++        plan = self._dash_query("faellig", self._review_plan, stamps=stamps)
+         self.lbl_due.configure(text=due_text(plan))
+         self.btn_review.set_enabled(plan.count() > 0)
+ 
+--- a/test_leistung_suche_0632.py
++++ b/test_leistung_suche_0632.py
+@@ -487,6 +487,7 @@
+         (wie eine frisch gebaute Ansicht ohne Zwischenspeicher)."""
+         view._dash_cache.clear()
+         view._painted.clear()
++        view._review_index = None      # FG-107: "faellig" voll neu aufbauen
+         view.refresh()
+         return self.snapshot(view)
+ 
+@@ -530,7 +531,9 @@
+ 
+     # Zuordnung Aenderungsart -> erneut ausgefuehrte DBManager-Methoden (K11,
+     # Tabelle im Bericht). activity_days zaehlt zweimal (Tagesziel + Serie).
+-    DAY = {"activity_days": 2, "question_results": 1, "daily_counts": 1,
++    # Ab FG-107 liest "faellig" ueber fisi_lernen.ReviewIndex statt
++    # question_results; gezaehlt wird dann DashboardView._review_plan.
++    DAY = {"activity_days": 2, "faellig": 1, "daily_counts": 1,
+            "month_activity": 1, "recent_activities": 1}
+     K11 = {
+         "karte": dict(DAY, distinct_cards_learned=1, category_coverage=1,
+@@ -546,7 +549,7 @@
+         "tagesziel": {"activity_days": 1},
+         "name": {},
+         "nichts": {},
+-        "mitternacht": {"activity_days": 2, "question_results": 1, "daily_counts": 1},
++        "mitternacht": {"activity_days": 2, "faellig": 1, "daily_counts": 1},
+     }
+     METHODS = ("distinct_cards_learned", "distinct_quiz_questions", "distinct_ap1",
+                "distinct_scenarios", "quiz_success_rate", "activity_days",
+@@ -621,6 +624,12 @@
+                 counts[_name] = counts.get(_name, 0) + 1
+                 return _method(*args, **kwargs)
+             setattr(db, name, counted)
++        review_plan = view._review_plan
++
++        def counted_plan():
++            counts["faellig"] = counts.get("faellig", 0) + 1
++            return review_plan()
++        view._review_plan = counted_plan
+         try:
+             view.refresh()
+             for kind, expected in self.K11.items():
+@@ -630,6 +639,7 @@
+                 self.assertEqual(counts, expected, kind)
+                 self.assertEqual(self.snapshot(view), self.uncached_snapshot(view), kind)
+         finally:
++            del view._review_plan
+             for name in self.METHODS:
+                 delattr(db, name)
+             for module, value in saved:
