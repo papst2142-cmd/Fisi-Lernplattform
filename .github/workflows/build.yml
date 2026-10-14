@@ -273,6 +273,24 @@ jobs:
       # der Bau mit einer Datei aus Nullbytes ab.
       # Feste Fassungen: flet 1.0.1, python-build 20260921 (Python 3.14.7),
       # dart-bridge 1.10.0. Neue Flet-Fassung -> Liste und Pruefsummen neu.
+      # PROBE R3 (Zweig version-0632-n10-probe, nie mergen):
+      # (a) zwei kaputte Laufzeit-Dateien vorlegen - eine leer, eine nur aus
+      #     Nullbytes; der naechste Schritt muss beide erkennen und neu laden
+      # (b) Selbsttest noch einmal OHNE PYTHONDONTWRITEBYTECODE (wie bis
+      #     0.63.1) - es entstehen __pycache__-Dateien in mobile/src, die in
+      #     die APK gelangen; "APK pruefen" muss rot werden
+      - name: PROBE R3 kaputte Laufzeit-Dateien und Bytecode vorlegen
+        run: |
+          CACHE="$HOME/.flet/cache"
+          mkdir -p "$CACHE/dart-bridge/v1.10.0" "$CACHE/python-build/v3.14.7"
+          : > "$CACHE/dart-bridge/v1.10.0/libdart_bridge-android-x86_64-py3.14.so"
+          head -c 1048576 /dev/zero > "$CACHE/python-build/v3.14.7/python-android-dart-3.14.7-x86_64.tar.gz"
+          ls -l "$CACHE/dart-bridge/v1.10.0/libdart_bridge-android-x86_64-py3.14.so" "$CACHE/python-build/v3.14.7/python-android-dart-3.14.7-x86_64.tar.gz"
+          echo "PYTHONDONTWRITEBYTECODE=${PYTHONDONTWRITEBYTECODE:-nicht gesetzt}"
+          FISI_DB_PATH="$RUNNER_TEMP/selbsttest_probe.db" python mobile/src/main.py --selbsttest
+          find mobile/src -name '*.pyc' | sort | head -40
+          echo "PROBE: $(find mobile/src -name '*.pyc' | wc -l) .pyc-Dateien in mobile/src"
+
       - name: Android-Laufzeit vorab laden und pruefen
         run: |
           CACHE="$HOME/.flet/cache"
