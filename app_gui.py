@@ -1641,7 +1641,8 @@ class FitRowsMixin(FitWidthMixin):
     der Lage ab, die sie selbst veraendert (keine Schleife).
     Bei Normal bleibt alles genau wie bisher (Z3 gilt fuer Gross/Sehr gross),
     ausser im Teil aus _z3_normal_part (ab 0.63.2 B-4b: Bewertung der
-    Pruefung im Pruefungstrainer)."""
+    Pruefung im Pruefungstrainer; Notizblock, Fortschritt und Optionen,
+    sobald sie bei Normal breiter sind als sichtbar, Z3_NORMAL)."""
 
     Z3_GAP = 6          # Abstand der Kacheln im Raster (wie bisher, logische px)
     Z3_CELL_PAD = 16    # Innenabstand einer Tabellenzelle links + rechts (logische px)
@@ -1692,13 +1693,48 @@ class FitRowsMixin(FitWidthMixin):
             changed |= self._z3_tree(tree, room)
         for check, room in found["checks"]:
             changed |= self._z3_check(check, room)
+        if inside is not None:
+            # ab 0.63.2 (S1c2-Nachbesserung): bei Normal wird die Seite oft erst
+            # nach dem Aufbau schmaler - Tk meldet das der Bildlaufflaeche nicht
+            # immer (der seitliche Balken blieb stehen, obwohl alles passt);
+            # nach jedem Anpassen die Breite nachziehen (aendert nichts, wenn
+            # sie stimmt)
+            self.after(40, self._refit_width)
         return changed
+
+    # Ab 0.63.2 (B-4b Rest, S1c2-Nachbesserung): Notizblock, Fortschritt und
+    # Optionen passen auch bei Normal (1120, mit breiterer Schrift auch 1360)
+    # ohne seitliches Rollen - aber erst, wenn die Seite bei Normal wirklich
+    # breiter ist als sichtbar. Solange sie passt, bleibt alles genau wie
+    # bisher (z. B. Normal 1360 mit Inter).
+    Z3_NORMAL = False
+    # so lange (ms) muss die Seite zu breit bleiben: waehrend des Aufbaus ist
+    # sie kurz breiter, bis die Umbruchbreiten der Texte angepasst sind
+    # (ScrollArea._fit_wraplengths) - das allein zaehlt nicht
+    Z3_NORMAL_WAIT = 300
 
     def _z3_normal_part(self):
         """Ab 0.63.2 (B-4b): Teil der Ansicht, der auch bei Normal nach den
         gleichen Regeln angepasst wird (None: bei Normal bleibt alles wie
-        bisher)."""
-        return None
+        bisher). Mit Z3_NORMAL die ganze Ansicht, sobald sie bei Normal
+        laenger als Z3_NORMAL_WAIT breiter ist als sichtbar (danach bleibt die
+        Anpassung an: was wieder passt, stellt sie selbst zurueck)."""
+        if not self.Z3_NORMAL:
+            return None
+        if not self.__dict__.get("_z3_normal_on"):
+            if self.inner.winfo_reqwidth() <= self.canvas.winfo_width():
+                self._z3_normal_since = None
+                return None
+            now = time.monotonic()
+            since = self.__dict__.get("_z3_normal_since")
+            if since is None:
+                self._z3_normal_since = now
+            if since is None or now - since < self.Z3_NORMAL_WAIT / 1000.0:
+                # spaeter noch einmal nachsehen
+                self.after(self.Z3_NORMAL_WAIT + 20, self._schedule_fit)
+                return None
+            self._z3_normal_on = True
+        return self.content
 
     # -- Teile finden ---------------------------------------------------------
 
@@ -4406,6 +4442,8 @@ class NotebookView(FitRowsMixin, View):
     zuletzt falsch, gelb: danach erst einmal richtig) - ueber Karteikarten,
     Pruefungstrainer, AP1, AP2 und Testprojekte hinweg."""
 
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def build(self):
         self.page = 0
         self.entries = []
@@ -5552,6 +5590,7 @@ class CalcView(View):
 
 class ProgressView(FitRowsMixin, View):
     Z3_REFIT = ("refresh",)   # ab 0.63.2 (Z3): neue Tabellenzeilen
+    Z3_NORMAL = True          # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
 
     def build(self):
         row = transparent_frame(self.content)
@@ -6090,6 +6129,8 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
 
 
 class SettingsView(FitRowsMixin, View):
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
         fisi_optionen). Offen ohne Klappkopf nur Updates (E1; bis 0.59.1 auch
