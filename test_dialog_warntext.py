@@ -89,11 +89,12 @@ FAELLE = [((1280, 720), "normal", "hell", 1.0), ((1280, 720), "sehr_gross", "dun
           ((1366, 768), "normal", "dunkel", 1.0), ((1366, 768), "sehr_gross", "hell", 1.0)]
 # Testplan O4 (Hauptstrang: ja): je Bildschirm einmal wie Windows bei 125 %
 FAELLE_125 = [((1366, 768), "normal", "hell", 1.25), ((1280, 720), "sehr_gross", "dunkel", 1.25)]
-ARTEN = ["messen", "tastatur", "klick_ja", "klick_nein", "tab_ja_eingabe", "eingabe", "esc",
-         "esc_textfeld", "schliessen_x11", "schliessen_protokoll", "grab_fehlt"]
+ARTEN = ["messen", "tastatur", "klick_ja", "klick_nein", "tab_ja_eingabe", "eingabe",
+         "eingabe_textfeld", "esc", "esc_textfeld", "schliessen_x11", "schliessen_protokoll",
+         "grab_fehlt"]
 ARTEN_125 = ["messen", "tastatur"]
-ABBRUCH = ["klick_nein", "eingabe", "esc", "esc_textfeld", "schliessen_x11",
-           "schliessen_protokoll", "grab_fehlt"]
+ABBRUCH = ["klick_nein", "eingabe", "eingabe_textfeld", "esc", "esc_textfeld",
+           "schliessen_x11", "schliessen_protokoll", "grab_fehlt"]
 WEITER = ["klick_ja", "tab_ja_eingabe"]
 
 CHILD = r"""
@@ -381,6 +382,13 @@ def one(art, laeufe):
             (d.focus_get() or d).event_generate("<Return>")
         elif art == "esc":
             (d.focus_get() or d).event_generate("<Escape>")
+        elif art == "eingabe_textfeld":
+            # Eingabetaste im Textfeld loest nie "Ja" aus; danach "Nein"
+            lauf["tab_weg"], lauf["tab_erreicht"] = tab_bis(d, d.text._textbox)
+            d.focus_get().event_generate("<Return>")
+            settle(4)
+            if dialogs():
+                klick(d.btn_no)
         elif art == "esc_textfeld":
             lauf["tab_weg"], lauf["tab_erreicht"] = tab_bis(d, d.text._textbox)
             if not lauf["tab_erreicht"]:
@@ -607,6 +615,7 @@ class PCDialogTest(unittest.TestCase):
                 self.assertTrue(laeufe["tab_ja_eingabe"]["tab_erreicht"],
                                 laeufe["tab_ja_eingabe"]["tab_weg"])
                 self.assertTrue(laeufe["esc_textfeld"]["tab_erreicht"])
+                self.assertTrue(laeufe["eingabe_textfeld"]["tab_erreicht"])
                 self.assertEqual(laeufe["esc_textfeld"]["fokus_vor_esc"],
                                  laeufe["esc_textfeld"]["textfeld"])
                 self.assertEqual(laeufe["schliessen_x11"]["gesendet"], 1)
