@@ -218,9 +218,10 @@ class KernTest(Base):
 
     def test_b_g_08_warntext_nennt_eigene_loeschungen(self):
         # Ab 0.63.2 (FG-81, nur zusammen mit B-G-08): volle neue Saetze statt
-        # Teilstuecke. Endfassung (Weisung zu Meldung 37, Abschnitt 3: Satz 6
-        # neu gefasst, Satz 7 zu Spielstaenden/Projekten neu; die anderen
-        # Saetze wie Antwort Meldung 35 B.2): jeder Satz ist in
+        # Teilstuecke. Endfassung (Weisung zu Meldung 38 und 40, Abschnitt 2
+        # Frage 1: Satz 5 ersatzlos gestrichen; davor Weisung zu Meldung 37,
+        # Abschnitt 3: Satz 6 neu gefasst, Satz 7 zu Spielstaenden/Projekten
+        # neu; die anderen Saetze wie Antwort Meldung 35 B.2): jeder Satz ist in
         # test_abgleich_0632.py BG08Ersetzen per Verhaltenstest belegt (Liste:
         # bau_0.63.2/s6b/texte_m37/ergebnis.md)
         backup = self.backup_of(self.learned(self.db()))
@@ -247,7 +248,6 @@ class KernTest(Base):
             "Was ein anderes Gerät ohne Verbindung gelernt hat, bleibt in der Regel "
             "erhalten, wenn es sich erst nach dem Ersetzen wieder abgleicht und alle deine "
             "Geräte schon beim Ersetzen mindestens Version 0.63.2 hatten. "
-            "Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt gelöscht. "
             "Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, gelten "
             "weiter – außer sie kamen vor der letzten Löschung derselben Art, die dieses "
             "Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ oder "
@@ -282,7 +282,13 @@ class KernTest(Base):
         self.assertNotIn("eine unbekannte frühere Löschung derselben Art", text)
         self.assertNotIn("(zum Beispiel ebenfalls „Alle Lerndaten löschen“)", text)
         self.assertNotIn("wird dagegen aufgehoben", text)
-        self.assertEqual(zweiter.count(". "), 7)          # 8 Saetze
+        # Fassung von d54397f, Satz 5: von gp3_fg81_m37 (M1, Ablaeufe h7, h7h,
+        # h8, h9) widerlegt; ersatzlos gestrichen (Weisung zu Meldung 38 und
+        # 40, Abschnitt 2 Frage 1)
+        self.assertNotIn("Was nach dem Erstellen der Sicherung schon abgeglichen war, "
+                         "bleibt gelöscht.", text)
+        self.assertNotIn("bleibt gelöscht. Löschungen eines anderen", text)
+        self.assertEqual(zweiter.count(". "), 6)          # 7 Saetze
         self.assertEqual(text.count("beide „"), 3)
 
     def test_b_g_11_volle_platte_keine_leere_sicherheitskopie(self):

@@ -1335,7 +1335,9 @@ class BG08Ersetzen(unittest.TestCase):
     def test_fg81_satz5_f7_schon_abgeglichenes_bleibt_geloescht(self):
         """FG-81 Satz 5, gezielt.py f7, alle 0.63.2: B lernt nach dem Erstellen
         der Sicherung und gleicht vor der Loeschung ab -> "b-zwischen" bleibt
-        auf A und B geloescht; das Eingespielte kommt."""
+        auf A und B geloescht; das Eingespielte kommt. Satz 5 ist gestrichen
+        (Weisung zu Meldung 38 und 40, Frage 1); der Fall bleibt als Beleg des
+        Verhaltens, Gegenstueck: h7, h7h, h9 (bekannte Grenze)."""
         a, b = self.voll("A"), self.voll("B", tz="UTC")
         a("lerne", 2, "vorher")
         self.alle_sync([a, b], 1)
@@ -1922,6 +1924,141 @@ class BG08Ersetzen(unittest.TestCase):
             self.assertEqual(ende[name]["spiel"], {"lx": 3, "ly": 3}, name)
             self.assertEqual(ende[name]["karten"], {"a-vorher": 2}, name)
         self.stabil([a, b])
+
+    # ------------------------------------------------------------------
+    # Weisung zu Meldung 38 und 40, Abschnitt 2 Frage 1 (Ablaeufe aus
+    # gp3_fg81_m37: h1, h7, h7h, h9). Satznummern wie in gp3 (Fassung
+    # d54397f); nach dem Streichen von Satz 5 ist "Satz 6" der fuenfte Satz.
+
+    def test_fg81_satz6_h1_beide_historie_loeschen_frueher_unbekannt_aufgehoben(self):
+        """FG-81 Satz 6 (beide "Historie loeschen"), gp3 h1, alle 0.63.2: B
+        "Historie loeschen" t1 und Abgleich (A kennt es nicht), danach A
+        "Historie loeschen" tA ohne Abgleich; A ersetzt -> t1 kam vor der
+        letzten Loeschung derselben Art, die A kennt, und wird aufgehoben: der
+        Verlauf aus der Sicherung bleibt auf A und B."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("fuelle", "vorher")
+        b("fuelle", "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        self.assertTrue(b("clear_history")["ok"])     # t1, A kennt es nicht
+        b.sync()
+        ta.pause()
+        self.assertTrue(a("clear_history")["ok"])     # tA, ohne Abgleich
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        self.alle_sync([a, b], 3)
+        aufgehoben = ta.datei().get("aufgehoben") or {}
+        bericht("FG-81 h1: aufgehoben=%s" % aufgehoben)
+        self.assertIn("history_cleared_at", aufgehoben)
+        for device in (a, b):
+            self.assertEqual(verlauf(device), {"a-vorher": 1, "b-vorher": 1}, device.name)
+            self.assertEqual(zeilen(os.path.join(device.home, "lern.db"),
+                                    "SELECT COUNT(*) FROM test_results")[0][0], 2, device.name)
+            self.assertEqual(device.namen(), {"a-vorher": 1, "b-vorher": 1}, device.name)
+        self.stabil([a, b])
+
+    def _h7_zwischen(self):
+        """gp3 _zwischen: A lernt und fuellt "vorher", Abgleich, A erstellt die
+        Sicherung; B lernt und fuellt "zwischen" (nach dem Erstellen), B und A
+        gleichen ab (A hat "b-zwischen")."""
+        a, b = self.voll("A"), self.voll("B", tz="UTC")
+        a("lerne", 2, "vorher")
+        a("fuelle", "vorher")
+        self.alle_sync([a, b, a], 1)
+        a("sicherung_erstellen", self.pfad(a))
+        ta.pause()
+        b("lerne", 2, "zwischen")
+        b("fuelle", "zwischen")
+        b.sync()
+        a.sync()
+        self.assertEqual(karten(a, "-zwischen"), 3)
+        ta.pause()
+        return a, b
+
+    def _h7_ende(self, geraete):
+        return {d.name: {"karten": d.namen(), "verlauf": verlauf(d),
+                         "besten": d("bestenzahl")["besten"]} for d in geraete}
+
+    # Soll "bekannte Grenze, kein Versprechen": Gelerntes nach dem Erstellen
+    # der Sicherung kommt auf allen Geraeten zurueck, nichts geht verloren.
+    _H7_KOMMT_ZURUECK = {"karten": {"a-vorher": 3, "b-zwischen": 3},
+                         "verlauf": {"a-vorher": 1, "b-zwischen": 1},
+                         "besten": ["a-vorher", "b-zwischen"]}
+
+    def test_fg81_bekannte_grenze_kein_versprechen_h7_geraet_offline_bei_loeschung(self):
+        """Bekannte Grenze, kein Versprechen (Weisung zu Meldung 38 und 40,
+        Frage 1; gp3 h7, alle 0.63.2): B lernt nach dem Erstellen der
+        Sicherung und gleicht ab, ist dann ohne Verbindung. A "Alle Lerndaten
+        loeschen", Abgleich, "Alles ersetzen", Abgleich; B gleicht erst danach
+        ab -> "b-zwischen" taucht auf A und B wieder auf (nichts geht
+        verloren). Haelt das heutige Verhalten fest; der Warntext verspricht
+        dazu nichts (der fruehere Satz 5 ist gestrichen)."""
+        a, b = self._h7_zwischen()
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.assertEqual(a.namen(), {"a-vorher": 3})    # vor Bs Abgleich
+        b.sync()
+        self.assertEqual(b.namen(), {"a-vorher": 3, "b-zwischen": 3})
+        self.alle_sync([a, b], 3)
+        ende = self._h7_ende([a, b])
+        bericht("FG-81 bekannte Grenze h7: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name], self._H7_KOMMT_ZURUECK, name)
+        self.stabil([a, b])
+
+    def test_fg81_bekannte_grenze_kein_versprechen_h7h_historie_geraet_offline(self):
+        """Bekannte Grenze, kein Versprechen (gp3 h7h, alle 0.63.2): wie h7,
+        aber A "Historie loeschen" -> der Verlauf "b-zwischen" taucht auf A
+        und B wieder auf, nichts geht verloren. Haelt das heutige Verhalten
+        fest."""
+        a, b = self._h7_zwischen()
+        self.assertTrue(a("clear_history")["ok"])
+        a.sync()
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        self.assertEqual(verlauf(a), {"a-vorher": 1})   # vor Bs Abgleich
+        b.sync()
+        self.alle_sync([a, b], 3)
+        ende = self._h7_ende([a, b])
+        bericht("FG-81 bekannte Grenze h7h: %s" % ende)
+        for name in "AB":
+            self.assertEqual(ende[name], self._H7_KOMMT_ZURUECK, name)
+        self.stabil([a, b])
+
+    def test_fg81_bekannte_grenze_kein_versprechen_h9_drittes_geraet(self):
+        """Bekannte Grenze, kein Versprechen (gp3 h9, alle 0.63.2): wie h7,
+        aber B gleicht nach der Loeschung ab (B leer); C hatte "b-zwischen"
+        vor der Loeschung abgeglichen und ist dann ohne Verbindung. A ersetzt,
+        A und B gleichen ab, C erst danach -> "b-zwischen" taucht auf A, B
+        und C wieder auf, nichts geht verloren. Haelt das heutige Verhalten
+        fest."""
+        a, b = self._h7_zwischen()
+        c = self.voll("C", tz="Asia/Tokyo")
+        c.sync()
+        self.assertEqual(karten(c, "-zwischen"), 3)
+        self.assertTrue(a("reset_all")["ok"])
+        a.sync()
+        b.sync()
+        self.assertEqual(karten(b, "-zwischen"), 0)
+        ta.pause()
+        a("sicherung_ersetzen", self.pfad(a))
+        a.sync()
+        b.sync()
+        for device in (a, b):                           # vor Cs Abgleich
+            self.assertEqual(device.namen(), {"a-vorher": 3}, device.name)
+        c.sync()
+        self.alle_sync([a, b, c], 3)
+        ende = self._h7_ende([a, b, c])
+        bericht("FG-81 bekannte Grenze h9: %s" % ende)
+        for name in "ABC":
+            self.assertEqual(ende[name], self._H7_KOMMT_ZURUECK, name)
+        self.stabil([a, b, c])
 
     def _f9_bis_zum_ersetzen(self):
         """gezielt.py f9 bis nach dem Ersetzen: A, B lernen und gleichen ab,
