@@ -29,6 +29,7 @@ Start:  python test_vorladen.py
 """
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -210,9 +211,33 @@ class PreloadTest(AppCase):
         # Ohne Eingabe laeuft der naechste Schritt
         pre.last_input = 0
         pre.queue = [("view", "calc")]
-        pre._step()
-        self.assertIsNotNone(app.views.built("calc"))
-        self.assertTrue(pre.done)
+        # Ab 0.63.2 (N6, FG-104): Der Rechner wird in Teilen vorgeladen - ein
+        # Schritt je Zeitgeber, bis das Vorladen fertig ist. Feste Obergrenze:
+        # erster Schritt 1 + Karten-Teile 6 (Subnetting, RAID, Bildschirm,
+        # USV, USV-Rest, Abschluss) + Rest der Subnetting-Karte hoechstens 5
+        # (2 Modi + 3 weitere Ansichten) + letzter Schritt (prepare) 1 = 13,
+        # dazu Reserve 3. So endet ein Fehler rot, statt zu haengen.
+        max_steps = 16
+        steps = 0
+        while not pre.done and steps < max_steps:
+            # den geplanten Zeitgeber abbrechen, der Test fuehrt den Schritt
+            # selbst aus (sonst liefe derselbe Schritt doppelt)
+            if pre.job is not None:
+                self.root.after_cancel(pre.job)
+                pre.job = None
+            pre._step()
+            steps += 1
+        self.assertTrue(pre.done, "Vorladen nach %d Schritten nicht fertig" % steps)
+        calc = app.views.built("calc")
+        self.assertIsNotNone(calc)
+        self.assertFalse(calc.parts_pending, "beim Rechner steht noch ein Teil aus")
+        self.assertFalse(calc.subnet.build_rest(), "Rechner nicht ganz gebaut")
+        # kein Vorlade-Zeitgeber steht noch aus
+        tk_ = self.root.tk
+        waiting = [timer for timer in tk_.splitlist(tk_.call("after", "info"))
+                   if re.match(r"\d+_step$", tk_.splitlist(
+                       tk_.splitlist(tk_.call("after", "info", timer))[0])[0])]
+        self.assertEqual(waiting, [])
         self.assertEqual(app.current, "dashboard")
         self.assertEqual(self.errors, [])
 
