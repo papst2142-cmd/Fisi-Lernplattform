@@ -576,8 +576,69 @@ def _haken_nur_wo_noetig(ctx, zustand):
     ctx.werte["%s/%s" % (ctx.name, zustand)]["haken_umbrochen"] = umbrochen
 
 
+def _haken_erste_zeile(ctx, zustand):
+    """Nico, Meldung 39 Frage 2c: Bewertungskriterium umbrochen -> das
+    Kaestchen steht auf der Hoehe der ersten Textzeile (Mitte Kaestchen =
+    Mitte erste Zeile, 2 px Spielraum), nicht mittig zum ganzen Text."""
+    import customtkinter as ctk
+    stack = [ctx.view.inner]
+    while stack:
+        widget = stack.pop()
+        stack.extend(widget.winfo_children())
+        if (not isinstance(widget, ctk.CTkCheckBox) or not widget.winfo_ismapped()
+                or not widget.__dict__.get("_fisi_z3_erste_zeile")):
+            continue
+        label, box = widget._text_label, widget._canvas
+        # Zeilenhoehe wie das Label sie zeichnet (Probezeile)
+        import tkinter
+        probe = tkinter.Label(widget, font=label.cget("font"), text="Ag",
+                              pady=0, bd=0, highlightthickness=0)
+        line = probe.winfo_reqheight()
+        probe.destroy()
+        inset = (int(label.cget("pady")) + int(label.cget("bd"))
+                 + int(label.cget("highlightthickness")))
+        text_hoch = label.winfo_height() - 2 * inset
+        zeilen = int(round(text_hoch / float(line)))
+        if zeilen < 2:
+            continue
+        ctx.werte.setdefault("%s/%s" % (ctx.name, zustand), {}).setdefault("haken_mehrzeilig", 0)
+        ctx.werte["%s/%s" % (ctx.name, zustand)]["haken_mehrzeilig"] += 1
+        # Text steht im Label mittig: oberer Rand des Textblocks
+        oben = label.winfo_rooty() + (label.winfo_height() - zeilen * line) / 2.0
+        erste = oben + line / 2.0
+        mitte = box.winfo_rooty() + box.winfo_height() / 2.0
+        if abs(mitte - erste) > 2:
+            ctx.fehler.append("%s/%s: Kaestchen nicht an der ersten Zeile (%d Zeilen, "
+                              "Kaestchen-Mitte %.1f, erste Zeile %.1f): %r"
+                              % (ctx.name, zustand, zeilen, mitte - label.winfo_rooty(),
+                                 erste - label.winfo_rooty(), label.cget("text")[:50]))
+    if (ctx.name == "pruefungstrainer" and zustand == "pruefung_bewertung_laengstes"
+            and not ctx.werte.get("%s/%s" % (ctx.name, zustand), {}).get("haken_mehrzeilig")):
+        ctx.fehler.append("%s/%s: kein umbrochenes Kriterium - Pruefung der ersten Zeile "
+                          "laeuft ins Leere" % (ctx.name, zustand))
+
+
+def _spalte_erfolgsquote(ctx, zustand):
+    """Nico, Meldung 39 Frage 1a (Variante B): "Erfolgsquote" in der
+    Historie der Pruefungssessions faellt nur bei "Sehr gross" weg (und nur,
+    wenn die Tabelle sonst nicht passt); bei Normal und Gross bleibt sie."""
+    tree = getattr(ctx.view, "tree", None)
+    if ctx.name not in ("fortschritt", "fortschritt_daten") or tree is None:
+        return
+    spalten = tree["displaycolumns"]
+    if spalten in ("#all", ("#all",)):
+        spalten = tree["columns"]
+    weg = "prozent" not in spalten
+    ctx.werte.setdefault("%s/%s" % (ctx.name, zustand), {})["erfolgsquote_weg"] = weg
+    if weg and ctx.faktor != 1.3:
+        ctx.fehler.append("%s/%s: Spalte Erfolgsquote fehlt bei Faktor %s"
+                          % (ctx.name, zustand, ctx.faktor))
+
+
 def _z3_pruefe(ctx, zustand):
     ctx.pruefe(zustand)
+    _haken_erste_zeile(ctx, zustand)
+    _spalte_erfolgsquote(ctx, zustand)
     _unterklassen_sichtbar(ctx, zustand)
     _tabellen_lesbar(ctx, zustand)
     _normal_unveraendert(ctx, zustand)

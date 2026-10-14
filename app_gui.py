@@ -1897,7 +1897,10 @@ class FitRowsMixin(FitWidthMixin):
         Eintrag (nichts abgeschnitten). Passt sie: Breiten wie bisher.
         Ab Gegenpruefung S1c2 (M1): Zellen mit Kurzform (tree._fisi_z3_kurz,
         {Zeile: {Spalte: (lang, kurz)}}) zeigen die Kurzform, solange die
-        Tabelle mit den langen Texten nicht passt."""
+        Tabelle mit den langen Texten nicht passt.
+        Ab S1c2-Nachbesserung (Nico, Antwort Meldung 39 Frage 1a, Variante B):
+        Spalten in tree._fisi_z3_weglassen fallen bei "Sehr gross" weg,
+        solange die Tabelle mit ihnen nicht passt (sonst bleiben sie)."""
         if "_fisi_z3_columns" not in tree.__dict__:
             tree._fisi_z3_columns = {key: int(tree.column(key, "width"))
                                      for key in tree["columns"]}
@@ -1932,6 +1935,14 @@ class FitRowsMixin(FitWidthMixin):
         short = bool(kurz) and sum(least.values()) > room
         if short:
             least = least_for(True)
+        drop = ()
+        if (fisi_theme.current_font_size == "sehr_gross"
+                and sum(least.values()) > room):
+            drop = tuple(key for key in tree.__dict__.get("_fisi_z3_weglassen", ())
+                         if key in base)
+        all_base = base
+        base = {key: width for key, width in base.items() if key not in drop}
+        least = {key: least[key] for key in base}
         widths = dict(base)
         if sum(base.values()) > room or any(least[k] > base[k] for k in base):
             # anteilig verkleinern; Spalten an ihrer Untergrenze bleiben dort
@@ -1950,9 +1961,12 @@ class FitRowsMixin(FitWidthMixin):
             widths = {k: max(least[k], min(base[k], widths[k])) for k in base}
         # verglichen mit dem zuletzt gesetzten Stand: Tk dehnt Spalten mit
         # stretch selbst, die gelesene Breite taugt nicht zum Vergleich
-        state = (widths, short, tuple(items))
-        if state == tree.__dict__.get("_fisi_z3_state", (base, False, tuple(items))):
+        state = (widths, short, tuple(items), drop)
+        if state == tree.__dict__.get("_fisi_z3_state", (all_base, False, tuple(items), ())):
             return False
+        if drop != tree.__dict__.get("_fisi_z3_drop", ()):
+            tree.configure(displaycolumns=list(base) if drop else "#all")
+            tree._fisi_z3_drop = drop
         for item, cells in kurz.items():
             for key, pair in cells.items():
                 tree.set(item, key, pair[1 if short else 0])
@@ -1965,7 +1979,7 @@ class FitRowsMixin(FitWidthMixin):
         # Tk rechnet die verlangte Breite erst beim Konfigurieren neu
         tree.configure(height=tree.cget("height"))
         tree._fisi_z3_state = state
-        tree._fisi_z3_umgestellt = widths != base or short
+        tree._fisi_z3_umgestellt = widths != base or short or bool(drop)
         return True
 
     @staticmethod
@@ -2126,8 +2140,38 @@ class FitRowsMixin(FitWidthMixin):
             label.configure(wraplength=wrap, justify="left")
         else:
             label.configure(wraplength=0, justify=check._fisi_z3_justify)
+        if check.__dict__.get("_fisi_z3_erste_zeile"):
+            FitRowsMixin._z3_check_top(check, label, bool(wrap))
         check._fisi_z3_umgestellt = bool(wrap)
         return True
+
+    @staticmethod
+    def _z3_check_top(check, label, wrapped):
+        """Ab 0.63.2 (Nico, Meldung 39 Frage 2c): Bei umbrochenem Text steht
+        das Kaestchen oben, mittig zur ersten Zeile (nicht mittig zum ganzen
+        Text). Einzeilig wie bisher."""
+        box = getattr(check, "_canvas", None)
+        if box is None:
+            return
+        if not wrapped:
+            box.grid_configure(sticky="e", pady=0)
+            label.grid_configure(pady=0)
+            return
+        # Zeilenhoehe so, wie das Label sie zeichnet (die Schriftmetrik
+        # weicht mit Ersatzschriften davon ab): eine Probezeile messen
+        probe = tk.Label(check, font=label.cget("font"), text="Ag",
+                         pady=0, bd=0, highlightthickness=0)
+        line = probe.winfo_reqheight()
+        probe.destroy()
+        inset = int(label.cget("pady")) + int(label.cget("bd")) + int(label.cget("highlightthickness"))
+        height = box.winfo_reqheight()
+        first = inset + line / 2.0       # Mitte der ersten Zeile im Text
+        if height / 2.0 >= first:
+            box.grid_configure(sticky="ne", pady=0)
+            label.grid_configure(pady=(int(round(height / 2.0 - first)), 0))
+        else:
+            box.grid_configure(sticky="ne", pady=(int(round(first - height / 2.0)), 0))
+            label.grid_configure(pady=0)
 
 
 # ============================================================================
@@ -3210,11 +3254,15 @@ class ExamPanel(ctk.CTkFrame):
 
             for index, criterion in enumerate(part["kriterien"]):
                 var = tk.BooleanVar(value=marks[index] if index < len(marks) else False)
-                ctk.CTkCheckBox(card.body, text=criterion, variable=var,
-                                command=lambda i=index, v=var, t=toggled: t(i, v),
-                                font=F["small"], text_color=C["text_soft"],
-                                fg_color=C["green"], border_color=C["border_hi"],
-                                hover_color=C["card_hi"]).pack(anchor="w", pady=2)
+                check = ctk.CTkCheckBox(card.body, text=criterion, variable=var,
+                                        command=lambda i=index, v=var, t=toggled: t(i, v),
+                                        font=F["small"], text_color=C["text_soft"],
+                                        fg_color=C["green"], border_color=C["border_hi"],
+                                        hover_color=C["card_hi"])
+                check.pack(anchor="w", pady=2)
+                # ab 0.63.2 (Nico, Meldung 39 Frage 2c): umbrochen steht das
+                # Kaestchen an der ersten Zeile (FitRowsMixin._z3_check)
+                check._fisi_z3_erste_zeile = True
             row = transparent_frame(card.body)
             row.pack(anchor="w", pady=(8, 0))
             make_label(row, "Punkte", font=F["small"], fg=C["text_dim"]).pack(
@@ -5641,6 +5689,9 @@ class ProgressView(FitRowsMixin, View):
         columns = ("datum", "score", "prozent", "note", "dauer")
         self.tree = ttk.Treeview(table_card.body, columns=columns, show="headings",
                                  height=9, style="Dash.Treeview")
+        # ab 0.63.2 (Nico, Meldung 39 Frage 1a): bei "Sehr gross" im schmalen
+        # Fenster faellt "Erfolgsquote" weg (Z3, _z3_tree)
+        self.tree._fisi_z3_weglassen = ("prozent",)
         headings = [("datum", "Datum & Uhrzeit", 170), ("score", "Ergebnis", 110),
                     ("prozent", "Erfolgsquote", 110), ("note", fr.NOTE_KURZ, 150),
                     ("dauer", "Dauer", 90)]
