@@ -1,0 +1,83 @@
+# Nur Probe (Zweig probe-0632-fensterziehen, Plan 0.63.2 B9 / Weisung zu
+# Meldung 41 Abschnitt 6): Schleifen-Nachweis fuer den Fensterziehen-Umbau in
+# test_leistung.py (FG-60, auf Zustand warten statt fester Pausen).
+# Wiederholt PcTest.test_1 und test_2 viele Male, je in einem eigenen Prozess:
+#   windows-ruhig  ohne Zusatzlast
+#   windows-last   mit zwei Rechenschleifen als Zusatzlast (langsamer Runner)
+#   linux-ruhig    unter Xvfb wie der Teil "lang"
+# Ein Durchgang rot = Job rot. Baut nichts, veroeffentlicht nichts, wird nie
+# gemergt. build.yml und pruefung/ci_tests.sh bleiben unveraendert.
+name: Probe 0.63.2 Fensterziehen (nur Probe)
+
+on:
+  push:
+    branches: [probe-0632-fensterziehen]
+    paths: [".github/workflows/probe-0632-fensterziehen.yml", "test_leistung.py"]
+  workflow_dispatch:
+
+jobs:
+  schleife:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-ruhig, os: windows-2025, runden: 30, last: 0 }
+          - { name: windows-last, os: windows-2025, runden: 30, last: 2 }
+          - { name: linux-ruhig, os: ubuntu-24.04, runden: 30, last: 0 }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: |
+          python -m pip install --retries 10 --timeout 60 -r requirements.txt psutil
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get -o Acquire::Retries=5 update
+            sudo apt-get -o Acquire::Retries=5 install -y xvfb x11-utils
+          fi
+          echo "::notice::Stand $(git log --oneline -1)"
+      - name: Schleife (${{ matrix.runden }} Durchgaenge, Zusatzlast ${{ matrix.last }})
+        env:
+          RUNDEN: ${{ matrix.runden }}
+          LAST: ${{ matrix.last }}
+          NAME: ${{ matrix.name }}
+        run: |
+          set +e   # ein roter Durchgang soll die Schleife nicht abbrechen
+          LASTPIDS=""
+          for _ in $(seq 1 "$LAST"); do
+            python -c "while True: pass" &
+            LASTPIDS="$LASTPIDS $!"
+          done
+          ROT=0
+          for r in $(seq 1 "$RUNDEN"); do
+            t0=$(date +%s)
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              timeout 900 xvfb-run -a -s "-screen 0 1920x1080x24" python -m unittest \
+                test_leistung.PcTest.test_1_aus_ohne_spuren \
+                test_leistung.PcTest.test_2_schalter_in_den_optionen > "$RUNNER_TEMP/r$r.txt" 2>&1
+            else
+              timeout 900 python -m unittest \
+                test_leistung.PcTest.test_1_aus_ohne_spuren \
+                test_leistung.PcTest.test_2_schalter_in_den_optionen > "$RUNNER_TEMP/r$r.txt" 2>&1
+            fi
+            rc=$?
+            dauer=$(( $(date +%s) - t0 ))
+            # Ein "skipped" zaehlt nicht als gruen (kein Display = Probe ungueltig)
+            if [ $rc -eq 0 ] && grep -qE "^OK[[:space:]]*$" "$RUNNER_TEMP/r$r.txt"; then
+              echo "Durchgang $r: gruen ($dauer s)"
+            else
+              ROT=$((ROT + 1))
+              echo "::error::Durchgang $r: ROT (Rueckgabe $rc, $dauer s)"
+              cat "$RUNNER_TEMP/r$r.txt"
+            fi
+          done
+          for p in $LASTPIDS; do kill "$p" 2>/dev/null; done
+          echo "ERGEBNIS $NAME: $((RUNDEN - ROT)) von $RUNDEN gruen"
+          [ "$ROT" -eq 0 ]
