@@ -384,12 +384,21 @@ class FloorPlan(tk.Canvas):
             font = tk_font(F["h3"])
         x, y = self._xy(shape["x"], shape["y"])
         text = shape["text"]
-        if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
+        if shape.get("maxw") and role == "ort":
+            # Ab 0.63.2 (B-D-10): Ortsschilder der Karte nach derselben Regel
+            # wie die Klickflaeche (fg.place_at, Massstab je Schriftgroesse) -
+            # so heisst ein Ort bei jeder Schriftgroesse gleich (bisher nur
+            # bei "Gross" mit Kurznamen, z. B. "Verwaltung")
+            if len(text) * fg.MAP_CHAR_PX > shape["maxw"] * self.scale / px(1):
+                text = shape["kurz"]
+        elif shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
                 shape["maxw"] * self.scale:
             text = shape["kurz"]
         item = self.create_text(x, y, text=text, fill=shape["color"], font=font,
                                 anchor="w" if shape["anchor"] == "w" else "center",
                                 tags=tags)
+        if shape.get("bg") and role == "raum":
+            self._clear_furniture(item, shape)
         if shape.get("bg"):
             x1, y1, x2, y2 = self.bbox(item)
             pad_x, pad_y = px(8), px(3)
@@ -397,6 +406,37 @@ class FloorPlan(tk.Canvas):
                                 (y2 - y1) / 2.0 + pad_y, fill=shape["bg"],
                                 outline=shape.get("border", ""), width=px(1), tags=tags)
             self.tag_lower(back, item)
+
+    def _clear_furniture(self, item, shape):
+        """Ab 0.63.2 (B-D-10): Ein Raumschild, das frei beginnt, aber mit der
+        Schriftgroesse in die Einrichtung hineinwaechst (z. B. "Bahnsteig 1"
+        ueber dem ersten Fahrkartenautomaten), rueckt unter diese
+        Einrichtung. Schilder, die schon immer auf einem Moebel stehen
+        (Kueche), bleiben, wo sie sind."""
+        try:
+            rooms = self.content()["gebaeude"]["raeume"]
+        except (AttributeError, KeyError, TypeError):
+            return
+        room = next((entry for entry in rooms if entry.get("name") == shape["text"]), None)
+        if room is None:
+            return
+        pad_x, pad_y = px(8), px(3)
+        x1, y1, x2, y2 = self.bbox(item)
+        boxes = []
+        for deco in room.get("deko", []):
+            left, top = self._xy(deco["x"], deco["y"])
+            right, bottom = self._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+            boxes.append((left, top, right, bottom))
+        start = (x1 - pad_x, y1 - pad_y, x1 + pad_x, y2 + pad_y)
+
+        def hits(a, b):
+            return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+        if any(hits(start, box) for box in boxes):
+            return
+        sign = (x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y)
+        hit = [box for box in boxes if hits(sign, box)]
+        if hit:
+            self.move(item, 0, max(box[3] for box in hit) + pad_y + px(4) - (y1 - pad_y))
 
     def to_building(self, event):
         return ((event.x - self.offset) / self.scale,
@@ -1405,6 +1445,27 @@ class FitBoard(ctk.CTkFrame):
             button_hover_color=C["card_hi"], text_color=C["text"],
             dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
             dropdown_text_color=C["text"], font=F["small"], dropdown_font=F["small"])
+        # Ab 0.63.2 (FG-80): 1 px Rahmen in C["field_border"] wie die
+        # uebrigen Aufklapplisten der App (app_gui.FramedOptionMenu, B-D-11);
+        # CTkOptionMenu kennt keinen Rahmen, die Zeichenhilfe aber schon
+        plain_draw = menu._draw
+
+        def framed_draw(no_color_updates=False):
+            plain_draw(no_color_updates)
+            try:
+                menu._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                    menu._apply_widget_scaling(menu._current_width),
+                    menu._apply_widget_scaling(menu._current_height),
+                    menu._apply_widget_scaling(menu._corner_radius),
+                    menu._apply_widget_scaling(1),
+                    menu._apply_widget_scaling(menu._current_width - menu._current_height))
+                menu._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                        fill=C["field_border"])
+                menu._canvas.tag_lower("border_parts")
+            except (tk.TclError, AttributeError):
+                pass    # ohne Rahmen wie bis 0.63.1
+        menu._draw = framed_draw
+        menu._draw()
         if self.locked:
             menu.configure(state="disabled")
         self.menus.append(menu)
@@ -2148,6 +2209,11 @@ class TabCache:
         self._tab_base = None
         self._parked = []           # vorgebaute Reiter (ab 0.56, prepare_tab)
 
+    # Ab 0.63.2 (B-N-01): Meldung, wenn ein Reiter nicht aufgebaut werden kann
+    TAB_ERROR_TITLE = "Reiter nicht geöffnet"
+    TAB_ERROR_TEXT = ("Der Reiter „%s“ ließ sich wegen eines Programmfehlers nicht "
+                      "öffnen. Der Fehler steht in fehler.log.")
+
     def _tab_build(self, build):
         outer = self.content
         body = _frame(outer)
@@ -2155,10 +2221,52 @@ class TabCache:
         self.content = body
         try:
             build()
+        except Exception as exc:
+            # Ab 0.63.2 (B-N-01): den halb gebauten Inhalt nicht stehen lassen
+            # (er lag sonst ueber jedem anderen Reiter). Beim Vorladen meldet
+            # der Vorlader selbst (fehler.log, still), sonst Meldung und
+            # zurueck auf den zuletzt funktionierenden Reiter.
+            self.content = outer
+            body.destroy()
+            if getattr(self.app, "preloading", False):
+                raise
+            self._tab_failed(build, (type(exc), exc, exc.__traceback__))
+            return
         finally:
             self.content = outer
         self._tab_body = body
         self._tab_frames[self.tab] = (self._render_key(), body)
+        self._tab_ok = self.tab
+
+    def _tab_failed(self, build, exc_info):
+        """Ab 0.63.2 (B-N-01): Fehler wie jeden unerwarteten Fehler melden
+        (report_callback_exception: fehler.log), dazu ein Fenster. Reiterzeile
+        und Inhalt zeigen danach wieder den zuletzt funktionierenden Reiter."""
+        failed = self.tab
+        names = dict(self._tab_list())
+        self._tab_frames.pop(failed, None)
+        self.app.root.report_callback_exception(*exc_info)
+        # Im Starttest (FISI_SELFTEST) kein modales Fenster: es wartete auf
+        # einen Klick, der Lauf endete nie. Der Fehler zaehlt dort schon ueber
+        # report_callback_exception (Starttest-Protokoll, Exit-Code 1).
+        import os
+        if not os.environ.get("FISI_SELFTEST"):
+            messagebox.showerror(self.TAB_ERROR_TITLE,
+                                 self.TAB_ERROR_TEXT % names.get(failed, failed))
+        back = getattr(self, "_tab_ok", None)
+        if back is None or back == failed or back not in names:
+            return
+        self.tab = back
+        cached = self._tab_frames.get(back)
+        if cached is not None and cached[1].winfo_exists():
+            cached[1].pack(fill="x")
+            self._tab_body = cached[1]
+        else:
+            self._tab_build(build)
+        row = getattr(self, "_tab_row", None)
+        if row is not None and row.value != self.tab:
+            row.value = self.tab
+            row._paint()
 
     def _tabs_done(self):
         self._tab_base = _base_key(self._render_key())
@@ -2258,7 +2366,9 @@ class TabCache:
             self._tab_build(build)
         # Ab 0.62.3: ein vorgebauter Reiter liegt unter der Hintergrundflaeche
         # (prepare_tab legt ihn mit lower() nach unten) - nach vorn holen
-        self._tab_body.lift()
+        # Ab 0.63.2 (B-N-01): nach einem Fehler im Aufbau kann der Rahmen fehlen
+        if self._tab_body is not None and self._tab_body.winfo_exists():
+            self._tab_body.lift()
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()
@@ -2732,9 +2842,10 @@ class GameView(ReusableView, ScrollArea):
                     subtitle="Ort anklicken, um hinzugehen")
         card.pack(fill="x")
         if card.head is not None:
+            # Ab 0.63.2 (B-D-10): Abstand auch rechts, zum Hinweistext
             NeoButton(card.head, "Karte" if as_list else "Liste",
                       lambda: self._toggle_map_list(not as_list), kind="ghost", height=28,
-                      font=F["small_bold"]).pack(side="right", padx=(10, 0))
+                      font=F["small_bold"]).pack(side="right", padx=(10, 10))
         if as_list:
             self._build_place_list(card.body, state)
             self.world = None
@@ -2872,8 +2983,12 @@ class GameView(ReusableView, ScrollArea):
                 NeoButton(body, "Firma gründen", lambda: self.app.show_view("firma"),
                           kind="primary").pack(anchor="w", pady=(8, 0))
 
-        for task, status in tickets:
+        # Ab 0.63.2 (B-F-03): hoechstens TICKET_PAGE Eintraege je Seite. Mit
+        # 150 und mehr Eintraegen wurde die Ansicht so hoch, dass X das Bild
+        # ablehnte und das Programm endete. Die Kopfzeile zaehlt weiter alle.
+        for task, status in self._ticket_page(tickets):
             self._ticket_row(body, task, status)
+        self._ticket_pager(body, tickets)
 
         if not item:
             footer = _frame(body)
@@ -2889,6 +3004,43 @@ class GameView(ReusableView, ScrollArea):
                     "Heute ist nichts mehr zu tun.")
             make_label(footer, hint, font=F["small"], fg=C["muted"]).pack(side="left",
                                                                           padx=14)
+
+    # Ab 0.63.2 (B-F-03): Eintraege je Seite in "Tickets heute" bzw. im Raum.
+    # Im normalen Spiel sind es hoechstens etwa 37 an einem Tag, dort
+    # erscheint also nie ein Blaettern.
+    TICKET_PAGE = 50
+
+    def _ticket_page(self, tickets):
+        """Sichtbarer Ausschnitt der Ticketliste. Die Seite gilt fuer den
+        Arbeitstag und den Raum, in dem geblaettert wurde; sonst Seite 1."""
+        where = (self.game.state.day, self.room)
+        mark = getattr(self, "ticket_page", None)
+        page = mark[1] if isinstance(mark, tuple) and mark[0] == where else 0
+        pages = max(1, -(-len(tickets) // self.TICKET_PAGE))
+        page = max(0, min(page, pages - 1))
+        self.ticket_page = (where, page)
+        return tickets[page * self.TICKET_PAGE:(page + 1) * self.TICKET_PAGE]
+
+    def _ticket_pager(self, body, tickets):
+        """Blaettern wie in den Listen der Lernplattform (app_gui, Pfeile und
+        "Seite x / y"); nur bei mehr als TICKET_PAGE Eintraegen."""
+        pages = -(-len(tickets) // self.TICKET_PAGE)
+        if pages <= 1:
+            return
+        from fisi_widgets import IconButton   # nur fuer dieses Blaettern
+        pager = _frame(body)
+        pager.pack(fill="x", pady=(10, 0))
+        IconButton(pager, "arrow_left", lambda: self._turn_tickets(-1),
+                   parent_bg=C["card"]).pack(side="left")
+        make_label(pager, "Seite %d / %d" % (self.ticket_page[1] + 1, pages),
+                   font=F["small_bold"], fg=C["text_dim"]).pack(side="left", expand=True)
+        IconButton(pager, "arrow_right", lambda: self._turn_tickets(1),
+                   parent_bg=C["card"]).pack(side="right")
+
+    def _turn_tickets(self, delta):
+        where, page = self.ticket_page
+        self.ticket_page = (where, page + delta)
+        self.render(keep_scroll=True)
 
     def _build_warehouse(self, parent, state):
         """Lager: was unterwegs ist, was da ist und was ausgeliefert wurde."""
@@ -5610,11 +5762,16 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             elif booking:
                 make_label(side, "gebucht", font=F["small_bold"], fg=C["green"]).pack()
             else:
+                # Ab 0.63.2 (B-D-10): beide Knoepfe so breit wie der laengere
+                # Text ("Laufend buchen" / "Einmalig buchen"), mindestens 110
+                from fisi_widgets import text_width   # wie NeoButton selbst
+                wide = max(110, max(int(text_width(label, F["small_bold"]) + 44)
+                                    for _mode, label in fg.AD_MODES))
                 for mode, label in fg.AD_MODES:
                     offer = item["angebote"][mode]
                     button = NeoButton(side, label, lambda o=offer: self._book_ad(o),
                                        kind="primary" if mode == fg.AD_RUNNING else "ghost",
-                                       height=32, width=110, font=F["small_bold"])
+                                       height=32, width=wide, font=F["small_bold"])
                     button.pack(pady=(0, 6))
                     button.set_enabled(not offer["problem"])
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \

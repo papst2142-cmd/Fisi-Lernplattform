@@ -1,0 +1,933 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Tests ab 0.63.2 fuer die Spiel-Fehler am PC (Bauauftrag N2):
+
+  B-F-03  "Tickets heute" mit 150 und mehr Eintraegen: Die Spielansicht wurde
+          so hoch (1493 + 61 * N px), dass X das Bild ablehnte (BadAlloc bzw.
+          BadValue bei X_CreatePixmap) und das Programm ohne Meldung endete.
+          Jetzt hoechstens GameView.TICKET_PAGE Eintraege je Seite, Blaettern
+          wie in den Listen der Lernplattform, Kopfzeile zaehlt weiter alle.
+          Der Aufbau laeuft in einem eigenen Prozess (stuerzt X ab, endet nur
+          dieser Prozess, der Test meldet ihn rot).
+  B-N-01  Scheitert der Aufbau eines Reiters in Reise oder Firma, erscheint
+          eine Meldung (Fenster und fehler.log ueber report_callback_exception),
+          der halb gebaute Inhalt verschwindet, Reiterzeile und Inhalt zeigen
+          wieder den zuletzt funktionierenden Reiter.
+  B-I-05  Eingebaute Leistungsmessung: Seitenwechsel bis fertig gezeichnet,
+          Zaehlen der Elemente ausserhalb der Dauer, Feld "messart" (2) und
+          getrennte Auswertung alter und neuer Messart (fisi_leistung).
+  B-D-10  (Teil a) Spielansichten zurechtgerueckt: Name der Spielfigur nie
+          auf einer Wand, mind. 4,5:1 gegen den Boden (auch dunkel);
+          Ortsschilder der Karte bei jeder Schriftgroesse gleich; "Bahnsteig 1"
+          ueberdeckt keinen Automaten; "Platz wechseln" mit Abstand zum
+          Suchfeld; Knopftexte "Laufend buchen" / "Einmalig buchen".
+  FG-80   Aufklapplisten im Spiel (Serverfarm) mit Rahmen wie in der App.
+
+Der Test wird NIE uebersprungen: Fehlt die Anzeige, ist er rot.
+Start:  xvfb-run -a python test_spiel_pc_0632.py
+"""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+from test_vorladen import AppCase, HAS_DISPLAY   # noqa: E402  vorhandene Testhilfe
+
+
+# ============================================================================
+#  B-F-03: viele Eintraege in "Tickets heute"
+# ============================================================================
+
+def _ticket_db(path, count):
+    """Platz 1 mit Spielfigur und count geloesten Tickets an Arbeitstag 1
+    (wie die Nachstellung der Pruefung 0.62.4, bf03_unabhaengig.py: Game.solve
+    laesst nur heute offene Tickets zu, darum direkt als Ereignis)."""
+    import fisi_core
+    import fisi_game as fg
+    db = fisi_core.DBManager(path)
+    game = fg.Game(db, device="PC")
+    run = game.new_run(1)
+    game.set_profile("Test", {})
+    state = game.reload()
+    tasks = [task for task in game.content["aufgaben"] if not task.get("zwischenfall")]
+    if count > len(tasks):
+        raise AssertionError("nur %d Aufgaben" % len(tasks))
+    for task in tasks[:count]:
+        payload = {"aufgabe": task["id"], "tag": state.day, "richtig": True, "geld": 0,
+                   "reputation": {}}
+        db.log_game_event(fg.EV_SOLVED, json.dumps(payload), "PC", run)
+    game.invalidate()
+    return len(game.reload().todays_tickets())
+
+
+# Laeuft im eigenen Prozess: Spielansicht oeffnen, Platz 1 waehlen, zeichnen,
+# Hoehe und Zeilen melden, dann einmal weiterblaettern.
+_CHILD = r"""
+import json, os, sys, time
+sys.path.insert(0, sys.argv[1])
+factor = float(sys.argv[2])
+import customtkinter as ctk
+import app_gui, fisi_theme, fisi_widgets, fisi_game_gui
+app_gui.apply_appearance()
+if factor != 1.0:
+    fisi_theme.apply_font_size({1.15: "gross", 1.3: "sehr_gross"}[factor])
+    fisi_widgets.apply_ui_scale(factor)
+app_gui.UpdateController.auto_check = lambda self: None
+app_gui.SyncController.auto_start = lambda self: None
+errors = []
+root = ctk.CTk()
+root.report_callback_exception = lambda *exc: errors.append(repr(exc[1]))
+app = app_gui.FISIApp(root)
+root.geometry("1360x900+0+0")
+rows = []
+original = fisi_game_gui.GameView._ticket_row
+def counting(self, parent, task, status):
+    rows.append(task["id"])
+    return original(self, parent, task, status)
+fisi_game_gui.GameView._ticket_row = counting
+def pump(seconds):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        root.update()
+        time.sleep(0.005)
+pump(0.3)
+app.show_view("game")
+pump(0.3)
+view = app.views["game"]
+run = [item for item in view.game.slots() if not item["extra"] and item.get("lauf")][0]["lauf"]
+del rows[:]
+view._choose(run)
+pump(1.0)
+report = {"rows": len(rows), "height": view.content.winfo_reqheight(),
+          "subtitles": [], "pages": [], "errors": errors}
+import tkinter
+def texts(widget, out):
+    for child in widget.winfo_children():
+        if isinstance(child, tkinter.Label) and isinstance(child.master, ctk.CTkBaseClass):
+            continue   # innerer Label eines CTkLabel (Text sonst doppelt)
+        try:
+            out.append(str(child.cget("text")))
+        except Exception:
+            pass
+        texts(child, out)
+    return out
+all_texts = texts(view.content, [])
+report["subtitles"] = [t for t in all_texts if "bearbeitet" in t]
+report["pages"] = [t for t in all_texts if t.startswith("Seite ")]
+if hasattr(view, "_turn_tickets") and report["pages"]:
+    first = list(rows)
+    del rows[:]
+    view._turn_tickets(1)
+    pump(0.5)
+    report["rows_page2"] = len(rows)
+    report["overlap"] = len(set(first) & set(rows))
+    report["pages2"] = [t for t in texts(view.content, []) if t.startswith("Seite ")]
+print("ERGEBNIS " + json.dumps(report), flush=True)
+os._exit(0)
+"""
+
+
+class TicketListeTest(unittest.TestCase):
+    """B-F-03: Die Ansicht baut mit 149, 150, 250 und 442 Eintraegen ohne
+    X-Fehler, bleibt unter der Grenze und zaehlt in der Kopfzeile alle."""
+
+    # Hoehe der Ansicht mit 149 Eintraegen lief 0.62.4 gerade noch (10.582 px);
+    # mit Blaettern bleibt sie weit darunter
+    MAX_HEIGHT = 8000
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        self.folder = tempfile.mkdtemp(prefix="fisi tickets ")
+
+    def tearDown(self):
+        shutil.rmtree(self.folder, ignore_errors=True)
+
+    def _run(self, count, factor=1.0):
+        db = os.path.join(self.folder, "t%d_%s.db" % (count, factor))
+        env = dict(os.environ, FISI_DB_PATH=db, HOME=self.folder,
+                   FISI_SELFTEST=os.path.join(self.folder, "log.txt"),
+                   PYTHONDONTWRITEBYTECODE="1")
+        saved = os.environ.get("FISI_DB_PATH")
+        os.environ["FISI_DB_PATH"] = db
+        try:
+            self.assertEqual(_ticket_db(db, count), count)
+        finally:
+            if saved is None:
+                os.environ.pop("FISI_DB_PATH", None)
+            else:
+                os.environ["FISI_DB_PATH"] = saved
+        script = os.path.join(self.folder, "kind.py")
+        with open(script, "w", encoding="utf-8") as handle:
+            handle.write(_CHILD)
+        result = subprocess.run([sys.executable, script, HERE, str(factor)], env=env,
+                                capture_output=True, text=True, timeout=300)
+        lines = [line for line in result.stdout.splitlines() if line.startswith("ERGEBNIS ")]
+        self.assertEqual(result.returncode, 0,
+                         "%d Eintraege: Programm beendet (rc=%s)\n%s" % (
+                             count, result.returncode, result.stderr[-1500:]))
+        self.assertEqual(len(lines), 1, result.stdout[-1500:] + result.stderr[-1500:])
+        return json.loads(lines[0][len("ERGEBNIS "):])
+
+    def _check(self, count, factor=1.0):
+        import fisi_game_gui
+        # Soll 50 je Seite (gegen den alten Stand ohne Konstante ebenso, damit
+        # der Test dort am Absturz bzw. an der Zeilenzahl rot wird)
+        page = getattr(fisi_game_gui.GameView, "TICKET_PAGE", 50)
+        report = self._run(count, factor)
+        self.assertEqual(report["errors"], [])
+        self.assertLess(report["height"], self.MAX_HEIGHT, report)
+        self.assertEqual(report["rows"], min(count, page), report)
+        # Kopfzeile zaehlt weiter alle Eintraege
+        self.assertTrue(any("von %d bearbeitet" % count in text
+                            for text in report["subtitles"]), report["subtitles"])
+        pages = -(-count // page)
+        if pages > 1:
+            self.assertEqual(report["pages"], ["Seite 1 / %d" % pages])
+            self.assertEqual(report["pages2"], ["Seite 2 / %d" % pages])
+            self.assertEqual(report["rows_page2"], min(page, count - page))
+            self.assertEqual(report["overlap"], 0)
+        else:
+            self.assertEqual(report["pages"], [])
+        return report
+
+    def test_149_eintraege(self):
+        self._check(149)
+
+    def test_150_eintraege(self):
+        self._check(150)
+
+    def test_250_eintraege(self):
+        self._check(250)
+
+    def test_442_eintraege_sehr_gross(self):
+        self._check(442, factor=1.3)
+
+    def test_wenige_eintraege_ohne_blaettern(self):
+        # Im normalen Spiel (hoechstens etwa 37 je Tag) bleibt alles wie bisher
+        report = self._check(37)
+        self.assertEqual(report["pages"], [])
+
+
+# ============================================================================
+#  B-N-01: Fehler beim Aufbau eines Reiters
+# ============================================================================
+
+def _texts(widget, out=None):
+    import tkinter
+    import customtkinter as ctk
+    out = [] if out is None else out
+    for child in widget.winfo_children():
+        if isinstance(child, tkinter.Label) and isinstance(child.master, ctk.CTkBaseClass):
+            continue   # innerer Label eines CTkLabel (Text sonst doppelt)
+        try:
+            out.append(str(child.cget("text")))
+        except Exception:   # noqa: BLE001 - Rahmen ohne Text
+            pass
+        _texts(child, out)
+    return out
+
+
+class ReiterFehlerTest(AppCase):
+    profile = True
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        super().setUp()
+        import fisi_game_gui
+        self.gui = fisi_game_gui
+        self.shown = []
+        self._saved_showerror = fisi_game_gui.messagebox.showerror
+        fisi_game_gui.messagebox.showerror = lambda title, text, **_k: self.shown.append(
+            (title, text))
+        self.stop_preloader()
+        self.app.slot_chosen = True
+        # AppCase setzt FISI_SELFTEST nur gegen Netzzugriffe (beim Start der
+        # App gelesen); hier soll sich die App wie beim Nutzer verhalten
+        self._saved_selftest = os.environ.pop("FISI_SELFTEST", None)
+
+    def tearDown(self):
+        self.gui.messagebox.showerror = self._saved_showerror
+        if self._saved_selftest is not None:
+            os.environ["FISI_SELFTEST"] = self._saved_selftest
+        super().tearDown()
+
+    def _click(self, row, key):
+        # wie ein echter Klick: ueber die Ereignisschleife (Fehler landen dann
+        # in report_callback_exception, nicht im Test)
+        self.root.after(0, lambda: row.select(key))
+        self.pump(0.3)
+
+    def _packed(self, view):
+        return [child for child in view.content.winfo_children()
+                if child.winfo_manager() == "pack"]
+
+    def _broken(self, view, name):
+        original = getattr(type(view), name)
+
+        def broken(self_, *args, **kwargs):
+            original(self_, *args, **kwargs)
+            raise RuntimeError("kuenstlicher Fehler im Reiter")
+        setattr(view, name, lambda *a, **k: broken(view, *a, **k))
+        return lambda: delattr(view, name)
+
+    def test_reise_klick_auf_kaputten_reiter(self):
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        self.assertEqual(view.tab, "rueckblick")
+        good = view._tab_body
+        before = self._packed(view)
+        # "Erfolge" baut die Bestwerte (halb gebaut) und scheitert dann
+        restore = self._broken(view, "_build_records")
+        self._click(view._tab_row, "erfolge")
+        # Meldung: Fenster und report_callback_exception (fehler.log)
+        self.assertEqual(len(self.shown), 1, self.shown)
+        self.assertEqual(self.shown[0][0], self.gui.TabCache.TAB_ERROR_TITLE)
+        self.assertIn("„Erfolge“", self.shown[0][1])
+        self.assertEqual(len(self.errors), 1)
+        self.assertIn("kuenstlicher Fehler", self.errors[0])
+        # Zurueck auf dem funktionierenden Reiter, nichts Halbes sichtbar
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        self.assertEqual(self._packed(view), before)
+        self.assertTrue(good.winfo_ismapped())
+        self.assertNotIn("BESTWERTE", _texts(view.content))
+        self.assertNotIn("erfolge", view._tab_frames)
+        # Ohne Fehler geht der Reiter danach wieder auf
+        restore()
+        self._click(view._tab_row, "erfolge")
+        self.assertEqual(view.tab, "erfolge")
+        self.assertIn("BESTWERTE", _texts(view._tab_body))
+        self.assertEqual(len(self._packed(view)), len(before))
+        self.assertEqual(len(self.shown), 1)
+        self.assertEqual(len(self.errors), 1)
+
+    def test_starttest_ohne_fenster(self):
+        """Nacharbeit L5: Im Starttest (FISI_SELFTEST) wartete das Fenster auf
+        einen Klick, der Lauf endete nie. Dort nur report_callback_exception
+        (Starttest-Protokoll, Exit-Code), Rueckkehr wie sonst."""
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        restore = self._broken(view, "_build_records")
+        os.environ["FISI_SELFTEST"] = os.path.join(self.folder, "log.txt")
+        self._click(view._tab_row, "erfolge")
+        self.assertEqual(self.shown, [])
+        self.assertEqual(len(self.errors), 1)
+        self.assertIn("kuenstlicher Fehler", self.errors[0])
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        restore()
+
+    def test_reise_neuaufbau_mit_kaputtem_reiter(self):
+        self.app.show_view("reise")
+        self.pump(0.3)
+        view = self.app.views["reise"]
+        normal = len(self._packed(view))
+        restore = self._broken(view, "_build_records")
+        view.tab = "erfolge"
+        self.root.after(0, view.render)
+        self.pump(0.3)
+        self.assertEqual(len(self.shown), 1)
+        self.assertEqual(len(self.errors), 1)
+        self.assertEqual(view.tab, "rueckblick")
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        self.assertEqual(len(self._packed(view)), normal)
+        self.assertTrue(view._tab_body.winfo_ismapped())
+        self.assertNotIn("BESTWERTE", _texts(view.content))
+        restore()
+
+
+class FirmaReiterFehlerTest(ReiterFehlerTest):
+    """Wie ReiterFehlerTest, aber mit gegruendeter Firma (alle Reiter)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import traceback
+        from test_reiter_sichtbar import _firma_spielstand
+        self.folder = tempfile.mkdtemp(prefix="fisi reiterfehler ")
+        os.environ["FISI_DB_PATH"] = os.path.join(self.folder, "test.db")
+        os.environ["FISI_SELFTEST"] = os.path.join(self.folder, "log.txt")  # kein Netz
+        os.environ["HOME"] = self.folder
+        import customtkinter as ctk
+        import app_gui
+        import fisi_game_gui
+        import fisi_widgets
+        self.app_gui = app_gui
+        fisi_widgets.FoldCard._open_state.clear()
+        fisi_widgets._PHOTO_CACHE.clear()
+        fisi_widgets._IMAGE_CACHE.clear()
+        _firma_spielstand(os.environ["FISI_DB_PATH"])
+        app_gui.apply_appearance()
+        self.errors = []
+        self.root = ctk.CTk()
+        self.root.report_callback_exception = lambda *exc: self.errors.append(
+            "".join(traceback.format_exception(*exc)))
+        self.app = app_gui.FISIApp(self.root)
+        self.root.geometry("1360x900+0+0")
+        self.pump(0.2)
+        self.gui = fisi_game_gui
+        self.shown = []
+        self._saved_showerror = fisi_game_gui.messagebox.showerror
+        fisi_game_gui.messagebox.showerror = lambda title, text, **_k: self.shown.append(
+            (title, text))
+        self.stop_preloader()
+        self.app.slot_chosen = True
+        self._saved_selftest = os.environ.pop("FISI_SELFTEST", None)
+
+    # die Reise-Tests laufen schon in ReiterFehlerTest
+    test_reise_klick_auf_kaputten_reiter = None
+    test_reise_neuaufbau_mit_kaputtem_reiter = None
+    test_starttest_ohne_fenster = None
+
+    def test_firma_klick_auf_kaputten_reiter(self):
+        view = self.app.views["firma"]
+        self.app.show_view("firma")
+        self.pump(0.3)
+        tabs = [key for key, _name in self.gui.fg.firm_tabs(view.game.state)]
+        self.assertGreater(len(tabs), 1, tabs)
+        first = view.tab
+        names = dict(self.gui.fg.firm_tabs(view.game.state))
+        good = view._tab_body
+        before = self._packed(view)
+        for other in [key for key in tabs if key != first]:
+            restore = self._broken(view, "_build_" + other)
+            self._click(view._tab_row, other)
+            self.assertIn("„%s“" % names[other], self.shown[-1][1])
+            self.assertEqual(view.tab, first, other)
+            self.assertEqual(view._tab_row.value, first, other)
+            self.assertEqual(self._packed(view), before, other)
+            self.assertTrue(good.winfo_ismapped(), other)
+            restore()
+        self.assertEqual(len(self.shown), len(tabs) - 1, self.shown)
+        self.assertEqual(len(self.errors), len(tabs) - 1)
+
+
+# ============================================================================
+#  B-I-05: eingebaute Leistungsmessung (Seitenwechsel bis fertig gezeichnet)
+# ============================================================================
+
+class LeistungsMessartTest(AppCase):
+    """B-I-05: Die Dauer eines Seitenwechsels reicht bis die Seite fertig
+    gezeichnet ist (auch Arbeit, die erst durch die Groessen-Ereignisse beim
+    Zeichnen entsteht), das Zaehlen der Elemente liegt ausserhalb, und die
+    Zeile traegt messart 2. Alte Messdateien ohne Spalte werden gelesen, die
+    Auswertung vergleicht nur gleiche Messart."""
+
+    LOAD = 0.4    # kuenstliche Zeichenlast in Sekunden
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        super().setUp()
+        import fisi_leistung
+        self.fle = fisi_leistung
+        self.stop_preloader()
+        self.app.perf.set_active(True)
+        self.show("settings")
+
+    def tearDown(self):
+        try:
+            self.app.perf.set_active(False)
+        except Exception:   # noqa: BLE001
+            pass
+        super().tearDown()
+
+    def show(self, key):
+        # wie ein Klick: ueber die Ereignisschleife
+        self.root.after(0, lambda: self.app.show_view(key))
+        self.pump(0.6)
+
+    def _pages(self):
+        self.app.perf.rec.flush()
+        return [row for row in self.fle.read_rows()
+                if row["ereignis"] == self.fle.EVENT_PAGE]
+
+    def _with_load(self, view):
+        """Beim Zeigen einen Rahmen einhaengen, dessen erstes Groessen-Ereignis
+        (entsteht erst beim Zeichnen, nach dem ersten Leerlauf) LOAD dauert."""
+        import tkinter as tk
+        original = view.on_show
+        seen = []
+
+        def on_show():
+            original()
+            frame = tk.Frame(view, width=50, height=50)
+
+            def slow(_event):
+                if not seen:
+                    seen.append(1)
+                    time.sleep(self.LOAD)
+            frame.bind("<Configure>", slow)
+            # erst im Leerlauf einhaengen: Geometrie und Groessen-Ereignis
+            # entstehen dann erst beim Zeichnen, nach dem ersten Leerlauf
+            # (wie bei Bedienelementen, die sich beim Zeichnen neu aufbauen)
+            view.after_idle(lambda: frame.place(x=0, y=0))
+        view.on_show = on_show
+        return seen
+
+    def test_dauer_bis_fertig_gezeichnet(self):
+        seen = self._with_load(self.app.views["dashboard"])
+        self.show("dashboard")
+        self.assertEqual(seen, [1], "kuenstliche Zeichenlast lief nicht")
+        row = self._pages()[-1]
+        self.assertEqual((row["von"], row["nach"]), ("settings", "dashboard"))
+        self.assertGreaterEqual(self.fle._duration(row), self.LOAD * 1000, row)
+        self.assertEqual(self.fle.messart_of(row), self.fle.MESSART_GEZEICHNET)
+        self.assertEqual(row["messart"], "2")
+        self.assertTrue(row["elemente"] and row["aufgaben"])
+
+    def test_zaehlen_ausserhalb_der_messung(self):
+        perf = self.app.perf
+        original = perf.elements
+
+        def slow_count():
+            time.sleep(1.5)
+            return original()
+        perf.elements = slow_count
+        try:
+            self.show("dashboard")
+            self.pump(1.8)
+        finally:
+            perf.elements = original
+        row = self._pages()[-1]
+        self.assertEqual(row["nach"], "dashboard")
+        self.assertTrue(row["elemente"])
+        self.assertLess(self.fle._duration(row), 1500, row)
+
+    def test_andere_ereignisse_ohne_messart(self):
+        # Messart aendert kein Verhalten bestehender Messungen (FG-40):
+        # Start, Darstellung usw. bleiben ohne Kennzeichnung
+        self.show("dashboard")
+        self.app.perf.rec.flush()
+        rows = self.fle.read_rows()
+        others = [row for row in rows if row["ereignis"] != self.fle.EVENT_PAGE]
+        self.assertTrue(others)
+        for row in others:
+            self.assertEqual(row["messart"], "", row)
+
+    def test_alte_datei_und_getrennte_auswertung(self):
+        fle = self.fle
+        # Messdatei von 0.63.1 (ohne Spalte messart)
+        old_header = ";".join(fle.COLUMNS[:-1])
+        old_path = os.path.join(self.folder, "alt.csv")
+        with open(old_path, "w", encoding="utf-8") as handle:
+            handle.write(old_header + "\n")
+            for ms in ("36,0", "40,0", "38,0"):
+                handle.write(";".join(["2026-10-01T10:00:00.000", "0.63.1", "PC", "Linux",
+                                       "seite", "settings", "dashboard", ms] +
+                                      [""] * (len(fle.COLUMNS) - 9)) + "\n")
+        old_rows = fle.read_rows(old_path)
+        self.assertEqual(len(old_rows), 3)
+        self.assertNotIn("messart", old_rows[0])
+        self.assertEqual({fle.messart_of(row) for row in old_rows}, {fle.MESSART_ALT})
+        self.assertEqual(fle.page_times(old_rows, fle.MESSART_ALT),
+                         {"dashboard": [36.0, 40.0, 38.0]})
+        # neue Messung mit dem Programm
+        self.show("dashboard")
+        new_rows = self._pages()
+        self.assertTrue(new_rows)
+        # alt gegen neu: keine gemeinsame Messart -> kein Vergleich
+        self.assertEqual(fle.compare_pages(old_rows, new_rows), {})
+        # gleiche Messart wird verglichen
+        both = fle.compare_pages(new_rows, new_rows)
+        self.assertEqual(list(both), [fle.MESSART_GEZEICHNET])
+        self.assertIn("dashboard", both[fle.MESSART_GEZEICHNET])
+        self.assertEqual(fle.compare_pages(old_rows, old_rows),
+                         {fle.MESSART_ALT: {"dashboard": (38.0, 38.0)}})
+        # Eine alte Messdatei bekommt beim Weiterschreiben die neue Kopfzeile,
+        # ihre Zeilen bleiben alte Messart
+        rec = fle.Recorder("0.63.2", "PC", path=old_path)
+        rec.active = True
+        rec.record(fle.EVENT_PAGE, von="a", nach="b", dauer_ms=1.0,
+                   messart=fle.MESSART_GEZEICHNET, speicher=False)
+        rec.flush()
+        rows = fle.read_rows(old_path)
+        self.assertEqual([fle.messart_of(row) for row in rows],
+                         [fle.MESSART_ALT] * 3 + [fle.MESSART_GEZEICHNET])
+
+
+# ============================================================================
+#  B-D-10 (Teil a): Name der Spielfigur, Ortsschilder, Abstaende
+# ============================================================================
+
+def _wall_bands(content):
+    """Waende als Rechtecke in Gebaeude-Einheiten (wie building_shapes:
+    Aussenwand 0,3 breit, Raumwaende 0,16)."""
+    import fisi_game as fg
+    building = (content or fg.GAME)["gebaeude"]
+    wide, high = building["breite"], building["hoehe"]
+    bands = [(-0.15, -0.15, wide + 0.15, 0.15), (-0.15, high - 0.15, wide + 0.15, high + 0.15),
+             (-0.15, -0.15, 0.15, high + 0.15), (wide - 0.15, -0.15, wide + 0.15, high + 0.15)]
+    for room in building["raeume"]:
+        left, top = room["x"], room["y"]
+        right, bottom = left + room["w"], top + room["h"]
+        bands += [(left, top - 0.08, right, top + 0.08), (left, bottom - 0.08, right, bottom + 0.08),
+                  (left - 0.08, top, left + 0.08, bottom), (right - 0.08, top, right + 0.08, bottom)]
+    return bands
+
+
+def _name_box(shape):
+    """Geschaetzte Flaeche des Namens (0,22 je Zeichen, 0,4 hoch)."""
+    width = 0.22 * len(shape["text"])
+    left = shape["x"] if shape.get("anchor") == "w" else shape["x"] - width / 2
+    return (left, shape["y"] - 0.2, left + width, shape["y"] + 0.2)
+
+
+def _hits(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+class NamensschildTest(unittest.TestCase):
+    """B-D-10: Der Name der Spielfigur steht an jedem Standort auf Boden
+    (nicht auf einer Wand - die Wand ist in beiden Modi hell, dort ist
+    keine Farbe lesbar, die auch auf dunklem Boden lesbar ist) und hat
+    gegen diesen Boden mind. 4,5:1, in jedem Modus und jeder Kreisfarbe."""
+
+    # "Kim Talbahn" (11 Zeichen) passt noch in die schmalste Raumbreite
+    # (Kueche zuhause, 4 Einheiten); laengere Namen haben dort keinen Platz
+    # ohne Wand und bleiben unter der Figur (wie bisher)
+    NAMES = ("Kim Talbahn", "Du")
+
+    def setUp(self):
+        import fisi_theme
+        self.old_mode = fisi_theme.current_mode
+
+    def tearDown(self):
+        import fisi_theme
+        fisi_theme.apply_mode(self.old_mode)
+
+    def _contents(self):
+        import fisi_game as fg
+        state = fg.GameState([])
+        return [("Bitweiche", None), ("Zuhause", fg.site_content(fg.SITE_HOME, state)),
+                ("Buero", fg.site_content(fg.SITE_OFFICE, state)),
+                ("Bahnhof", fg.site_content("talheim", state))]
+
+    def _floor_at(self, content, x, y):
+        import fisi_game as fg
+        colors = fg._floor_colors(content)
+        building = (content or fg.GAME)["gebaeude"]
+        for index, room in enumerate(building["raeume"]):
+            if room["x"] <= x < room["x"] + room["w"] and room["y"] <= y < room["y"] + room["h"]:
+                return colors[index + 1]
+        return colors[0]
+
+    def _positions(self, content, step=0.5):
+        import fisi_game as fg
+        building = (content or fg.GAME)["gebaeude"]
+        y = 0.1
+        while y < building["hoehe"]:
+            x = 0.1
+            while x < building["breite"]:
+                if fg.can_stand(x, y, content=content):
+                    yield (x, y)
+                x += step
+            y += step
+
+    def test_name_nie_auf_der_wand_und_lesbar(self):
+        import fisi_game as fg
+        import fisi_theme
+        problems = []
+        for mode in (fisi_theme.MODE_DARK, fisi_theme.MODE_LIGHT):
+            fisi_theme.apply_mode(mode)
+            for site, content in self._contents():
+                bands = _wall_bands(content)
+                for position in self._positions(content):
+                    for name in self.NAMES:
+                        for number, key in enumerate(fg.RING_COLORS):
+                            shape = fg.player_shapes(position, (name, {"kreis": key}),
+                                                     content=content)[-1]
+                            box = _name_box(shape)
+                            if number == 0 and any(_hits(box, band) for band in bands):
+                                problems.append((mode, site, position, name, "Wand"))
+                                break
+                            for x in (box[0], (box[0] + box[2]) / 2, box[2]):
+                                floor = self._floor_at(content, x, shape["y"])
+                                if fisi_theme.contrast(shape["color"], floor) < 4.5:
+                                    problems.append((mode, site, position, name, key, floor))
+        self.assertEqual(problems[:12], [], "%d Faelle" % len(problems))
+
+    def test_dunkelmodus_name_hell_genug_auf_jedem_boden(self):
+        """Plan: Kontrastrechnung fuer jede Kreisfarbe, auch dunkel. Ein
+        mittelheller Boden zwingt die Aufhellung (Kreisfarbe allein < 4,5)."""
+        import copy
+        import fisi_game as fg
+        import fisi_theme
+        fisi_theme.apply_mode(fisi_theme.MODE_DARK)
+        content = copy.deepcopy(fg.site_content(fg.SITE_HOME, fg.GameState([])))
+        content["gebaeude"]["flur"]["bodenfarbe"] = "#5B4F86"
+        floors = fg._floor_colors(content)
+        weak = [key for key, ring in fg.RING_COLORS.items()
+                if min(fisi_theme.contrast(ring, floor) for floor in floors) < 4.5]
+        self.assertTrue(weak, "Testboden zu dunkel gewaehlt")
+        for key, ring in fg.RING_COLORS.items():
+            shapes = fg.player_shapes(fg.start_position(content), ("Kim", {"kreis": key}),
+                                      content=content)
+            self.assertEqual(shapes[0]["line"], ring)      # Kreis bleibt
+            for floor in floors:
+                self.assertGreaterEqual(fisi_theme.contrast(shapes[-1]["color"], floor), 4.5,
+                                        (key, shapes[-1]["color"], floor))
+
+    def test_knopftexte_marketing(self):
+        import fisi_game as fg
+        self.assertEqual(dict(fg.AD_MODES), {fg.AD_RUNNING: "Laufend buchen",
+                                             fg.AD_ONCE: "Einmalig buchen"})
+
+
+_CHILD_ANSICHT = r"""
+import json, os, sys, time
+code, factor, width, height = sys.argv[1], float(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+sys.path.insert(0, code)
+os.chdir(code)
+import fisi_core, fisi_game as fg
+db = fisi_core.DBManager(os.environ["FISI_DB_PATH"])
+game = fg.Game(db, "PC")
+game.set_profile("Kim", {})
+# alle Auftraege geloest (wie fotos_n2.py): auch Lindenau mit dem langen
+# Ortsnamen "Talbahn-Verwaltung" steht auf der Karte
+for number, task in enumerate(game.content["aufgaben"]):
+    db.log_game_event(fg.EV_SOLVED, json.dumps({"aufgabe": task["id"], "tag": number + 1,
+                                                "richtig": True, "geld": 0, "reputation": {}}),
+                      "PC")
+    db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": number + 1, "gehalt": 0}), "PC")
+game.reload()
+import customtkinter as ctk
+import app_gui, fisi_widgets, fisi_theme
+app_gui.apply_appearance()
+if factor != 1.0:
+    fisi_theme.apply_font_size({1.15: "gross", 1.3: "sehr_gross"}[factor])
+    fisi_widgets.apply_ui_scale(factor)
+app_gui.UpdateController.auto_check = lambda self: None
+app_gui.SyncController.auto_start = lambda self: None
+errors = []
+root = ctk.CTk()
+root.report_callback_exception = lambda *exc: errors.append(repr(exc[1]))
+root.geometry("%dx%d+0+0" % (width, height))
+app = app_gui.FISIApp(root)
+def pump(seconds):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        root.update()
+        time.sleep(0.005)
+pump(0.5)
+root.geometry("%dx%d+0+0" % (width, height))   # FISIApp setzt eigene Groesse
+pump(0.5)
+app.show_view("game")
+pump(0.3)
+view = app.views["game"]
+run = [item for item in view.game.slots() if not item["extra"] and item.get("lauf")][0]["lauf"]
+view._choose(run)
+fg.set_map_list_mode(False)
+view.render()
+pump(1.0)
+world = view.world
+signs = sorted(world.itemcget(item, "text") for item in world.find_all()
+               if world.type(item) == "text" and world.itemcget(item, "text")
+               and not world.itemcget(item, "text").isdigit()   # Zahl offener Tickets
+               and world.itemcget(item, "text") != "Neu")
+view.place = "talheim"
+app.show_view("kunde")
+pump(1.0)
+plan = app.views["kunde"].plan
+sign = [item for item in plan.find_all()
+        if plan.type(item) == "text" and plan.itemcget(item, "text") == "Bahnsteig 1"]
+x1, y1, x2, y2 = plan.bbox(sign[0])
+pad_x, pad_y = fisi_widgets.px(8), fisi_widgets.px(3)
+room = [entry for entry in plan.content()["gebaeude"]["raeume"] if entry["name"] == "Bahnsteig 1"][0]
+machines = []
+for deco in room["deko"]:
+    if deco["typ"] == "automat":
+        left, top = plan._xy(deco["x"], deco["y"])
+        right, bottom = plan._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+        machines.append((left, top, right, bottom))
+app.show_view("zuhause")
+pump(0.5)
+header = app.header
+button = header.slot_box.winfo_children()[-1]
+gap = header.search_box.winfo_rootx() - (button.winfo_rootx() + button.winfo_width())
+report = {"signs": signs, "sign": [x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y],
+          "machines": machines, "gap": gap, "button": button.winfo_class(),
+          "window": root.winfo_width(),
+          "errors": errors}
+print("ERGEBNIS " + json.dumps(report), flush=True)
+os._exit(0)
+"""
+
+
+class SpielansichtGeometrieTest(unittest.TestCase):
+    """B-D-10: Ortsschilder gleich bei allen Schriftgroessen, "Bahnsteig 1"
+    nicht ueber einem Automaten, "Platz wechseln" mit Abstand zum Suchfeld
+    (echtes Fenster, je Groesse ein eigener Prozess)."""
+
+    RUNS = ((1.0, 1360, 900), (1.15, 1360, 900), (1.3, 1360, 900), (1.3, 1120, 800))
+    reports = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.reports = {}
+        if not HAS_DISPLAY:
+            return
+        folder = tempfile.mkdtemp(prefix="fisi ansicht ")
+        try:
+            script = os.path.join(folder, "kind.py")
+            with open(script, "w", encoding="utf-8") as handle:
+                handle.write(_CHILD_ANSICHT)
+            for factor, width, height in cls.RUNS:
+                home = os.path.join(folder, "%s_%d" % (factor, width))
+                os.makedirs(home)
+                env = dict(os.environ, HOME=home, FISI_DB_PATH=os.path.join(home, "t.db"),
+                           FISI_SELFTEST=os.path.join(home, "log.txt"), FISI_VORLADEN="0",
+                           PYTHONDONTWRITEBYTECODE="1")
+                result = subprocess.run([sys.executable, script, HERE, str(factor), str(width),
+                                         str(height)], env=env, capture_output=True, text=True,
+                                        timeout=300)
+                lines = [line for line in result.stdout.splitlines()
+                         if line.startswith("ERGEBNIS ")]
+                cls.reports[(factor, width)] = (json.loads(lines[0][len("ERGEBNIS "):])
+                                                if lines else result.stderr[-1500:])
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        for key, report in self.reports.items():
+            self.assertIsInstance(report, dict, (key, report))
+            self.assertEqual(report["errors"], [], key)
+
+    def test_ortsschilder_bei_jeder_groesse_gleich(self):
+        normal = self.reports[(1.0, 1360)]["signs"]
+        self.assertIn("Talbahn-Verwaltung", normal)
+        for key, report in self.reports.items():
+            self.assertEqual(report["signs"], normal, key)
+
+    def test_bahnsteig_ueberdeckt_keinen_automaten(self):
+        for key, report in self.reports.items():
+            self.assertEqual(len(report["machines"]), 3, key)
+            for machine in report["machines"]:
+                self.assertFalse(_hits(report["sign"], machine), (key, report["sign"], machine))
+
+    def test_platz_wechseln_mit_abstand_zum_suchfeld(self):
+        for key, report in self.reports.items():
+            self.assertGreaterEqual(report["gap"], 8, (key, report["gap"], report["button"]))
+
+
+# ============================================================================
+#  FG-80: Aufklapplisten im Spiel (Serverfarm, FitBoard) mit Rahmen
+# ============================================================================
+
+class AufklapplisteRahmenTest(unittest.TestCase):
+    """FG-80: Die Aufklapplisten beim Bestuecken der Server haben wie die
+    uebrigen Aufklapplisten der App 1 px Rahmen in C["field_border"] - auch
+    nach einem Neuzeichnen (gesperrt, andere Groesse)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import customtkinter as ctk
+        import app_gui
+        import fisi_widgets
+        app_gui.apply_appearance()
+        self.root = ctk.CTk()
+        fisi_widgets.setup_fonts(self.root)
+
+    def tearDown(self):
+        self.root.destroy()
+
+    def test_rahmen_in_feldrahmenfarbe(self):
+        import fisi_game as fg
+        import fisi_game_gui as gg
+        from fisi_theme import C
+        task = [item for item in fg.farm_tasks() if item["id"] == "sf-bestueckung"][0]
+        board = gg.FitBoard(self.root, task)
+        board.pack()
+        self.root.update()
+        self.assertTrue(board.menus)
+        for menu in board.menus:
+            menu.configure(state="disabled")   # zeichnet neu
+            menu.configure(width=150)
+            self.root.update()
+            parts = menu._canvas.find_withtag("border_parts")
+            self.assertTrue(parts, "kein Rahmen")
+            self.assertEqual({menu._canvas.itemcget(item, "fill") for item in parts},
+                             {C["field_border"]})
+
+
+class SchildAufMoebelTest(unittest.TestCase):
+    """B-D-10 (Nacharbeit L1): Ein Raumschild, das schon immer auf einem
+    Moebel beginnt (Kueche zuhause auf dem Herd), bleibt an seinem Platz;
+    nur Schilder, die frei beginnen und in die Einrichtung hineinwachsen,
+    ruecken darunter (fisi_game_gui.FloorPlan._clear_furniture)."""
+
+    def setUp(self):
+        if not HAS_DISPLAY:
+            self.fail("keine Anzeige - dieser Test darf nicht uebersprungen werden "
+                      "(unter Linux mit xvfb-run starten)")
+        import customtkinter as ctk
+        import app_gui
+        import fisi_widgets
+        app_gui.apply_appearance()
+        self.root = ctk.CTk()
+        self.root.geometry("1100x800+0+0")
+        fisi_widgets.setup_fonts(self.root)
+
+    def tearDown(self):
+        self.root.destroy()
+
+    def test_schild_auf_moebel_bleibt(self):
+        import fisi_game as fg
+        import fisi_game_gui as gg
+        plan = gg.FloorPlan(self.root, lambda _room: None, site=fg.SITE_HOME)
+        plan.pack(fill="both", expand=True)
+        self.root.update()
+        plan.set_state(fg.GameState([("2026-01-01", fg.EV_PROFILE,
+                                      {"name": "Kim", "aussehen": {}})]))
+        self.root.update()
+        content = plan.content()
+        rooms = {room["name"]: room for room in content["gebaeude"]["raeume"]}
+        signs = [shape for shape in fg.building_shapes({}, None, None, content=content)
+                 if shape["k"] == "text" and shape.get("bg") and shape["text"] in rooms]
+        checked = []
+        for shape in signs:
+            names = (shape["text"], shape.get("kurz"))      # bei wenig Platz Kurzname
+            item = [entry for entry in plan.find_all() if plan.type(entry) == "text"
+                    and plan.itemcget(entry, "text") in names][0]
+            # Schildanfang an der Sollstelle aus dem Grundriss (nicht dort,
+            # wohin es vielleicht gerueckt ist)
+            nominal = plan._xy(shape["x"], shape["y"])[1]
+            shift = nominal - plan.coords(item)[1]
+            x1, y1, x2, y2 = plan.bbox(item)
+            start = (x1 - gg.px(8), y1 + shift - gg.px(3), x1 + gg.px(8), y2 + shift + gg.px(3))
+            on_furniture = False
+            for deco in rooms[shape["text"]].get("deko", []):
+                left, top = plan._xy(deco["x"], deco["y"])
+                right, bottom = plan._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+                on_furniture |= _hits(start, (left, top, right, bottom))
+            if on_furniture:
+                checked.append(shape["text"])
+                self.assertAlmostEqual(plan.coords(item)[1], nominal, delta=1,
+                                       msg=shape["text"])
+        self.assertIn("Küche", checked)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

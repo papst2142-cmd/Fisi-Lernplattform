@@ -7961,7 +7961,8 @@ def tax_day_lines(items, content=None):
 
 AD_RUNNING = "laufend"
 AD_ONCE = "einmalig"
-AD_MODES = ((AD_RUNNING, "Laufend"), (AD_ONCE, "Einmalig"))
+# Ab 0.63.2 (B-D-10): Knopftexte als Handlung ("Laufend" las sich wie ein Zustand)
+AD_MODES = ((AD_RUNNING, "Laufend buchen"), (AD_ONCE, "Einmalig buchen"))
 
 
 def marketing_rules(content=None):
@@ -11089,8 +11090,58 @@ def player_shapes(position, player, rotate=False, content=None):
     shapes = person_shapes(x, y, player[1], ring=ring)
     # Name unter der Figur (wie bei den Kollegen), so verdeckt er kein "!".
     # Im Hellmodus (ab 0.53) in abgedunkelter Kreisfarbe, sonst kaum lesbar.
-    name_color = light_text(ring, _floor_colors(content)) if fisi_theme.light else ring
-    shapes.append(_text(x, y + 0.8, player[0] or "Du", "player", name_color, anchor="c"))
+    # Ab 0.63.2 (B-D-10): auch im Dunkelmodus mit mind. 4,5:1 gegen alle
+    # Boeden (Kreisfarbe so weit aufgehellt wie noetig). Laege der Name unter
+    # der Figur auf einer Wand (schmaler Flur, Seiten- oder Aussenwand), rueckt
+    # er in den Raum, neben oder ueber die Figur - auf der Wand ist keine Farbe
+    # lesbar, die auch auf dem Boden lesbar ist (Wand hell in beiden Modi).
+    floors = _floor_colors(content)
+    # Mindestkontrast; geschaetzte Zeichenbreite und halbe Schrifthoehe
+    # (Gebaeude-Einheiten) fuer die Pruefung "auf der Wand"
+    min_contrast, char_w, half_h = 4.5, 0.22, 0.2
+    if fisi_theme.light:
+        name_color = light_text(ring, floors)
+    else:
+        name_color = ring
+        for step in range(1, 41):
+            if all(fisi_theme.contrast(name_color, floor) >= min_contrast for floor in floors):
+                break
+            name_color = mix(ring, "#FFFFFF", step * 0.025)
+    name = player[0] or "Du"
+    width = char_w * len(name)
+    # Kandidaten (Mitte x, Mitte y, Anker, Zeichenpunkt) in Gebaeude-Einheiten
+    px_, py_ = position
+    places = [(px_, py_ + 0.8, "c", (x, y + 0.8))]
+    building = (content or GAME)["gebaeude"]
+    wide, high = building["breite"], building["hoehe"]
+    if not rotate:
+        # unter der Figur, aber seitlich in den Raum geschoben (schmaler Raum)
+        room = room_at(px_, py_, content) or {"x": 0.0, "w": wide}
+        shifted = min(max(px_, room["x"] + 0.25 + width / 2),
+                      room["x"] + room["w"] - 0.25 - width / 2)
+        places += [(shifted, py_ + 0.8, "c", (x + shifted - px_, y + 0.8)),
+                   (px_ + 0.95 + width / 2, py_, "w", (x + 0.95, y)),
+                   (px_ - 0.95 - width / 2, py_, "c", (x - 0.95 - width / 2, y)),
+                   (px_, py_ - 0.8, "c", (x, y - 0.8)),
+                   (shifted, py_ - 0.8, "c", (x + shifted - px_, y - 0.8))]
+    # Wandbaender: Aussenwand 0,3 breit, Raumwaende 0,16 (wie building_shapes)
+    bands = [(-0.15, -0.15, wide + 0.15, 0.15), (-0.15, high - 0.15, wide + 0.15, high + 0.15),
+             (-0.15, -0.15, 0.15, high + 0.15), (wide - 0.15, -0.15, wide + 0.15, high + 0.15)]
+    for item in building["raeume"]:
+        left, top = item["x"], item["y"]
+        right, bottom = left + item["w"], top + item["h"]
+        bands += [(left, top - 0.08, right, top + 0.08),
+                  (left, bottom - 0.08, right, bottom + 0.08),
+                  (left - 0.08, top, left + 0.08, bottom),
+                  (right - 0.08, top, right + 0.08, bottom)]
+
+    def free(mid_x, mid_y):
+        box = (mid_x - width / 2, mid_y - half_h, mid_x + width / 2, mid_y + half_h)
+        return not any(box[0] < band[2] and band[0] < box[2] and
+                       box[1] < band[3] and band[1] < box[3] for band in bands)
+    _mid_x, _mid_y, anchor, point = next(
+        (place for place in places if free(place[0], place[1])), places[0])
+    shapes.append(_text(point[0], point[1], name, "player", name_color, anchor=anchor))
     return shapes
 
 

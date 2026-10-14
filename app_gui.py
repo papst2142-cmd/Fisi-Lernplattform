@@ -923,8 +923,10 @@ class Header(ctk.CTkFrame):
         self.slot_box = transparent_frame(left)
         self.slot_label = make_label(self.slot_box, "", font=F["small"], fg=C["muted"])
         self.slot_label.pack(side="left", padx=(16, 8))
+        # Ab 0.63.2 (B-D-10): Abstand zum Suchfeld (stiess bei "Sehr gross" an)
         NeoButton(self.slot_box, "Platz wechseln", lambda: self.app.open_slot_picker(),
-                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
+                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left",
+                                                                     padx=(0, 12))
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
                                        border_width=1, border_color=C["field_border"])
@@ -7163,11 +7165,26 @@ class PerfMonitor:
         if not self.rec.active or old == new:
             return
 
+        # Ab 0.63.2 (B-I-05): Messende erst, wenn die Seite fertig gezeichnet
+        # ist. Bis 0.63.1 endete die Messung beim ersten Leerlauf, also bevor
+        # Tk die Geometrie fertig berechnet und die dadurch ausgeloesten
+        # Groessen-Ereignisse (Neuzeichnen der Bedienelemente) abgearbeitet
+        # hatte. Jetzt: im ersten Leerlauf das Ausstehende erledigen, dann im
+        # naechsten Leerlauf (nach den Fenster-Ereignissen) noch einmal und
+        # erst dann messen. Die Zeile traegt messart 2 (fisi_leistung), damit
+        # sie nie mit alten Werten verglichen wird. Das Zaehlen der Elemente
+        # liegt wie bisher nach dem Messende.
+        def drawn():
+            self.root.update_idletasks()
+            self.root.after_idle(done)
+
         def done():
+            self.root.update_idletasks()
             elapsed = (time.perf_counter() - started) * 1000
             self.rec.record(fle.EVENT_PAGE, von=old or "", nach=new, dauer_ms=elapsed,
-                            elemente=self.elements(), aufgaben=self.tasks())
-        self.root.after_idle(done)
+                            elemente=self.elements(), aufgaben=self.tasks(),
+                            messart=fle.MESSART_GEZEICHNET)
+        self.root.after_idle(drawn)
 
     def blocked(self, seconds):
         """Ab 0.59.2: Der Herzschlag kam seconds zu spaet (Hauptfaden
