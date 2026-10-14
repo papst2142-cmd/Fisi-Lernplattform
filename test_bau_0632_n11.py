@@ -236,6 +236,14 @@ class LockTest(unittest.TestCase):
         self.assertIn("Uninstall\\Inno Setup 6_is1", schritt)
         self.assertIn("(Get-ItemProperty $s).DisplayVersion", schritt)
         self.assertEqual(schritt.count("$ist = Fassung"), 2)
+        # Frage 21 (Weisung 41): scheitert die Nachinstallation, wird der Lauf
+        # rot - nach 3 Versuchen exit 1, danach Fassungs- und Dateipruefung
+        # mit exit 1; der Schritt hat kein continue-on-error (Probe-Lauf
+        # 38508995179 mit Fassung 6.7.99: Windows rot)
+        self.assertIn("if ($versuch -eq 3) { exit 1 }", schritt)
+        self.assertIn('{ Write-Host "ISCC.exe fehlt"; exit 1 }', schritt)
+        self.assertNotIn("continue-on-error", schritt)
+        self.assertNotIn("ErrorActionPreference = 'Continue'", schritt)
         self.assertIn('if ($ist -ne $soll) { Write-Host "Inno Setup $ist statt $soll"; exit 1 }',
                       schritt)
         self.assertEqual(len(re.findall(r"choco install", _lesen(BUILD_YML))), 1)
