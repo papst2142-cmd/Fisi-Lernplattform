@@ -39,6 +39,8 @@ je Befehl eine JSON-Zeile auf stdout. Befehle:
   timeout SEK            fisi_sync.TIMEOUT
   sync                   Abgleich; Meldung, received, sent, removed
   reset_all | clear_history | reset_records     wie die Knoepfe
+  reset_game             "Spielstand zuruecksetzen" (ab 0.63.2, Testplan N14 5.3)
+  delete_run PLATZ LAUF  Spielstand loeschen (db.delete_run, ab 0.63.2, N14 5.3)
   sicherung_erstellen PFAD | sicherung_zusammen PFAD | sicherung_ersetzen PFAD
   ende
 """
@@ -211,9 +213,11 @@ def run(name, *args):
         return {"sync": "ok", "meldung": result.message, "received": result.received,
                 "sent": result.sent, "removed": getattr(result, "removed", None),
                 "uhr_fix": getattr(db, "last_clock_fix", None)}
-    if name in ("reset_all", "clear_history", "reset_records"):
+    if name in ("reset_all", "clear_history", "reset_records", "reset_game"):
         ok = getattr(db, name)()
         return {"ok": ok, "uhr_fix": getattr(db, "last_clock_fix", None)}
+    if name == "delete_run":
+        return {"ok": bool(db.delete_run(int(args[0]), args[1], NAME))}
     if name == "sicherung_erstellen":
         with open(args[0], "wb") as handle:
             handle.write(fisi_sicherung.create_backup(db, "test", NAME))
