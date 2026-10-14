@@ -1,0 +1,57 @@
+# Nur Messung (Zweig messung-0632-fg110, FG-107 + FG-110, Weisung zu Meldung 44, 2.3 Nr. 4),
+# Vorgehen wie messung-0632-n6. Wird nie gemergt, baut und veroeffentlicht nichts.
+#   VORHER  = 1e7965a (version-0632-n7 vor FG-107)
+#   NACHHER = a551440 (version-0632-n7-fg: FG-107 + FG-110)
+# 5 Runden abwechselnd vorher/nachher auf einem fest gesaeten grossen Lernstand
+# (20.000 Karteikarten-Ereignisse, 50.000 Quizantworten): Dashboard nach je
+# 3 Quizantworten, 3 Karteikarten und ohne Aenderung, gesamt und "faellig".
+name: Messung 0.63.2 FG-107+FG-110 (nur Messung)
+
+on:
+  push:
+    branches: [messung-0632-fg110]
+    paths: [".github/workflows/messung-0632-fg110.yml", "messung_0632_fg110/**"]
+  workflow_dispatch:
+
+env:
+  VORHER: "1e7965a"
+  NACHHER: "a551440"
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Staende vorher/nachher
+        run: |
+          git worktree add ../st_base "$VORHER"
+          git worktree add ../st_neu "$NACHHER"
+          for v in base neu; do echo "::notice::Stand $v $(git -C ../st_$v log --oneline -1)"; done
+          python -c "import sys, customtkinter, tkinter; print('::notice::Python', sys.version.split()[0], 'customtkinter', customtkinter.__version__, 'Tk', tkinter.TkVersion)"
+      - name: Grosser Lernstand
+        run: python messung_0632_fg110/fg110_db.py ../st_base "$RUNNER_TEMP/gross.db"
+      - name: Messung (5 Runden abwechselnd)
+        continue-on-error: true
+        run: |
+          for r in 1 2 3 4 5; do
+            if [ $((r % 2)) = 1 ]; then a=base; b=neu; else a=neu; b=base; fi
+            for s in $a $b; do
+              timeout 900 python messung_0632_fg110/fg110_messung.py "$(cd ../st_$s && pwd)" "$RUNNER_TEMP/gross.db" "$RUNNER_TEMP/fg110.jsonl" $s $r || echo "::warning::Runde $r $s Rueckgabe $?"
+            done
+          done
+      - name: Rohwerte im Log
+        run: |
+          while IFS= read -r line; do echo "ROHFG110 $line"; done < "$RUNNER_TEMP/fg110.jsonl"
+      - name: Tabelle
+        run: python messung_0632_fg110/fg110_tabelle.py "$RUNNER_TEMP/fg110.jsonl"
