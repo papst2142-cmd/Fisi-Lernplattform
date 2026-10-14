@@ -490,6 +490,8 @@ def merge_backup(db, backup, restore_runs=(), device=""):
 
     events = _records(data, "spiel_ereignisse")
     slot_rows = _records(data, "spiel_plaetze")
+    # Ab 0.63.2 (G-B): erneut pruefen, direkt vor dem Schreibblock
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -682,6 +684,9 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
     settings = load_settings()
     settings.update(_goal_values(backup.get("einstellungen")))
     temp = target = None
+    # Ab 0.63.2 (G-B): erneut pruefen, nach der Sicherheitskopie und direkt
+    # vor dem Schreibblock
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()

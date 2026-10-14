@@ -642,6 +642,7 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
     remote_tables = remote.get("tables") or {}
 
     received = []       # ab 0.62.5 (B-G-18): (Tabelle, uid) neu uebernommen
+    refuse_read_only(db)    # ab 0.63.2 (G-B): direkt vor dem Schreibblock
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -726,7 +727,7 @@ def sync(db, settings=None, device=""):
         raise SyncError("Der Abgleich ist noch nicht eingerichtet.")
     if repo.count("/") != 1:
         raise SyncError("Das Repository bitte als „Benutzer/Name“ angeben, "
-                        "z.B. papst2142-cmd/fisi-lernstand.")
+                        "z. B. deinname/fisi-lernstand.")
     refuse_read_only(db)        # ab 0.62.5 (M-1): vor jedem Zugriff aufs Netz
 
     received = 0
@@ -736,6 +737,7 @@ def sync(db, settings=None, device=""):
     for _attempt in range(3):
         _SERVER_CLOCK.update(server=None, device=None)
         sha, remote = fetch_remote(repo, token)
+        refuse_read_only(db)    # ab 0.63.2 (G-B): auch nach dem Netz, vor dem Schreiben
         raw_markers = dict((remote or {}).get("markers") or {}) if remote else {}
         deviation = _clock_deviation()
         mixed = _note_mixed(db, remote, deviation)
