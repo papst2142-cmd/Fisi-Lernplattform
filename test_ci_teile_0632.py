@@ -4,7 +4,7 @@
 Tests fuer 0.63.2, FG-96: Aufteilung der Linux-Testteile in der CI.
 
   * Jede Testdatei test_*.py liegt in GENAU EINEM der Linux-Teile
-    spiel, lang, breite, rest (keine doppelt, keine in keinem Teil).
+    spiel, lang, breite, rest, rest2 (FG-113) (keine doppelt, keine in keinem Teil).
   * Teil "breite" enthaelt genau die drei Breitentests (soweit im Stand),
     keiner davon laeuft zusaetzlich in "rest".
   * Eine neue Testdatei landet weiter automatisch in "rest"; kommt
@@ -31,11 +31,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CI_TESTS = os.path.join(HERE, "pruefung", "ci_tests.sh")
 BUILD = os.path.join(HERE, ".github", "workflows", "build.yml")
 
-TEILE = ("spiel", "lang", "breite", "rest")
+TEILE = ("spiel", "lang", "breite", "rest", "rest2")
 BREITE = {"test_spiel_breite_0632.py", "test_ansichten_breite.py",
           "test_rechner_seite_breite.py"}
 # im Stand e0f9c7e vorhanden; test_spiel_breite_0632.py kommt mit N5
 BREITE_PFLICHT = {"test_ansichten_breite.py", "test_rechner_seite_breite.py"}
+# FG-113: Teil "rest2"; test_abgleich_0632.py kommt mit S6a
+REST2 = {"test_abgleich.py", "test_abgleich_0632.py", "test_anzeige_pc_0632.py",
+         "test_spielstand_inkrementell.py", "test_trainer_richtig_waere_pc.py"}
+REST2_PFLICHT = REST2 - {"test_abgleich_0632.py"}
 
 
 def _bash():
@@ -105,7 +109,7 @@ class GenauEinTeilTest(unittest.TestCase):
     def test_n5_datei_landet_in_breite_neue_datei_in_rest(self):
         # Nachstellung des Stands nach dem N5-Merge plus einer ganz neuen Datei
         alle = sorted({os.path.basename(p) for p in glob.glob(os.path.join(HERE, "test_*.py"))}
-                      | BREITE | {"test_fg96_neu_nachgestellt.py"})
+                      | BREITE | REST2 | {"test_fg96_neu_nachgestellt.py"})
         ordner = _kopie(alle)
         try:
             zuordnung = _zuordnung(ordner)
@@ -115,6 +119,15 @@ class GenauEinTeilTest(unittest.TestCase):
         self.assertEqual(set(zuordnung["breite"]), BREITE)
         self.assertIn("test_fg96_neu_nachgestellt.py", zuordnung["rest"])
         self.assertNotIn("test_spiel_breite_0632.py", zuordnung["rest"])
+        self.assertEqual(set(zuordnung["rest2"]), REST2)  # FG-113, nach S6a
+
+    def test_teil_rest2_genau_die_liste(self):
+        # FG-113: "rest2" = genau REST2 (soweit im Stand), keine davon in "rest"
+        zuordnung = _zuordnung(HERE)
+        vorhanden = {d for d in REST2 if os.path.exists(os.path.join(HERE, d))}
+        self.assertTrue(REST2_PFLICHT <= vorhanden, "rest2-Datei fehlt im Stand")
+        self.assertEqual(set(zuordnung["rest2"]), vorhanden)
+        self.assertEqual(set(zuordnung["rest"]) & REST2, set())
 
 
 class MatrixTest(unittest.TestCase):
@@ -133,7 +146,7 @@ class MatrixTest(unittest.TestCase):
     def test_matrix_spiel_lang_breite_rest(self):
         job = self._tests_job()
         matrix = [z for z in job if z.strip().startswith("teil:")]
-        self.assertEqual(matrix, ["        teil: [spiel, lang, breite, rest]"])
+        self.assertEqual(matrix, ["        teil: [spiel, lang, breite, rest, rest2]"])  # FG-113
 
     def test_matrix_ohne_teil_ibus(self):
         # FG-94, Weg c: Teil ibus laeuft nur im Container, nicht auf GitHub

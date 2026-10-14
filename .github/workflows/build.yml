@@ -272,7 +272,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        teil: [spiel, lang, breite, rest]
+        teil: [spiel, lang, breite, rest, rest2]
     steps:
       - uses: actions/checkout@v7
         with:
