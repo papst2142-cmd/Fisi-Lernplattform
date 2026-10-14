@@ -420,7 +420,12 @@ class PillGroupTest(unittest.TestCase):
                          [[sem] for sem in pills.semantics])
         self.assertTrue(all(item.tight for item in pills.row.controls))
         for sem, pill in zip(pills.semantics, pills.pills):
-            self.assertIs(sem.content, pill)
+            # Ab 0.63.2 (B-J-04, Variante unsichtbar): Tippflaeche mindestens
+            # 48 dp um die Pille, nur sie nimmt das Tippen an
+            self.assertIs(sem.content.content, pill)
+            self.assertEqual(sem.content.height, max(48, ui.grow(36)))
+            self.assertIsNotNone(sem.content.on_click)
+            self.assertIsNone(pill.on_click)
             self.assertEqual(pill.height, ui.grow(36))     # Pille selbst wie bisher
         self.assertEqual([item.selected for item in pills.semantics],
                          [False, False, True, False, False])
@@ -439,7 +444,8 @@ class PillGroupTest(unittest.TestCase):
         pills = ui.PillGroup(self.OPTIONEN, initial=2)
         self.assertFalse(pills.row.wrap)
         self.assertEqual(pills.row.scroll, ft.ScrollMode.HIDDEN)
-        self.assertEqual(pills.height, ui.grow(36))
+        self.assertEqual(pills.height, max(48, ui.grow(36)))   # B-J-04 Tippflaeche
+        self.assertTrue(all(pill.height == ui.grow(36) for pill in pills.pills))
         self.assertEqual(pills.controls, [pills.mask, pills.hint])
         self.assertEqual(pills.hint.tooltip, "Weitere Einträge")
 

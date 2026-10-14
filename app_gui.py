@@ -913,6 +913,7 @@ class Header(ctk.CTkFrame):
 
         left = transparent_frame(self)
         left.pack(side="left", padx=(28, 0), pady=20)
+        self._left = left
         self.crumb_main = make_label(left, "DASHBOARD", font=F["label"],
                                      fg=C["text"])
         self.crumb_main.pack(side="left")
@@ -948,6 +949,47 @@ class Header(ctk.CTkFrame):
             "<FocusIn>", lambda _e: self.search_box.configure(border_color=C["purple"]))
         self.search_entry.bind(
             "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["field_border"]))
+        # Ab 0.63.2 (B-J-06): Passen Brotkrumen und Suchfeld bei den Stufen
+        # 160/200 % nicht nebeneinander (kleines Fenster), steht das Suchfeld in
+        # einer zweiten Zeile darunter. Sonst drueckte es die Brotkrumen weg
+        # oder verschwand selbst (z. B. Firma mit "Platz wechseln"). Bei den
+        # Stufen bis "Sehr gross" und wo beides passt, bleibt alles wie bisher.
+        self.stacked = False
+        self.bind("<Configure>", self._arrange, "+")
+
+    # Abstand zwischen Brotkrumen und Suchfeld, wenn beide in einer Zeile stehen
+    ROW_GAP = 16
+    # Ab dieser Schriftstufe darf das Suchfeld in die zweite Zeile (160 %)
+    STACK_FACTOR = 1.6
+
+    def header_needs(self):
+        """Breite (echte Pixel), die Brotkrumen und Suchfeld in einer Zeile
+        brauchen: beide Teile plus Raender (28 links, 28 rechts) und Abstand."""
+        scale = ctk.ScalingTracker.get_widget_scaling(self) or 1.0
+        return (self._left.winfo_reqwidth() + self.search_box.winfo_reqwidth()
+                + (28 + 28 + self.ROW_GAP) * scale)
+
+    def _arrange(self, _event=None):
+        try:
+            width = self.winfo_width()
+            if width <= 1:
+                return
+            stacked = (fisi_theme.font_factor() >= self.STACK_FACTOR
+                       and self.header_needs() > width)
+        except tk.TclError:     # Kopfzeile schon abgebaut (Farb-/Schriftwechsel)
+            return
+        if stacked == self.stacked:
+            return
+        self.stacked = stacked
+        # pack() (nicht pack_configure) rechnet die Abstaende mit der Skalierung
+        # um; die Reihenfolge bleibt (erst Brotkrumen, dann Suchfeld)
+        self.search_box.pack_forget()
+        if stacked:
+            self._left.pack(side="top", anchor="w", padx=(28, 0), pady=(20, 8))
+            self.search_box.pack(side="top", anchor="w", padx=(28, 28), pady=(0, 14))
+        else:
+            self._left.pack(side="left", anchor="center", padx=(28, 0), pady=20)
+            self.search_box.pack(side="right", padx=(0, 28), pady=14)
 
     def _search(self):
         query = self.search_entry.get().strip()
@@ -957,6 +999,7 @@ class Header(ctk.CTkFrame):
     def set_crumbs(self, main, sub):
         self.crumb_main.configure(text=main)
         self.crumb_sub.configure(text=sub)
+        self.after_idle(self._arrange)
 
     def set_slot(self, text):
         """Platzanzeige (ab 0.48): leer = ausblenden."""
@@ -965,6 +1008,7 @@ class Header(ctk.CTkFrame):
             self.slot_box.pack(side="left")
         else:
             self.slot_box.pack_forget()
+        self.after_idle(self._arrange)
 
 
 # ============================================================================

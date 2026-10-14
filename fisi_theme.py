@@ -1047,6 +1047,10 @@ FONT_SIZES = [
     {"id": "normal", "name": "Normal", "faktor": 1.0},
     {"id": "gross", "name": "Groß", "faktor": 1.15},
     {"id": "sehr_gross", "name": "Sehr groß", "faktor": 1.3},
+    # Ab 0.63.2 (B-J-06, F22 b): zwei groessere Stufen 160 % und 200 %
+    # (Namen: Weisung zu Meldung 38/40, B4; Kennungen bleiben)
+    {"id": "extra_gross", "name": "Extra groß", "faktor": 1.6},
+    {"id": "riesig", "name": "Maximal", "faktor": 2.0},
 ]
 FONT_IDS = [item["id"] for item in FONT_SIZES]
 FONT_CHOICES = [(item["id"], item["name"]) for item in FONT_SIZES]

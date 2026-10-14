@@ -29,7 +29,8 @@ MONO = "monospace"
 # Schriftgroesse des Systems (Flutter-Standard MediaQuery.textScaler). Die
 # Einstellung "Schriftgroesse" der App kommt hinzu: Jeder ft.Text bekommt beim
 # Anlegen seine Groesse mal dem Faktor (Normal 1,0 / Gross 1,15 / Sehr gross
-# 1,3). Feste Hoehen der Bausteine hier (Knoepfe, Pillen) wachsen mit.
+# 1,3; ab 0.63.2 auch 160 % (1,6) / 200 % (2,0)). Feste Hoehen der
+# Bausteine hier (Knoepfe, Pillen) wachsen mit.
 # Zeichnungen auf der Leinwand (Spielkarte) bleiben gleich; Achsen und
 # Legenden der Diagramme wachsen ab 0.58 mit (fs, grow).
 
@@ -48,6 +49,24 @@ def grow(value):
 
 def set_font_factor(factor):
     FONT_FACTOR[0] = float(factor)
+
+
+# Ab 0.63.2 (B-J-06, F22 b): Ab der Stufe 160 % stehen
+# Bausteine, die sonst nebeneinander stehen (Banner, Kacheln, Ringkarten),
+# untereinander, und Kopfzeile und Diagramme werden hoeher - auf 384 dp
+# braeche sonst fast jedes Wort mitten im Wort um oder Text wuerde
+# abgeschnitten. Bis "Sehr gross" (130 %) bleibt alles wie bisher.
+LARGE_FACTOR = 1.6
+
+
+def large():
+    """Ist eine der Stufen ab 160 % gewaehlt?"""
+    return FONT_FACTOR[0] >= LARGE_FACTOR
+
+
+def large_grow(value):
+    """Hoehe eines Bausteins: ab 160 % mit der Schrift (grow), sonst fest."""
+    return grow(value) if large() else value
 
 
 _text_init = ft.Text.__init__
@@ -319,11 +338,23 @@ class GradientButton(ft.Container):
         # Ab 0.59.1 (H1): Rolle "Schaltflaeche" mit dem Knopftext als Namen
         # (vorher meldete sich der Knopf nur als Flaeche). Die Rolle sitzt
         # innen, damit Rolle, Name und Antippen ein Element bleiben.
+        inner = ft.Row(row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)
+        # Ab 0.63.2 (B-J-06, Rest S6): ab 160 % darf der Text eines Knopfs ohne
+        # Symbol in eine zweite Zeile umbrechen, wenn der Knopf schmaler ist als
+        # sein Text (nur wo der Knopf eine Breite hat, z. B. expand=True); bis
+        # "Sehr groß" bleibt der Aufbau wie bisher
+        hoehe, rand = grow(height), ft.Padding.symmetric(horizontal=20)
+        if large() and not icon:
+            self.caption.text_align = ft.TextAlign.CENTER
+            # FG-111: der Knopf waechst mit dem Text; ein unsichtbarer Halter
+            # haelt einzeilig die bisherige Hoehe
+            oben = grow(6)
+            inner = ft.Stack([ft.Container(width=0, height=hoehe - 2 * oben), self.caption],
+                             alignment=ft.Alignment.CENTER)
+            hoehe, rand = None, ft.Padding.symmetric(horizontal=20, vertical=oben)
         super().__init__(
-            content=ft.Semantics(button=True, content=ft.Row(
-                row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)),
-            height=grow(height), border_radius=grow(height) // 2,
-            padding=ft.Padding.symmetric(horizontal=20),
+            content=ft.Semantics(button=True, content=inner),
+            height=hoehe, border_radius=grow(height) // 2, padding=rand,
             alignment=ft.Alignment.CENTER, expand=expand,
             on_click=self._clicked, ink=True)
         self._paint(True)
@@ -369,16 +400,20 @@ class PillGroup(ft.Stack):
         self.current = initial
         self.pills = []
         self.semantics = []
-        height = grow(36)
+        height = max(48, grow(36))   # B-J-04 Variante unsichtbar: Tippflaeche
+        sichtbar = grow(36)          # Pille selbst wie bisher
         for index, (_value, caption) in enumerate(options):
             pill = ft.Container(
                 content=ft.Text(caption, size=13, weight=ft.FontWeight.BOLD),
-                height=height, border_radius=height // 2, alignment=ft.Alignment.CENTER,
-                padding=ft.Padding.symmetric(horizontal=16), ink=True,
-                on_click=lambda _e, i=index: self.select(i))
+                height=sichtbar, border_radius=sichtbar // 2, alignment=ft.Alignment.CENTER,
+                padding=ft.Padding.symmetric(horizontal=16))
+            # nur die Tippflaeche nimmt das Tippen an (ein Knoten fuer TalkBack)
+            tipp = ft.Container(content=pill, height=height, alignment=ft.Alignment.CENTER,
+                                border_radius=sichtbar // 2, ink=True,
+                                on_click=lambda _e, i=index: self.select(i))
             self.pills.append(pill)
             # Ab 0.56: TalkBack sagt "Schaltflaeche" und ob die Pille gewaehlt ist
-            self.semantics.append(ft.Semantics(content=pill, button=True, selected=False))
+            self.semantics.append(ft.Semantics(content=tipp, button=True, selected=False))
         # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
         self._widths = [32 + 7.6 * FONT_FACTOR[0] * len(str(caption))
                         for _v, caption in options]
@@ -891,12 +926,21 @@ class HeroPanel(ft.Container):
         self.sub = ft.Text("", size=13, color=mix(C["on_accent"], C["accent2"], 0.25))
         self.big = ft.Text("", size=30, weight=ft.FontWeight.BOLD, color=C["on_accent"])
         self.big_sub = ft.Text("", size=12, color=mix(C["on_accent"], C["accent2"], 0.25))
+        texts = ft.Column([self.title, self.sub], spacing=6, tight=True, expand=True)
+        numbers = ft.Column([self.big, self.big_sub], spacing=0, tight=True,
+                            horizontal_alignment=ft.CrossAxisAlignment.END)
+        # Ab 0.63.2 (B-J-06): ab 160 % steht die grosse Zahl unter dem Text
+        # (daneben blieb fuer "Dein Lernstand" nur eine schmale Spalte)
+        if large():
+            texts.expand = None
+            numbers.horizontal_alignment = ft.CrossAxisAlignment.START
+            layout = ft.Column([texts, numbers], spacing=12, tight=True,
+                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        else:
+            layout = ft.Row([texts, numbers],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER)
         super().__init__(
-            content=ft.Row([
-                ft.Column([self.title, self.sub], spacing=6, tight=True, expand=True),
-                ft.Column([self.big, self.big_sub], spacing=0, tight=True,
-                          horizontal_alignment=ft.CrossAxisAlignment.END),
-            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            content=layout,
             gradient=gradient("hero", ft.Alignment.TOP_LEFT, ft.Alignment.BOTTOM_RIGHT),
             border_radius=18, padding=20)
 
@@ -1077,7 +1121,10 @@ class _LineCanvas(cv.Canvas):
         self._goal = None
         self._name = None
         self._width = 300
-        super().__init__(height=height, expand=True, on_resize=self._resized,
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher - Achsenschrift und Raender
+        # wachsen seit 0.58 mit, bei fester Hoehe lagen die Achsenzahlen dann
+        # uebereinander
+        super().__init__(height=large_grow(height), expand=True, on_resize=self._resized,
                          resize_interval=100)
 
     def _resized(self, event):
@@ -1211,7 +1258,8 @@ class _ShareCanvas(cv.Canvas):
         self._names = ("richtig", "falsch")
         self._empty = "–"
         self._width = 300
-        super().__init__(height=height, expand=True, on_resize=self._resized,
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher (wie _LineCanvas)
+        super().__init__(height=large_grow(height), expand=True, on_resize=self._resized,
                          resize_interval=100)
 
     def _resized(self, event):
