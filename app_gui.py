@@ -7690,6 +7690,9 @@ class LongQuestionDialog(ctk.CTkToplevel):
         self.text.pack(fill="both", expand=True, side="top")
         set_text(self.text, message)
         self.text.configure(state="disabled")
+        # Testplan Dialog D5: per Tab erreichbar (schreibgeschuetzte Felder
+        # ueberspringt Tk sonst), dann rollen Pfeile/Bild/Strg+Ende den Text
+        self.text._textbox.configure(takefocus=1)
         self.text.yview_moveto(0)
         self._default = self.btn_yes if default == "yes" else self.btn_no
         self.protocol("WM_DELETE_WINDOW", lambda: self._close(False))
@@ -7756,9 +7759,16 @@ def ask_long_question(app, title, message, default="no"):
         try:
             if dialog.winfo_exists():
                 dialog.grab_set()
-        except tk.TclError:
+        except tk.TclError as error:
             if tries:
                 dialog.after(50, lambda: grab(tries - 1))
+            else:
+                # Ab 0.63.2 (Testplan Dialog V7): nicht still - der Dialog
+                # bleibt offen und antwortet wie sonst, nur das Hauptfenster
+                # ist dann nicht gesperrt; das steht in fehler.log
+                write_error_log("Rueckfrage \"%s\": Fenster liess sich nicht sperren "
+                                "(grab_set: %s), Hauptfenster bleibt bedienbar."
+                                % (title, error))
 
     dialog.after(50, grab)
     root.wait_window(dialog)
