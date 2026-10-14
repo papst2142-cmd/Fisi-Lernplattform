@@ -15,7 +15,8 @@ N-b  Z7 im Spiel (mobile/src/spiel.py): Ereignisse, die schreiben und danach
      haengt. Bestandsaufnahme aller self.game.<m>(-Aufrufe als Tabelle.
 N-h  Subnetting-Blaettern: gesperrte Pfeile in C["muted"], freie in
      C["accent"] (gleiche Regel wie _paint_page_buttons, B-E-03).
-     Ab Nico 14b (Meldung 39): in Lila/Magenta und Blau/Tuerkis hell gesperrt
+     Ab Nico 14b (Meldung 39): in Lila/Magenta und Blau/Tuerkis hell und
+     ("einheitlich") jeder hellen Farbwelt mit Abstand unter 29 gesperrt
      C["muted"] zu 40 % zur Karte aufgehellt (PfeilFarbe14bTest).
 
 Eigenstaendig lauffaehig (eigene FakePage/Basis, kein Import aus anderen
@@ -1019,6 +1020,17 @@ PROBE_NETZ = ("10.0.0.0/8", "256")           # 32 Seiten wie die Foto-Probe
 SOLL_14B = {"violett": "#A49BB8", "nachtblau": "#9AA3B9", "tannengruen": "#94A7A0",
             "aubergine": "#B098A7", "anthrazit": "#9D9DA5", "schwarz": "#9B9BA2"}
 GEAENDERT_14B = ("lila_magenta", "blau_tuerkis")
+# Nico "Ja bitte einheitlich": zusaetzlich die sechs hellen Faelle, die auf
+# 58d6d66 unter dem Mindestabstand 29 lagen (Messwert vorher in Klammern)
+GEAENDERT_EINHEITLICH = {
+    ("cyan_pink", "tannengruen"): 18.6, ("gruen_lime", "tannengruen"): 21.2,
+    ("cyan_pink", "anthrazit"): 24.4, ("rot_pink", "aubergine"): 24.5,
+    ("cyan_pink", "schwarz"): 24.6, ("cyan_pink", "nachtblau"): 25.1,
+}
+
+
+def geaendert(preset, background):
+    return preset in GEAENDERT_14B or (preset, background) in GEAENDERT_EINHEITLICH
 
 
 def soll_gesperrt():
@@ -1028,7 +1040,7 @@ def soll_gesperrt():
     eigene = fisi_theme.custom_colors.get(mode)
     eigene = bool(eigene) and eigene != fisi_theme.custom_start(mode)
     if (mode == fisi_theme.MODE_LIGHT and not eigene
-            and fisi_theme.current_preset in GEAENDERT_14B):
+            and geaendert(fisi_theme.current_preset, fisi_theme.current_background)):
         return SOLL_14B[fisi_theme.current_background]
     return fisi_theme.C["muted"]
 GROSS_NETZ = ("2001:db8:abcd::/48", "65536")  # 8.192 Seiten (main.selftest)
@@ -1141,15 +1153,6 @@ MIN_ABSTAND = 29.0
 # (vorher 1,00 bis 1,28:1) und gesperrt auf der Karte (Pfeil bleibt sichtbar)
 MIN_KONTRAST_14B = 1.9
 MIN_KARTE_14B = 2.4
-# Bekannte Grenze (nicht Teil von 14b, an Nico gemeldet): unveraenderte
-# Farbwelten hell mit anderem Hintergrund unter MIN_ABSTAND (Messwert).
-UNTER_MIN_UNVERAENDERT = {
-    ("cyan_pink", "tannengruen"): 18.6, ("gruen_lime", "tannengruen"): 21.2,
-    ("cyan_pink", "anthrazit"): 24.4, ("rot_pink", "aubergine"): 24.5,
-    ("cyan_pink", "schwarz"): 24.6, ("cyan_pink", "nachtblau"): 25.1,
-}
-
-
 @unittest.skipUnless(_flet_ok(), "flet fehlt")
 class PfeilFarbe14bTest(N15Basis):
 
@@ -1203,47 +1206,53 @@ class PfeilFarbe14bTest(N15Basis):
                     yield preset, background, mode
 
     def test_14b_geaenderte_faelle(self):
-        """Lila/Magenta und Blau/Tuerkis hell, je Hintergrund: Sollfarbe,
-        Mindestabstand, Kontrast gesperrt<->frei und auf der Karte."""
+        """Lila/Magenta und Blau/Tuerkis hell je Hintergrund und die sechs
+        einheitlich dazugenommenen Faelle: Sollfarbe, Mindestabstand, Kontrast
+        gesperrt<->frei und auf der Karte."""
         t = self.theme
-        for preset in GEAENDERT_14B:
-            for background in t.BACKGROUND_IDS:
-                self.welt(preset, background, t.MODE_LIGHT)
-                gesperrt, frei = self.farben()
-                name = (preset, background)
-                self.assertEqual(gesperrt, SOLL_14B[background], name)
-                self.assertEqual(frei, t.C["accent"], name)
-                self.assertGreaterEqual(t.color_distance(gesperrt, frei), MIN_ABSTAND, name)
-                self.assertGreaterEqual(t.contrast(gesperrt, frei), MIN_KONTRAST_14B, name)
-                self.assertGreaterEqual(t.contrast(gesperrt, t.C["card"]), MIN_KARTE_14B, name)
+        faelle = [(preset, background) for preset in GEAENDERT_14B
+                  for background in t.BACKGROUND_IDS] + sorted(GEAENDERT_EINHEITLICH)
+        self.assertEqual(len(faelle), 18)
+        for preset, background in faelle:
+            self.welt(preset, background, t.MODE_LIGHT)
+            gesperrt, frei = self.farben()
+            name = (preset, background)
+            if name in GEAENDERT_EINHEITLICH:
+                # Vorher (C["muted"]) wirklich unter dem Mindestabstand
+                self.assertEqual(round(t.color_distance(t.C["muted"], frei), 1),
+                                 GEAENDERT_EINHEITLICH[name], name)
+            self.assertEqual(gesperrt, SOLL_14B[background], name)
+            self.assertEqual(frei, t.C["accent"], name)
+            self.assertGreaterEqual(t.color_distance(gesperrt, frei), MIN_ABSTAND, name)
+            self.assertGreaterEqual(t.contrast(gesperrt, frei), MIN_KONTRAST_14B, name)
+            self.assertGreaterEqual(t.contrast(gesperrt, t.C["card"]), MIN_KARTE_14B, name)
 
     def test_unveraenderte_farbwelten_gleich(self):
         """Alle anderen Faelle (dunkel; hell in den vier anderen Grundfarben)
         gesperrt genau C["muted"] wie gebaut, frei C["accent"]."""
         n = 0
         for preset, background, mode in self.alle():
-            if mode == self.theme.MODE_LIGHT and preset in GEAENDERT_14B:
+            if mode == self.theme.MODE_LIGHT and geaendert(preset, background):
                 continue
             self.welt(preset, background, mode)
             self.assertEqual(self.farben(), (self.theme.C["muted"], self.theme.C["accent"]),
                              (preset, background, mode))
             n += 1
-        self.assertEqual(n, 60)
+        self.assertEqual(n, 54)
 
     def test_mindestabstand_alle_farbwelten(self):
-        """Alle Grundfarben x Hintergruende x hell/dunkel: Abstand gesperrt <->
-        frei mindestens MIN_ABSTAND; Ausnahmen nur die gemessene, gemeldete
-        Liste UNTER_MIN_UNVERAENDERT (genau diese, Wert auf 0,1 genau)."""
+        """Alle Grundfarben x Hintergruende x hell/dunkel (72 Faelle): Abstand
+        gesperrt <-> frei mindestens MIN_ABSTAND, ohne Ausnahme (Nico
+        "einheitlich")."""
         t = self.theme
-        unter = {}
+        n = 0
         for preset, background, mode in self.alle():
             self.welt(preset, background, mode)
             gesperrt, frei = self.farben()
-            abstand = t.color_distance(gesperrt, frei)
-            if abstand < MIN_ABSTAND:
-                self.assertEqual(mode, t.MODE_LIGHT, (preset, background, mode, abstand))
-                unter[(preset, background)] = round(abstand, 1)
-        self.assertEqual(unter, UNTER_MIN_UNVERAENDERT)
+            self.assertGreaterEqual(t.color_distance(gesperrt, frei), MIN_ABSTAND,
+                                    (preset, background, mode))
+            n += 1
+        self.assertEqual(n, 72)
 
     def test_standard_hintergrund_ohne_ausnahme(self):
         """Hintergrund Violett/Flieder (Standard, Messung K44 und Fotos):

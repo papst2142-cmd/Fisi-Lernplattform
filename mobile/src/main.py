@@ -1831,20 +1831,25 @@ class ExamPanel(ft.Column):
 # Hellen die gedaempfte Farbe C["muted"] und die Akzentfarbe fast gleich hell
 # und im Farbton nah (Abstand nur ~17, auf dem Foto kaum zu unterscheiden).
 # Gesperrte Blaetterpfeile nehmen dort C["muted"], zu LOCKED_SOFT_MIX zur
-# Kartenflaeche hin aufgehellt (gleicher Farbton, blasser). Alle anderen
-# Farbwelten, eigene Farben und der PC bleiben unveraendert.
+# Kartenflaeche hin aufgehellt (gleicher Farbton, blasser). Nico "Ja bitte
+# einheitlich": ebenso jede helle Farbwelt, in der C["muted"] und C["accent"]
+# weniger als LOCKED_MIN_DISTANCE (fisi_theme.color_distance) auseinander
+# liegen. Alle anderen Farbwelten, eigene Farben und der PC bleiben unveraendert.
 LOCKED_SOFT_PRESETS = ("lila_magenta", "blau_tuerkis")
 LOCKED_SOFT_MIX = 0.4
+LOCKED_MIN_DISTANCE = 29.0
 
 
 def _locked_arrow_color():
     """Farbe eines gesperrten Blaetterpfeils (Handy-Listen und Blaettern im
-    Rechner): C["muted"], ausser in LOCKED_SOFT_PRESETS im Hellen (ohne
-    eigene Farben), siehe oben."""
+    Rechner): C["muted"], ausser im Hellen (ohne eigene Farben) in
+    LOCKED_SOFT_PRESETS oder bei zu kleinem Abstand zur Akzentfarbe, siehe oben."""
     mode = fisi_theme.current_mode
     values = fisi_theme.custom_colors.get(mode)
     custom = bool(values) and values != fisi_theme.custom_start(mode)
-    if fisi_theme.light and not custom and fisi_theme.current_preset in LOCKED_SOFT_PRESETS:
+    if fisi_theme.light and not custom and (
+            fisi_theme.current_preset in LOCKED_SOFT_PRESETS
+            or fisi_theme.color_distance(C["muted"], C["accent"]) < LOCKED_MIN_DISTANCE):
         return mix(C["muted"], C["card"], LOCKED_SOFT_MIX)
     return C["muted"]
 
