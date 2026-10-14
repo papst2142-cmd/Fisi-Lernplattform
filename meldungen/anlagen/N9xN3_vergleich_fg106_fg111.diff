@@ -1,0 +1,33 @@
+--- N9 5185e78 (FG-106/FG-111, gegen Basis e0f9c7e)
++++ Integrationsdiff 9e72864 (gegen a82fd34)
+@@ -89,11 +89,26 @@
+ +                               spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER))
+ +                rows.append(ft.Container(line, padding=ft.Padding.only(left=18)))
+ @@ KONFLIKT Mitarbeiter (Weiterbilden/Themen/Entlassen) @@
+--            parts.append(ft.Row([
+-+            parts.append((_stack_large if ui.large() else ft.Row)([
++-            for button in buttons:
++-                button.alignment = None
++-            parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
+++            if ui.large():
+++                # Ab 0.63.2 (N9, FG-106): ab 160 % untereinander in voller Breite
+++                parts.append(_stack_large(buttons))
+++            else:
+++                for button in buttons:
+++                    button.alignment = None
+++                parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
+ @@ KONFLIKT Kredit (Tilgungsplan/Abloesen) @@
+--            parts.append(ft.Row([
+-+            parts.append((_stack_large if ui.large() else ft.Row)([
++-            # Textbreite
+++            # Textbreite; ab 160 % (N9, FG-111) untereinander in voller Breite
++-            plan.alignment = repay.alignment = None
++-            parts.append(ft.Row([plan, repay], spacing=8, run_spacing=8, wrap=True))
+++            if ui.large():
+++                parts.append(_stack_large([plan, repay]))
+++            else:
+++                plan.alignment = repay.alignment = None
+++                parts.append(ft.Row([plan, repay], spacing=8, run_spacing=8, wrap=True))
+ @@ Loesung einreichen (Farm) @@
+ -        self.buttons = ft.Column([ft.Row([
+ +        self.buttons = ft.Column([(_stack_large if ui.large() else ft.Row)([
