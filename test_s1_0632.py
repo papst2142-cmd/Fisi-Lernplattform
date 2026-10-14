@@ -31,6 +31,14 @@ Loeschungen DIESES Geraets Eintraege uebrig, die ohne den Fix geloescht
 wuerden (Matrix U5/U7/U8 "a-av", U6 "b-bv", P3) - sie kommen beim naechsten
 Abgleich wieder. Es geht dabei nichts verloren (AK1, Teilmenge).
 
+AK1 (Weisung zu Meldung 41, Frage 1): gegenueber 0.63.1 nie mehr Verlust;
+gegenueber S6b eine benannte Ausnahme (U6-Fall): Geht die Uhr dauerhaft nach
+und ist der Sprung nicht feststellbar, liegt die eigene Loeschmarke vor einer
+frueheren Loeschung eines anderen Geraets; "Alles ersetzen" hebt diese dann
+nicht auf (test_grenze_g8_f2b_u6_nachlauf_weiter_falsch, bekannte Grenze,
+kein Versprechen; ein zweites "Alles ersetzen" mit derselben Datei holt die
+Eintraege zurueck).
+
 Testplan: bau_0.63.2/testplaene/Testplan_N14.md. Hier (CI, Teil "rest"):
 Kern-Gitter im Testprozess, Ablaeufe P1-P5, die Matrix-Zellen, in denen
 sich etwas aendert, die Hinweis-Zellen (N14-F2), Lernstand T-a (AK7) und
@@ -148,6 +156,11 @@ def bisher(zelle):
 # Zellen, die in der CI laufen (Teil "rest", Laufzeit): jede, deren Ergebnis
 # sich gegenueber bisher aendert, und die Hinweis-Zellen U5/U8 ohne Abgleich
 # (N14-F2: Hinweis wahr). Alle 32 Zellen: pruefung/s1_voll.py.
+# Ergebnis eines zweiten "Alles ersetzen" im U6-Fall (Grenze G8, Weisung zu
+# Meldung 41, Auflage 2), belegt logs/n14_g8_zweites_ersetzen.log
+_ALLES = {"a-vorher": 2, "b-vorher": 2}
+ZWEITES_ERSETZEN = {"direkt": _ALLES, "danach": {"A": _ALLES, "B": _ALLES}}
+
 CI_ZELLEN = sorted(set(BISHER) | {("U5", "A", False), ("U8", "A", False),
                                   ("U1", "A", False)})
 
@@ -443,7 +456,7 @@ class S1ErsetzenTest(S1Basis):
     def pfad(self, device, name="sicherung.fisisicherung"):
         return os.path.join(device.home, name)
 
-    def _f2b(self, u):
+    def _f2b(self, u, zweimal=False):
         d, e, _ = U_FAELLE[u]
         a, b = self.geraet("A"), self.geraet("B", "UTC")
         a("ohne_start")
@@ -475,8 +488,106 @@ class S1ErsetzenTest(S1Basis):
                 device.sync()
         self.ruhe((a, b))
         stand["karten"] = {device.name: device.namen() for device in (a, b)}
+        if zweimal:
+            # Weisung zu Meldung 41, Auflage 2: zweites "Alles ersetzen" mit
+            # derselben Sicherungsdatei, danach Abgleich
+            self.zeit(4.2, A=e)
+            a("sicherung_ersetzen", self.pfad(a))
+            stand["zweites_direkt"] = a.namen()
+            self.zeit(4.4, A=e)
+            for _ in range(3):
+                for device in (a, b):
+                    device.sync()
+            self.ruhe((a, b))
+            stand["zweites"] = {device.name: device.namen() for device in (a, b)}
         ta.bericht("G8 f2b %s: %s" % (u, stand))
         return stand
+
+    def _f2g(self, u, variante):
+        """f2g (test_abgleich_0632 auf S6b lokal, Weisung zu Meldung 37) mit
+        A unter u: A kennt eine spaetere Loeschung "Alle Lerndaten" von C
+        (t2), nicht die von B (t1); As eigene Loeschung ist "Historie
+        loeschen" (tA). vor: t1 < t2 < tA; nach: tA < t1 < t2. A wird nach
+        jedem eigenen Abgleich ohne Kennung des Systemstarts neu gestartet
+        (Sprung nicht feststellbar)."""
+        d, e, _ = U_FAELLE[u]
+        a = self.geraet("A")
+        b = self.geraet("B", "UTC")
+        c = self.geraet("C", "Asia/Tokyo")
+        a("ohne_start")
+        self.zeit(0, A=d)
+        a("lerne", 2, "vorher")
+        a("fuelle", "vl")
+        b("lerne", 2, "vorher")
+        b("fuelle", "vl")
+        c("lerne", 2, "vorher")
+        for _ in range(2):
+            for device in (a, b, c):
+                device.sync()                           # A misst d
+        self.zeit(1, A=d)
+        a("sicherung_erstellen", self.pfad(a))
+        self.zeit(2.5, A=e)
+        a = self.neu_starten(a, ("ohne_start",))
+        stand = {}
+        if variante == "nach":
+            self.zeit(2.8, A=e)
+            stand["hinweis_tA"] = a("clear_history").get("uhr_fix")    # tA
+        self.zeit(3.0, A=e)
+        b("lerne", 1, "zw")
+        self.zeit(3.1, A=e)
+        self.assertTrue(b("reset_all")["ok"])           # t1, A kennt das nicht
+        b.sync()
+        self.zeit(3.2, A=e)
+        c.sync()
+        self.zeit(3.3, A=e)
+        c("lerne", 1, "zw")
+        self.zeit(3.4, A=e)
+        self.assertTrue(c("reset_all")["ok"])           # t2
+        c.sync()
+        self.zeit(3.5, A=e)
+        a.sync()                                        # A kennt t2 (nicht t1)
+        a = self.neu_starten(a, ("ohne_start",))        # wieder nicht feststellbar
+        if variante == "vor":
+            self.zeit(3.7, A=e)
+            stand["hinweis_tA"] = a("clear_history").get("uhr_fix")    # tA nach t2
+        stand.update({"t1": b.marke(), "t2": c.marke(), "reset_at_A": a.marke(),
+                      "tA": a.marke("history_cleared_at")})
+        self.zeit(3.8, A=e)
+        a("sicherung_ersetzen", self.pfad(a))
+        self.zeit(4.0, A=e)
+        for _ in range(3):
+            for device in (a, b, c):
+                device.sync()
+        self.ruhe((a, b, c))
+        stand["karten"] = {device.name: device.namen() for device in (a, b, c)}
+        stand["verlauf"] = {device.name: _verlauf(device) for device in (a, b, c)}
+        ta.bericht("G8 f2g %s %s: %s" % (u, variante, stand))
+        return stand
+
+    # Ergebnis von S6b (Basis 69e62ae) in denselben Ablaeufen, belegt
+    # (logs/basis_69e62ae_g8_f2g.log); Soll: kein Etikett weniger (AK1).
+    F2G_S6B = {"karten": {"a-vorher": 2, "a-vl": 1, "b-vorher": 2, "b-vl": 1, "c-vorher": 2},
+               "verlauf": {"a-vl": 1, "b-vl": 1}}
+
+    def _f2g_pruefen(self, u, variante):
+        stand = self._f2g(u, variante)
+        for name in "ABC":
+            for art in ("karten", "verlauf"):
+                for etikett, n in self.F2G_S6B[art].items():
+                    self.assertGreaterEqual(stand[art][name].get(etikett, 0), n,
+                                            (u, variante, name, art, etikett))
+
+    def test_g8_f2g_u3_vor(self):
+        self._f2g_pruefen("U3", "vor")
+
+    def test_g8_f2g_u3_nach(self):
+        self._f2g_pruefen("U3", "nach")
+
+    def test_g8_f2g_u6_vor(self):
+        self._f2g_pruefen("U6", "vor")
+
+    def test_g8_f2g_u6_nach(self):
+        self._f2g_pruefen("U6", "nach")
 
     def test_g8_f2b_u3_nachlauf_gestellt(self):
         """f2b, A ging 2 h nach (gemessen), Uhr gestellt, Neustart: wie S6b."""
@@ -484,13 +595,25 @@ class S1ErsetzenTest(S1Basis):
         for name in "AB":
             self.assertEqual(stand["karten"][name], {"a-vorher": 2, "b-vorher": 2}, name)
 
-    def test_g8_f2b_u6_nachlauf_weiter_falsch(self):
-        """f2b, A geht weiter 2 h nach (gemessen), Neustart: wie S6b - Bs
-        fruehere Loeschung (t1) ist aufgehoben, weil sie vor As Loeschung
-        (t2) kam."""
-        stand = self._f2b("U6")
+    def test_grenze_g8_f2b_u6_nachlauf_weiter_falsch(self):
+        """BEKANNTE GRENZE, KEIN VERSPRECHEN (Weisung zu Meldung 41, Frage 1
+        (a) vorlaeufig, N14-F5): f2b, A geht weiter 2 h nach (gemessen),
+        Programm ohne Kennung des Systemstarts neu gestartet. As eigene
+        Loeschung (t2) bekommt mit Weg b die Geraetezeit (2 h zu frueh) und
+        liegt damit vor Bs frueherer Loeschung (t1): t1 wird beim Ersetzen
+        nicht aufgehoben, der eingespielte Stand verschwindet beim Abgleich
+        auf A und B. AK1: gegenueber 0.63.1 nie mehr Verlust (0.63.1 hebt
+        nichts auf, gleiches Ergebnis); gegenueber S6b eine benannte Ausnahme
+        (dieser U6-Fall; S6b: {"a-vorher": 2, "b-vorher": 2} auf A und B).
+        Die Eintraege bleiben in der Sicherungsdatei. Haelt das heutige
+        Ergebnis fest, auch fuer ein zweites "Alles ersetzen" mit derselben
+        Datei (Auflage 2)."""
+        stand = self._f2b("U6", zweimal=True)
         for name in "AB":
-            self.assertEqual(stand["karten"][name], {"a-vorher": 2, "b-vorher": 2}, name)
+            self.assertEqual(stand["karten"][name], {}, name)
+        self.assertEqual(stand["zweites_direkt"], ZWEITES_ERSETZEN["direkt"])
+        for name in "AB":
+            self.assertEqual(stand["zweites"][name], ZWEITES_ERSETZEN["danach"][name], name)
 
 
 class S1KernTest(unittest.TestCase):

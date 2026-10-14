@@ -37,6 +37,7 @@ import itertools
 import json
 import os
 import random
+import re
 import sys
 import unittest
 
@@ -114,10 +115,10 @@ SOLL_ART = {"U1": {"a-av": 0, "b-bv": 1, "a-an": 1, "b-bn": 1},      # b-bv Gren
 
 
 def _hat(row, etikett):
-    """Zeile (JSON-Liste aus "inhalt") gehoert zu etikett: ein Wert ist
-    genau etikett (Bestenliste) oder enthaelt es als JSON-Text (Daten)."""
-    return any(isinstance(v, str) and (v == etikett or '"%s"' % etikett in v)
-               for v in json.loads(row))
+    """Zeile (JSON-Liste aus "inhalt") gehoert zu etikett: ein Wert enthaelt
+    etikett als ganzes Wort (Bestenliste, Daten auch doppelt als JSON)."""
+    muster = re.compile(r"(?<![\w-])%s(?![\w-])" % re.escape(etikett))
+    return any(isinstance(v, str) and muster.search(v) for v in json.loads(row))
 
 
 def zaehle_art(geraete, table):
