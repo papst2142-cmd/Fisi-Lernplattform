@@ -1,0 +1,57 @@
+diff --git a/test_spiel_stufen_0632.py b/test_spiel_stufen_0632.py
+index 0a70403..5097ba4 100644
+--- a/test_spiel_stufen_0632.py
++++ b/test_spiel_stufen_0632.py
+@@ -238,7 +238,8 @@ class S2FaehigkeitenTest(_Basis):
+ 
+ 
+ class S3MitarbeiterKnoepfeTest(_Basis):
+-    """Mitarbeiter: drei Knoepfe nebeneinander, ab 160 % untereinander."""
++    """Mitarbeiter: bis Sehr gross die Reihe von B-E-08 (Umbruch, Knoepfe in
++    Textbreite), ab 160 % untereinander in voller Breite."""
+ 
+     def reihe(self, faktor):
+         gs, _app = self.screen(faktor)
+@@ -252,7 +253,9 @@ class S3MitarbeiterKnoepfeTest(_Basis):
+             self.assertIsInstance(reihe, ft.Row, faktor)
+             self.assertEqual([k.caption.value for k in reihe.controls],
+                              ["Weiterbilden", "Themen", "Entlassen"])
+-            self.assertTrue(all(k.expand for k in reihe.controls), faktor)
++            self.assertTrue(reihe.wrap, faktor)
++            self.assertTrue(all(not k.expand for k in reihe.controls), faktor)
++            self.assertTrue(all(k.alignment is None for k in reihe.controls), faktor)
+ 
+     def test_ab_160_untereinander(self):
+         for faktor in GROSS:
+@@ -367,7 +370,8 @@ class StufenwechselTest(_Basis):
+         (neu_knopf, neu_reihe), = finde(neu_mitarbeiter, knopf("Weiterbilden"))
+         self.assertIsNot(neu_knopf, alt_knopf)
+         self.assertIsInstance(neu_reihe, ft.Row)
+-        self.assertTrue(all(k.expand for k in neu_reihe.controls))
++        self.assertTrue(neu_reihe.wrap)
++        self.assertTrue(all(k.alignment is None for k in neu_reihe.controls))
+         gs.open_ticket(gs.game.content["aufgaben"][0]["id"])
+         self.assertIsNot(gs.btn_submit, alt_submit)
+         self.assertTrue(gs.btn_submit.expand)
+@@ -398,9 +402,10 @@ class _Reihe(_Basis):
+         self.assertEqual(len(funde), 1, caption)
+         return funde[0][1]
+ 
+-    def pruefen(self, reihe, faktor, anzahl, spacing, expand):
++    def pruefen(self, reihe, faktor, anzahl, spacing, expand, wrap=False):
+         if faktor in KLEIN:
+             self.assertIsInstance(reihe, ft.Row, faktor)
++            self.assertEqual(bool(reihe.wrap), wrap, faktor)
+             self.assertEqual(len(reihe.controls), anzahl)
+             if spacing is not None:
+                 self.assertEqual(reihe.spacing, spacing)
+@@ -456,7 +461,8 @@ class KreditReiheTest(_Reihe):
+                 karte = gs._running_loans(gs.game.state)
+                 reihe = self.reihe(karte, "Tilgungsplan")
+                 self.assertIs(finde(reihe, knopf("Ablösen"))[0][1], reihe)
+-                self.pruefen(reihe, faktor, 2, 8, True)
++                # B-E-08: bis Sehr gross Umbruch und Textbreite
++                self.pruefen(reihe, faktor, 2, 8, False, wrap=True)
+ 
+ 
+ class ReiseSeitenTest(_Reihe):
