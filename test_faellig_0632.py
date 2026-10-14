@@ -523,6 +523,21 @@ class IndexTest(Base):
                 found.add((name, match.group(1)))
         self.assertEqual(found, allowed)
 
+    def test_t10_waechter_keine_vorgegebene_nummer(self):
+        """Der Index setzt voraus, dass neue Zeilen hoehere Nummern bekommen
+        (AUTOINCREMENT). Kein INSERT im Programm darf die Nummer (id) selbst
+        vorgeben; sonst koennte eine geloeschte Nummer mit anderem Inhalt
+        wiederkommen, ohne dass sich Anzahl und hoechste Nummer aendern."""
+        names = [n for n in os.listdir(HERE) if n.endswith(".py") and not n.startswith("test_")]
+        names += [os.path.join("mobile", "src", "main.py")]
+        found = []
+        for name in names:
+            text = open(os.path.join(HERE, name), encoding="utf-8").read()
+            for match in re.finditer(r"INSERT\s+(?:OR\s+\w+\s+)?INTO\s+[%\w]+\s*\(\s*([^)]*)", text):
+                if re.match(r"(?:rowid|id|_rowid_|oid)\b", match.group(1).strip()):
+                    found.append((name, match.group(0)))
+        self.assertEqual(found, [])
+
     def test_kf15_schreiben_zwischen_stempel_und_zeilen(self):
         """Ein Schreiben aus einer zweiten Verbindung genau zwischen Stempel und
         Zeilen darf weder verloren gehen noch doppelt zaehlen."""
