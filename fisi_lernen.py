@@ -791,7 +791,7 @@ def _vlsm_task(rng, level):
     solution = {"netz%d" % i: str(nets[i]) for i in range(count)}
     matchers = {"netz%d" % i: _network_matcher(nets[i]) for i in range(count)}
     text = ("Teile das Netz %s nach VLSM auf (größtes Netz zuerst, lückenlos ab der "
-            "ersten Adresse). Gib je Abteilung Netzadresse/Präfix an, z.B. "
+            "ersten Adresse). Gib je Abteilung Netzadresse/Präfix an, z. B. "
             "192.168.1.0/26." % base)
     return TrainerTask("vlsm", level, text, fields, solution, steps, matchers)
 

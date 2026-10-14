@@ -799,6 +799,8 @@ class TrainerTest(unittest.TestCase):
          "'::' ersetzen, bei Gleichstand den ersten.",
          "2. Die längste Folge von Nullblöcken (mindestens zwei) durch '::' ersetzen, "
          "bei Gleichstand die erste.", "1.19"),
+        # ab 0.63.2 (N8-F7): "z. B." mit Leerzeichen im VLSM-Aufgabentext
+        ("Präfix an, z.B. 192.168.1.0/26.", "Präfix an, z. B. 192.168.1.0/26.", "N8-F7"),
     ]
 
     @classmethod
