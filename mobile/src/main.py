@@ -3942,12 +3942,6 @@ def custom_preview(palette, map_colors, categories, block):
         vertical_alignment=ft.CrossAxisAlignment.START))
 
 
-# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
-# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
-WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
-WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
-
-
 class SettingsScreen(Screen):
     crumbs = ("SYSTEM", "OPTIONEN")
 
@@ -4778,6 +4772,12 @@ class SettingsScreen(Screen):
 
         self.app.confirm("Alles zurücksetzen",
                          "Wirklich ALLE Lerndaten unwiderruflich löschen?", confirmed)
+
+
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
 
 
 # ============================================================================

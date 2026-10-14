@@ -6042,12 +6042,6 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
                        anchor="w", fill=map_colors["schrift"], font=tk_font(F["small_bold"]))
 
 
-# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
-# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
-WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
-WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
-
-
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
@@ -7084,6 +7078,12 @@ class SettingsView(View):
 # ============================================================================
 #  SUCHE
 # ============================================================================
+
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
 
 # Ab 0.63.2 (N7, B-I-02): Suchtext der Inhalte einmal je Programmlauf.
 # Die Lerninhalte aendern sich zur Laufzeit nicht; bis 0.63.1 bildete jede
