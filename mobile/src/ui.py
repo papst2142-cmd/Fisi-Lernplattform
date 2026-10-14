@@ -388,16 +388,20 @@ class PillGroup(ft.Stack):
         self.current = initial
         self.pills = []
         self.semantics = []
-        height = grow(36)
+        height = max(48, grow(36))   # B-J-04 Variante unsichtbar: Tippflaeche
+        sichtbar = grow(36)          # Pille selbst wie bisher
         for index, (_value, caption) in enumerate(options):
             pill = ft.Container(
                 content=ft.Text(caption, size=13, weight=ft.FontWeight.BOLD),
-                height=height, border_radius=height // 2, alignment=ft.Alignment.CENTER,
-                padding=ft.Padding.symmetric(horizontal=16), ink=True,
-                on_click=lambda _e, i=index: self.select(i))
+                height=sichtbar, border_radius=sichtbar // 2, alignment=ft.Alignment.CENTER,
+                padding=ft.Padding.symmetric(horizontal=16))
+            # nur die Tippflaeche nimmt das Tippen an (ein Knoten fuer TalkBack)
+            tipp = ft.Container(content=pill, height=height, alignment=ft.Alignment.CENTER,
+                                border_radius=sichtbar // 2, ink=True,
+                                on_click=lambda _e, i=index: self.select(i))
             self.pills.append(pill)
             # Ab 0.56: TalkBack sagt "Schaltflaeche" und ob die Pille gewaehlt ist
-            self.semantics.append(ft.Semantics(content=pill, button=True, selected=False))
+            self.semantics.append(ft.Semantics(content=tipp, button=True, selected=False))
         # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
         self._widths = [32 + 7.6 * FONT_FACTOR[0] * len(str(caption))
                         for _v, caption in options]
