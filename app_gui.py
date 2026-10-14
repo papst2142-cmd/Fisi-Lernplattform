@@ -5887,6 +5887,29 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
                        anchor="w", fill=map_colors["schrift"], font=tk_font(F["small_bold"]))
 
 
+# Ab 0.63.2 (FG-77): Schreibsperre (read_only_reason) waehrend "Sicherung
+# einspielen" -> "Zusammenfuehren". SyncError kommt nur aus merge_into_local,
+# vor dessen Schreibblock: nichts uebernommen, die normale Sicherungs-Meldung.
+# Entsteht die Sperre erst waehrend des Vorgangs und kommt BackupError, kann
+# das Zusammenfuehren schon geschrieben sein (Pruefung vor dem Wiederherstellen
+# geloeschter Spielstaende): ehrlicher Satz. PC und Handy gleich (Test).
+MSG_MERGE_INTERRUPTED = ("Das Zusammenführen wurde unterbrochen. Ein Teil der Sicherung "
+                         "kann schon übernommen sein; es geht nichts verloren. %s Ist das "
+                         "behoben, spiele die Sicherung noch einmal mit „Zusammenführen“ ein.")
+
+
+def merge_error_text(db, error, locked_before):
+    """Meldung zu einem Fehler beim Zusammenfuehren (ab 0.63.2, FG-77);
+    locked_before: read_only_reason vor dem Aufruf."""
+    reason = getattr(db, "read_only_reason", None)
+    line = DB_READ_ONLY_LINES.get(reason, "") if reason else ""
+    if isinstance(error, fisi_sync.SyncError):
+        return (fsi.MSG_READ_ONLY % line).strip()
+    if reason and not locked_before:
+        return " ".join((MSG_MERGE_INTERRUPTED % line).split())
+    return fsi.restore_error_text(error)
+
+
 class SettingsView(View):
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
@@ -6827,11 +6850,12 @@ class SettingsView(View):
         runs = fsi.deleted_runs(self.db, backup)
         if runs and not messagebox.askyesno(fsi.DELETED_TITLE, fsi.deleted_question(runs)):
             runs = []
+        locked = getattr(self.db, "read_only_reason", None)
         try:
             count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
                                      SyncController.device())
-        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+        except fsi.RESTORE_ERRORS + (fisi_sync.SyncError,) as error:  # ab 0.63.2 (FG-77)
+            messagebox.showerror(fsi.ERROR_TITLE, merge_error_text(self.db, error, locked))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE,
