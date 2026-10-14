@@ -1295,7 +1295,10 @@ class TerminalBoard(ft.Column):
         self.step_label = ui.label("")
         self.goal_label = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         self.lines = ft.Column(spacing=2, tight=True)
-        self.screen = ft.Container(content=self.lines, bgcolor=TERMINAL_BG, border_radius=12,
+        # Ab 0.63.2 (B-N-04): Zeilen ohne Umbruch, der Bereich ist waagrecht wischbar
+        # (Spalten tabellenartiger Ausgaben bleiben erhalten)
+        self.screen = ft.Container(content=ft.Row([self.lines], scroll=ft.ScrollMode.AUTO),
+                                   bgcolor=TERMINAL_BG, border_radius=12,
                                    border=ft.Border.all(1, C["border"]),
                                    padding=ft.Padding.symmetric(horizontal=12, vertical=10))
         self.choices = ft.Column(spacing=8, tight=True,
@@ -1319,14 +1322,17 @@ class TerminalBoard(ft.Column):
         self._paint()
 
     def _line(self, role, value):
+        # Ab 0.63.2 (B-N-04): jede Zeile einzeilig (no_wrap); Ein- und Ausgabe
+        # wachsen gleich mit der Schriftgroesse (ui.fs bzw. ft.Text-Groesse)
         if role in ("eingabe", "cursor"):
             return ft.Text(spans=[
                 ft.TextSpan(self.task["prompt"] + " ",
                             ft.TextStyle(color=C["green"], font_family=ui.MONO, size=ui.fs(12))),
                 ft.TextSpan(value, ft.TextStyle(
                     color=C["accent"] if role == "cursor" else C["text"],
-                    font_family=ui.MONO, size=ui.fs(12)))])
-        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
+                    font_family=ui.MONO, size=ui.fs(12)))], no_wrap=True)
+        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role],
+                       no_wrap=True)
 
     def _paint(self):
         lines = [self._line(role, value)
@@ -3249,11 +3255,16 @@ class GameScreen:
                          weight=ft.FontWeight.BOLD,
                          color=C["green"] if project["team"] else C["orange"])]
         editing = self.team_for == pid
-        parts.append(ft.Row([ui.GradientButton(
-            "Team fertig" if editing else "Team ändern",
-            lambda _e: self._pick_team(None if editing else pid),
-            kind="ghost" if editing else "primary", height=38, expand=True),
-            self._details_button(pid)], spacing=8))
+        # Ab 0.63.2 (B-E-08, FG-85): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+        # Textbreite (wie bei _tender_box; _details_button bleibt unveraendert)
+        team = ui.GradientButton("Team fertig" if editing else "Team ändern",
+                                 lambda _e: self._pick_team(None if editing else pid),
+                                 kind="ghost" if editing else "primary", height=38)
+        details = self._details_button(pid)
+        for item in (team, details):
+            item.expand = None
+            item.alignment = None
+        parts.append(ft.Row([team, details], spacing=8, run_spacing=8, wrap=True))
         if editing:
             parts.append(ui.label("Wer arbeitet mit? (antippen)"))
             for option in fg.project_candidates(state, project, levels):
@@ -3292,10 +3303,15 @@ class GameScreen:
             return self._person_box(parts)
         else:
             button = ui.GradientButton("Angebot kalkulieren",
-                                       lambda _e, i=project["id"]: self._calc(i), height=38,
-                                       expand=True)
+                                       lambda _e, i=project["id"]: self._calc(i), height=38)
             button.set_enabled(not problem)
-            parts.append(ft.Row([button, self._details_button(project["id"])], spacing=8))
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite (vorher "Angebot kalku" neben "Details")
+            details = self._details_button(project["id"])
+            for item in (button, details):
+                item.expand = None
+                item.alignment = None
+            parts.append(ft.Row([button, details], spacing=8, run_spacing=8, wrap=True))
             if problem:
                 parts.append(ui.text(problem, size=11, color=C["muted"]))
         parts += self._project_details(project)
@@ -3485,15 +3501,21 @@ class GameScreen:
                     state.branch["name"] if there else fg.firm_rules()["gebaeude"]["name"]),
                     size=12, color=C["purple"] if there else C["green"]),
                     ft.Row([move])]
-            parts.append(ft.Row([
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite (vorher gleich breit nebeneinander: "Weiterbi", "Entlasse");
+            # ohne alignment richtet sich die Breite nach der Beschriftung
+            buttons = [
                 ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
-                                  kind="ghost", height=36, expand=True),
+                                  kind="ghost", height=36),
                 ui.GradientButton("Themen", lambda _e, i=item["id"]: self._toggle_topics(i),
                                   kind="success" if item["id"] in self.topics_for else "ghost",
-                                  height=36, expand=True),
+                                  height=36),
                 ui.GradientButton("Entlassen", lambda _e, i=item: self._fire(i), kind="ghost",
-                                  height=36, expand=True),
-            ], spacing=8))
+                                  height=36),
+            ]
+            for button in buttons:
+                button.alignment = None
+            parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
             coaching = fg.coaching_offer(state, item["id"])
             if coaching["macke"]:
                 button = ui.GradientButton("Coaching (%s)" % euro(coaching["preis"]),
@@ -3958,10 +3980,12 @@ class GameScreen:
                     offer = item["angebote"][mode]
                     button = ui.GradientButton(label, lambda _e, o=offer: self._book_ad(o),
                                                kind="primary" if mode == fg.AD_RUNNING
-                                               else "ghost", height=38, expand=True)
+                                               else "ghost", height=38)
                     button.set_enabled(not offer["problem"])
+                    # Vorschlag 0.63.2 (B-E-08/B-D-10): Textbreite, Zeilenumbruch
+                    button.alignment = None
                     buttons.append(button)
-                parts.append(ft.Row(buttons, spacing=8))
+                parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \
                     item["angebote"][fg.AD_RUNNING]["problem"]
                 if problem:
@@ -4120,14 +4144,18 @@ class GameScreen:
         button = ui.GradientButton("Aufnehmen", lambda _e: self._take_loan(offer),
                                    expand=True)
         button.set_enabled(not offer["problem"])
+        # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+        # Textbreite (vorher "-5.00(" und "+1.00(" abgeschnitten)
+        steps = [ui.GradientButton(label, lambda _e, d=delta: self._loan_step(d),
+                                   kind="ghost", height=38)
+                 for label, delta in (("−5.000", -5 * step), ("−1.000", -step),
+                                      ("+1.000", step), ("+5.000", 5 * step))]
+        for item in steps:
+            item.alignment = None
         free = [ui.text("Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen.",
                         size=12, color=C["text_dim"]),
                 ui.text(euro(amount), size=22, weight=ft.FontWeight.BOLD),
-                ft.Row([ui.GradientButton(label, lambda _e, d=delta: self._loan_step(d),
-                                          kind="ghost", height=38, expand=True)
-                        for label, delta in (("−5.000", -5 * step), ("−1.000", -step),
-                                             ("+1.000", step), ("+5.000", 5 * step))],
-                       spacing=6),
+                ft.Row(steps, spacing=6, run_spacing=6, wrap=True),
                 ui.label("Laufzeit"),
                 ui.PillGroup(terms, initial=keys.index(str(self.loan_term))
                              if str(self.loan_term) in keys else 0,
@@ -4167,12 +4195,15 @@ class GameScreen:
             if opened:
                 parts.append(self._loan_plan(item))
             repay = ui.GradientButton("Ablösen", lambda _e, i=item: self._repay_loan(i),
-                                      kind="ghost", height=38, expand=True)
+                                      kind="ghost", height=38)
             repay.set_enabled(state.money >= item["abloesen"]["gesamt"])
-            parts.append(ft.Row([
-                ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
-                                  lambda _e, i=item["id"]: self._toggle_plan(i), kind="ghost",
-                                  height=38, expand=True), repay], spacing=8))
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite
+            plan = ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
+                                     lambda _e, i=item["id"]: self._toggle_plan(i),
+                                     kind="ghost", height=38)
+            plan.alignment = repay.alignment = None
+            parts.append(ft.Row([plan, repay], spacing=8, run_spacing=8, wrap=True))
             box = self._person_box(parts)
             if item["ausfaelle"]:
                 box.border = ft.Border.all(1, C["red"])
@@ -4181,22 +4212,41 @@ class GameScreen:
 
     def _loan_plan(self, item):
         rows, skipped = fg.loan_plan_rows(item)
+        # Ab 0.63.2 (B-E-08): Spalten statt gleich breiter Zellen. Jede Spalte ist
+        # so breit wie ihr breitester Betrag (Texte ohne Umbruch, nichts wird
+        # abgeschnitten); passt die Tabelle nicht, ist sie waagrecht wischbar.
+        # Vor und nach der Zeile "… weitere Raten …" steht je ein Block; eine
+        # unsichtbare Zeile der Hoehe 0 mit allen Werten der Spalte haelt die
+        # Spalten beider Bloecke gleich breit.
+        head = ("Tag", "Rate", "Zinsen", "Tilgung", "Rest")
+        values = [["%d" % row[0]] + [euro(value) for value in row[1:]] for row in rows]
+        blocks = [[head] + values[:-1], values[-1:]] if skipped else [[head] + values]
 
-        def line(values, color, weight=None):
-            return ft.Row([ui.text(value, size=11, color=color, weight=weight, expand=True,
-                                   text_align=ft.TextAlign.RIGHT) for value in values],
-                          spacing=4)
+        def cell(value, color, weight=None):
+            return ui.text(value, size=11, color=color, weight=weight, no_wrap=True)
 
-        lines = [line(("Tag", "Rate", "Zinsen", "Tilgung", "Rest"), C["muted"],
-                      ft.FontWeight.BOLD)]
-        for number, row in enumerate(rows):
-            if skipped and number == len(rows) - 1:
-                lines.append(ui.text("… %d weitere Raten …" % skipped, size=11,
-                                     color=C["muted"]))
-            lines.append(line(["%d" % row[0]] + [euro(value) for value in row[1:]],
-                              C["text_soft"]))
-        lines.append(ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
-                             % euro(item["zinsen_noch"]), size=12, color=C["text_dim"]))
+        def block(lines):
+            columns = []
+            for index in range(len(head)):
+                column = [cell(line[index], C["muted"] if line is head else C["text_soft"],
+                               ft.FontWeight.BOLD if line is head else None)
+                          for line in lines]
+                column.append(ft.Container(height=0, clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                                           content=ft.Column(
+                    [cell(line[index], C["text_soft"], ft.FontWeight.BOLD)
+                     for other in blocks for line in other], spacing=0, tight=True)))
+                columns.append(ft.Column(column, spacing=3, tight=True,
+                                         horizontal_alignment=ft.CrossAxisAlignment.END))
+            return ft.Row(columns, spacing=12, tight=True,
+                          vertical_alignment=ft.CrossAxisAlignment.START)
+
+        table = [block(blocks[0])]
+        if skipped:
+            table += [ui.text("… %d weitere Raten …" % skipped, size=11, color=C["muted"]),
+                      block(blocks[1])]
+        lines = [ft.Row([ft.Column(table, spacing=3, tight=True)], scroll=ft.ScrollMode.AUTO),
+                 ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
+                         % euro(item["zinsen_noch"]), size=12, color=C["text_dim"])]
         return ft.Column(lines, spacing=3, tight=True)
 
     def _toggle_plan(self, loan_id):
