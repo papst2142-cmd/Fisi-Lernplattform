@@ -32,6 +32,16 @@ gelten ab dem Start); das Ergebnis wird fuer alle Klassen zwischengespeichert.
 Gegen 14b3bd4 (0.63.1) rot (seitlicher Schieberegler in allen vier Ansichten
 bei 1120 x 720, Messung Plan: +34 bis +565 px).
 
+Ab CI Welle 3b (0.63.2): Auf GitHub fehlt Inter, dort waehlt die App DejaVu
+Sans (breiter). Dann war AP2 bei Sehr gross 1360 nach "Musterloesung
+anzeigen" 25 px zu breit (der laengere Knopftext loeste keine neue Anpassung
+aus) und das Testprojekt bei Normal 1360 nicht mehr im Raster wie bisher.
+Deshalb laeuft jeder Fall zusaetzlich mit einer anderen Schrift
+(test_..._andere_schrift): die Standardschrift wird per fontconfig abgelehnt
+- im Container DejaVu Sans statt Inter wie auf GitHub, auf GitHub eine
+dritte Schrift. Geprueft wird, dass wirklich eine andere Schrift gewaehlt
+wurde; alle Anforderungen oben gelten unveraendert.
+
 Start:  xvfb-run -a python test_ansichten_breite.py
 """
 
@@ -399,6 +409,8 @@ def worker(faktor, breite, hoehe, namen):
     if meldungen:
         for name in namen:
             ergebnis[name]["fehler"].append("Fehlermeldungen: %r" % meldungen)
+    for name in namen:
+        ergebnis[name]["schrift"] = fisi_widgets.F.get("family")
     print("ERG " + json.dumps(ergebnis, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)
@@ -422,14 +434,35 @@ HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 _ERGEBNISSE = {}
 
 
-def ergebnis(faktor, breite, hoehe):
+def _fc_ohne(family):
+    """fontconfig-Datei, die die Einstellungen des eigenen Prozesses nutzt
+    (ein gesetztes FONTCONFIG_FILE, sonst die des Systems), aber zusaetzlich
+    family (und ihre Display-Variante) ablehnt (Muster aus N5,
+    test_spiel_breite_0632)."""
+    path = os.path.join(tempfile.mkdtemp(prefix="fisi_fc_"), "fonts.conf")
+    basis = os.path.abspath(os.environ.get("FONTCONFIG_FILE") or "/etc/fonts/fonts.conf")
+    patterns = "".join(
+        "<pattern><patelt name=\"family\"><string>%s</string></patelt></pattern>" % name
+        for name in (family, family + " Display"))
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
+                     '<fontconfig><include ignore_missing="yes">%s</include>'
+                     '<selectfont><rejectfont>%s</rejectfont></selectfont>'
+                     '</fontconfig>\n' % (basis, patterns))
+    return path
+
+
+def ergebnis(faktor, breite, hoehe, ohne=None):
     """Alle angemeldeten Ansichten fuer eine Schriftgroesse und ein Fenster
-    (ein Prozess, Ergebnis zwischengespeichert)."""
-    key = (faktor, breite, hoehe)
+    (ein Prozess, Ergebnis zwischengespeichert); ohne = abgelehnte Schrift."""
+    key = (faktor, breite, hoehe, ohne)
     if key not in _ERGEBNISSE:
+        env = dict(os.environ)
+        if ohne:
+            env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
         done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
                                str(faktor), str(breite), str(hoehe)] + list(ANSICHTEN),
-                              capture_output=True, text=True, timeout=900, cwd=HERE)
+                              capture_output=True, text=True, timeout=900, cwd=HERE, env=env)
         lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
         _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
                             "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:], done.stderr[-4000:]))
@@ -442,17 +475,19 @@ class AnsichtBreiteBasis(unittest.TestCase):
 
     NAME = None
 
-    def run_case(self, faktor, breite, hoehe):
+    def run_case(self, faktor, breite, hoehe, ohne=None):
         if self.NAME is None:
             self.skipTest("Basisklasse")
-        result = ergebnis(faktor, breite, hoehe)
+        result = ergebnis(faktor, breite, hoehe, ohne)
         self.assertIsInstance(result, dict, result)
         mine = result[self.NAME]
-        print("\n  %s %s %dx%d: %s" % (self.NAME, FAKTOREN[faktor], breite, hoehe,
-                                      {k: v["inhalt"] for k, v in mine["werte"].items()}))
-        self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, FAKTOREN[faktor],
-                                                             breite, hoehe))
+        print("\n  %s %s %dx%d (%s): %s" % (self.NAME, FAKTOREN[faktor], breite, hoehe,
+                                           mine["schrift"],
+                                           {k: v["inhalt"] for k, v in mine["werte"].items()}))
+        self.assertEqual(mine["fehler"], [], "%s %s %dx%d (Schrift %s)"
+                         % (self.NAME, FAKTOREN[faktor], breite, hoehe, mine["schrift"]))
         self.assertTrue(mine["werte"], "keine Zustaende geprueft")
+        return mine
 
 
 def _make(faktor, breite, hoehe):
@@ -461,11 +496,27 @@ def _make(faktor, breite, hoehe):
     return test
 
 
+def _make_ohne(faktor, breite, hoehe):
+    """Derselbe Fall mit abgelehnter Standardschrift (andere Schriftmetrik)."""
+    def test(self):
+        if self.NAME is None:
+            self.skipTest("Basisklasse")
+        standard = ergebnis(faktor, breite, hoehe)
+        self.assertIsInstance(standard, dict, standard)
+        family = standard[self.NAME]["schrift"]
+        mine = self.run_case(faktor, breite, hoehe, ohne=family)
+        self.assertNotEqual(mine["schrift"], family, "Schrift nicht gewechselt")
+    return test
+
+
 def fuer_alle_fenster(cls):
-    """Klassen-Dekorator: je Schriftgroesse und Fenster ein Testfall."""
+    """Klassen-Dekorator: je Schriftgroesse und Fenster ein Testfall, dazu
+    derselbe mit einer anderen Schrift (ab CI Welle 3b)."""
     for faktor in FAKTOREN:
         for breite, hoehe in FENSTER:
             setattr(cls, "test_%s_%d" % (FAKTOREN[faktor], breite), _make(faktor, breite, hoehe))
+            setattr(cls, "test_%s_%d_andere_schrift" % (FAKTOREN[faktor], breite),
+                    _make_ohne(faktor, breite, hoehe))
     return cls
 
 

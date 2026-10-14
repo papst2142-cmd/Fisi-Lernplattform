@@ -1108,33 +1108,53 @@ class FitWidthMixin:
                 changed |= card.stack_subtitle(card.head_width() > room)
         return changed
 
-    @staticmethod
-    def _fit_flows(flows, room):
+    def _fit_flows(self, flows, room):
         """flows: [(Rahmen, Einzug)] - Einzug = Innenabstand der Kachel."""
         changed = False
         for frame, inset in flows:
             if frame.winfo_exists():
+                self._watch_flow(frame)
                 changed |= FlowRow.of(frame).fit(room - inset)
         return changed
+
+    def _watch_flow(self, frame):
+        """Ab 0.63.2 (CI Welle 3b): Aendert ein Teil der Zeile seine Groesse
+        (neuer Knopftext, z. B. "Musterloesung ausblenden"), neu anpassen.
+        Vorher kam die Anpassung nur bei Groessenaenderung von Fenster oder
+        Inhalt; neben einer laengeren Liste aendert sich die Hoehe aber
+        nicht, und der breitere Knopf schob die Seite ueber den Rand (mit
+        breiterer Schrift, z. B. DejaVu Sans auf GitHub). Entschieden wird
+        weiter nur aus Breiten (FlowRow.fit), es entsteht keine Schleife."""
+        for widget in frame.winfo_children():
+            if "_fisi_fit_watch" not in widget.__dict__:
+                widget._fisi_fit_watch = True
+                tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
 
     def _fit_columns(self, avail, layout, left, right, flows, cards, uniform):
         """Liste links, Inhalt rechts (Gewichte 2 : 5 wie bisher). Drei Stufen:
         "breit" wie bisher (gleich breite Raster-Einheiten), "frei" (beide
         Spalten nebeneinander, die rechte mindestens MIN_COLUMN breit; ihre
         Knopfzeilen brechen bei Bedarf um) und "gestapelt" (Liste oben,
-        Inhalt darunter, wie die Spalten des Rechners)."""
+        Inhalt darunter, wie die Spalten des Rechners).
+
+        Ab 0.63.2 (CI Welle 3b): "breit" gilt, sobald die Raster-Anordnung
+        mit Kopfzeilen in einer Zeile passt; eine Knopfzeile, die mit einer
+        breiteren Schrift (DejaVu Sans auf GitHub) nicht in die Spalte
+        passt, bricht dort um. Mit der abgenommenen Schrift (Inter) passen
+        die Knopfzeilen in "breit" immer, dort aendert sich nichts."""
         gap = px(self.COLUMN_GAP)
         left_width = left.winfo_reqwidth()
         flow_rows = [(FlowRow.of(frame), inset) for frame, inset in flows]
         # schmalster Text in einer Kachel (Umbruchbreite + Innenabstand)
         text = px(self.MIN_TEXT + 2 * 18) + 2
-        natural = max([row.natural_width() + inset for row, inset in flow_rows]
-                      + [card.head_width() for card in cards] + [text])
         narrow = max([row.min_width() + inset for row, inset in flow_rows]
                      + [self._head_min(card) for card in cards] + [text])
-        if 7 * max(left_width / 2.0, natural / 5.0) + gap <= avail:
-            mode, room = "breit", natural
+        # Raster wie bisher: Knopfzeilen duerfen umbrechen, Kopfzeilen nicht
+        wide = max([row.min_width() + inset for row, inset in flow_rows]
+                   + [card.head_width() for card in cards] + [text])
+        if 7 * max(left_width / 2.0, wide / 5.0) + gap <= avail:
             column = avail * 5 // 7 - px(self.COLUMN_GAP // 2)
+            mode, room = "breit", column
         elif avail - left_width - gap >= max(narrow, px(self.MIN_COLUMN)):
             mode, room = "frei", avail - left_width - gap
             column = room
@@ -5047,9 +5067,12 @@ class CalcView(View):
         raid.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         make_label(raid.body, RAID_FIELD_LEVEL, font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
+        # Ab 0.63.2 (CI Welle 3b): bei Bedarf zweizeilig wie die Farbtiefe -
+        # mit breiterer Schrift (DejaVu Sans) war die Reihe bei Sehr gross
+        # und 1120 px breiter als die Karte
         self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
-                                    initial=2)
-        self.raid_pills.pack(anchor="w", pady=(8, 12))
+                                    initial=2, umbrechen=True)
+        self.raid_pills.pack(anchor="w", fill="x", pady=(8, 12))
 
         grid = transparent_frame(raid.body)
         grid.pack(anchor="w", fill="x")
@@ -5116,6 +5139,11 @@ class CalcView(View):
         self.subnet_gap = 0
         self.canvas.bind("<Configure>", self._schedule_fit, "+")
         self.content.bind("<Configure>", self._schedule_fit, "+")
+        # Ab 0.63.2 (CI Welle 3b): neuer Knopftext ("Lösung ausblenden")
+        # aendert nur die Breite, nicht die Hoehe - Knopfzeilen neu anpassen
+        for row in self.ups_button_rows:
+            for widget in row.winfo_children():
+                tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
 
     # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
     #
@@ -5152,8 +5180,18 @@ class CalcView(View):
                 card.grid_configure(padx=(0, gap))
             card.stack_subtitle(card.head_width() > avail)
             self._fit_ups(avail)
+            # Ab 0.63.2 (CI Welle 3b): Knopfzeilen der USV-Karte brechen um,
+            # wenn sie nicht in die Karte passen (FlowRow; mit Inter passen
+            # sie immer, mit DejaVu Sans bei Sehr gross und 1120 px nicht)
+            room = avail - self.ups_card.frame_width()
+            changed = False
+            for row in self.ups_button_rows:
+                changed |= FlowRow.of(row).fit(room)
         except tk.TclError:
             return
+        if changed:
+            # neue Breite der Karte: Abstand der Subnetting-Karte neu rechnen
+            self.after_idle(self._schedule_fit)
 
     def _fit_ups(self, avail):
         """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
@@ -5217,6 +5255,7 @@ class CalcView(View):
                     self.ups_unit.grid(row=row, column=2, sticky="w")
         buttons = transparent_frame(ups.body)
         buttons.pack(anchor="w", pady=(14, 0))
+        self.ups_button_rows = [buttons]   # ab 0.63.2: brechen bei Bedarf um (_fit)
         for mode, caption in UPS_MODES:
             NeoButton(buttons, caption, lambda m=mode: self.calc_ups(m),
                       kind="accent" if mode == "empfehlung" else "primary").pack(
@@ -5237,6 +5276,7 @@ class CalcView(View):
             anchor="w", pady=(18, 0))
         task_buttons = transparent_frame(ups.body)
         task_buttons.pack(anchor="w", pady=(8, 0))
+        self.ups_button_rows.append(task_buttons)
         NeoButton(task_buttons, UPS_TASK_NEXT, self.next_ups_task, kind="ghost").pack(
             side="left", padx=(0, 10))
         self.btn_ups_solution = NeoButton(task_buttons, UPS_SOLUTION_SHOW,
