@@ -3201,8 +3201,9 @@ class ScenarioViewBase(FitWidthMixin, View):
                          subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         self._fit_parts = (layout, list_card)
-        self.add_parts([self._build_list, self._build_task, self._build_own,
-                        self._build_solution, self._build_end])
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_own, self._build_solution, self._build_end])
 
     def _build_list(self):
         list_card = self._fit_parts[1]
@@ -3211,6 +3212,8 @@ class ScenarioViewBase(FitWidthMixin, View):
             subtitle=lambda item: item["theme"],
             status_source=lambda: position_statuses(StatusBook(self.db), self.SOURCE),
             group_field="theme", group_label="Thema")
+
+    def _fill_list(self):
         self.paged.refresh()
 
     def _build_task(self):
@@ -3404,8 +3407,9 @@ class ProjectView(FitWidthMixin, View):
                          subtitle="%s Kundenaufträge" % fisi_core.de_int(len(PROJEKTARBEITEN)))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         self._fit_parts = (layout, list_card)
-        self.add_parts([self._build_list, self._build_task, self._build_hints,
-                        self._build_end])
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_hints, self._build_end])
 
     def _build_list(self):
         list_card = self._fit_parts[1]
@@ -3417,6 +3421,8 @@ class ProjectView(FitWidthMixin, View):
             category_filter=True,
             group_field="schwierigkeit", group_label="Schwierigkeit",
             count_noun="Kundenaufträgen")
+
+    def _fill_list(self):
         self.paged.refresh()
 
     def _build_task(self):
