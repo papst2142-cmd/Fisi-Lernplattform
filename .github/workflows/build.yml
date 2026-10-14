@@ -85,6 +85,8 @@ jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    # Ab 0.63.2 (B-M-06): nur der Linux-Bau laeuft im Container (sonst leer)
+    container: ${{ matrix.container }}
     # Ab 0.63.2 (B-M-03): Zeitgrenze (laengster Lauf bisher unter 10 min)
     timeout-minutes: 30
     strategy:
@@ -93,9 +95,16 @@ jobs:
         include:
           - os: windows-2025
             label: windows
-          # Aelteres Ubuntu = aeltere glibc = laeuft auf mehr Linux-Systemen
-          - os: ubuntu-22.04
+          # Aelteres Ubuntu = aeltere glibc = laeuft auf mehr Linux-Systemen.
+          # Ab 0.63.2 (B-M-06, F29): gebaut wird in einem Container Ubuntu
+          # 22.04 (glibc 2.35) auf einem aktuellen Runner - unabhaengig davon,
+          # wann GitHub das Runner-Bild ubuntu-22.04 abschaltet. Das Bild ist
+          # per Pruefsumme festgelegt (N11-F5, Stand 04.10.2026), damit sich
+          # glibc und Tk nicht still aendern. Die Schritt-Pruefung "glibc-
+          # Bedarf" haelt den Bedarf auf dem Stand von v0.63.1.
+          - os: ubuntu-24.04
             label: linux
+            container: ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
           # Ab 0.62.4: macos-15 statt macos-14 (GitHub schaltet macos-14 am
           # 02.11.2026 ab). Weiter Apple Silicon (arm64), Label bleibt.
           - os: macos-15
@@ -104,6 +113,28 @@ jobs:
             label: macos-intel
 
     steps:
+      # Ab 0.63.2 (B-M-06): Der Container Ubuntu 22.04 bringt fast nichts mit
+      # (kein sudo, kein git, keine Bibliotheken fuer Python und Tk). Alles
+      # aus den signierten Ubuntu-Quellen, vor checkout und setup-python.
+      - name: Linux-Werkzeuge installieren
+        if: runner.os == 'Linux'
+        # Ab 0.63.2 (B-M-03): normal unter 1 min, ein Haenger lief 41 min
+        timeout-minutes: 10
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          TZ: Etc/UTC
+        # Ab 0.63.2 (B-M-02): Netzfehler werden innerhalb des Schritts
+        # wiederholt (apt je bis zu 5x), nie der ganze Job
+        run: |
+          apt-get -o Acquire::Retries=5 update
+          apt-get -o Acquire::Retries=5 install -y --no-install-recommends tk-dev xvfb xauth \
+            binutils file curl ca-certificates git lsb-release squashfs-tools desktop-file-utils \
+            libssl3 libffi8 libsqlite3-0 libbz2-1.0 liblzma5 zlib1g libncursesw6 libreadline8 \
+            libuuid1 libgdbm6 libexpat1 xz-utils zstd
+          cat /etc/os-release | head -n 2
+          ldd --version | head -n 1
+          dpkg-query -W -f='${Package} ${Version}\n' tk8.6-dev libtk8.6 libc6
+
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
@@ -114,7 +145,7 @@ jobs:
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
-          cache-dependency-path: requirements-build.txt
+          cache-dependency-path: requirements-lock-bau.txt
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
@@ -128,15 +159,11 @@ jobs:
           # Ohne Abschnitt in AENDERUNGEN.md gibt es keinen Release-Text
           python build.py --versionshinweise > /dev/null
 
-      - name: Linux-Werkzeuge installieren
+      - name: AppImage-Werkzeuge laden (Linux)
         if: runner.os == 'Linux'
-        # Ab 0.63.2 (B-M-03): normal unter 1 min, ein Haenger lief 41 min
         timeout-minutes: 10
-        # Ab 0.63.2 (B-M-02): Netzfehler werden innerhalb des Schritts
-        # wiederholt (apt und Downloads je bis zu 5x), nie der ganze Job
+        # Ab 0.63.2 (B-M-02): Downloads je bis zu 5x im Schritt wiederholt
         run: |
-          sudo apt-get -o Acquire::Retries=5 update
-          sudo apt-get -o Acquire::Retries=5 install -y tk-dev xvfb
           # Ab 0.62 (A5): feste Fassungen statt "continuous", mit SHA-256-
           # Pruefung - stimmt eine Pruefsumme nicht, bricht der Bau ab.
           # appimagetool 1.9.1 und die AppImage-Laufzeit type2-runtime
@@ -156,20 +183,45 @@ jobs:
       - name: Inno Setup bereitstellen
         if: runner.os == 'Windows'
         shell: pwsh
-        # Ab 0.63.2 (B-M-02): bei Netzfehler bis zu 3 Versuche im Schritt
+        # Ab 0.63.2 (B-M-02): bei Netzfehler bis zu 3 Versuche im Schritt.
+        # Ab 0.63.2 (B-M-05): feste Fassung 6.7.1 (im Referenzlauf 38443624150
+        # vorinstalliert, Runner-Bild windows-2025 20260925). Ist eine andere
+        # oder keine da, wird genau diese installiert; sonst bricht der Bau ab.
         run: |
-          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+          $soll = "6.7.1"
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          $ist = if (Test-Path $iscc) { (Get-Item $iscc).VersionInfo.ProductVersion } else { "fehlt" }
+          Write-Host "Inno Setup vorhanden: $ist"
+          if ($ist -ne $soll) {
             foreach ($versuch in 1..3) {
-              choco install innosetup -y --no-progress
+              choco install innosetup --version $soll -y --no-progress --allow-downgrade
               if ($LASTEXITCODE -eq 0) { break }
               if ($versuch -eq 3) { exit 1 }
               Write-Host "Wiederholung wegen Netzfehler (choco, Versuch $versuch)"
               Start-Sleep -Seconds 10
             }
+            $ist = (Get-Item $iscc).VersionInfo.ProductVersion
           }
+          if ($ist -ne $soll) { Write-Host "Inno Setup $ist statt $soll"; exit 1 }
+          Write-Host "Inno Setup $ist (fest)"
 
+      # Ab 0.63.2 (B-M-05): nur aus der Lock-Datei, jedes Paket mit Pruefsumme
       - name: Abhaengigkeiten installieren
-        run: python -m pip install --retries 10 --timeout 60 -r requirements-build.txt
+        run: python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-bau.txt
+
+      # Ab 0.63.2 (B-N-12, F26 (b)): bekannte Sicherheitsluecken in allen
+      # Lock-Dateien (PC und Handy). Normaler Lauf und Testversion: Warnung;
+      # Release-Lauf: Fund oder "nicht pruefbar" (nach 3 Versuchen) = rot,
+      # dann kein Release. pip-audit selbst fest mit Pruefsummen, in einer
+      # eigenen Umgebung. Prueft nur Python-Pakete von PyPI.
+      - name: Sicherheitsluecken pruefen (pip-audit)
+        if: runner.os == 'Linux'
+        run: |
+          python -m venv "$RUNNER_TEMP/audit"
+          "$RUNNER_TEMP/audit/bin/python" -m pip install --retries 10 --timeout 60 --quiet --require-hashes -r requirements-lock-pip-audit.txt
+          python pruefung/pip_audit_lauf.py --pip-audit "$RUNNER_TEMP/audit/bin/pip-audit" \
+            requirements-lock-bau.txt requirements-lock-tests.txt requirements-lock-flet.txt \
+            requirements-lock-certifi.txt requirements-lock-pip-audit.txt
 
       # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
       # Unter macOS laeuft sonst keine Testsammlung.
@@ -200,6 +252,37 @@ jobs:
           grep -n "^#### " "$NOTICES" | grep -i -e "lib32" -e "nicht eindeutig" && exit 1
           grep -c "^#### zlib1g (Ubuntu-Paket)" "$NOTICES"
 
+      # Ab 0.63.2 (B-M-06): glibc-Bedarf nicht hoeher als bei v0.63.1
+      # (Programmordner, .deb und AppImage, jede ELF-Datei)
+      - name: glibc-Bedarf pruefen (Linux)
+        if: runner.os == 'Linux'
+        run: python pruefung/glibc_pruefen.py dist/FISI-Lernplattform installer_output/*.deb installer_output/*.AppImage
+
+      # Ab 0.63.2 (B-H-12): Pakete ohne .DS_Store; Startdatei und Hinweisdatei
+      # je Paketart (AppImage mit Version und AppImage-Laufzeit, .deb ohne)
+      - name: Paketinhalt pruefen (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          VERSION=$(python -c "import build; print(build.app_version())")
+          rm -rf "$RUNNER_TEMP/deb" "$RUNNER_TEMP/appimage"
+          dpkg-deb -x installer_output/*.deb "$RUNNER_TEMP/deb"
+          OFFSET=$(python -c "import sys; sys.path.insert(0, 'pruefung'); import glibc_pruefen as g; print(g._elf_end(open(sys.argv[1], 'rb').read()))" installer_output/*.AppImage)
+          unsquashfs -q -no-progress -o "$OFFSET" -d "$RUNNER_TEMP/appimage" installer_output/*.AppImage > /dev/null
+          FEHLER=0
+          if find dist "$RUNNER_TEMP/deb" "$RUNNER_TEMP/appimage" -name .DS_Store | grep .; then echo "FEHLER: .DS_Store im Paket"; FEHLER=1; fi
+          DEB_DESKTOP="$RUNNER_TEMP/deb/usr/share/applications/fisi-lernplattform.desktop"
+          APP_DESKTOP="$RUNNER_TEMP/appimage/fisi-lernplattform.desktop"
+          desktop-file-validate "$DEB_DESKTOP" || FEHLER=1
+          desktop-file-validate "$APP_DESKTOP" || FEHLER=1
+          grep -qx "X-AppImage-Version=$VERSION" "$APP_DESKTOP" || { echo "FEHLER: AppImage ohne X-AppImage-Version=$VERSION"; FEHLER=1; }
+          if grep -q "X-AppImage-Version" "$DEB_DESKTOP"; then echo "FEHLER: .deb mit X-AppImage-Version"; FEHLER=1; fi
+          for f in "$RUNNER_TEMP/deb/opt/fisi-lernplattform/THIRD_PARTY_NOTICES.txt" "$RUNNER_TEMP/deb/usr/share/doc/fisi-lernplattform/THIRD_PARTY_NOTICES.txt"; do
+            if grep -q "^#### AppImage-Laufzeit" "$f"; then echo "FEHLER: AppImage-Laufzeit in $f"; FEHLER=1; fi
+          done
+          grep -c "^#### AppImage-Laufzeit" "$RUNNER_TEMP/appimage/usr/lib/fisi-lernplattform/THIRD_PARTY_NOTICES.txt" || { echo "FEHLER: AppImage ohne AppImage-Laufzeit in der Hinweisdatei"; FEHLER=1; }
+          if [ "$FEHLER" = 0 ]; then echo "Paketinhalt geprueft: ohne .DS_Store, Startdatei und Hinweisdatei je Paketart richtig"; fi
+          exit "$FEHLER"
+
       - uses: actions/upload-artifact@v7
         with:
           name: installer-${{ matrix.label }}
@@ -222,7 +305,7 @@ jobs:
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
-          cache-dependency-path: .github/workflows/build.yml
+          cache-dependency-path: requirements-lock-flet.txt
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
@@ -251,7 +334,9 @@ jobs:
           key: android-werkzeug-${{ runner.os }}-flet-1.0.1-${{ hashFiles('mobile/pyproject.toml') }}
 
       - name: Flet installieren
-        run: python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1" certifi
+        # Ab 0.63.2 (B-M-05): flet[all]==1.0.1 samt Abhaengigkeiten und certifi
+        # aus der Lock-Datei, jedes Paket mit Pruefsumme
+        run: python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-flet.txt
 
       # Ab 0.63.2 (B-H-09): ohne Bytecode-Dateien - sonst landen
       # mobile/src/__pycache__/*.cpython-312.pyc (gut 2 MB, auf dem Handy
@@ -463,8 +548,8 @@ jobs:
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: |
-            requirements.txt
-            .github/workflows/build.yml
+            requirements-lock-tests.txt
+            requirements-lock-flet.txt
 
       - name: Werkzeuge fuer die Tests
         env:
@@ -476,8 +561,8 @@ jobs:
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
-          python -m pip install --retries 10 --timeout 60 -r requirements.txt psutil
-          python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1"
+          python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-tests.txt
+          python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-flet.txt
           python mobile/vorbereiten.py
 
       - name: Tests ausfuehren
@@ -502,13 +587,13 @@ jobs:
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
           cache-dependency-path: |
-            requirements.txt
-            .github/workflows/build.yml
+            requirements-lock-tests.txt
+            requirements-lock-flet.txt
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
-          python -m pip install --retries 10 --timeout 60 -r requirements.txt psutil
-          python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1"
+          python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-tests.txt
+          python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-flet.txt
           python mobile/vorbereiten.py
 
       - name: Tests ausfuehren
@@ -533,7 +618,7 @@ jobs:
           # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
           # Release-Laeufe bauen ohne Cache (nachvollziehbar)
           cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
-          cache-dependency-path: .github/workflows/build.yml
+          cache-dependency-path: requirements-lock-certifi.txt
 
       - name: Alte Version bestimmen (letztes normales Release)
         id: alt
@@ -554,7 +639,7 @@ jobs:
           path: alt
 
       - name: Abhaengigkeiten
-        run: python -m pip install --retries 10 --timeout 60 certifi
+        run: python -m pip install --retries 10 --timeout 60 --require-hashes -r requirements-lock-certifi.txt
 
       - uses: actions/download-artifact@v8
         with:
@@ -693,7 +778,7 @@ jobs:
         run: |
           LATEST=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
           PRE=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/vorab-$VORAB" --jq .prerelease)
-          python3 -m pip install --retries 10 --timeout 60 --quiet certifi
+          python3 -m pip install --retries 10 --timeout 60 --quiet --require-hashes -r requirements-lock-certifi.txt
           # ab 0.59.1 fuer alle drei Installationsarten der Testversionen
           ANGEBOT=$(python3 -c "import fisi_update as u; print(' '.join((lambda i: i.version if i else '-')(u.check_for_update('0.1', kind=k)) for k in ('windows', 'deb', 'android')))")
           {

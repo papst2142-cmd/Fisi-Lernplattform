@@ -14,7 +14,7 @@ description = "Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker 
 requires-python = ">=3.10"
 dependencies = [
     "flet==1.0.1",
-    "certifi",
+    "certifi==2026.7.22",
 ]
 
 [tool.flet]
