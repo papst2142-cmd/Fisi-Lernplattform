@@ -4477,6 +4477,8 @@ class TrainerPanel(ctk.CTkFrame):
         self.lbl_counter.pack(side="left", padx=16)
         self.entries = {}
         self.marks = {}
+        self.field_labels = []      # ab 0.63.2 (N-e): Beschriftungen der Felder
+        self.fields_stacked = False   # ab 0.63.2 (N-e): Beschriftung ueber dem Feld
         self.show_stats()
 
     def show_stats(self):
@@ -4503,18 +4505,26 @@ class TrainerPanel(ctk.CTkFrame):
         for child in self.fields_box.winfo_children():
             child.destroy()
         self.entries, self.marks = {}, {}
+        self.field_labels = []
+        self.fields_stacked = False
         for row, (key, label) in enumerate(task.fields):
-            # Ab 0.63.2 (A1): Zeilen 0, 2, 4, ...; die ungerade Zeile darunter bleibt
-            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld
-            make_label(self.fields_box, label, font=F["small"],
-                       fg=C["text_dim"]).grid(row=2 * row, column=0, sticky="w", pady=4)
+            # Ab 0.63.2 (A1): je Feld eine Zeile; die Zeile darunter bleibt
+            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld.
+            # Ab 0.63.2 (N8, N-e): drei Zeilen je Feld (3r, 3r+1, 3r+2) - die
+            # Zeile darueber nimmt die Beschriftung auf, wenn Beschriftung und
+            # Feld nebeneinander nicht in die Karte passen (_fit_fields);
+            # sonst bleibt sie leer (Hoehe 0), Anordnung wie bisher
+            caption = make_label(self.fields_box, label, font=F["small"], fg=C["text_dim"])
+            caption.grid(row=3 * row + 1, column=0, sticky="w", pady=4)
+            caption.fit_row = 3 * row + 1
+            self.field_labels.append(caption)
             entry = EntryBox(self.fields_box, width=26)
-            entry.grid(row=2 * row, column=1, sticky="w", padx=12, pady=4)
+            entry.grid(row=3 * row + 1, column=1, sticky="w", padx=12, pady=4)
             entry.bind("<Return>", lambda _e: self.check())
             mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"],
                               justify="left")
-            mark.grid(row=2 * row, column=2, sticky="w")
-            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 2 * row, entry
+            mark.grid(row=3 * row + 1, column=2, sticky="w")
+            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 3 * row + 1, entry
             self.entries[key], self.marks[key] = entry, mark
         if task.fields:
             self.entries[task.fields[0][0]].focus_set()
@@ -4523,6 +4533,9 @@ class TrainerPanel(ctk.CTkFrame):
         self.btn_check.set_text("Prüfen")
         self.btn_check.set_enabled(True)
         self.lbl_counter.configure(text="Aufgabe %d / %d" % (self.index + 1, len(self.tasks)))
+        # Ab 0.63.2 (N-e): Anordnung der Felder auch dann pruefen, wenn sich
+        # die Groesse des Feldbereichs nicht aendert (gleich viele Felder)
+        self._schedule_fit_marks()
 
     def check(self):
         if not self.tasks:
@@ -4582,6 +4595,8 @@ class TrainerPanel(ctk.CTkFrame):
             pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
                       - (self.fields_box.winfo_rootx() + self.fields_box.winfo_width()))
             right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+            if self._fit_fields(right - self.fields_box.winfo_rootx()):
+                self.update_idletasks()
             for mark in self.marks.values():
                 raw = getattr(mark, "fit_raw", "")
                 if not raw:
@@ -4626,6 +4641,31 @@ class TrainerPanel(ctk.CTkFrame):
             # Messung fehlgeschlagen: altes Verhalten (Marke neben dem Feld)
             pass
 
+    def _fit_fields(self, room):
+        """Ab 0.63.2 (N8, N-e): Passen Beschriftung und Feld nebeneinander
+        nicht in die sichtbare Breite (Sehr gross, 1120 px, lange
+        Beschriftungen wie "Broadcast-Adresse des 1. vergebenen Subnetzes"),
+        steht jede Beschriftung direkt ueber ihrem Feld (Spalte des Felds);
+        sonst wie bisher links daneben. Entschieden wird nur aus den
+        benoetigten Breiten (nicht aus der aktuellen Anordnung), es entsteht
+        keine Schleife. Liefert True, wenn sich die Anordnung geaendert hat."""
+        if not self.field_labels or room <= 1:
+            return False
+        gap = px(12)
+        entry_width = max(entry.winfo_reqwidth() for entry in self.entries.values())
+        caption_width = max(label.winfo_reqwidth() for label in self.field_labels)
+        stacked = caption_width + 2 * gap + entry_width > room
+        if stacked == self.fields_stacked:
+            return False
+        self.fields_stacked = stacked
+        for label in self.field_labels:
+            if stacked:
+                label.grid(row=label.fit_row - 1, column=1, sticky="w", padx=12,
+                           pady=(4, 0))
+            else:
+                label.grid(row=label.fit_row, column=0, sticky="w", padx=0, pady=4)
+        return True
+
     def advance(self):
         if self.index < len(self.tasks) - 1:
             self.index += 1
@@ -4635,6 +4675,7 @@ class TrainerPanel(ctk.CTkFrame):
         self.tasks = []
         for child in self.fields_box.winfo_children():
             child.destroy()
+        self.field_labels = []   # ab 0.63.2 (N-e)
         self.txt_steps.pack_forget()
         self.lbl_task.configure(text="Runde beendet: %s." % summary)
         self.lbl_feedback.configure(text="Starte eine neue Runde oder wähle eine andere "
