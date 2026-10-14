@@ -4227,6 +4227,16 @@ SOURCE_COLOR_KEY = {SRC_CARD: "accent", SRC_QUIZ: "purple", SRC_AP1: "blue",
 NOTEBOOK_PAGE = 12
 
 
+def _holds_old_texts(book):
+    """Ab 0.63.2 (FG-117): Haelt der Lernstand book alte Fragetexte (wie
+    FG-110), kann apply_question_renames sie an Ort und Stelle umschreiben
+    (zweites Programm, Abgleich), ohne dass sich der Stempel aendert. Dann
+    gelten Merkschluessel und Zwischenspeicher nicht (wie bis 0.63.1)."""
+    results = getattr(book, "results", None) or {}
+    return any((source, old) in results for source, table in ReviewIndex.TABLES
+               for old in fisi_core.QUESTION_RENAMES.get(table, {}))
+
+
 class NotebookView(View):
     """Zentrale Uebersicht aller Fragen, die noch geuebt werden muessen (rot:
     zuletzt falsch, gelb: danach erst einmal richtig) - ueber Karteikarten,
@@ -4332,7 +4342,7 @@ class NotebookView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or _holds_old_texts(getattr(self, "book", None)):
             return None
         return (stamp, self.cat_pills.get(), self.topic_menu.get(), self.source_pills.get(),
                 self.status_pills.get(), self.answer_pills.get(), self.page, self.query)
@@ -4396,7 +4406,8 @@ class NotebookView(View):
             return cached[1]
         self.book_builds = getattr(self, "book_builds", 0) + 1
         book = StatusBook(self.db)
-        self._book_stamp = (stamp, book) if stamp is not None else None
+        self._book_stamp = (stamp, book) if stamp is not None \
+            and not _holds_old_texts(book) else None
         return book
 
     def refresh(self, keep_page=False):
@@ -5640,7 +5651,7 @@ class ProgressView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or getattr(self, "_coverage_old", False):
             return None
         goal = learning_settings()
         plan = frp.load_rp_settings()
@@ -5712,7 +5723,8 @@ class ProgressView(View):
         # Wechsel zum Fortschritt so schnell bleibt wie in 0.54
         plan = frp.load_rp_settings()
         key = frp.coverage_key(self.db, plan)
-        if key is None or key != getattr(self, "_coverage_key", None):
+        if key is None or key != getattr(self, "_coverage_key", None) \
+                or getattr(self, "_coverage_old", False):     # FG-117
             self._coverage_key = key
             self.after(50, lambda: self._fill_coverage(plan))
 
@@ -5721,7 +5733,9 @@ class ProgressView(View):
             if self.coverage_card is None:
                 self.coverage_card = CoverageCard(self.coverage_slot, self.app)
                 self.coverage_card.pack(fill="x")
-            self.coverage_card.set_coverage(frp.Coverage(StatusBook(self.db), plan))
+            book = StatusBook(self.db)
+            self._coverage_old = _holds_old_texts(book)      # FG-117
+            self.coverage_card.set_coverage(frp.Coverage(book, plan))
         except tk.TclError:   # Fenster inzwischen geschlossen
             pass
 
