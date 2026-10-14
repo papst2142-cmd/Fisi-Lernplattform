@@ -479,6 +479,20 @@ class IndexTest(Base):
         conn.close()
         ref = self.assertSame(index)
         self.assertEqual(ref, ("err", "ValueError"))
+        # Kaputtes Datum bei einer Frage, die es nicht (mehr) gibt: die
+        # Referenz ueberspringt sie, der Index faellt auf from_db zurueck
+        conn = sqlite3.connect(self.db.db_path)
+        conn.execute("DELETE FROM quiz_answers WHERE timestamp = 'kein Datum'")
+        insert(conn, "quiz_answers", "kein Datum", "gibt es nicht", 1)
+        conn.commit()
+        conn.close()
+        ref = self.assertSame(index)
+        self.assertEqual(ref[0], "ok")
+        conn = sqlite3.connect(self.db.db_path)
+        conn.execute("DELETE FROM quiz_answers WHERE question = 'gibt es nicht'")
+        insert(conn, "quiz_answers", "kein Datum", QUIZ[3], 1)
+        conn.commit()
+        conn.close()
 
         class Broken:
             db_path = self.db.db_path
