@@ -29,7 +29,6 @@ Start:  python test_vorladen.py
 """
 
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -237,9 +236,11 @@ class PreloadTest(AppCase):
         self.assertFalse(calc.subnet.build_rest(), "Rechner nicht ganz gebaut")
         # kein Vorlade-Zeitgeber steht noch aus
         tk_ = self.root.tk
-        waiting = [timer for timer in tk_.splitlist(tk_.call("after", "info"))
-                   if re.match(r"\d+_step$", tk_.splitlist(
-                       tk_.splitlist(tk_.call("after", "info", timer))[0])[0])]
+        waiting = []
+        for timer in tk_.splitlist(tk_.call("after", "info")):
+            name = tk_.splitlist(tk_.splitlist(tk_.call("after", "info", timer))[0])[0]
+            if name.endswith("_step") and name[:-len("_step")].isdigit():
+                waiting.append(timer)   # Zeitgeber von ViewPreloader._step
         self.assertEqual(waiting, [])
         self.assertEqual(app.current, "dashboard")
         self.assertEqual(self.errors, [])
