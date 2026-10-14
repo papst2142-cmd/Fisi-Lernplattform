@@ -6938,7 +6938,7 @@ class SettingsView(View):
             return
         # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht; vor jeder
         # Meldung wieder weg
-        overlay = self.app._show_busy(WAIT_BACKUP_TEXT, single=True)
+        overlay = show_wait(self.app, WAIT_BACKUP_TEXT)
         try:
             data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
             # Ab 0.62.5 (B-G-02): ueber eine Hilfsdatei - bei voller Platte
@@ -6949,7 +6949,7 @@ class SettingsView(View):
         else:
             failure = None
         finally:
-            self.app._hide_busy(overlay)
+            hide_wait(self.app, overlay)
         if failure is not None:
             messagebox.showerror(fsi.SAVE_ERROR_TITLE, failure)
             return
@@ -6994,7 +6994,7 @@ class SettingsView(View):
             return
         # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird; vor
         # jeder Meldung wieder weg
-        overlay = self.app._show_busy(WAIT_REPLACE_TEXT, single=True)
+        overlay = show_wait(self.app, WAIT_REPLACE_TEXT)
         failure = None
         try:
             try:
@@ -7005,7 +7005,7 @@ class SettingsView(View):
             if failure is None:
                 self._after_restore()
         finally:
-            self.app._hide_busy(overlay)
+            hide_wait(self.app, overlay)
         if failure is not None:
             messagebox.showerror(fsi.ERROR_TITLE, failure)
             return
@@ -7083,6 +7083,18 @@ class SettingsView(View):
 # solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
 WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
 WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
+def show_wait(app, text):
+    """Bitte-warten-Hinweis ueber dem Fenster (FISIApp._show_busy, nur diese
+    eine Zeile). None, wenn app keine Abdeckung kennt (z.B. Test-Attrappe)."""
+    show = getattr(app, "_show_busy", None)
+    return show(text, single=True) if show is not None else None
+
+
+def hide_wait(app, overlay):
+    if overlay is not None:
+        app._hide_busy(overlay)
 
 
 # Ab 0.63.2 (N7, B-I-02): Suchtext der Inhalte einmal je Programmlauf.

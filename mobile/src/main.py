@@ -4581,11 +4581,11 @@ class SettingsScreen(Screen):
     def create_backup(self, _event=None):
         self._flush_inputs()
         # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht
-        overlay = self.app.show_wait(WAIT_BACKUP_TEXT)
+        overlay = show_wait(self.app, WAIT_BACKUP_TEXT)
         try:
             data = fsi.create_backup(self.db, APP_VERSION, "Handy")
         finally:
-            self.app.hide_wait(overlay)
+            hide_wait(self.app, overlay)
         self.app.page.run_task(self.app.save_file, fsi.default_name(), data,
                                "application/octet-stream")
 
@@ -4678,7 +4678,7 @@ class SettingsScreen(Screen):
         def replace():
             # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird;
             # vor jeder Meldung wieder weg
-            overlay = self.app.show_wait(WAIT_REPLACE_TEXT)
+            overlay = show_wait(self.app, WAIT_REPLACE_TEXT)
             failure = None
             try:
                 try:
@@ -4690,7 +4690,7 @@ class SettingsScreen(Screen):
                 if failure is None:
                     self._after_restore()
             finally:
-                self.app.hide_wait(overlay)
+                hide_wait(self.app, overlay)
             if failure is not None:
                 self.app.info(fsi.ERROR_TITLE, failure)
                 return
@@ -4778,6 +4778,18 @@ class SettingsScreen(Screen):
 # solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
 WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
 WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
+def show_wait(app, text):
+    """Bitte-warten-Hinweis (FISIMobileApp.show_wait). None, wenn app keine
+    Abdeckung kennt (z.B. Test-Attrappe)."""
+    show = getattr(app, "show_wait", None)
+    return show(text) if show is not None else None
+
+
+def hide_wait(app, overlay):
+    if overlay is not None:
+        app.hide_wait(overlay)
 
 
 # ============================================================================
