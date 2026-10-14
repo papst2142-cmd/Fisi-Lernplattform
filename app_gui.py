@@ -1010,11 +1010,28 @@ class View(ScrollArea):
         """Den naechsten Teil bauen."""
         if self._parts:
             self._parts.pop(0)()
+            self._parts_built()
 
     def complete(self):
         """Alle fehlenden Teile jetzt bauen."""
+        had_parts = bool(self._parts)
         while self._parts:
             self._parts.pop(0)()
+        if had_parts:
+            self._parts_built()
+
+    # Ab 0.63.2 (N6, B-I-04): nach dem letzten Teil die Umbruchbreiten einmal
+    # ganz neu anpassen (ScrollArea._fit_wraplengths). Am Stueck gebaut gibt
+    # es beim ersten Anpassen schon alle Texte; in Teilen kamen spaetere
+    # Texte erst nach dem ersten Anpassen dazu und behielten sonst ihre
+    # urspruengliche Umbruchbreite.
+    REWRAP_AFTER_PARTS = False
+
+    def _parts_built(self):
+        if self._parts or not (self._in_parts and self.REWRAP_AFTER_PARTS):
+            return
+        self._wrap_width = None
+        self._schedule_wrap()
 
     def on_show(self):
         pass
@@ -1087,8 +1104,9 @@ class FitWidthMixin:
         elif self._in_parts:
             # Ab 0.63.2 (N6): in Teilen vorgeladen hat die Ansicht ihre Groesse
             # schon; wird der Inhalt durch die Anpassung schmaler, meldet Tk
-            # das der Bildlaufflaeche nicht (kein <Configure>) - selbst nachziehen
-            self._refit_width()
+            # das der Bildlaufflaeche nicht (kein <Configure>) - selbst nachziehen,
+            # nach dem Leerlauf-Durchgang, der die neuen Groessen berechnet
+            self.after_idle(self._refit_width)
 
     def _fit_width(self, avail):
         raise NotImplementedError
@@ -1769,6 +1787,7 @@ class CardsView(View):
              ("reveal", "Aufdecken")]
     # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
     PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.cards = list(KARTEIKARTEN)
@@ -3189,6 +3208,7 @@ class ScenarioViewBase(FitWidthMixin, View):
     SOURCE = SRC_AP2
     # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
     PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.index = 0
@@ -3400,6 +3420,7 @@ class ProjectView(FitWidthMixin, View):
 
     # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
     PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.index = 0
@@ -5084,6 +5105,7 @@ class CalcView(View):
     # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut (je Karte ein
     # Teil, View.add_parts); beim direkten Oeffnen wie bisher am Stueck
     PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.info_visible = {"raid": False, "screen": False, "ups": False}

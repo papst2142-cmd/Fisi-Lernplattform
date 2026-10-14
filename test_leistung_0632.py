@@ -818,6 +818,25 @@ class PartsPreloadTest(AppCase):
             frp._ITEM_POINTS.update(saved)
         self.assertEqual(self.errors, [])
 
+    def test_i_umbruch_nach_dem_letzten_teil(self):
+        """B-I-04: Texte aus spaeteren Teilen bekommen ihre Umbruchbreite wie
+        am Stueck gebaut (ScrollArea._fit_wraplengths nach dem letzten Teil),
+        auch wenn das erste Anpassen schon nach dem ersten Teil lief."""
+        self.stop_preloader()
+        for key, label in (("testproject", "header_label"), ("scenarios", "lbl_title")):
+            view = self.fresh_parts(key)
+            self.pump(0.2)
+            view._fit_wraplengths()        # erstes Anpassen: nur der erste Teil steht
+            self.assertIsNotNone(view._wrap_width, key)
+            while view.parts_pending:
+                view.build_next()
+                self.pump(0.02)
+            self.pump(0.3)
+            text = getattr(view, label)
+            self.assertIsNotNone(text.__dict__.get("_fisi_wrap"),
+                                 "%s.%s nie angepasst" % (key, label))
+        self.assertEqual(self.errors, [])
+
 
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
 class PartsPreloadSmallTest(PartsPreloadTest):
@@ -832,7 +851,8 @@ class PartsPreloadSmallTest(PartsPreloadTest):
 
     test_d_klick_hat_vorrang = test_e_sichtbare_ansicht_unberuehrt = \
         test_f_rechner_rechnet_gleich = test_g_eingaben_sichern_bei_halber_ansicht = \
-        test_h_karten_warten_auf_rahmenplan = test_a_teile_und_grenze
+        test_h_karten_warten_auf_rahmenplan = test_i_umbruch_nach_dem_letzten_teil = \
+        test_a_teile_und_grenze
 
 
 # ============================================================================
