@@ -963,8 +963,8 @@ class QuizScreen(Screen):
         self._on_category("Alle")
         # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
         self.practice_box = ft.Column([self.setup_card, status, question,
-                                       ft.Row([self.btn_submit, self.btn_cancel],
-                                              spacing=10)], spacing=14, tight=True)
+                                       tile_row([self.btn_submit, self.btn_cancel],
+                                                spacing=10)], spacing=14, tight=True)
         self.exam = ExamPanel(self.app)
         self.exam.visible = False
         self.mode_pills = ui.PillGroup(QUIZ_MODES, on_change=self._on_mode)
@@ -1541,9 +1541,9 @@ class ExamPanel(ft.Column):
                    vertical_alignment=ft.CrossAxisAlignment.END),
             self.lbl_progress,
             ui.text(exam["name"], size=12, color=C["muted"]),
-            ft.Row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
-                    ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
-                                      expand=True)], spacing=10),
+            tile_row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
+                      ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
+                                        expand=True)], spacing=10),
         ], accent=C["accent"])
         self.task_box = ft.Column(spacing=14, tight=True)
         controls = [head]
@@ -2867,7 +2867,7 @@ class NotebookScreen(Screen):
             if len(answer) > 900:
                 answer = answer[:900].rsplit(" ", 1)[0] + " …"
             controls.append(ui.text(answer, size=13, color=C["text_dim"], selectable=True))
-        controls.append(ft.Row([
+        controls.append(tile_row([
             ui.GradientButton("Antwort ausblenden" if key in self.opened else "Antwort zeigen",
                               lambda _e, k=key: self._toggle(k), kind="ghost", height=36,
                               expand=True),

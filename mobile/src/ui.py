@@ -343,13 +343,18 @@ class GradientButton(ft.Container):
         # Symbol in eine zweite Zeile umbrechen, wenn der Knopf schmaler ist als
         # sein Text (nur wo der Knopf eine Breite hat, z. B. expand=True); bis
         # "Sehr groß" bleibt der Aufbau wie bisher
+        hoehe, rand = grow(height), ft.Padding.symmetric(horizontal=20)
         if large() and not icon:
             self.caption.text_align = ft.TextAlign.CENTER
-            inner = self.caption
+            # FG-111: der Knopf waechst mit dem Text; ein unsichtbarer Halter
+            # haelt einzeilig die bisherige Hoehe
+            oben = grow(6)
+            inner = ft.Stack([ft.Container(width=0, height=hoehe - 2 * oben), self.caption],
+                             alignment=ft.Alignment.CENTER)
+            hoehe, rand = None, ft.Padding.symmetric(horizontal=20, vertical=oben)
         super().__init__(
             content=ft.Semantics(button=True, content=inner),
-            height=grow(height), border_radius=grow(height) // 2,
-            padding=ft.Padding.symmetric(horizontal=20),
+            height=hoehe, border_radius=grow(height) // 2, padding=rand,
             alignment=ft.Alignment.CENTER, expand=expand,
             on_click=self._clicked, ink=True)
         self._paint(True)
