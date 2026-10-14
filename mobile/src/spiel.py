@@ -1755,6 +1755,17 @@ def market_box(lines):
         border=ft.Border.all(1, mix(C["accent"], C["card"], 0.45)))
 
 
+def _stack_large(controls, spacing=8, **kwargs):
+    """Ab 0.63.2 (B-J-06): was sonst nebeneinander steht, ab 160 %
+    untereinander in voller Breite (wie main.tile_row)."""
+    for control in controls:
+        if getattr(control, "expand", None):
+            control.expand = None
+    kwargs.pop("vertical_alignment", None)
+    return ft.Column(controls, spacing=spacing, tight=True,
+                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+
 class GameScreen:
     """Seite "Spiel" der Handy-App (gleiche Schnittstelle wie Screen in
     main.py: crumbs, root, on_show)."""
@@ -2088,7 +2099,7 @@ class GameScreen:
                 "Firma öffnen" if state.firm else "Firma gründen", self.open_firm,
                 kind="ghost" if state.firm else "primary", height=38))
         profile = ui.Card("Spielfigur", [
-            ft.Row([
+            (_stack_large if ui.large() else ft.Row)([
                 avatar(state.profile["aussehen"], 84),
                 ft.Column([
                     ui.text(state.profile["name"], size=22, weight=ft.FontWeight.BOLD),
@@ -2381,7 +2392,7 @@ class GameScreen:
                     ft.Row([ui.GradientButton(
                         "Karteikarten zu %s" % fg.TOPIC_SHORT[key],
                         lambda _e: self._open_cards(fg.TOPIC_CAT[key], key), kind="ghost",
-                        height=38)]),
+                        height=38, expand=ui.large() or None)]),
                 ], spacing=8, tight=True),
                 bgcolor=mix(C["card"], C["yellow"], 0.12), border_radius=14, padding=14,
                 border=ft.Border.all(1, mix(C["yellow"], C["card"], 0.35))))
@@ -2422,7 +2433,8 @@ class GameScreen:
         self.btn_defer = ui.GradientButton("Verschieben", self._defer, kind="ghost",
                                            expand=True)
         self.buttons = ft.Column([
-            ft.Row([self.btn_submit, self.btn_help], spacing=10),
+            (_stack_large if ui.large() else ft.Row)([self.btn_submit, self.btn_help],
+                                                     spacing=10),
             ft.Row([self.btn_defer]),
             ui.text("Ohne Hilfe gibt es %d %% Bonus."
                     % round(fg.GAME["balancing"]["bonus_ohne_hilfe"] * 100),
@@ -2767,8 +2779,11 @@ class GameScreen:
             ("Verdient", euro(stats["verdient"]), "alle Einnahmen"),
         ]
         grid = []
-        for index in range(0, len(tiles), 2):
-            grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
+        # Ab 0.63.2 (B-J-06): ab 160 % eine Kachel je Zeile (sonst brachen die
+        # Titel mitten im Wort um: "ZWISCHENFÄ/LLE", "KUNDENPRO/JEKTE")
+        per_row = 1 if ui.large() else 2
+        for index in range(0, len(tiles), per_row):
+            grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + per_row]],
                                spacing=8))
         controls = [tabs, ui.Card("Rückblick", grid, accent=C["accent2"],
                             subtitle="%s · Tag %d · %s" % (
@@ -3422,33 +3437,42 @@ class GameScreen:
         for row in fg.skill_bars(item):
             color = CATEGORY_COLOR[fg.CAT_NAME[row["cat"]]]
             opened = self._cat_open(staff_id, row["cat"])
+            name = ft.Row([
+                ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
+                        size=16, color=color),
+                ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
+                spacing=2, tight=True)
+            bar = [ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
+                   ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
+                                        text_align=ft.TextAlign.RIGHT),
+                                width=ui.large_grow(30))]
+            # Ab 0.63.2 (B-J-06): ab 160 % Name ueber Balken und Wert
+            line = (ft.Column([name, ft.Row(bar, spacing=6,
+                                            vertical_alignment=ft.CrossAxisAlignment.CENTER)],
+                              spacing=2, tight=True) if ui.large() else
+                    ft.Row([ft.Container(name, width=110)] + bar,
+                           spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER))
             rows.append(ui.as_button(ft.Container(
-                content=ft.Row([
-                    ft.Container(ft.Row([
-                        ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
-                                size=16, color=color),
-                        ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
-                        spacing=2, tight=True), width=110),
-                    ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
-                    ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
-                                         text_align=ft.TextAlign.RIGHT), width=30)],
-                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                content=line,
                 padding=ft.Padding.symmetric(vertical=3), ink=True,
                 on_click=lambda _e, key=row["cat"]: self._toggle_cat(staff_id, key))))
             if not opened:
                 continue
             for topic in row["themen"]:
-                rows.append(ft.Container(ft.Row([
-                    ft.Container(ui.text(topic["name"], size=11, color=C["text_dim"]),
-                                 width=92),
-                    ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
-                                            6), expand=True),
-                    ft.Container(ui.text(str(topic["wert"]), size=11,
-                                         color=C["yellow"] if topic["grenze"]
-                                         else C["text_soft"],
-                                         text_align=ft.TextAlign.RIGHT), width=30)],
-                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                    padding=ft.Padding.only(left=18)))
+                label = ui.text(topic["name"], size=11, color=C["text_dim"])
+                bar = [ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
+                                               6), expand=True),
+                       ft.Container(ui.text(str(topic["wert"]), size=11,
+                                            color=C["yellow"] if topic["grenze"]
+                                            else C["text_soft"],
+                                            text_align=ft.TextAlign.RIGHT),
+                                    width=ui.large_grow(30))]
+                line = (ft.Column([label, ft.Row(bar, spacing=6,
+                                                 vertical_alignment=ft.CrossAxisAlignment.CENTER)],
+                                  spacing=2, tight=True) if ui.large() else
+                        ft.Row([ft.Container(label, width=92)] + bar,
+                               spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER))
+                rows.append(ft.Container(line, padding=ft.Padding.only(left=18)))
         return ft.Column(rows, spacing=2, tight=True)
 
     def _person_box(self, controls):
@@ -3485,7 +3509,7 @@ class GameScreen:
                     state.branch["name"] if there else fg.firm_rules()["gebaeude"]["name"]),
                     size=12, color=C["purple"] if there else C["green"]),
                     ft.Row([move])]
-            parts.append(ft.Row([
+            parts.append((_stack_large if ui.large() else ft.Row)([
                 ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
                                   kind="ghost", height=36, expand=True),
                 ui.GradientButton("Themen", lambda _e, i=item["id"]: self._toggle_topics(i),
@@ -4750,7 +4774,7 @@ class GameScreen:
                                 [self.farm_board, self.help_box, self.result_box],
                                 accent=C["accent"]))
         self.btn_help = ui.GradientButton("Hilfe", self._show_help, kind="ghost")
-        self.buttons = ft.Column([ft.Row([
+        self.buttons = ft.Column([(_stack_large if ui.large() else ft.Row)([
             ui.GradientButton("Lösung einreichen", self._farm_submit, expand=True),
             self.btn_help], spacing=10)], spacing=10, tight=True)
         controls.append(self.buttons)
