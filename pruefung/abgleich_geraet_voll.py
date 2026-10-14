@@ -21,6 +21,10 @@ Zusaetzliche Befehle (je Zeile ein JSON-Befehl, wie abgleich_geraet.py):
                          Anfang einer Sekunde, also in derselben Sekunde)
                          ein Eintrag - wie das Spiel nach dem Loeschen (B-G-17)
   projekt_loeschen NAME  fisi_projekt.delete_project
+  projekt_feld ID FELD WERT  db.save_project_field (ab 0.63.2, N16)
+  projekt_zeilen         Rohzeilen des Abschlussprojekts [uid, timestamp,
+                         projekt, feld, wert], sortiert (ab 0.63.2, N16)
+  projekte               sichtbare Projekte (fisi_projekt.projects), sortiert
   inhalt                 Lernstand ohne id (je Tabelle sortierte Zeilen mit
                          uid) und die Loeschmarken - zum Vergleich der Geraete
   export_sha             sha256 des kanonischen JSON von export_local
@@ -109,6 +113,18 @@ def run(name, *args):
     if name == "projekt_loeschen":
         fisi_projekt.delete_project(db, args[0])
         return {"ok": True}
+    if name == "projekt_feld":
+        return {"ok": bool(db.save_project_field(args[0], args[1], args[2]))}
+    if name == "projekt_zeilen":
+        conn = g._conn()
+        try:
+            rows = conn.execute("SELECT uid, timestamp, projekt, feld, wert"
+                                " FROM abschlussprojekt").fetchall()
+        finally:
+            conn.close()
+        return {"zeilen": sorted([list(row) for row in rows], key=json.dumps)}
+    if name == "projekte":
+        return {"projekte": sorted(fisi_projekt.projects(db))}
     if name == "inhalt":
         return inhalt()
     if name == "export_sha":

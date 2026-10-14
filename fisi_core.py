@@ -468,7 +468,21 @@ def apply_question_renames(cur):
 def purge_superseded_project_rows(cur):
     """Loescht im Abschlussprojekt alle Zeilen, die eine neuere Fassung
     desselben Feldes haben (ab 0.51). Gleiche Zeit: die groessere uid gilt,
-    damit alle Geraete dieselbe Zeile behalten."""
+    damit alle Geraete dieselbe Zeile behalten.
+
+    Ab 0.63.2 (N16, N-f; F32 umgesetzt als Variante (ii'), Weisung zu
+    Meldung 40 B1): In einem geloeschten Projekt (Feld "_geloescht" = "1")
+    verschwindet zuerst jede NICHT LEERE Fassung, die spaeter liegt als die
+    frueheste Loeschung (vorgehende Uhr, andere Zeitzone, Offline-Bearbeitung
+    eines anderen Geraets). Nur DELETE, nie UPDATE; "_geloescht" selbst und
+    die leeren Fassungen (B-G-09) bleiben, lebende Projekte unberuehrt."""
+    cur.execute(
+        "DELETE FROM abschlussprojekt WHERE feld != '_geloescht' AND wert != ''"
+        " AND EXISTS ("
+        " SELECT 1 FROM abschlussprojekt AS loesch"
+        " WHERE loesch.projekt = abschlussprojekt.projekt"
+        " AND loesch.feld = '_geloescht' AND loesch.wert = '1'"
+        " AND loesch.timestamp < abschlussprojekt.timestamp)")
     cur.execute(
         "DELETE FROM abschlussprojekt WHERE EXISTS ("
         " SELECT 1 FROM abschlussprojekt AS neu"
