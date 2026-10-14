@@ -1546,7 +1546,7 @@ class DashboardView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or self._dash_renames_pending():
             return None
         return (stamp, datetime.date.today(), self.zoom_category,
                 tuple(sorted(learning_settings().items())))
@@ -1591,7 +1591,7 @@ class DashboardView(View):
     def _dash_stamps(self):
         """{tabelle: (Anzahl, hoechste Nummer)} in einer Abfrage, None ohne
         Stempel (dann wird alles neu abgefragt, wie bis 0.63.1)."""
-        if not hasattr(self.db, "change_stamp"):
+        if not hasattr(self.db, "change_stamp") or self._dash_renames_pending():
             return None
         tables = sorted({table for tables, _dated in self.DASH_QUERIES.values()
                          for table in tables})
@@ -1599,6 +1599,18 @@ class DashboardView(View):
         if stamp is None or len(stamp) != 2 * len(tables):
             return None
         return {table: tuple(stamp[2 * i:2 * i + 2]) for i, table in enumerate(tables)}
+
+    def _dash_renames_pending(self):
+        """Ab 0.63.2 (FG-115): Haelt der "faellig"-Index alte Fragetexte
+        (FG-110, always_full), kann apply_question_renames sie an Ort und
+        Stelle umschreiben (zweites Programm, Abgleich), ohne dass sich der
+        Stempel aendert. Dann Zwischenspeicher leeren und alles neu abfragen
+        (wie bis 0.63.1), bis der Index wieder ohne alte Texte ist."""
+        index = getattr(self, "_review_index", None)
+        if index is None or not index.always_full:
+            return False
+        self._dash_cache = {}
+        return True
 
     def _dash_query(self, name, func, *args, stamps=None):
         """Ergebnis von func(*args), aus dem Zwischenspeicher, solange sich die
