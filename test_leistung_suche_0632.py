@@ -358,6 +358,28 @@ class PcTest(unittest.TestCase):
         hits = self.expected_hits("RAID")
         rows, _extra = self.shown_rows()
         self.assertEqual(rows, [self.row_texts(hit) for hit in hits[:60]])
+        # Zweite Suche ohne Treffer: keine Zeile der ersten Suche darf
+        # nachtraeglich im neuen Bereich erscheinen
+        self.app.do_search("a")
+        self.root.update_idletasks()
+        self.assertIsNotNone(view._pending)
+        self.app.do_search("zz-nichts-n7")
+        self.pump(0.6)
+        rows, extra = self.shown_rows()
+        self.assertEqual(rows, [])
+        self.assertEqual(extra, ["Keine Treffer. Versuche einen anderen Suchbegriff."])
+        # Zweite Suche mit mehr als 60 Treffern: genau eine Liste, genau ein
+        # Hinweis auf weitere Treffer (keine zweite, parallele Kette)
+        self.app.do_search("a")
+        self.root.update_idletasks()
+        self.app.do_search("e")
+        self.finish_search()
+        self.pump(0.6)
+        hits = self.expected_hits("e")
+        self.assertGreater(len(hits), 60)
+        rows, extra = self.shown_rows()
+        self.assertEqual(rows, [self.row_texts(hit) for hit in hits[:60]])
+        self.assertEqual(extra, ["... weitere %d Treffer nicht angezeigt." % (len(hits) - 60)])
 
     def test_k5_klick_und_tastatur_auch_nachgereicht(self):
         """K5: Zeile 1 und eine nachgereichte Zeile (40) per Klick, Eingabe
@@ -534,6 +556,9 @@ class PcTest(unittest.TestCase):
         elif kind == "quiz":
             question = fc.QUIZ_QUESTIONS[777]
             db.log_quiz_answer(question["cat"], question["q"], True)
+        elif kind == "quiz_falsch":
+            question = fc.QUIZ_QUESTIONS[777]
+            db.log_quiz_answer(question["cat"], question["q"], False)
         elif kind == "ap1":
             scen = fc.AP1_SZENARIEN[7]
             db.log_ap1(7, scen["title"], scen["theme"], True)
@@ -609,7 +634,7 @@ class PcTest(unittest.TestCase):
             view.refresh()
 
     def test_k12_differenz_nach_jedem_schritt(self):
-        """K12: feste Folge von 36 gemischten Aenderungen (alle Arten, auch
+        """K12: feste Folge von 37 gemischten Aenderungen (alle Arten, auch
         Mitternacht, Tagesziel, Name, Reinzoomen, "Alles ersetzen", Loeschen
         aller Lerndaten); nach jedem Schritt zeigt das Dashboard dasselbe wie
         eine Neuberechnung ohne Zwischenspeicher."""
@@ -623,7 +648,8 @@ class PcTest(unittest.TestCase):
                  "zoom:" + fc.CATEGORIES[1], "quiz", "zoom:" + fc.CATEGORIES[1],
                  "ap1", "mitternacht", "ap2", "ersetzen", "quiz", "karte",
                  "monat_zurueck", "quiz", "monat_heute", "trainer", "loeschen",
-                 "karte", "quiz", "tagesziel", "ersetzen", "mitternacht", "nichts"]
+                 "karte", "quiz", "tagesziel", "ersetzen", "mitternacht",
+                 "ersetzen_gleiche_anzahl", "nichts"]
         self.assertGreaterEqual(len(steps), 30)
         try:
             for number, step in enumerate(steps):
@@ -632,6 +658,23 @@ class PcTest(unittest.TestCase):
                 elif step == "ersetzen":
                     fsi.replace_all(self.app.db, backup, os.path.join(_TMP, "sicher"),
                                     "0.63.2", "PC")
+                    self.app.refresh_after_sync()
+                elif step == "ersetzen_gleiche_anzahl":
+                    # Ersetzen durch eine Sicherung mit derselben Zeilenzahl,
+                    # aber anderem Inhalt (eine Quizantwort falsch statt richtig)
+                    folder = os.path.join(_TMP, "sicher")
+                    start = fsi.read_backup(fsi.create_backup(self.app.db, "0.63.2", "PC"))
+                    self.change("quiz_falsch")
+                    other = fsi.read_backup(fsi.create_backup(self.app.db, "0.63.2", "PC"))
+                    fsi.replace_all(self.app.db, start, folder, "0.63.2", "PC")
+                    self.app.refresh_after_sync()
+                    self.change("quiz")
+                    self.app.notify_progress()
+                    self.root.update()
+                    view.refresh()
+                    self.assertEqual(self.snapshot(view), self.uncached_snapshot(view),
+                                     "Schritt %d: %s (richtig)" % (number, step))
+                    fsi.replace_all(self.app.db, other, folder, "0.63.2", "PC")
                     self.app.refresh_after_sync()
                 elif step == "loeschen":
                     self.app.db.reset_all()
