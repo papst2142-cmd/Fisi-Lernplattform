@@ -449,12 +449,16 @@ class BG17Bestenliste(unittest.TestCase):
         Abgleich; der eigene neue Eintrag bleibt."""
         db = neue_db("bg17_fremd")
         sekundenanfang()
+        jetzt = fisi_core.device_now()      # Sekunde des Loeschens
         db.reset_records()
+        self.assertEqual(fisi_core.device_now().strftime("%Y-%m-%d %H:%M:%S"),
+                         jetzt.strftime("%Y-%m-%d %H:%M:%S"), "Sekunde gewechselt")
         db.log_record("lauf1", "rekord", "nachher", 2.0)
         marke = db.get_meta("bestenliste_reset_at")
+        bericht("FG-100 fremd: Loeschen %s, Marke %s" % (fisi_core.format_with_zone(jetzt), marke))
         columns = list(fisi_sync.SYNC_TABLES["spiel_bestenliste"])
-        werte = {"timestamp": marke[:19], "utc_offset": int(marke[-6:-3]) * 60 + (
-            1 if marke[-6] == "+" else -1) * int(marke[-2:]), "durchgang": "l2",
+        werte = {"timestamp": jetzt.strftime("%Y-%m-%d %H:%M:%S"),
+                 "utc_offset": fisi_core.offset_minutes(jetzt), "durchgang": "l2",
             "art": "rekord", "schluessel": "fremd-selbe-sekunde", "wert": 3.0, "daten": "{}"}
         fremd = {"format": fisi_sync.FORMAT, fisi_sync.WRITER_KEY: "x", "markers": {},
                  "columns": {"spiel_bestenliste": columns},
