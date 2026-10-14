@@ -36,6 +36,7 @@ import shutil
 import sys
 import tempfile
 import time
+import _tkinter
 import traceback
 import unittest
 
@@ -360,10 +361,13 @@ class RecolorTest(AppCase):
         settings.open_area("tagesziel")
         self.pump(0.1)
         before = {key: fold.opened for key, fold in settings.folds.items()}
+        stored = dict(self.app_gui.FoldCard._open_state)
         app.change_font_size("gross")
         self.finish()
         after = {key: fold.opened for key, fold in app.views.built("settings").folds.items()}
         self.assertEqual(after, before)
+        # auch die gemerkten Zustaende (gelten beim naechsten Aufbau)
+        self.assertEqual(dict(self.app_gui.FoldCard._open_state), stored)
 
     def test_f_verwaiste_zeitgeber(self):
         """K3: ein Zeitgeber eines Elements der alten Oberflaeche wird nach dem
@@ -394,6 +398,15 @@ class RecolorTest(AppCase):
         app.show_view("quiz")
         self.assertEqual(app.current, "quiz")
         self.assertTrue(log["old"].winfo_exists(), "Abbau schon fertig vor dem Klick")
+        # einzelne Ereignisse wie mainloop, bis der erste Abbau-Schritt lief:
+        # waehrend des Abbaus ist ein weiterer Wechsel nicht gesperrt
+        end = time.monotonic() + 30
+        while not any(e[0] == "schritt" for e in log["events"]) and time.monotonic() < end:
+            if not self.root.tk.dooneevent(_tkinter.DONT_WAIT):
+                time.sleep(0.003)
+        self.assertTrue(any(e[0] == "schritt" for e in log["events"]), "kein Abbau-Schritt")
+        self.assertTrue(app.recolor_pending, "Abbau in einem Schritt fertig")
+        self.assertFalse(app._recoloring, "Wechsel waehrend des Abbaus gesperrt")
         self.finish()
         self.assertEqual(app.current, "quiz")
         self.assertTrue(app.views.built("quiz").winfo_ismapped())
@@ -570,6 +583,10 @@ class PartsPreloadTest(AppCase):
         for key, mine in report.items():
             for task, ms in mine.items():
                 self.assertLessEqual(ms, PART_LIMIT_MS, "%s: %d ms" % (task, ms))
+        # Karteikarten: der letzte Teil (Filter, Reihenfolge, Zaehler) lief
+        cards = app.views.built("cards")
+        self.assertTrue(getattr(cards, "filtered", None), "Karteikarten ohne Filter")
+        self.assertTrue(cards.lbl_counts.cget("text"), "Karteikarten ohne Zaehler")
         # Rechner: prepare (Rest der Subnetting-Karte) lief nach den Teilen
         self.assertFalse(app.views.built("calc").subnet.build_rest())
         # K13: Reihenfolge unveraendert

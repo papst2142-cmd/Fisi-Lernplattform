@@ -9684,9 +9684,7 @@ class FISIApp:
         keys = ("cards", "ap1scenarios", "scenarios", "testproject") if revealed else ()
         for key in keys + ("abschluss",):
             view = self.views.built(key)
-            # Ab 0.63.2 (N6): eine halb vorgeladene Ansicht hatte noch
-            # niemand offen - es gibt nichts zu speichern
-            if view is not None and not getattr(view, "parts_pending", False):
+            if view is not None:
                 view._flush()
         quiz = self.views.built("quiz")
         if quiz is not None:
