@@ -2587,9 +2587,11 @@ class GameScreen:
             return self.place
         return fg.SITE_OFFICE
 
-    def open_site(self, key, replace=False):
+    def open_site(self, key, replace=False, toast_bis=None):
         """Oeffnet eine Grossansicht. replace: die offene Grossansicht ersetzen
         (z.B. vom Buero direkt nach Hause)."""
+        # ab 0.63.2 (N-a): Nummer am Anfang lesen oder vom Aufrufer uebernehmen
+        mark = self.app.toast_mark() if toast_bis is None else toast_bis
         self.game.reload()
         page = self.app.page
         if replace:
@@ -2602,7 +2604,8 @@ class GameScreen:
         self.office = ft.Column(spacing=12, tight=True,
                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_site()
-        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]))
+        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]),
+                      toast_bis=mark)
 
     def open_office(self, _event=None):
         self.open_site("buero")
@@ -2721,6 +2724,7 @@ class GameScreen:
             self.firm_tab = "mitarbeiter"
             self.open_firm()
         elif action == "feierabend":
+            mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor end_day
             try:
                 payload = self.game.end_day()
             except ValueError as exc:
@@ -2735,7 +2739,7 @@ class GameScreen:
                            fg.day_end_money_text(payload)))
             self.app.notify_progress()
             self.render()
-            self.open_site("zuhause", replace=True)
+            self.open_site("zuhause", replace=True, toast_bis=mark)
         elif action == "buero":
             state = self.game.state
             scene = fg.morning_text(state.day, state=state)
@@ -2755,6 +2759,7 @@ class GameScreen:
     # -- Reise des Spielers (ab 0.39) -----------------------------------------
 
     def open_journey(self, _event=None, tab=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.game.check_knowledge()
         self.journey_page = 0
@@ -2763,7 +2768,8 @@ class GameScreen:
         self.journey_box = ft.Column(spacing=12, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_journey()
-        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]))
+        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]),
+                      toast_bis=mark)
 
     def _fill_journey(self):
         state = self.game.state
@@ -2952,12 +2958,14 @@ class GameScreen:
     # -- Firma (ab 0.33) ------------------------------------------------------
 
     def open_firm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.training_for = self.training_cat = None
         self.firm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_firm()
-        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]))
+        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]),
+                      toast_bis=mark)
 
     def _fill_firm(self):
         state = self.game.state
@@ -4521,11 +4529,13 @@ class GameScreen:
     # -- Grossauftrag Serverfarm (ab 0.52) ------------------------------------
 
     def open_farm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.farm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_farm()
-        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]))
+        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]),
+                      toast_bis=mark)
 
     def _fill_farm(self):
         state = self.game.state
@@ -4913,8 +4923,9 @@ class GameScreen:
         page.update()
 
     def _open_cards(self, category, topic=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         self.app.screens["cards"].set_category(category, topic)
-        self.app.open("cards")
+        self.app.open("cards", toast_bis=mark)
 
     def _open_learn(self, kind, title):
         self.app.open_search_hit(kind, title)
