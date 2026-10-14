@@ -1970,6 +1970,7 @@ class ScenarioScreen(Screen):
         self.paged.refresh(keep_page=True)
 
     def open_detail(self, position):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor dem Schreiben (_flush)
         self._flush()
         self.index = position
         self.solution_visible = False
@@ -1998,7 +1999,7 @@ class ScenarioScreen(Screen):
         ])
         self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
-        self.app.push(self.crumbs, content)
+        self.app.push(self.crumbs, content, toast_bis=mark)
 
     def _load(self):
         item = self.DATA[self.index]
@@ -2117,6 +2118,7 @@ class ProjectScreen(Screen):
         return "\n".join(lines).rstrip()
 
     def open_detail(self, position):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor dem Schreiben (_flush)
         self._flush()
         self.index = position
         self.lbl_title = ui.text("", size=18, weight=ft.FontWeight.BOLD)
@@ -2141,7 +2143,7 @@ class ProjectScreen(Screen):
         ])
         self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
-        self.app.push(self.crumbs, content)
+        self.app.push(self.crumbs, content, toast_bis=mark)
 
     def _load(self):
         project = PROJEKTARBEITEN[self.index]
@@ -5489,8 +5491,12 @@ class FISIMobileApp:
         if perf is not None:
             perf.page(self.tab, key, started)
 
-    def push(self, crumbs, content):
-        self.close_toast()
+    def push(self, crumbs, content, toast_bis=None):
+        # Ab 0.63.2 (N-a): Mit toast_bis (Nummer vom Anfang des Ereignisses,
+        # toast_mark) bleibt ein Hinweis aus diesem Ereignis offen, nur
+        # aeltere werden geschlossen. Ohne Parameter wie bisher: alle.
+        if toast_bis is None or getattr(self, "_toast_nr", -1) < toast_bis:
+            self.close_toast()
         self.page.views.append(ft.View(
             route="/%d" % len(self.page.views), controls=[safe_content(content)],
             appbar=self._appbar(root=False, crumbs=crumbs), bgcolor=C["bg"], padding=0))
@@ -5630,12 +5636,21 @@ class FISIMobileApp:
     def toast(self, message, color=None, duration=TOAST_MS):
         # Ab 0.53 wie am PC: ein neuer Hinweis ersetzt den alten, gleiche Dauer
         self.close_toast()
+        # Ab 0.63.2 (N-a): laufende Nummer je Hinweis (siehe toast_mark, push)
+        self._toast_nr = self.toast_mark()
+        self._toast_count = self._toast_nr + 1
         self._toast = ft.SnackBar(
             ft.Text(message, color=C["text"]), bgcolor=C["card_hi"],
             behavior=ft.SnackBarBehavior.FLOATING,
             shape=ft.RoundedRectangleBorder(radius=12), duration=duration,
             show_close_icon=True, close_icon_color=color or C["text_dim"])
         self.page.show_dialog(self._toast)
+
+    def toast_mark(self):
+        """Ab 0.63.2 (N-a): Nummer, die der naechste Hinweis bekommt. Wer vor
+        einem Seitenwechsel schreibt, liest sie am Anfang des Ereignisses und
+        gibt sie push als toast_bis mit. Nur lesen, aendert nichts."""
+        return getattr(self, "_toast_count", 0)
 
     def close_toast(self):
         """Offenen Hinweis schliessen (ab 0.53: beim Seitenwechsel und vor
