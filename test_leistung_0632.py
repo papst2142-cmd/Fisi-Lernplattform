@@ -63,10 +63,16 @@ def _display_available():
 HAS_DISPLAY = _display_available()
 
 
+ScrollAreaType = []   # fisi_widgets.ScrollArea (erst mit Anzeige importiert)
+
+
 def widget_tree(widget, geometry=True):
     """Liste (Tiefe, Klasse, Text, Pillen-Auswahl, sichtbar, Lage) in der
     Reihenfolge der Kinder - fuer den Vergleich zweier Aufbauten."""
     rows = []
+    if not ScrollAreaType:
+        import fisi_widgets
+        ScrollAreaType.append(fisi_widgets.ScrollArea)
 
     def walk(item, depth):
         text = ""
@@ -85,6 +91,10 @@ def widget_tree(widget, geometry=True):
             value = str(get())
         mapped = bool(item.winfo_ismapped())
         row = [depth, type(item).__name__, text, value, mapped]
+        if geometry and isinstance(item, ScrollAreaType[0]):
+            # Bildlaufflaeche: Breite des Inhalts und waagerechte Lage
+            row += [item.canvas.itemcget(item._window, "width"),
+                    tuple(round(x, 4) for x in item.canvas.xview())]
         if geometry and mapped:   # Lage nicht gezeigter Elemente ist ohne Bedeutung
             row += [item.winfo_x(), item.winfo_y(), item.winfo_width(), item.winfo_height()]
         rows.append(tuple(row))
@@ -98,6 +108,8 @@ class AppCase(unittest.TestCase):
     """Eigenes Hauptfenster mit leerer Datenbank je Test (wie test_vorladen)."""
 
     preload = None   # FISI_VORLADEN fuer diesen Test (None = normal)
+    font = None      # Schriftgroesse vor dem Start (None = normal)
+    size = "1360x900"
 
     def setUp(self):
         self.folder = tempfile.mkdtemp(prefix="fisi n6 ")
@@ -121,6 +133,8 @@ class AppCase(unittest.TestCase):
         fisi_widgets._PHOTO_CACHE.clear()
         fisi_widgets._IMAGE_CACHE.clear()
         app_gui.apply_appearance()
+        if self.font is not None:
+            fisi_theme.save_font_size(self.font)
         self.errors = []
         self.root = ctk.CTk()
         self.root.report_callback_exception = lambda *exc: self.errors.append(
@@ -130,7 +144,7 @@ class AppCase(unittest.TestCase):
         self.root.tk.createcommand("bgerror", lambda *msg: self.errors.append(
             "bgerror: %s" % (msg,)))
         self.app = app_gui.FISIApp(self.root)
-        self.root.geometry("1360x900+0+0")
+        self.root.geometry(self.size + "+0+0")
         self.pump(0.2)
 
     def tearDown(self):
@@ -590,6 +604,15 @@ class PartsPreloadTest(AppCase):
             self.assertTrue(view.prepare())
         return self.tree_after_show(key)
 
+    def fresh_parts(self, key):
+        """Die Ansicht neu in Teilen anlegen (erster Teil); eine schon
+        vorgeladene vorher wegwerfen."""
+        old = dict.pop(self.app.views, key, None)
+        if old is not None:
+            old.destroy()
+            self.pump(0.05)
+        return self.app.views.build_in_parts(key)
+
     def stop_preloader(self):
         pre = self.app.preloader
         if pre.job is not None:
@@ -608,7 +631,7 @@ class PartsPreloadTest(AppCase):
         self.stop_preloader()
         app = self.app
         for key in PART_VIEWS:
-            view = app.views.build_in_parts(key)
+            view = self.fresh_parts(key)
             self.assertTrue(view.parts_pending, key)
             count = 1
             while view.parts_pending:
@@ -627,7 +650,7 @@ class PartsPreloadTest(AppCase):
         self.stop_preloader()
         app = self.app
         for key in PART_VIEWS:
-            view = app.views.build_in_parts(key)
+            view = self.fresh_parts(key)
             view.build_next()
             self.assertTrue(view.parts_pending, key)
             shown = []
@@ -649,7 +672,7 @@ class PartsPreloadTest(AppCase):
         wartet, die Warteschlange bleibt."""
         app, pre = self.app, self.app.preloader
         self.stop_preloader()
-        view = app.views.build_in_parts("calc")
+        view = self.fresh_parts("calc")
         self.assertTrue(view.parts_pending)
         pre.queue = [("part", "calc"), ("view", "calc")]
         pre.done = False
@@ -673,7 +696,7 @@ class PartsPreloadTest(AppCase):
         fertig gebaut, der Vorlader ueberspringt ihn."""
         app, pre = self.app, self.app.preloader
         self.stop_preloader()
-        view = app.views.build_in_parts("calc")
+        view = self.fresh_parts("calc")
         app.show_view("calc")
         self.pump(0.1)
         self.assertFalse(view.parts_pending)
@@ -690,7 +713,7 @@ class PartsPreloadTest(AppCase):
         """A-N6-26: nach dem Vorladen in Teilen rechnet der Rechner wie direkt."""
         self.stop_preloader()
         app = self.app
-        view = app.views.build_in_parts("calc")
+        view = self.fresh_parts("calc")
         view.complete()
         app.show_view("calc")
         self.pump(0.2)
@@ -715,12 +738,28 @@ class PartsPreloadTest(AppCase):
         self.stop_preloader()
         app = self.app
         for key in PART_VIEWS:
-            app.views.build_in_parts(key)
+            self.fresh_parts(key)
         app.flush_inputs(revealed=True)
         app.flush_inputs(revealed=False)
         for key in PART_VIEWS:
             self.assertTrue(app.views.built(key).parts_pending, key)
         self.assertEqual(self.errors, [])
+
+
+@unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
+class PartsPreloadSmallTest(PartsPreloadTest):
+    """K11 auch bei schmalem Fenster und grosser Schrift (die Ansichten passen
+    sich dort an: Spalten, Umbrueche, Breite der Bildlaufflaeche)."""
+
+    font = "sehr_gross"
+    size = "1120x720"
+
+    def test_a_teile_und_grenze(self):
+        self.skipTest("nur bei 1360x900 Normal (PartsPreloadTest)")
+
+    test_d_klick_hat_vorrang = test_e_sichtbare_ansicht_unberuehrt = \
+        test_f_rechner_rechnet_gleich = test_g_eingaben_sichern_bei_halber_ansicht = \
+        test_a_teile_und_grenze
 
 
 # ============================================================================

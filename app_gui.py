@@ -1084,6 +1084,11 @@ class FitWidthMixin:
         if changed:
             # neue Mindestbreite an die Bildlaufflaeche melden
             self.after_idle(self._schedule_fit)
+        elif self._in_parts:
+            # Ab 0.63.2 (N6): in Teilen vorgeladen hat die Ansicht ihre Groesse
+            # schon; wird der Inhalt durch die Anpassung schmaler, meldet Tk
+            # das der Bildlaufflaeche nicht (kein <Configure>) - selbst nachziehen
+            self._refit_width()
 
     def _fit_width(self, avail):
         raise NotImplementedError
@@ -5242,6 +5247,10 @@ class CalcView(View):
             self._fit_ups(avail)
         except tk.TclError:
             return
+        if self._in_parts:
+            # Ab 0.63.2 (N6): wie FitWidthMixin._fit - Breite der
+            # Bildlaufflaeche nachziehen, wenn die Seite schmaler wurde
+            self.after_idle(self._refit_width)
 
     def _fit_ups(self, avail):
         """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
@@ -9048,6 +9057,9 @@ class FISIApp:
         # Das Vorladen beginnt erst danach (_finish_recolor).
         self._teardown.extend(self._teardown_pieces(old, old_views))
         self._recolor_origin = recolor_started
+        preloader = getattr(self, "preloader", None)
+        if preloader is not None:
+            preloader.done = False   # wie bisher: das Vorladen beginnt von vorn
 
     # -- Ab 0.63.2 (N6, B-I-01): Schritte nach dem Aufdecken ----------------
 
@@ -9274,6 +9286,10 @@ class FISIApp:
                 hold_size(built, self.view_area)
         fill_area(view)
         view.tkraise()
+        if getattr(view, "_in_parts", False):
+            # Ab 0.63.2 (N6): in Teilen vorgeladen - die Bildlaufflaeche bekam
+            # evtl. kein <Configure> mehr (Groesse schon vorher fest)
+            view.after_idle(view._refit_width)
         # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
         # (sie springen nur beim Neuzeichnen nach oben)
         if not getattr(view, "keeps_scroll", False):
