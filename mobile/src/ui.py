@@ -338,9 +338,16 @@ class GradientButton(ft.Container):
         # Ab 0.59.1 (H1): Rolle "Schaltflaeche" mit dem Knopftext als Namen
         # (vorher meldete sich der Knopf nur als Flaeche). Die Rolle sitzt
         # innen, damit Rolle, Name und Antippen ein Element bleiben.
+        inner = ft.Row(row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)
+        # Ab 0.63.2 (B-J-06, Rest S6): ab 160 % darf der Text eines Knopfs ohne
+        # Symbol in eine zweite Zeile umbrechen, wenn der Knopf schmaler ist als
+        # sein Text (nur wo der Knopf eine Breite hat, z. B. expand=True); bis
+        # "Sehr groß" bleibt der Aufbau wie bisher
+        if large() and not icon:
+            self.caption.text_align = ft.TextAlign.CENTER
+            inner = self.caption
         super().__init__(
-            content=ft.Semantics(button=True, content=ft.Row(
-                row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)),
+            content=ft.Semantics(button=True, content=inner),
             height=grow(height), border_radius=grow(height) // 2,
             padding=ft.Padding.symmetric(horizontal=20),
             alignment=ft.Alignment.CENTER, expand=expand,
