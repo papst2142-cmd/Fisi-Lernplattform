@@ -886,8 +886,14 @@ class Tooltip:
             self._job = None
 
     def _focus(self, _event=None):
+        # erst nach dem Hineinscrollen (focus_widget -> see) zeigen, sonst
+        # stuende das Schild an der alten Stelle des Knopfs
         if _keyboard[0]:
-            self.show()
+            self._cancel()
+            try:
+                self._job = self.widget.after_idle(self.show)
+            except tk.TclError:
+                self._job = None
 
     def show(self):
         self._job = None
@@ -896,6 +902,7 @@ class Tooltip:
         try:
             if not self.widget.winfo_ismapped():
                 return
+            self.widget.update_idletasks()   # Lage nach dem Scrollen
             window = tk.Toplevel(self.widget)
             window.wm_overrideredirect(True)
             window.configure(bg=C["border"])

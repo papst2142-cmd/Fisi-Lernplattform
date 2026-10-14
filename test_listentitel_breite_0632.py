@@ -132,6 +132,12 @@ def worker(faktor):
             box_w = row.get("title_box", title.master).winfo_width()
             inner_w = row.get("title_box", title).master.winfo_width()
             werte.setdefault(name, []).append([round(wrap), box_w])
+            # K2: nichts abgeschnitten - der Rahmen ist so hoch wie der Titel
+            if "title_box" in row and \
+                    row["title_box"].winfo_height() < title.winfo_reqheight() - 1:
+                found.append("%s: Titel abgeschnitten (Rahmen %d < Titel %d) (K2)"
+                             % (fall, row["title_box"].winfo_height(),
+                                title.winfo_reqheight()))
             # K1
             if abs(wrap - box_w) > 2 or abs(box_w - inner_w) > 2:
                 found.append("%s: Umbruchbreite %d, Zeile %d, Textbereich %d (K1)"
@@ -158,9 +164,15 @@ def worker(faktor):
                     wort_ganz = [w for w in raw.split(" ") if stueck in w or
                                  stueck.startswith(w)]
                     wort = wort_ganz[0] if wort_ganz else stueck
+                    # steht das Wort am Titelanfang, bleibt die Nummer davor
+                    # (K4 geht vor): sie zaehlt zur ersten Zeile mit
+                    vorn = ""
+                    m_nr = NUMMER.match(raw)
+                    if m_nr and index == 0 and raw.split(" ")[1:2] == [wort]:
+                        vorn = m_nr.group(0).rstrip() + " "
                     passend = [p for p in fisi_trennung.trennstellen(wort)
-                               if font.measure(wort[:p] if wort[p - 1] == "-" else
-                                               wort[:p] + "-") <= wrap]
+                               if font.measure(vorn + (wort[:p] if wort[p - 1] == "-" else
+                                                       wort[:p] + "-")) <= wrap]
                     if passend:
                         found.append("%s: Zeile endet im Wort ohne Strich, obwohl %r eine "
                                      "passende Stelle hat (K2)" % (fall, wort))
@@ -192,7 +204,7 @@ def worker(faktor):
             root.geometry("%dx%d+0+0" % (breite, hoehe))
             pump(1.0)
             paged = app.views[key].paged
-            seiten = {0}
+            seiten = {0, 1}   # Seite 2: Blaettern mit neuem Text (Hoehe folgt)
             for ziel in ZIELE:
                 for position, item in enumerate(paged.items):
                     if item["title"] == ziel:

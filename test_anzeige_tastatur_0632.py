@@ -546,9 +546,18 @@ class SymbolNamenTest(PcBasis):
         self.assertEqual(len(gezeigt), 1)
         tip.show = echt
         # Tab-Fokus: sofort, weg beim Fokusverlust
+        # (den Knopf vorher aus dem Bild scrollen: focus_widget scrollt ihn
+        # hinein, das Schild steht danach direkt unter dem Knopf)
+        view = self.app.views["testproject"]
+        view.canvas.yview_moveto(0.0)
+        pump(0.3)
         self.fw.focus_widget(knopf)
         pump(0.3)
         self.assertIsNotNone(tip.window)
+        tip.window.update_idletasks()
+        abstand = tip.window.winfo_rooty() - (knopf.winfo_rooty() + knopf.winfo_height())
+        self.assertTrue(0 <= abstand <= self.gui.px(20), ("Schild nicht am Knopf", abstand))
+        self.assertLessEqual(abs(tip.window.winfo_rootx() - knopf.winfo_rootx()), 1)
         self.fw.focus_widget(self.app.views["testproject"].paged.btn_prev
                              if self.app.views["testproject"].paged.page else
                              self.app.views["testproject"].paged.rows[0]["frame"])

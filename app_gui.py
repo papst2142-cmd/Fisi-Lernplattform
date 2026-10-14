@@ -594,6 +594,11 @@ class PagedList:
                              font=F["small_bold"], height=0, anchor="w",
                              justify="left", wraplength=self.TITLE_WRAP, cursor="hand2")
         title.place(x=0, y=0, relwidth=1)
+        # Die Hoehe des Rahmens folgt der wirklichen Hoehe des Titels (CTk
+        # meldet die neue Hoehe erst spaeter - sonst blieb die zweite Zeile
+        # abgeschnitten)
+        tk.Misc.bind(title, "<Configure>",
+                     lambda event, box=title_box: self._fit_title_box(box, event.height), "+")
         sub = ctk.CTkLabel(inner, text="", text_color=C["muted"], font=F["tiny"],
                            anchor="w", height=0, cursor="hand2")
         sub.pack(anchor="w")
@@ -627,6 +632,15 @@ class PagedList:
         height = title.winfo_reqheight()
         if abs(row["title_box"].winfo_reqheight() - height) > 0:
             row["title_box"].configure(height=height / scale)
+
+    @staticmethod
+    def _fit_title_box(box, height):
+        try:
+            if height > 1 and box.winfo_height() != height:
+                scale = px(1000) / 1000.0 or 1.0
+                box.configure(height=height / scale)
+        except tk.TclError:
+            pass
 
     def _rewrap_titles(self, event=None):
         if event is not None:
