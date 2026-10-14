@@ -379,6 +379,9 @@ class GlibcTest(unittest.TestCase):
         self.assertIn("        env:\n          AGENT_TOOLSDIRECTORY: ${{ runner.os == 'Linux' && "
                       "'/opt/werkzeuge-jammy' || '' }}", setup)
         self.assertEqual(text.count("AGENT_TOOLSDIRECTORY"), 1)
+        werkzeuge = "\n".join(_schritt(text, "Linux-Werkzeuge installieren"))
+        self.assertIn('echo "PIP_CACHE_DIR=/root/.cache/pip" >> "$GITHUB_ENV"', werkzeuge)
+        self.assertEqual(text.count("PIP_CACHE_DIR"), 1)
         # der Container-Schritt laeuft vor checkout (dort fehlt sonst git)
         self.assertLess(build.index("- name: Linux-Werkzeuge installieren"),
                         build.index("- uses: actions/checkout@"))

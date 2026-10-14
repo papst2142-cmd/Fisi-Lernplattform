@@ -134,6 +134,11 @@ jobs:
           cat /etc/os-release | head -n 2
           ldd --version | head -n 1
           dpkg-query -W -f='${Package} ${Version}\n' tk8.6-dev libtk8.6 libc6
+          # pip nimmt keinen Zwischenspeicher in einem Ordner, der nicht dem
+          # Benutzer gehoert (/github/home gehoert dem Runner, hier root;
+          # Lauf 38505081061: "cache is disabled") - eigener Ordner
+          mkdir -p /root/.cache/pip
+          echo "PIP_CACHE_DIR=/root/.cache/pip" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v7
         with:
