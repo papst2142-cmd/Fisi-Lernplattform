@@ -231,6 +231,9 @@ class PreloadTest(AppCase):
         calc = app.views.built("calc")
         self.assertIsNotNone(calc)
         self.assertFalse(calc.parts_pending, "beim Rechner steht noch ein Teil aus")
+        # jede Karte des Rechners steht (je ein Merkmal aus jedem Teil)
+        for name in ("subnet", "raid_pills", "depth_pills", "ups_card", "txt_ups"):
+            self.assertTrue(hasattr(calc, name), "Rechner ohne %s" % name)
         self.assertFalse(calc.subnet.build_rest(), "Rechner nicht ganz gebaut")
         # kein Vorlade-Zeitgeber steht noch aus
         tk_ = self.root.tk
