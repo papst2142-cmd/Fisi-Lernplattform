@@ -128,7 +128,7 @@ jobs:
         run: |
           apt-get -o Acquire::Retries=5 update
           apt-get -o Acquire::Retries=5 install -y --no-install-recommends tk-dev xvfb xauth \
-            binutils file curl ca-certificates git lsb-release squashfs-tools desktop-file-utils \
+            binutils file curl ca-certificates git lsb-release squashfs-tools \
             libssl3 libffi8 libsqlite3-0 libbz2-1.0 liblzma5 zlib1g libncursesw6 libreadline8 \
             libuuid1 libgdbm6 libexpat1 xz-utils zstd
           cat /etc/os-release | head -n 2
@@ -292,8 +292,10 @@ jobs:
           if find dist "$RUNNER_TEMP/deb" "$RUNNER_TEMP/appimage" -name .DS_Store | grep .; then echo "FEHLER: .DS_Store im Paket"; FEHLER=1; fi
           DEB_DESKTOP="$RUNNER_TEMP/deb/usr/share/applications/fisi-lernplattform.desktop"
           APP_DESKTOP="$RUNNER_TEMP/appimage/fisi-lernplattform.desktop"
-          desktop-file-validate "$DEB_DESKTOP" || FEHLER=1
-          desktop-file-validate "$APP_DESKTOP" || FEHLER=1
+          # desktop-file-validate laeuft nicht hier: die Fassung von Ubuntu
+          # 22.04 (0.26) kennt SingleMainWindow (Spezifikation 1.5) nicht und
+          # meldet es als Fehler (Lauf 38505311173). Geprueft wird mit 0.27 im
+          # Job tests (test_bau_0632_n11.py, gleiche Funktionen des Paketbaus).
           grep -qx "X-AppImage-Version=$VERSION" "$APP_DESKTOP" || { echo "FEHLER: AppImage ohne X-AppImage-Version=$VERSION"; FEHLER=1; }
           if grep -q "X-AppImage-Version" "$DEB_DESKTOP"; then echo "FEHLER: .deb mit X-AppImage-Version"; FEHLER=1; fi
           for f in "$RUNNER_TEMP/deb/opt/fisi-lernplattform/THIRD_PARTY_NOTICES.txt" "$RUNNER_TEMP/deb/usr/share/doc/fisi-lernplattform/THIRD_PARTY_NOTICES.txt"; do

@@ -332,7 +332,7 @@ class ZeitgrenzenTest(unittest.TestCase):
         # N11 (B-M-06): "curl" als Paketname in der apt-Liste des Containers
         # ist kein Aufruf - genau diese eine Zeile, sonst nichts
         paketzeile = ("            binutils file curl ca-certificates git lsb-release "
-                      "squashfs-tools desktop-file-utils \\")
+                      "squashfs-tools \\")
         pakete = [z for z in zeilen if z == paketzeile]
         self.assertEqual(len(pakete), 1)
         self.assertIn(paketzeile, _schritt(_lesen(BUILD), "Linux-Werkzeuge installieren"))

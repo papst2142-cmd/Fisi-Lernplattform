@@ -54,6 +54,21 @@ def pins(lock_path):
     return found
 
 
+def gruppen(alle):
+    """Teilt die Pakete so auf, dass jeder Name je Teil nur einmal vorkommt:
+    pip-audit lehnt zwei Fassungen desselben Pakets in einer Liste ab
+    ("duplicate requirements", Probe-Lauf 38505308938)."""
+    teile = []
+    for name, version in sorted(alle):
+        for teil in teile:
+            if name not in {n for n, _v in teil}:
+                teil.append((name, version))
+                break
+        else:
+            teile.append([(name, version)])
+    return teile
+
+
 def _audit(tool, requirements, output):
     """Ein Lauf von pip-audit. Gibt das gelesene JSON zurueck oder None und
     den Grund, wenn nicht geprueft werden konnte."""
@@ -98,21 +113,29 @@ def main(argv):
     for lock in locks:
         for name, version in pins(lock):
             alle.setdefault((name.lower(), version), []).append(os.path.basename(lock))
+    data = {"dependencies": []}
+    grund = ""
     with tempfile.TemporaryDirectory() as work:
-        requirements = os.path.join(work, "pakete.txt")
-        with open(requirements, "w", encoding="utf-8") as handle:
-            for name, version in sorted(alle):
-                handle.write("%s==%s\n" % (name, version))
-        output = os.path.join(work, "ergebnis.json")
-        data, grund = None, ""
-        for versuch in range(1, VERSUCHE + 1):
-            data, grund = _audit(tool, requirements, output)
-            if data is not None:
+        for nummer, gruppe in enumerate(gruppen(alle), 1):
+            requirements = os.path.join(work, "pakete%d.txt" % nummer)
+            with open(requirements, "w", encoding="utf-8") as handle:
+                for name, version in gruppe:
+                    handle.write("%s==%s\n" % (name, version))
+            output = os.path.join(work, "ergebnis%d.json" % nummer)
+            teil = None
+            for versuch in range(1, VERSUCHE + 1):
+                teil, grund = _audit(tool, requirements, output)
+                if teil is not None:
+                    break
+                if versuch < VERSUCHE:
+                    print("Wiederholung wegen Netzfehler (pip-audit, Versuch %d): %s"
+                          % (versuch, grund))
+                    sys.stdout.flush()
+                    time.sleep(pause)
+            if teil is None:
+                data = None
                 break
-            if versuch < VERSUCHE:
-                print("Wiederholung wegen Netzfehler (pip-audit, Versuch %d): %s" % (versuch, grund))
-                sys.stdout.flush()
-                time.sleep(pause)
+            data["dependencies"].extend(teil["dependencies"])
 
     if data is None:
         text = ("pip-audit nicht pruefbar nach %d Versuchen: %s" % (VERSUCHE, grund))

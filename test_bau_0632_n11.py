@@ -441,6 +441,10 @@ with open(os.environ["STUB_ZAEHLER"], "a") as fh:
     fh.write("x")
 args = sys.argv[1:]
 anf = open(args[args.index("--requirement") + 1]).read().split()
+namen = [z.split("==")[0] for z in anf]
+if len(namen) != len(set(namen)):
+    sys.stderr.write("ERROR:pip_audit._cli:package has duplicate requirements\n")
+    sys.exit(1)
 ausgabe = args[args.index("--output") + 1]
 if modus == "netz":
     sys.stderr.write("requests.exceptions.ConnectionError: pypi.org\n")
@@ -449,7 +453,7 @@ deps = []
 for zeile in anf:
     name, fassung = zeile.split("==")
     vulns = []
-    if modus == "fund" and name == "urllib3":
+    if modus == "fund" and name == "urllib3" or modus == "alt" and fassung == "1.26.4":
         vulns = [{{"id": "GHSA-test-0001", "fix_versions": ["9.9.9"], "aliases": []}}]
     deps.append({{"name": name, "version": fassung, "vulns": vulns}})
 if modus == "uebersprungen":
@@ -498,6 +502,20 @@ class PipAuditTest(unittest.TestCase):
                       "(behoben in: 9.9.9; Lock-Datei: requirements-lock-flet.txt, "
                       "requirements-lock-pip-audit.txt)", text)
         self.assertNotIn("::error", text)
+
+    def test_zwei_fassungen_eines_pakets(self):
+        # zwei Lock-Dateien mit verschiedenen Fassungen (Probe-Lauf 38505308938)
+        alt = os.path.join(self.tmp, "requirements-lock-alt.txt")
+        with open(alt, "w") as fh:
+            fh.write("urllib3==1.26.4 \\\n    --hash=sha256:" + "0" * 64 + "\n")
+        rc, text, versuche = self._lauf("alt", "false", locks=LOCKS + (alt,))
+        self.assertEqual(rc, 0, text)
+        self.assertEqual(versuche, 2)
+        self.assertIn("::warning title=pip-audit::urllib3 1.26.4: GHSA-test-0001 "
+                      "(behoben in: 9.9.9; Lock-Datei: requirements-lock-alt.txt)", text)
+        self.assertEqual(text.count("::warning"), 1)
+        self.assertIn("geprueft, 1 Funde", text)
+        self.assertNotIn("nicht pruefbar", text)
 
     def test_l21_fund_release_rot(self):
         rc, text, _v = self._lauf("fund", "true")
@@ -683,6 +701,9 @@ class PaketTest(unittest.TestCase):
                          deb)
         self.assertEqual(deb, self.bau.DESKTOP_ENTRY.format(exec=self.bau.PACKAGE_NAME,
                                                             wm_class=self.bau.WM_CLASS))
+        # im Job tests (Linux, GitHub) ist desktop-file-utils installiert: dort Pflicht
+        if os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform.startswith("linux"):
+            self.assertTrue(shutil.which("desktop-file-validate"), "desktop-file-validate fehlt")
         if shutil.which("desktop-file-validate"):
             for pfad in (os.path.join(self.tmp, "build", "AppDir",
                                       self.bau.PACKAGE_NAME + ".desktop"),
@@ -745,8 +766,11 @@ class PaketTest(unittest.TestCase):
         schritt = "\n".join(_schritt(_lesen(BUILD_YML), "Paketinhalt pruefen (Linux)"))
         self.assertIn('find dist "$RUNNER_TEMP/deb" "$RUNNER_TEMP/appimage" -name .DS_Store',
                       schritt)
-        self.assertIn('desktop-file-validate "$DEB_DESKTOP" || FEHLER=1', schritt)
-        self.assertIn('desktop-file-validate "$APP_DESKTOP" || FEHLER=1', schritt)
+        # desktop-file-validate von Ubuntu 22.04 kennt SingleMainWindow nicht:
+        # die Pruefung laeuft in test_l38 (Job tests, Ubuntu 24.04)
+        self.assertNotIn("desktop-file-validate \"", schritt)
+        self.assertIn('grep -qx "X-AppImage-Version=$VERSION" "$APP_DESKTOP"', schritt)
+        self.assertIn('if grep -q "X-AppImage-Version" "$DEB_DESKTOP"; then', schritt)
         self.assertIn('exit "$FEHLER"', schritt)
 
 
