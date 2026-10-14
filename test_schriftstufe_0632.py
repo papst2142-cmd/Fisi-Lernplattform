@@ -98,6 +98,29 @@ class StufenTest(unittest.TestCase):
                 else:
                     os.environ[key] = value
 
+    def test_hilfe_und_suche_frage10(self):
+        """Weisung zu Meldung 41, Frage 10: Hilfesatz wortgleich (PC und Handy
+        lesen dasselbe fisi_hilfe), Suchwoerter "Extra groß"/"Maximal" finden
+        die Optischen Anpassungen am PC und am Handy."""
+        import fisi_hilfe
+        import fisi_optionen as fo
+        satz = ("Die Schrift vergrößerst du in den „Optionen“ unter „Optische "
+                "Anpassungen“ bei „Schriftgröße“ mit „Groß“, „Sehr groß“, "
+                "„Extra groß“ oder „Maximal“.")
+        treffer = [s["id"] for s in fisi_hilfe.HELP_SECTIONS if satz in s["text"]]
+        self.assertEqual(len(treffer), 1, treffer)
+        self.assertTrue(all("„Groß“ oder „Sehr groß“" not in s["text"]
+                            for s in fisi_hilfe.HELP_SECTIONS))
+        for wort in ("Extra groß", "Maximal"):
+            for pc in (True, False):
+                self.assertEqual([hit[0] for hit in fo.search_options(wort, pc=pc)][:1],
+                                 [fo.OPTIK_ID], (wort, pc))
+        # Alle Stufennamen stehen in den Suchwoertern
+        optik = [a for a in fo.AREAS if a["id"] == fo.OPTIK_ID][0]
+        woerter = [w.lower() for w in optik["stichwoerter"]]
+        for item in self.th.FONT_SIZES[1:]:
+            self.assertIn(item["name"].lower(), woerter)
+
     def test_kennungen(self):
         th = self.th
         for item in th.FONT_SIZES:
