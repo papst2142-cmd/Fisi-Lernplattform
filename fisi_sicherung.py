@@ -586,7 +586,7 @@ def replace_question(backup):
             "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
-            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Weisung zu Meldung 37, Abschnitt 3
+            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Weisung zu Meldung 38/40, Abschnitt 2
             "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
             "dem Repository wieder dazu. Löschungen, die dieses Gerät schon kennt (zum "
             "Beispiel „Alle Lerndaten löschen“), löschen das Eingespielte nicht noch "
@@ -598,8 +598,7 @@ def replace_question(backup):
             "Geräte deshalb bald. Was ein anderes Gerät ohne Verbindung gelernt hat, "
             "bleibt in der Regel erhalten, wenn es sich erst nach dem Ersetzen wieder "
             "abgleicht und alle deine Geräte schon beim Ersetzen mindestens Version 0.63.2 "
-            "hatten. Was nach dem Erstellen der Sicherung schon abgeglichen war, bleibt "
-            "gelöscht. Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, "
+            "hatten. Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, "
             "gelten weiter – außer sie kamen vor der letzten Löschung derselben Art, die "
             "dieses Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ "
             "oder beide „Bestenliste löschen“); solche werden aufgehoben. Bei Spielständen "
