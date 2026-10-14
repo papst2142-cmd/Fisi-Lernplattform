@@ -17,7 +17,7 @@ Jeder Fall mit der Standardschrift und mit abgelehnter Standardschrift
   K2  Tk teilt kein Wort selbst (jedes Wort jeder Zeile passt in die
       Umbruchbreite); jede Zeile, die innerhalb eines Wortes endet, endet mit
       "-" (vorhandener Bindestrich oder Trennstrich der Regel) - AUSSER die
-      Regel hatte keine zulaessige Stelle (Silbenregel wartet auf N8-F2): dann
+      Regel hatte keine zulaessige Stelle (Wort nicht in der Liste): dann
       prueft der Test, dass es im Wort wirklich keine passende Stelle gab, und
       zaehlt den Fall (Ausgabe "Rueckfall").
   K4  Die Nummer ("4.") steht in derselben Zeile wie der Anfang des Titels.
@@ -323,7 +323,7 @@ class ListentitelBreiteTest(unittest.TestCase):
     def pruefen(self, faktor, ohne=None):
         result = ergebnis(faktor, ohne)
         self.assertIsInstance(result, dict, result)
-        print("\n  Schrift %s, Breiten gezogen %r, Rueckfall (Silbenregel offen, N8-F2): %d"
+        print("\n  Schrift %s, Breiten gezogen %r, Rueckfall (Wort ohne Listeneintrag): %d"
               % (result["schrift"], result["breiten"], len(result["rueckfall"])))
         for zeile in result["rueckfall"]:
             print("    Rueckfall %s" % zeile)

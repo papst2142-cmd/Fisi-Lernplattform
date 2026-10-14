@@ -20,13 +20,18 @@ Was die Regel tut:
     angezeigte Text unveraendert (anzeige_text(): keine Trennung "auf
     Vorrat").
 
-Silbentrennung (trennstellen): Die Erwartungsliste mit den zulaessigen
-Trennstellen legt der Bauer N8 Chat vor (Weisung 38/40, N8-F2); bis Chat sie
-bestaetigt, ist die Silbenregel NICHT gebaut: trennstellen() liefert nur die
-Stellen nach einem vorhandenen Bindestrich. Ein Wort ohne solche Stelle wird
-dann wie bisher an der letzten passenden Stelle ohne Trennstrich geteilt
-(dasselbe, was Tk und Flutter heute tun) - die Nummer bleibt trotzdem beim
-Wort.
+Silbentrennung (trennstellen), Weisung zu Meldung 42, Fragen 11-13: nur die
+von Chat bestaetigte Liste (Meldung 42 Anhang A, WOERTER unten) - kein
+Silbenalgorithmus. Ein Wort der Liste (gross/klein gleich, Satzzeichen am
+Rand wie ":" oder ")" bleiben am Wort) bekommt genau seine Stellen; jedes
+andere Wort nur die Stellen nach einem vorhandenen Bindestrich. Links und
+rechts jeder Stelle stehen mindestens 2 Buchstaben (Frage 12), ein einzelner
+Vokal in der Wortmitte ist zulaessig (Frage 13). Bevorzugte Stellen
+(Wortfuge, vorhandener Bindestrich) werden zuerst genommen, die uebrigen nur,
+wenn keine bevorzugte passt. Zahlen, Adressen und Abkuerzungen ("nie
+trennen") haben keine Stelle; ein Wort ohne passende Stelle wird wie bisher
+an der letzten passenden Stelle ohne Trennstrich geteilt (dasselbe, was Tk
+und Flutter heute tun) - die Nummer bleibt trotzdem beim Wort.
 """
 
 import re
@@ -38,14 +43,108 @@ GESCHUETZT = " "
 TRENNSTRICH = "-"
 
 
-def trennstellen(wort):
-    """Zulaessige Trennstellen in wort (Positionen p: wort[:p] | wort[p:]).
+# Ab 0.63.2 (Weisung zu Meldung 42, Frage 11 (b)): die bestaetigte Liste.
+# "‖" bevorzugte Stelle (Wortfuge oder vorhandener Bindestrich), "|" weitere
+# zulaessige Stelle (Silbengrenze). Neue Woerter kommen hier dazu.
+WOERTER = (
+    "Wirt|schaft|lich|keits‖be|trach|tung",
+    "Wirt|schaft|lich|keits‖ver|gleich",
+    "Mehr‖fak|tor-‖Au|then|ti|fi|zie|rung",
+    "PRÜ|FUNGS‖TRAI|NER",
+    "AN‖PAS|SUN|GEN",
+    "Da|ten‖si|che|rungs‖kon|zep|te",
+    "Hoch‖ver|füg|bar|keit",
+    "Kun|den‖zu|frie|den|heit",
+    "IPv6-‖Adres|se",
+    "Netz‖werk‖in|fra|struk|tur",
+    "Ab|schluss‖pro|jekt",
+    "Schwie|rig|keits‖grad",
+    "Broad|cast-‖Adres|se",
+    "Prä|fix‖län|ge",
+    "Wild|card-‖Mas|ke",
+    "Punkt-‖zu-‖Punkt-‖Ver|bin|dun|gen",
+    "Vir|tu|a|li|sie|rung",
+    "Da|ten‖schutz-‖Grund‖ver|ord|nung",
+    "Ver|schlüs|se|lung",
+    "Nutz‖wert‖ana|ly|se",
+    "AP2-‖Pro|jekt‖do|ku|men|ta|ti|on",
+    "Amor|ti|sa|ti|ons‖rech|nung",
+    "Über|tra|gungs‖ge|schwin|dig|keit",
+    "Un|ter|bre|chungs‖freie",
+    "UND-‖Ver|knüp|fung",
+    "Sub‖netz‖mas|ke",
+    "Not|fall‖wie|der‖her|stel|lung",
+    "In|ves|ti|ti|ons‖ent|schei|dung",
+    "Da|ten‖schutz‖kon|for|me",
+    "Do|ku|men|ten‖ma|nage|ment‖sys|tem",
+    "Schwach|stel|len‖ma|nage|ment",
+    "Netz‖werk‖kom|po|nen|ten",
+    "Re|mote‖desk|top‖diens|te-‖Farm",
+)
+BEVORZUGT, WEITERE = "‖", "|"
+MINDESTENS = 2   # Buchstaben links und rechts jeder Stelle (Frage 12)
 
-    Bis zur Bestaetigung der Erwartungsliste durch Chat (N8-F2) nur die
-    Stellen direkt nach einem vorhandenen Bindestrich ("Mehrfaktor-|...").
-    Keine Stelle am Wortanfang oder -ende."""
-    return [i + 1 for i, zeichen in enumerate(wort)
-            if zeichen == TRENNSTRICH and 0 < i < len(wort) - 1]
+
+def _liste(eintraege):
+    """{wort.lower(): (alle Stellen, bevorzugte Stellen)} aus der Liste."""
+    liste = {}
+    for eintrag in eintraege:
+        wort, alle, bevorzugt = "", [], []
+        for zeichen in eintrag:
+            if zeichen in (BEVORZUGT, WEITERE):
+                alle.append(len(wort))
+                if zeichen == BEVORZUGT:
+                    bevorzugt.append(len(wort))
+            else:
+                wort += zeichen
+        liste[wort.lower()] = (tuple(alle), tuple(bevorzugt))
+    return liste
+
+
+_LISTE = _liste(WOERTER)
+
+
+def _kern(wort):
+    """(anfang, ende) des Wortes ohne Satzzeichen am Rand ("Titel:" ->
+    "Titel", "(Wort)" -> "Wort")."""
+    anfang, ende = 0, len(wort)
+    while anfang < ende and not wort[anfang].isalnum():
+        anfang += 1
+    while ende > anfang and not wort[ende - 1].isalnum():
+        ende -= 1
+    return anfang, ende
+
+
+def _genug(wort, stelle):
+    """Mindestens MINDESTENS Buchstaben links und rechts der Stelle."""
+    return (sum(z.isalpha() for z in wort[:stelle]) >= MINDESTENS and
+            sum(z.isalpha() for z in wort[stelle:]) >= MINDESTENS)
+
+
+def _stellen(wort):
+    """(alle, bevorzugte) Stellen in wort, Positionen p: wort[:p] | wort[p:]."""
+    anfang, ende = _kern(wort)
+    eintrag = _LISTE.get(wort[anfang:ende].lower())
+    if eintrag is not None:
+        alle = [anfang + p for p in eintrag[0]]
+        bevorzugt = [anfang + p for p in eintrag[1]]
+    else:
+        # nicht in der Liste: nur nach einem vorhandenen Bindestrich
+        alle = [i + 1 for i in range(anfang, ende - 1) if wort[i] == TRENNSTRICH]
+        bevorzugt = alle
+    alle = [p for p in alle if _genug(wort, p)]
+    return alle, [p for p in bevorzugt if p in alle]
+
+
+def trennstellen(wort):
+    """Alle zulaessigen Trennstellen in wort (sortiert)."""
+    return _stellen(wort)[0]
+
+
+def bevorzugte_stellen(wort):
+    """Die bevorzugten Trennstellen in wort (Wortfuge, vorhandener
+    Bindestrich); sie werden zuerst genommen."""
+    return _stellen(wort)[1]
 
 
 def _einheiten(text):
@@ -66,24 +165,32 @@ def _einheiten(text):
     return einheiten
 
 
-def _teilen(einheit, praefix, breite, messen, stellen_von):
+def _passend(einheit, start, stellen, breite, messen):
+    """Die hinterste Stelle nach start, deren Stueck (mit Trennstrich, an
+    einem vorhandenen Bindestrich ohne zweiten) in breite passt."""
+    for stelle in reversed(stellen):
+        if stelle <= start:
+            break
+        stueck = einheit[start:stelle]
+        if not stueck.endswith(TRENNSTRICH):
+            stueck += TRENNSTRICH
+        if messen(stueck) <= breite:
+            return stelle, stueck
+    return None
+
+
+def _teilen(einheit, praefix, breite, messen, stellen_von, bevorzugt_von):
     """Teilt eine zu lange Einheit in Stuecke, die je in breite passen.
+    Bevorzugte Stellen zuerst, die uebrigen nur, wenn keine bevorzugte passt.
     Liefert (stuecke, mit_ersatz): mit_ersatz = True, wenn ein Stueck ohne
     zulaessige Stelle geteilt werden musste (Rueckfall wie bisher)."""
     wort = einheit[praefix:]
     stellen = sorted(set(p + praefix for p in stellen_von(wort)))
+    bevorzugt = sorted(set(p + praefix for p in bevorzugt_von(wort)) & set(stellen))
     stuecke, start, ersatz = [], 0, False
     while messen(einheit[start:]) > breite:
-        gewaehlt = None
-        for stelle in reversed(stellen):
-            if stelle <= start:
-                break
-            stueck = einheit[start:stelle]
-            if not stueck.endswith(TRENNSTRICH):
-                stueck += TRENNSTRICH
-            if messen(stueck) <= breite:
-                gewaehlt = (stelle, stueck)
-                break
+        gewaehlt = (_passend(einheit, start, bevorzugt, breite, messen) or
+                    _passend(einheit, start, stellen, breite, messen))
         if gewaehlt is None:
             # Rueckfall: an der letzten passenden Stelle ohne Trennstrich
             # (wie Tk/Flutter bisher), mindestens ein Zeichen - die Nummer
@@ -102,7 +209,8 @@ def _teilen(einheit, praefix, breite, messen, stellen_von):
     return stuecke, ersatz
 
 
-def zeilen(text, breite, messen, stellen_von=trennstellen):
+def zeilen(text, breite, messen, stellen_von=trennstellen,
+           bevorzugt_von=bevorzugte_stellen):
     """Teilt text in Zeilen, die je hoechstens breite breit sind (messen).
     Liefert (zeilen, geteilt): geteilt = True, wenn ein Wort geteilt oder
     eine Nummer beim Wort gehalten werden musste (der Text weicht dann vom
@@ -119,7 +227,8 @@ def zeilen(text, breite, messen, stellen_von=trennstellen):
         if messen(einheit) <= breite:
             zeile = einheit
             continue
-        stuecke, _ersatz = _teilen(einheit, praefix, breite, messen, stellen_von)
+        stuecke, _ersatz = _teilen(einheit, praefix, breite, messen, stellen_von,
+                                   bevorzugt_von)
         geteilt = True
         ergebnis.extend(stuecke[:-1])
         zeile = stuecke[-1]
@@ -128,11 +237,12 @@ def zeilen(text, breite, messen, stellen_von=trennstellen):
     return ergebnis, geteilt
 
 
-def anzeige_text(text, breite, messen, stellen_von=trennstellen):
+def anzeige_text(text, breite, messen, stellen_von=trennstellen,
+                 bevorzugt_von=bevorzugte_stellen):
     """Text fuer die Anzeige: unveraendert, wenn der gewoehnliche Umbruch an
     Leerzeichen reicht (kein Wort zu lang, keine Nummer allein); sonst die
     Zeilen der Regel, mit Zeilenumbruch verbunden."""
-    stuecke, geteilt = zeilen(text, breite, messen, stellen_von)
+    stuecke, geteilt = zeilen(text, breite, messen, stellen_von, bevorzugt_von)
     if not geteilt:
         return text
     return "\n".join(stuecke)
