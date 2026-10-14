@@ -92,7 +92,8 @@ from fisi_lernen import (  # noqa: E402
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME,
     TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
-    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewIndex, ReviewPlan, daily_series,
+    daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
     practice_next_text, reminder_due, reminder_text, save_learning_settings,
     topic_practice_parts, trainer_round,
@@ -1618,6 +1619,14 @@ class DashboardView(View):
             self._dash_cache[name] = (key, value)
         return value
 
+    def _review_plan(self):
+        """Ab 0.63.2 (FG-107): "faellig" schrittweise (fisi_lernen.ReviewIndex),
+        Ergebnis gleich ReviewPlan.from_db(self.db)."""
+        index = getattr(self, "_review_index", None)
+        if index is None or index.db is not self.db:
+            index = self._review_index = ReviewIndex(self.db)
+        return index.plan()
+
     def _month_activity(self, year, month):
         """Kalender (provider): Lerntage eines Monats ueber den Zwischenspeicher."""
         return self._dash_query("kalender", self.db.month_activity, year, month,
@@ -1655,7 +1664,7 @@ class DashboardView(View):
         else:
             self.goal_ring.pack_forget()
             self.lbl_goal.pack_forget()
-        plan = self._dash_query("faellig", ReviewPlan.from_db, self.db, stamps=stamps)
+        plan = self._dash_query("faellig", self._review_plan, stamps=stamps)
         self.lbl_due.configure(text=due_text(plan))
         self.btn_review.set_enabled(plan.count() > 0)
 
