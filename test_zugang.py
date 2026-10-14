@@ -110,7 +110,11 @@ class SchriftgroesseTest(unittest.TestCase):
         th.save_font_size(th.FONT_NORMAL)
 
     def test_speichern_und_lesen(self):
-        self.assertEqual([item["faktor"] for item in th.FONT_SIZES], [1.0, 1.15, 1.3])
+        # Ab 0.63.2 (B-J-06, FG-101): die ersten drei Stufen unveraendert,
+        # dazu 1,6 ("Extra groß") und 2,0 ("Maximal")
+        faktoren = [item["faktor"] for item in th.FONT_SIZES]
+        self.assertEqual(faktoren[:3], [1.0, 1.15, 1.3])
+        self.assertEqual(faktoren[3:], [1.6, 2.0])
         th.save_font_size("sehr_gross")
         self.assertEqual(th.current_font_size, "sehr_gross")
         self.assertEqual(th.saved_font_size(), "sehr_gross")
@@ -120,8 +124,9 @@ class SchriftgroesseTest(unittest.TestCase):
             self.assertEqual(json.load(handle)[th.FONT_KEY], "sehr_gross")
 
     def test_unbekannt_ist_normal(self):
-        self.assertEqual(th.apply_font_size("riesig"), th.FONT_NORMAL)
-        self.assertEqual(th.font_factor("riesig"), 1.0)
+        # Ab 0.63.2 (FG-101): "riesig" ist jetzt eine Stufe (2,0)
+        self.assertEqual(th.apply_font_size("gibt_es_nicht"), th.FONT_NORMAL)
+        self.assertEqual(th.font_factor("gibt_es_nicht"), 1.0)
 
     def test_gleiche_texte_pc_und_handy(self):
         with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
