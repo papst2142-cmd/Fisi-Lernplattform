@@ -6354,7 +6354,7 @@ class Abschlussprojekt051Test(_Einstellungen, unittest.TestCase):
         self.assertEqual(fpj.to_number("1.234,50"), 1234.5)
         self.assertEqual(fpj.to_number("25,5"), 25.5)
         self.assertEqual(fpj.to_number("abc", 7), 7)
-        self.assertEqual(fpj.euro(1234.5), "1.234,50 €")
+        self.assertEqual(fpj.euro(1234.5), "1.234,50\u00a0€")   # ab 0.63.2 FG-109
         rows, total = fpj.schedule({})
         self.assertEqual(total, fpj.MAX_HOURS)
         self.assertEqual(fpj.schedule_warnings({}), [])

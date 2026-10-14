@@ -344,9 +344,9 @@ class BP01Test(unittest.TestCase):
 
     def test_bp01_sachkosten(self):
         felder = {"material_name_0": "Switch", "material_betrag_0": "1.000"}
-        self.assertIn("Sachkosten: 1.000,00 €", fp.cost_lines(felder))
+        self.assertIn("Sachkosten: 1.000,00\u00a0€", fp.cost_lines(felder))
         felder["material_betrag_0"] = "inf"
-        self.assertIn("Sachkosten: 0,00 €", fp.cost_lines(felder))
+        self.assertIn("Sachkosten: 0,00\u00a0€", fp.cost_lines(felder))
 
 
 class PcKaestenHinweisTest(unittest.TestCase):
