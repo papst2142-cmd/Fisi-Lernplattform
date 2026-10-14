@@ -104,7 +104,7 @@ jobs:
           # Bedarf" haelt den Bedarf auf dem Stand von v0.63.1.
           - os: ubuntu-24.04
             label: linux
-            container: ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
+            container: ubuntu:24.04
           # Ab 0.62.4: macos-15 statt macos-14 (GitHub schaltet macos-14 am
           # 02.11.2026 ab). Weiter Apple Silicon (arm64), Label bleibt.
           - os: macos-15
@@ -234,7 +234,7 @@ jobs:
           "$RUNNER_TEMP/audit/bin/python" -m pip install --retries 10 --timeout 60 --quiet --require-hashes -r requirements-lock-pip-audit.txt
           python pruefung/pip_audit_lauf.py --pip-audit "$RUNNER_TEMP/audit/bin/pip-audit" \
             requirements-lock-bau.txt requirements-lock-tests.txt requirements-lock-flet.txt \
-            requirements-lock-certifi.txt requirements-lock-pip-audit.txt
+            requirements-lock-certifi.txt requirements-lock-pip-audit.txt pruefung/probe_luecke.txt
 
       # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
       # Unter macOS laeuft sonst keine Testsammlung.
