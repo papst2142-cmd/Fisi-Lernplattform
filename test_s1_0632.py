@@ -164,6 +164,18 @@ ZWEITES_ERSETZEN = {"direkt": _ALLES, "danach": {"A": _ALLES, "B": _ALLES}}
 # der Uhr-Hinweis bei As Loeschung t2, belegt logs/n14_g8_zweites_ersetzen.log
 G8_U6_KARTEN = {"A": {}, "B": {}}
 G8_U6_HINWEIS = 0
+# Zweite benannte Ausnahme (Weisung zu Meldung 44, 2.5), feste Sollwerte =
+# heutiges Ergebnis, belegt logs/w44_ausnahme2_*.log
+LIFT_RESET = "aufgehoben:reset_at"
+AUSNAHME2_HINWEIS = 0
+AUSNAHME2_KARTEN = {"A": {"a-nach": 1}, "B": {"a-nach": 1}}
+AUSNAHME2_KARTEN_0631 = {"A": {"a-nach": 1}, "B": {"a-nach": 1}}
+# (S6b cb60f8b dort: "a-vorher" 2 und "b-vorher" 2 kommen zurueck, Hinweis -7200)
+
+
+def _utc(text):
+    """Marke (Text mit Zone) als UTC-Zeitpunkt."""
+    return datetime.datetime.fromisoformat(text).astimezone(UTC)
 
 CI_ZELLEN = sorted(set(BISHER) | {("U5", "A", False), ("U8", "A", False),
                                   ("U1", "A", False)})
@@ -622,6 +634,69 @@ class S1ErsetzenTest(S1Basis):
         self.assertEqual(stand["zweites_direkt"], ZWEITES_ERSETZEN["direkt"])
         for name in "AB":
             self.assertEqual(stand["zweites"][name], ZWEITES_ERSETZEN["danach"][name], name)
+
+    def _ausnahme2(self, code=None, lauf=""):
+        """Zweite benannte Ausnahme (Weisung zu Meldung 44, 2.5; Startwerte
+        34/41 in s1_voll ZufallErsetzen): B misst -2 h und sichert, Uhr
+        gestellt, Programm ohne Kennung des Systemstarts neu gestartet
+        (nicht feststellbar). B loescht (t2) und ersetzt ohne Abgleich;
+        24 min nach t2 loescht A (t3, A kennt t2 nicht); Abgleich."""
+        self.lauf_nr = lauf
+        a = self.geraet("A", code=code)
+        b = self.geraet("B", "UTC", code=code)
+        b("ohne_start")
+        self.zeit(0, B=-TWO_H)
+        a("lerne", 2, "vorher")
+        b("lerne", 2, "vorher")
+        for device in (a, b, b):
+            device.sync()                               # B misst -2 h
+        self.zeit(1, B=-TWO_H)
+        b("sicherung_erstellen", self.pfad(b))
+        self.zeit(2.5)                                  # Uhr von B gestellt
+        b = self.neu_starten(b, ("ohne_start",))        # nicht feststellbar
+        self.zeit(3.0)
+        b("lerne", 1, "zw")
+        antwort = b("reset_all")                        # t2
+        self.assertTrue(antwort["ok"])
+        stand = {"hinweis": antwort.get("uhr_fix")}
+        self.zeit(3.2)
+        b("sicherung_ersetzen", self.pfad(b))
+        stand["aufgehoben"] = b.marke(LIFT_RESET)
+        self.zeit(3.4)
+        self.assertTrue(a("reset_all")["ok"])           # t3, echt nach t2
+        stand["t3"] = a.marke()
+        self.zeit(3.6)
+        a("lerne", 1, "nach")
+        self.zeit(4.0)
+        for _ in range(3):
+            for device in (a, b):
+                device.sync()
+        self.ruhe((a, b))
+        stand["karten"] = {device.name: device.namen() for device in (a, b)}
+        for device in (a, b):
+            device.close()
+            self.geraete.remove(device)
+        ta.server_reset()
+        ta.bericht("Ausnahme 2 (%s): %s" % (code or "N", stand))
+        return stand
+
+    def test_ausnahme2_uhr_gestellt_fremde_loeschung_nach_ersetzen(self):
+        """BENANNTE AUSNAHME 2 GEGENUEBER S6B (Weisung zu Meldung 44, 2.5):
+        S6b rechnet die alte Messung (-2 h) in Bs Marke t2 ein, obwohl die
+        Uhr gestellt ist: Marke und Aufhebungsmarke liegen 2 h zu spaet, die
+        spaetere echte Loeschung t3 von A gilt dort mit als aufgehoben und
+        "vorher" kommt zurueck. N setzt t2 richtig, t3 wirkt. Gegen 0.63.1
+        (hebt nichts auf): gleiches Ergebnis, nie mehr Verlust. Feste
+        Sollwerte = heutiges Ergebnis (N und v0.63.1)."""
+        n = self._ausnahme2()
+        self.assertEqual(n["hinweis"], AUSNAHME2_HINWEIS)
+        # Aufhebungsmarke (t2) vor t3: die spaetere Loeschung wird nicht aufgehoben
+        self.assertLess(_utc(json.loads(n["aufgehoben"])[0]), _utc(n["t3"]))
+        for name in "AB":
+            self.assertEqual(n["karten"][name], AUSNAHME2_KARTEN[name], name)
+        alt = self._ausnahme2(self.alter_code(ALT), "_alt")
+        for name in "AB":
+            self.assertEqual(alt["karten"][name], AUSNAHME2_KARTEN_0631[name], ("0.63.1", name))
 
 
 class S1KernTest(unittest.TestCase):
