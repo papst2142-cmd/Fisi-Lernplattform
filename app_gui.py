@@ -6213,6 +6213,11 @@ class SettingsView(View):
         self.lbl_sync = make_label(row, "", font=F["small"], fg=C["text_dim"],
                                    justify="left", anchor="w", wraplength=520)
         self.lbl_sync.pack(side="left", padx=(16, 0))
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, gezeigt nur mit Text
+        # (show_sync_status), dann direkt unter der Zeile mit dem Knopf
+        self._sync_row = row
+        self.lbl_sync_mixed = make_label(sync.body, "", font=F["small"], fg=C["text_dim"],
+                                         justify="left", anchor="w", wraplength=800)
         self.var_sync_auto = tk.BooleanVar(value=settings["sync_auto"])
         ctk.CTkSwitch(sync.body, text="Automatisch abgleichen (beim Start, nach dem "
                                       "Lernen und beim Beenden)",
@@ -6564,6 +6569,7 @@ class SettingsView(View):
             self._sync_status = (result, error)
             return
         self.btn_sync.set_enabled(True)
+        self._show_sync_mixed()
         if error:
             self.lbl_sync.configure(text=error, text_color=C["red"])
             return
@@ -6577,6 +6583,16 @@ class SettingsView(View):
         else:
             text, color = "Noch nicht abgeglichen.", C["muted"]
         self.lbl_sync.configure(text=text, text_color=color)
+
+    def _show_sync_mixed(self):
+        """Ab 0.63.2 (C-4): Mischbetrieb-Zeile (Text wie am Handy aus
+        fisi_optionen); ohne Text nicht gezeigt."""
+        text = fo.sync_mixed_text(self.app.db)
+        self.lbl_sync_mixed.configure(text=text)
+        if text:
+            self.lbl_sync_mixed.pack(after=self._sync_row, anchor="w", pady=(8, 0))
+        else:
+            self.lbl_sync_mixed.pack_forget()
 
     def check_updates(self):
         self.btn_update.set_enabled(False)

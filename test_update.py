@@ -323,6 +323,41 @@ class PendingUpdateTest(TempDataMixin, unittest.TestCase):
         fu.finish_pending_update("0.55.1")
         self.assertFalse(fu.load_settings()["auto_check"])
 
+    # Update-Tipp je System (0.63.2): Wortlaute hier ausgeschrieben, damit
+    # der Test auch gegen den Stand ohne die Konstanten laeuft (rot/gruen).
+    TIP_WINDOWS_0631 = ("Tipp: PC neu starten und das Update erneut versuchen. Klappt es "
+                        "dann nicht, den Installer von der Download-Seite von Hand starten.")
+    TIP_APPIMAGE = ("Tipp: Das Update später erneut versuchen. Klappt es dann nicht, "
+                    "die neue AppImage-Datei von der Download-Seite laden, ausführbar "
+                    "machen (z. B. chmod +x) und von Hand starten. Die bisherige Datei "
+                    "erst löschen, wenn die neue läuft.")
+
+    def test_fehlschlag_appimage_tipp(self):
+        # AppImage merkt sich die bisherige Fassung (.alt); dort gibt es keinen
+        # Installer, also passt der Windows-Tipp nicht
+        fu.remember_pending_update("0.56", backup=os.path.join(
+            self.folder, "FISI-Lernplattform.AppImage" + fu.ALT_SUFFIX))
+        kind, text = fu.finish_pending_update("0.55.1")
+        self.assertEqual(kind, "fehler")
+        self.assertIn(fu.REASON_APPIMAGE, text)
+        self.assertTrue(text.endswith("\n\n" + self.TIP_APPIMAGE), text)
+        self.assertIn("AppImage-Datei", text)
+        self.assertNotIn("Installer", text)
+        self.assertNotIn("PC neu starten", text)
+
+    def test_fehlschlag_windows_tipp_unveraendert(self):
+        # Ohne .alt (Windows): ganzer Text wortgleich mit 0.63.1
+        fu.remember_pending_update("0.56")
+        kind, text = fu.finish_pending_update("0.55.1")
+        self.assertEqual(kind, "fehler")
+        expected = (
+            "Das Update auf Version 0.56 wurde nicht installiert. Installiert "
+            "ist weiterhin Version 0.55.1. Dein Lernstand ist davon nicht "
+            "betroffen.\n\n%s\n\nDas Protokoll liegt hier:\n%s\n"
+            "Es steht auch unter Optionen › Diagnose und Werkzeuge › Problem melden.\n\n"
+            "%s" % (fu.REASON_UNKNOWN, fu.update_log_path(), self.TIP_WINDOWS_0631))
+        self.assertEqual(text, expected)
+
 
 @unittest.skipIf(sys.platform == "win32",
                  "Platzhalter laeuft als Python-Skript; unter Windows wird der echte "

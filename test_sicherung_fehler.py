@@ -577,14 +577,24 @@ class TexteTest(unittest.TestCase):
 
 
 class ProjektLoeschenTest(unittest.TestCase):
-    """B-G-09 (nur der Text): die Rueckfrage sagt, dass die Eingaben bleiben."""
+    """B-G-09: die Rueckfrage sagt ehrlich, was geloescht wird und wo die
+    Eingaben bleiben. Bis 0.63.1 (nur ausgeblendet): "nur ausgeblendet,
+    nicht entfernt" und "in Sicherungen". Ab 0.63.2 (wirklich geloescht,
+    FG-28): "alle seine Eingaben werden gelöscht", aeltere Sicherungsdateien
+    und (nur bei eingerichtetem Abgleich) der Verlauf auf GitHub."""
 
     def test_b_g_09_rueckfrage_ehrlich_und_gleich(self):
         import fisi_projekt as fpj
-        text = fpj.delete_question({"titel": "Netzplan"})
+        text = fpj.delete_question({"titel": "Netzplan"}, synced=True)
         self.assertTrue(text.startswith("„Netzplan“ löschen?"))
-        self.assertIn("nur ausgeblendet, nicht entfernt", text)
-        self.assertIn("in Sicherungen", text)
+        self.assertIn("alle seine Eingaben werden gelöscht", text)
+        self.assertIn("Ältere Sicherungsdateien", text)
+        self.assertIn("im Verlauf des Abgleich-Repositorys auf GitHub", text)
+        local = fpj.delete_question({"titel": "Netzplan"}, synced=False)
+        self.assertTrue(local.startswith("„Netzplan“ löschen?"))
+        self.assertIn("alle seine Eingaben werden gelöscht", local)
+        self.assertIn("Ältere Sicherungsdateien", local)
+        self.assertNotIn("GitHub", local)
         with open(os.path.join(CODE, "app_gui.py"), encoding="utf-8") as handle:
             pc = handle.read()
         with open(os.path.join(CODE, "mobile", "src", "main.py"), encoding="utf-8") as handle:

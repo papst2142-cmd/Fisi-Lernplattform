@@ -223,3 +223,34 @@ def hit_target(title, query=""):
     templates = area["id"] == OPTIK_ID and bool(needle) and any(
         needle in word.lower() for word in TEMPLATE_WORDS)
     return area["id"], templates
+
+
+# Ab 0.63.2 (C-4): Zeile unter dem Abgleich-Status (PC = Handy). Sie sagt, ob
+# der Abgleich gerade die volle Schutzwirkung hat oder ob noch ein Geraet mit
+# einer Version vor 0.62.4 mitgleicht (Mischbetrieb, fisi_sync.MIXED_KEY).
+# Entschieden wird mit derselben Regel wie im Abgleich (_mixed_recent);
+# fisi_sync wird nur gelesen. Kein "vorzeitig beenden" (Abnahme 0.62.4).
+SYNC_MIXED_DONE = "Abgleich: volle Schutzwirkung aktiv."
+SYNC_MIXED_ACTIVE = ("Abgleich: volle Schutzwirkung ab %s (ein Gerät mit älterer "
+                     "Version hat zuletzt am %s abgeglichen).")
+
+
+def sync_mixed_text(db, now=None, settings=None):
+    """Text fuer die Mischbetrieb-Zeile, "" wenn der Abgleich nicht
+    eingerichtet ist oder noch nie lief (dann wird die Zeile nicht gezeigt).
+    now: Zeitpunkt mit Zone (fuer Tests), sonst die Geraeteuhr. Liest nur
+    (ein SELECT in sync_meta) und scheitert nie: im Zweifel "" ."""
+    import datetime
+    import fisi_sync
+    try:
+        settings = settings or fisi_sync.sync_settings()
+        if not fisi_sync.is_configured(settings) or not settings.get("sync_last"):
+            return ""
+        if not fisi_sync._mixed_recent(db, now):
+            return SYNC_MIXED_DONE
+        seen = fisi_sync._parse_utc(db.get_meta(fisi_sync.MIXED_KEY))
+        until = (seen + datetime.timedelta(seconds=fisi_sync.MIXED_HOLD)).astimezone()
+        return SYNC_MIXED_ACTIVE % (until.strftime("%d.%m.%Y"),
+                                    seen.astimezone().strftime("%d.%m."))
+    except Exception:
+        return ""
