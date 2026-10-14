@@ -24,6 +24,13 @@ Die CI-Teilmenge steht in test_s1_0632.py (dieselben Werkzeuge und Soll).
                 gegen den Vergleichsstand: gleiche Zahlen.
   Zufall        26 Zufallsablaeufe (Startwerte 1..26) mit N und mit dem
                 Vergleichsstand: kein Etikett hat mit N weniger (AK1).
+  ZufallErsetzen  26 Zufallsablaeufe mit "Sicherung erstellen" und "Alles
+                ersetzen" (Startwerte 27..52, Weisung zu Meldung 43, 2.5)
+                mit N, v0.63.1 und dem Vergleichsstand. Massstab v0.63.1:
+                kein Etikett mit N weniger, am Ende und direkt nach jedem
+                Ersetzen; jeder geplante Ersetzen-Schritt ausgefuehrt.
+                Gegen 0.63.1: nie mehr Verlust. Gegen S6b: eine benannte
+                Ausnahme (U6) - Abweichungen von S6b nur als Beleg im Log.
 
 Vergleichsstand (Zufall, Kontrolle, Sonder): S1_REF_CODE=<ordner mit dem
 Code von S6b>, sonst v0.63.1 (git archive).
@@ -450,6 +457,178 @@ class Zufall(VollBasis):
             ta.bericht("Zufall %02d: N %s (Hochladungen in Ruhe %d), Vergleich %s (%d)"
                        % (seed, stand["N"][0], stand["N"][1], stand["O"][0], stand["O"][1]))
         ta.bericht("Zufall: %d Etiketten mit N mehr als Vergleich, Fehler %s" % (mehr, fehler))
+        self.assertEqual(fehler, [])
+
+
+# ------------------------------------------------- Zufall mit "Alles ersetzen"
+# Weisung zu Meldung 43, 2.5: eigene Startwerte, die 26 Ablaeufe oben bleiben
+# unveraendert (gegen S6b). Massstab hier v0.63.1 (AK1 erster Teil): "Gegen
+# 0.63.1: nie mehr Verlust. Gegen S6b: eine benannte Ausnahme (U6)." -
+# Abweichungen von S6b stehen nur als Beleg im Log.
+STARTWERTE_ERSETZEN = range(27, 53)
+
+
+def _fuell(rnd, namen, uhr, gesichert, schritte, anzahl, ohne=()):
+    """anzahl Zufallsschritte wie in plan(), dazu "sicherung"; Geraete in
+    ohne gleichen dabei nicht ab und starten nicht neu."""
+    for _ in range(anzahl):
+        n = rnd.choice(namen)
+        was = rnd.choice(("lerne", "lerne", "sync", "sync", "reset_all", "uhr", "neustart_p",
+                          "neustart_s", "sicherung"))
+        if n in ohne and was in ("sync", "neustart_p", "neustart_s", "uhr"):
+            was = "lerne"
+        if was == "uhr":
+            uhr[n] = rnd.choice(UHREN)
+            schritte.append(("*", "uhr", dict(uhr)))
+        else:
+            if was == "sicherung" and n not in gesichert:
+                gesichert.append(n)
+            schritte.append((n, was, None))
+
+
+def plan_ersetzen(seed):
+    """Zufallsablauf um ein "Alles ersetzen" herum. Wie plan() (Uhren,
+    Neustarts, Lernen, Abgleich, Loeschen), dazu "sicherung" (Geraet erstellt
+    seine Sicherungsdatei) und "ersetzen" (wert = Geraet, dessen Datei
+    eingespielt wird). Geruest mit zufaelligen Teilen: X misst seine Uhr und
+    sichert; Fuellschritte; X wird zufaellig neu gestartet und seine Uhr
+    zufaellig gestellt; ein anderes Geraet Y loescht zufaellig und gleicht ab;
+    X loescht zufaellig, ohne abzugleichen; X ersetzt; Fuellschritte, auch
+    ein weiteres Ersetzen. So kommen auch Faelle wie G8/U6 vor."""
+    rnd = random.Random(seed)
+    namen = "ABC"[:2 + (seed % 3 == 0)]
+    x = rnd.choice(namen)
+    y = rnd.choice([n for n in namen if n != x])
+    schritte = [("*", "ohne_start", n) for n in namen if rnd.random() < 0.6]
+    uhr = {n: rnd.choice(UHREN) for n in namen}
+    schritte.append(("*", "uhr", dict(uhr)))
+    for n in namen:
+        schritte.append((n, "lerne", None))
+    for n in namen + x:
+        schritte.append((n, "sync", None))                      # X misst seine Uhr
+    schritte.append((x, "sicherung", None))
+    gesichert = [x]
+    _fuell(rnd, namen, uhr, gesichert, schritte, 4)
+    neustart = rnd.choice(("neustart_p", "neustart_p", "neustart_s", None))
+    if neustart:
+        schritte.append((x, neustart, None))
+    if rnd.random() < 0.3:
+        uhr[x] = rnd.choice(UHREN)                               # Uhr gestellt
+        schritte.append(("*", "uhr", dict(uhr)))
+    if rnd.random() < 0.8:
+        schritte.append((y, "lerne", None))
+        schritte.append((y, "reset_all", None))
+        schritte.append((y, "sync", None))
+    _fuell(rnd, namen, uhr, gesichert, schritte, rnd.randint(0, 2), ohne=(x,))
+    if rnd.random() < 0.8:
+        schritte.append((x, "lerne", None))
+        schritte.append((x, "reset_all", None))
+    quelle = x if rnd.random() < 0.7 else rnd.choice(gesichert)
+    schritte.append((x, "ersetzen", quelle))
+    for _ in range(6):
+        if rnd.random() < 0.2:
+            n = rnd.choice(namen)
+            schritte.append((n, "ersetzen", rnd.choice(gesichert)))
+        else:
+            _fuell(rnd, namen, uhr, gesichert, schritte, 1)
+    return namen, schritte
+
+
+class ZufallErsetzen(VollBasis):
+    MASSSTAB = "alt"        # Kontrollfehler K-b setzt "s6b"
+
+    def datei(self, geraet):
+        return os.path.join(geraet.home, "zufall.fisisicherung")
+
+    def ersetzen(self, device, quelle):
+        """Ein "Alles ersetzen"; True, wenn das Geraet es ausgefuehrt hat."""
+        return bool(device("sicherung_ersetzen", self.datei(quelle)).get("ok"))
+
+    def ablauf(self, seed, code):
+        namen, schritte = plan_ersetzen(seed)
+        zonen = {"A": "Europe/Berlin", "B": "UTC", "C": "Asia/Tokyo"}
+        geraete = {n: self.geraet(n, zonen[n], code=code) for n in namen}
+        t, uhr, nr, direkt, ersetzt = 0.0, {}, 0, [], 0
+        for geraet, was, wert in schritte:
+            if geraet == "*" and was == "ohne_start":
+                geraete[wert]("ohne_start")
+                continue
+            t += 0.2
+            if was == "uhr":
+                uhr = wert
+                self.zeit(t, **uhr)
+                continue
+            self.zeit(t, **uhr)
+            device = geraete[geraet]
+            if was == "lerne":
+                nr += 1
+                device("lerne", 2, "s%02d" % nr)
+            elif was == "sync":
+                device.sync()
+            elif was == "reset_all":
+                device("reset_all")
+            elif was == "neustart_p":
+                geraete[geraet] = self.neu_starten(device, ("ohne_start",))
+            elif was == "neustart_s":
+                device("neustart")
+            elif was == "sicherung":
+                self.assertTrue(device("sicherung_erstellen", self.datei(device))["ok"])
+            elif was == "ersetzen":
+                if self.ersetzen(device, geraete[wert]):
+                    ersetzt += 1
+                direkt.append((geraet, device.namen()))
+        t += 0.2
+        self.zeit(t, **uhr)
+        for _ in range(4):
+            for n in namen:
+                geraete[n].sync()
+        geplant = sum(1 for _, was, _ in schritte if was == "ersetzen")
+        return {"ende": {n: geraete[n].namen() for n in namen}, "direkt": direkt,
+                "geplant": geplant, "ersetzt": ersetzt}
+
+    @staticmethod
+    def weniger(n, o):
+        """Etiketten, die in n weniger oft vorkommen als in o."""
+        return {e: (n.get(e, 0), o.get(e, 0)) for e in set(n) | set(o)
+                if n.get(e, 0) < o.get(e, 0)}
+
+    def test_26_zufallsablaeufe_mit_ersetzen(self):
+        alt, ref = self.alt(), self.ref()
+        massstab = {"alt": "A", "s6b": "S"}[self.MASSSTAB]
+        fehler, belege, zaehlung, summe = [], [], [], [0, 0]
+        for seed in STARTWERTE_ERSETZEN:
+            stand = {}
+            for name, code in (("A", alt), ("S", ref), ("N", None)):
+                self.neuer_lauf("e%02d%s" % (seed, name))
+                stand[name] = self.ablauf(seed, code)
+            for name in "ASN":
+                z = stand[name]
+                if z["ersetzt"] != z["geplant"] or z["ersetzt"] < 1:
+                    zaehlung.append((seed, name, z["geplant"], z["ersetzt"]))
+            n, m, s = stand["N"], stand[massstab], stand["S"]
+            summe[0] += n["ersetzt"]
+            summe[1] += n["geplant"]
+            for dev in n["ende"]:
+                w = self.weniger(n["ende"][dev], m["ende"][dev])
+                if w:
+                    fehler.append((seed, "ende", dev, w))
+            for i, ((dev, nd), (_, md)) in enumerate(zip(n["direkt"], m["direkt"])):
+                w = self.weniger(nd, md)
+                if w:
+                    fehler.append((seed, "direkt %d" % (i + 1), dev, w))
+            for dev in n["ende"]:
+                w = self.weniger(n["ende"][dev], s["ende"][dev])
+                if w:
+                    belege.append((seed, dev, w))
+            ta.bericht("ZufallErsetzen %02d: Ersetzen geplant %d, ausgefuehrt N/A/S %d/%d/%d; "
+                       "N %s; 0.63.1 %s; S6b %s"
+                       % (seed, n["geplant"], n["ersetzt"], stand["A"]["ersetzt"],
+                          stand["S"]["ersetzt"], n["ende"], stand["A"]["ende"], s["ende"]))
+        ta.bericht("ZufallErsetzen: Massstab %s; N weniger als S6b (nur Beleg, U6): %s"
+                   % ({"A": "v0.63.1", "S": "S6b"}[massstab], belege or "keine"))
+        ta.bericht("ZufallErsetzen: Ersetzen mit N ausgefuehrt %d (geplant %d), Zaehlfehler %s, "
+                   "Fehler %s" % (summe[0], summe[1], zaehlung, fehler))
+        self.assertEqual(zaehlung, [], "Ersetzen-Schritte nicht wie geplant ausgefuehrt")
         self.assertEqual(fehler, [])
 
 
