@@ -1341,6 +1341,26 @@ class GradientPanel(tk.Canvas):
         self._texts = (title, subtitle, big, big_sub)
         self._draw()
 
+    def _cover_corners(self, width, height):
+        """Ab 0.63.2 (N8, B-D-08, Banner-Ecke): Die Zierkreise ragten ueber
+        die abgerundeten Ecken des Verlaufs hinaus (Linie im Hintergrund
+        unten rechts, z. B. Normal 1920 px). Die Flaeche ausserhalb der
+        Rundung wird mit dem Hintergrund abgedeckt; im Verlauf aendert sich
+        nichts."""
+        radius = 18 * _SCALE[0] + 0.5
+        steps = 12
+        for cx, cy, ex, ey, sx, sy in ((radius, radius, 0, 0, -1, -1),
+                                       (width - radius, radius, width, 0, 1, -1),
+                                       (radius, height - radius, 0, height, -1, 1),
+                                       (width - radius, height - radius, width, height, 1, 1)):
+            points = [ex, ey]
+            for step in range(steps + 1):
+                angle = math.pi / 2 * step / steps
+                x = cx + sx * radius * math.cos(angle)
+                y = cy + sy * radius * math.sin(angle)
+                points += [x, y]
+            self.create_polygon(points, fill=self.bg, outline="")
+
     def _schedule(self, _event=None):
         # Beim Ziehen des Fensters nicht bei jedem Pixel neu rendern
         if self._job is not None:
@@ -1368,6 +1388,7 @@ class GradientPanel(tk.Canvas):
             self.create_oval(width * cx - radius, height * cy - radius,
                              width * cx + radius, height * cy + radius,
                              outline=color, width=max(1, px(2)))
+        self._cover_corners(width, height)
         title, subtitle, big, big_sub = self._texts
         left = px(28)
         limit = width - left - px(28)

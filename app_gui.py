@@ -1011,7 +1011,14 @@ class Header(ctk.CTkFrame):
                                          placeholder_text="Suchen …  (Strg+F)",   # ab 0.63.2 (N-c): …
                                          placeholder_text_color=C["muted"],
                                          font=F["small"])
-        self.search_entry.pack(side="left", padx=(6, 12), pady=2)
+        # Ab 0.63.2 (N8, B-D-08): Abstand oben/unten aus der Skalierung - bei
+        # Gross/Sehr gross lag das Feld (36 hoch, Abstand 2) nach dem Runden
+        # auf dem 1 px breiten Rahmen und unterbrach ihn unten. Abstand in
+        # echten Pixeln = Rahmenbreite (aufgerundet) + 1, bei Normal wie
+        # bisher 2 px; Hoehe des Felds unveraendert.
+        scale = px(1000) / 1000.0 or 1.0
+        rand = int(-(-1 * scale // 1))
+        self.search_entry.pack(side="left", padx=(6, 12), pady=(rand + 1) / scale)
         self.search_entry._entry.configure(insertbackground=C["accent"],
                                            insertofftime=0)
         self.search_entry.bind("<Return>", lambda _e: self._search())
