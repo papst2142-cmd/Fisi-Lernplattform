@@ -23,6 +23,17 @@ gelten ab dem Start); das Ergebnis wird fuer alle Klassen zwischengespeichert.
 Gegen 14b3bd4 (0.63.1) rot (seitlicher Schieberegler in allen vier Ansichten
 bei 1120 x 720, Messung Plan: +34 bis +565 px).
 
+Ab S1c2-Nachbesserung (Weisung Antwort Meldung 41, 4): Auf GitHub fehlt
+Inter, dort waehlt die App DejaVu Sans (breiter). Deshalb laeuft auch jeder
+Z3-Fall zusaetzlich mit einer anderen Schrift (test_..._andere_schrift, wie
+CI Welle 3b): die Standardschrift wird per fontconfig abgelehnt - im
+Container DejaVu Sans statt Inter wie auf GitHub, auf GitHub eine dritte
+Schrift. Geprueft wird, dass wirklich eine andere Schrift gewaehlt wurde;
+alle Anforderungen und Deckel gelten unveraendert (gemessen mit Inter).
+Notizblock, Fortschritt und Optionen passen ab B-4b auch bei Normal; bei
+Normal darf dort nur umgestellt werden, wo die Seite ohne Anpassung zu breit
+waere (Vergleich mit einem Lauf ohne Normal-Anpassung, siehe Z3_NORMAL_ANSICHTEN).
+
 Start:  xvfb-run -a python test_ansichten_breite.py
 """
 
@@ -261,7 +272,10 @@ Z3_STUFEN = {1.0: "normal", 1.15: "gross", 1.3: "sehr_gross"}
 # Fehlschlag, gemeldet in bau_0.63.2/s1c2/ergebnis.md.
 # Pruefungstrainer (Bewertung) ab B-4b nicht mehr: Kriterien brechen auch bei
 # Normal um (Weisung Antwort Meldung 36, 3), Deckel 0 bei 1120 und 1360.
-Z3_NORMAL_1120_BEKANNT = ("notizblock", "fortschritt", "optionen", "fortschritt_daten")
+# S1c2-Nachbesserung (B-4b Rest, Weisung 32 2.2 / Weisung 41 4): Notizblock,
+# Fortschritt und Optionen brechen bei Normal 1120 jetzt auch um - keine
+# bekannten Faelle mehr, Deckel 0 (vorher 99/230, 34, 6).
+Z3_NORMAL_1120_BEKANNT = ()
 # Nacharbeit Gegenpruefung S1c2 (L1) hatte hier den Pruefungstrainer (Bewertung
 # mit den laengsten Kriterien, schon auf 14b3bd4 zu breit); mit B-4b behoben,
 # die Lockerung N-L2 ist zurueckgenommen.
@@ -277,11 +291,10 @@ Z3_GRENZE_BEKANNT = {("fortschritt_daten", 1.3, 1120)}
 # Ueberstand je Zustand (px, Messung 14b3bd4/b5d12f7 bzw. Nacharbeit), nur
 # die Fehlerarten "seitlich verschiebbar", "Inhalt ... breiter" und
 # "... ausserhalb des sichtbaren Bereichs" (in einem ueberstehenden Zustand).
+# S1c2-Nachbesserung: die Normal-1120-Deckel (Notizblock 99/230, Fortschritt
+# 34, Optionen 6) sind mit B-4b weg; der Deckel bei Sehr gross bleibt der
+# mit Inter gemessene Wert, auch fuer die andere Schrift (keine Lockerung).
 Z3_UEBERSTAND = {
-    ("notizblock", 1.0, 1120): {"start": 99, "offen": 230, "musterantworten": 230},
-    ("fortschritt", 1.0, 1120): {"start": 34},
-    ("fortschritt_daten", 1.0, 1120): {"mit_daten": 34, "neue_zeile": 34},
-    ("optionen", 1.0, 1120): {"alles_offen": 6},
     # N-M1: gemessen mit TESTZEIT (breitestes Datum), vorher 55 mit Uhrzeit des Laufs
     ("fortschritt_daten", 1.3, 1120): {"mit_daten": 70, "neue_zeile": 70},
 }
@@ -343,25 +356,107 @@ def _b4b_teil(ctx, zustand):
     return None
 
 
+# S1c2-Nachbesserung (B-4b Rest): diese Ansichten werden auch bei Normal nach
+# den Z3-Regeln angepasst (app_gui Z3_NORMAL), aber nur, wo die Seite ohne
+# Anpassung zu breit waere. Geprueft im Vergleich mit einem Lauf, in dem
+# Z3_NORMAL aus ist (wie 7a32651): passt dort ein Zustand, muss er hier genau
+# gleich aussehen (Geometrie aller sichtbaren Teile) und nichts umgestellt sein.
+Z3_NORMAL_ANSICHTEN = ("notizblock", "fortschritt", "optionen", "fortschritt_daten")
+
+
 def _normal_unveraendert(ctx, zustand=None):
     """Bei Normal: keine Zeile umbrochen, keine Unterschrift verschoben.
-    Ausnahme B-4b: die Bewertung im Pruefungstrainer (_b4b_teil)."""
+    Ausnahme B-4b: die Bewertung im Pruefungstrainer (_b4b_teil). In den
+    Z3_NORMAL_ANSICHTEN wird das sichtbar Umgestellte nur gemerkt (werte,
+    Vergleich im Test mit dem Lauf ohne Normal-Anpassung; Teile in
+    zugeklappten Kacheln stellt die Anpassung erst beim Aufklappen zurueck)."""
     if ctx.faktor != 1.0:
         return
     frei = _b4b_teil(ctx, zustand)
+    nur_sichtbar = ctx.name in Z3_NORMAL_ANSICHTEN
+    funde = []
     stack = [ctx.view.inner]
     while stack:
         widget = stack.pop()
         if widget is frei:
             continue
+        if nur_sichtbar and not widget.winfo_ismapped():
+            continue
         flow = widget.__dict__.get("_fisi_flow")
         if flow is not None and flow.wrapped:
-            ctx.fehler.append("%s: bei Normal umbrochen: %s" % (ctx.name, widget))
+            funde.append("%s: bei Normal umbrochen: %s" % (ctx.name, widget))
         if widget.__dict__.get("_sub_stacked"):
-            ctx.fehler.append("%s: bei Normal Unterschrift verschoben: %s" % (ctx.name, widget))
+            funde.append("%s: bei Normal Unterschrift verschoben: %s" % (ctx.name, widget))
         if widget.__dict__.get("_fisi_z3_umgestellt"):
-            ctx.fehler.append("%s: bei Normal umgestellt: %s" % (ctx.name, widget))
+            funde.append("%s: bei Normal umgestellt: %s" % (ctx.name, widget))
         stack.extend(widget.winfo_children())
+    if ctx.name in Z3_NORMAL_ANSICHTEN and zustand is not None:
+        ctx.werte["%s/%s" % (ctx.name, zustand)]["umgestellt"] = funde
+    else:
+        ctx.fehler.extend(funde)
+
+
+def _geometrie(ctx, zustand):
+    """Lage und Groesse aller sichtbaren Teile der Seite (relativ zur
+    Seite), als Liste in werte - fuer den Vergleich bei Normal. Gemessen,
+    wenn sich nichts mehr bewegt (zwei gleiche Messungen hintereinander;
+    unter Last kommen spaete Anpassungen der Umbruchbreiten sonst zu spaet)."""
+    vorher = None
+    for _ in range(20):
+        jetzt = _geometrie_jetzt(ctx)
+        if jetzt == vorher:
+            break
+        vorher = jetzt
+        ctx.pump(0.3)
+    ctx.werte["%s/%s" % (ctx.name, zustand)]["geometrie"] = jetzt
+
+
+def _geometrie_jetzt(ctx):
+    view = ctx.view
+    ox, oy = view.inner.winfo_rootx(), view.inner.winfo_rooty()
+    zeilen = []
+    stack = [view.inner]
+    while stack:
+        widget = stack.pop()
+        for child in widget.winfo_children():
+            try:
+                if not child.winfo_ismapped():
+                    continue
+                zeilen.append("%s %r %d %d %d %d" % (
+                    type(child).__name__, _text(child), child.winfo_rootx() - ox,
+                    child.winfo_rooty() - oy, child.winfo_width(), child.winfo_height()))
+            except Exception:  # noqa: BLE001
+                continue
+            stack.append(child)
+    return sorted(zeilen)
+
+
+def _zugeklappt_unterschrift(ctx, zustand):
+    """S1c2-Nachbesserung: eine zugeklappte Kachel (FoldCard), deren
+    Unterschrift unter die Ueberschrift gerueckt ist, zeigt sie direkt unter
+    der Ueberschrift und mit dem Abstand des Kopfes zum unteren Rand (vorher
+    brach das Verschieben bei zugeklappter Kachel ab, Optionen Sehr gross 1120
+    mit DejaVu Sans)."""
+    import fisi_widgets
+    stack = [ctx.view.inner]
+    while stack:
+        widget = stack.pop()
+        stack.extend(widget.winfo_children())
+        if not isinstance(widget, fisi_widgets.FoldCard) or widget.opened \
+                or not widget._sub_stacked or not widget.winfo_ismapped():
+            continue
+        unten = widget._sub_below
+        name = "%s/%s: %s" % (ctx.name, zustand, widget.fold_title)
+        if not unten.winfo_ismapped():
+            ctx.fehler.append("%s: Unterschrift nicht sichtbar" % name)
+            continue
+        kopf = widget.head
+        luecke = unten.winfo_y() - (kopf.winfo_y() + kopf.winfo_height())
+        rand = widget.winfo_height() - (unten.winfo_y() + unten.winfo_height())
+        if luecke > fisi_widgets.px(2) + 1:
+            ctx.fehler.append("%s: Unterschrift %d px unter der Ueberschrift" % (name, luecke))
+        if rand < fisi_widgets.px(widget._head_top) - 1:
+            ctx.fehler.append("%s: Unterschrift nur %d px ueber dem unteren Rand" % (name, rand))
 
 
 def _unterklassen_sichtbar(ctx, zustand):
@@ -401,8 +496,9 @@ def _tabellen_lesbar(ctx, zustand):
     (ttk.Treeview) passt jeder Spaltenkopf und jeder Zelltext in seine
     Spalte - nichts ist abgeschnitten. Nur Gross/Sehr gross (Z3); Normal
     bleibt wie 0.63.1 (dort ist "Pruefung" mit langem Namen schon zu schmal,
-    gemeldet in ergebnis_nacharbeit_gp.md)."""
-    if ctx.faktor == 1.0:
+    gemeldet in ergebnis_nacharbeit_gp.md) - ausser die Ansicht wird bei
+    Normal angepasst (B-4b Rest, Z3_NORMAL)."""
+    if ctx.faktor == 1.0 and not ctx.view.__dict__.get("_z3_normal_on"):
         return
     from tkinter import ttk
     import tkinter.font as tkfont
@@ -486,6 +582,9 @@ def _z3_pruefe(ctx, zustand):
     _tabellen_lesbar(ctx, zustand)
     _normal_unveraendert(ctx, zustand)
     _haken_nur_wo_noetig(ctx, zustand)
+    _zugeklappt_unterschrift(ctx, zustand)
+    if ctx.faktor == 1.0 and ctx.name in Z3_NORMAL_ANSICHTEN:
+        _geometrie(ctx, zustand)
 
 
 @ansicht("notizblock")
@@ -649,7 +748,9 @@ def pruefe_optionen(ctx):
     _z3_pruefe(ctx, "alles_offen")
     for card in view.folds.values():
         card.set_opened(False)
-    ctx.pump(0.3)
+    ctx.pump(0.8)
+    # S1c2-Nachbesserung: wieder zugeklappt (verschobene Unterschriften)
+    _z3_pruefe(ctx, "wieder_zu")
 
 
 @ansicht("fortschritt_daten")
@@ -678,8 +779,9 @@ def pruefe_fortschritt_daten(ctx):
     _z3_pruefe(ctx, "neue_zeile")
 
 
-def worker(faktor, breite, hoehe, namen):
-    """Laeuft im eigenen Prozess; gibt eine JSON-Zeile "ERG {...}" aus."""
+def worker(faktor, breite, hoehe, namen, z3_aus=False):
+    """Laeuft im eigenen Prozess; gibt eine JSON-Zeile "ERG {...}" aus.
+    z3_aus: Ansichten ohne Anpassung bei Normal (Z3_NORMAL aus, wie 7a32651)."""
     home = tempfile.mkdtemp(prefix="fisi_ansichten_")
     os.environ.update(HOME=home, APPDATA=home, FISI_DB_PATH=os.path.join(home, "t.db"),
                       FISI_SELFTEST=os.path.join(home, "log.txt"))
@@ -694,6 +796,12 @@ def worker(faktor, breite, hoehe, namen):
     fisi_widgets.apply_ui_scale(faktor)
     app_gui.UpdateController.auto_check = lambda self: None
     app_gui.SyncController.auto_start = lambda self: None
+    if z3_aus:
+        for klasse in vars(app_gui).values():
+            if isinstance(klasse, type) and "Z3_NORMAL" in vars(klasse):
+                klasse.Z3_NORMAL = False
+    import random
+    random.seed(6301)    # Kartenauswahl fest: Laeufe mit und ohne Anpassung vergleichbar
     meldungen = []
     app_gui.messagebox.showerror = lambda *a, **k: meldungen.append(a)
     root = ctk.CTk()
@@ -715,6 +823,8 @@ def worker(faktor, breite, hoehe, namen):
     if meldungen:
         for name in namen:
             ergebnis[name]["fehler"].append("Fehlermeldungen: %r" % meldungen)
+    for name in namen:
+        ergebnis[name]["schrift"] = fisi_widgets.F.get("family")
     print("ERG " + json.dumps(ergebnis, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)
@@ -738,14 +848,40 @@ HAS_DISPLAY = False if "--fall" in sys.argv else _tk_ok()
 _ERGEBNISSE = {}
 
 
-def ergebnis(faktor, breite, hoehe):
+def _fc_ohne(family):
+    """fontconfig-Datei, die die Einstellungen des eigenen Prozesses nutzt
+    (ein gesetztes FONTCONFIG_FILE, sonst die des Systems), aber zusaetzlich
+    family (und ihre Display-Variante) ablehnt (Muster aus N5,
+    test_spiel_breite_0632)."""
+    path = os.path.join(tempfile.mkdtemp(prefix="fisi_fc_"), "fonts.conf")
+    basis = os.path.abspath(os.environ.get("FONTCONFIG_FILE") or "/etc/fonts/fonts.conf")
+    patterns = "".join(
+        "<pattern><patelt name=\"family\"><string>%s</string></patelt></pattern>" % name
+        for name in (family, family + " Display"))
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
+                     '<fontconfig><include ignore_missing="yes">%s</include>'
+                     '<selectfont><rejectfont>%s</rejectfont></selectfont>'
+                     '</fontconfig>\n' % (basis, patterns))
+    return path
+
+
+def ergebnis(faktor, breite, hoehe, ohne=None, z3_aus=False):
     """Alle angemeldeten Ansichten fuer eine Schriftgroesse und ein Fenster
-    (ein Prozess, Ergebnis zwischengespeichert)."""
-    key = (faktor, breite, hoehe)
+    (ein Prozess, Ergebnis zwischengespeichert); ohne = abgelehnte Schrift;
+    z3_aus: dieselben Ansichten, aber ohne Anpassung bei Normal."""
+    key = (faktor, breite, hoehe, ohne, z3_aus)
     if key not in _ERGEBNISSE:
+        # gleicher Ablauf in beiden Laeufen (Vergleich mit z3_aus): feste
+        # Hash-Reihenfolge und dieselben vorangehenden Ansichten
+        env = dict(os.environ, PYTHONHASHSEED="0")
+        if ohne:
+            env["FONTCONFIG_FILE"] = _fc_ohne(ohne)
+        namen = list(ANSICHTEN)
         done = subprocess.run([sys.executable, os.path.abspath(__file__), "--fall",
-                               str(faktor), str(breite), str(hoehe)] + list(ANSICHTEN),
-                              capture_output=True, text=True, timeout=900, cwd=HERE)
+                               str(faktor), str(breite), str(hoehe)]
+                              + (["--z3-aus"] if z3_aus else []) + namen,
+                              capture_output=True, text=True, timeout=900, cwd=HERE, env=env)
         lines = [line for line in done.stdout.splitlines() if line.startswith("ERG ")]
         _ERGEBNISSE[key] = (json.loads(lines[-1][4:]) if lines else
                             "kein Ergebnis:\n%s\n%s" % (done.stdout[-2000:], done.stderr[-4000:]))
@@ -758,14 +894,17 @@ class AnsichtBreiteBasis(unittest.TestCase):
 
     NAME = None
 
-    def run_case(self, faktor, breite, hoehe):
+    def run_case(self, faktor, breite, hoehe, ohne=None):
         if self.NAME is None:
             self.skipTest("Basisklasse")
-        result = ergebnis(faktor, breite, hoehe)
+        result = ergebnis(faktor, breite, hoehe, ohne)
         self.assertIsInstance(result, dict, result)
         mine = result[self.NAME]
-        print("\n  %s %s %dx%d: %s" % (self.NAME, Z3_STUFEN[faktor], breite, hoehe,
-                                      {k: v["inhalt"] for k, v in mine["werte"].items()}))
+        print("\n  %s %s %dx%d (%s): %s" % (self.NAME, Z3_STUFEN[faktor], breite, hoehe,
+                                           mine["schrift"],
+                                           {k: v["inhalt"] for k, v in mine["werte"].items()}))
+        if faktor == 1.0 and self.NAME in Z3_NORMAL_ANSICHTEN:
+            self._nur_wo_noetig(faktor, breite, hoehe, ohne, mine)
         if getattr(self, "_bekannt", False):
             # Bekannte Luecke Normal 1120 (cfb32a9): nur Ueberstand erlaubt, aber
             # nichts darf bei Normal umgestellt sein (faengt eine fehlende Normal-Sperre).
@@ -777,15 +916,53 @@ class AnsichtBreiteBasis(unittest.TestCase):
             self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
                             "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
         else:
-            self.assertEqual(mine["fehler"], [], "%s %s %dx%d" % (self.NAME, Z3_STUFEN[faktor],
-                                                                 breite, hoehe))
+            self.assertEqual(mine["fehler"], [], "%s %s %dx%d (Schrift %s)"
+                             % (self.NAME, Z3_STUFEN[faktor], breite, hoehe, mine["schrift"]))
         self.assertTrue(mine["werte"], "keine Zustaende geprueft")
+        return mine
+
+    def _nur_wo_noetig(self, faktor, breite, hoehe, ohne, mine):
+        """B-4b Rest (Z3_NORMAL_ANSICHTEN): bei Normal nur umgestellt, wo die
+        Seite ohne Anpassung zu breit waere. Vergleich je Zustand mit dem
+        Lauf ohne Normal-Anpassung (gleiche Schrift): passt der Zustand dort,
+        ist hier nichts umgestellt und jedes sichtbare Teil liegt gleich."""
+        aus = ergebnis(faktor, breite, hoehe, ohne, z3_aus=True)
+        self.assertIsInstance(aus, dict, aus)
+        aus = aus[self.NAME]
+        self.assertEqual(aus["schrift"], mine["schrift"])
+        for zustand, wert in mine["werte"].items():
+            vorher = aus["werte"][zustand]
+            if vorher["inhalt"] > vorher["sichtbar"]:
+                continue        # ohne Anpassung zu breit: Umstellen erlaubt
+            self.assertEqual(wert["umgestellt"], [], "%s %dx%d (%s): umgestellt, obwohl "
+                             "es ohne Anpassung passt" % (zustand, breite, hoehe, mine["schrift"]))
+            anders = sorted(set(wert["geometrie"]) ^ set(vorher["geometrie"]))
+            self.assertEqual(wert["geometrie"], vorher["geometrie"],
+                             "%s %dx%d (%s): anders als ohne Anpassung, obwohl es passt "
+                             "(ohne/mit: %s)" % (zustand, breite, hoehe, mine["schrift"],
+                                                 [("ohne" if z in vorher["geometrie"] else "mit", z)
+                                                  for z in anders][:12]))
 
 
 def _make(faktor, breite, hoehe, bekannt=False):
     def test(self):
         self._bekannt = bekannt
         self.run_case(faktor, breite, hoehe)
+    return test
+
+
+def _make_ohne(faktor, breite, hoehe, bekannt=False):
+    """Derselbe Fall mit abgelehnter Standardschrift (andere Schriftmetrik,
+    Muster CI Welle 3b); bekannte Faelle mit denselben Deckeln."""
+    def test(self):
+        if self.NAME is None:
+            self.skipTest("Basisklasse")
+        self._bekannt = bekannt
+        standard = ergebnis(faktor, breite, hoehe)
+        self.assertIsInstance(standard, dict, standard)
+        family = standard[self.NAME]["schrift"]
+        mine = self.run_case(faktor, breite, hoehe, ohne=family)
+        self.assertNotEqual(mine["schrift"], family, "Schrift nicht gewechselt")
     return test
 
 
@@ -825,6 +1002,8 @@ def fuer_alle_stufen(cls):
             bekannt = _bekannt(cls.NAME, faktor, breite)
             test = _make(faktor, breite, hoehe, bekannt)
             setattr(cls, "test_%s_%d" % (stufe, breite), test)
+            setattr(cls, "test_%s_%d_andere_schrift" % (stufe, breite),
+                    _make_ohne(faktor, breite, hoehe, bekannt))
     return cls
 
 
@@ -939,7 +1118,9 @@ class FlowRowTest(unittest.TestCase):
 if __name__ == "__main__":
     if "--fall" in sys.argv:
         position = sys.argv.index("--fall")
+        namen = sys.argv[position + 4:]
+        z3_aus = "--z3-aus" in namen
         worker(float(sys.argv[position + 1]), int(sys.argv[position + 2]),
-               int(sys.argv[position + 3]), sys.argv[position + 4:])
+               int(sys.argv[position + 3]), [n for n in namen if n != "--z3-aus"], z3_aus)
     else:
         unittest.main(verbosity=2)
