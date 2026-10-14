@@ -8,9 +8,11 @@ Abgleich-Kern 0.63.2 (Plan 0.63.2, Bauauftrag S6a; Teilplan S6 1.1, 1.7, 1.8, 2)
           dem Schreibblock von merge_into_local; in der Sicherung vor dem
           Schreibblock von "Alles ersetzen" (nach der Sicherheitskopie) und
           vor dem Zurueckholen geloeschter Spielstaende (merge_backup).
-  B-G-17  "Bestenliste loeschen": Die Marke liegt eine Sekunde vor dem
-          Loeschen; ein Eintrag aus derselben Sekunde bleibt (auch auf einem
-          Geraet mit 0.63.1).
+  B-G-17  "Bestenliste loeschen" (ab Weisung zu Meldung 41, Frage 8, FG-100):
+          Die Marke ist wieder "jetzt"; ein Eintrag, der nicht nach der Marke
+          liegt, bekommt Marke + 1 s (in deren Zone) und bleibt (auch auf
+          einem Geraet mit 0.63.1); Eintraege anderer Geraete aus derselben
+          Sekunde vor dem Loeschen sind weg.
   B-G-29  Sehr alte Datenbank (vor v0.24, Eintraege ohne uid) als Datei auf
           zwei Geraete kopiert: Die uid kommt aus Tabelle, id und Inhalt,
           beide Kopien zaehlen nach dem Abgleich nicht doppelt. Abgesichert
@@ -357,7 +359,8 @@ class BG17Bestenliste(unittest.TestCase):
 
     def test_b_g_17_bestenliste_selbe_sekunde(self):
         """Loeschen und neuer Eintrag in derselben Sekunde, danach Abgleich
-        mit der eigenen Datei: Der neue Eintrag bleibt (vorher: 0 Zeilen)."""
+        mit der eigenen Datei: Der neue Eintrag bleibt (vorher: 0 Zeilen).
+        Ab FG-100: Der Eintrag traegt Marke + 1 s."""
         db = neue_db("bg17")
         db.log_record("lauf1", "rekord", "vorher", 1.0)
         sekundenanfang()
@@ -374,22 +377,91 @@ class BG17Bestenliste(unittest.TestCase):
         self.assertEqual(zeilen(db.db_path, "SELECT schluessel FROM spiel_bestenliste"),
                          [("nachher",)])
 
-    def test_b_g_17_marke_eine_sekunde_frueher(self):
-        """Die Marke ist genau eine Sekunde frueher, die Zone bleibt (auch
-        ueber die Zeitumstellung und den Jahreswechsel; als UTC exakt)."""
-        faelle = [("2026-10-25 02:00:00+01:00", "2026-10-25 01:59:59+01:00"),
-                  ("2027-01-01 00:00:00+01:00", "2026-12-31 23:59:59+01:00"),
-                  ("2026-07-01 12:30:15+02:00", "2026-07-01 12:30:14+02:00"),
-                  ("2026-07-01 12:30:15-05:30", "2026-07-01 12:30:14-05:30")]
-        for jetzt, soll in faelle:
+    def test_b_g_17_fg100_marke_ist_jetzt(self):
+        """FG-100 (neu, 0.63.2): Die Marke ist genau der Zeitpunkt des
+        Loeschens mit Zone (nicht mehr 1 s frueher)."""
+        for jetzt in ("2026-10-25 02:00:00+01:00", "2027-01-01 00:00:00+01:00",
+                      "2026-07-01 12:30:15+02:00", "2026-07-01 12:30:15-05:30"):
             db = neue_db("bg17_marke")
             with mock.patch.object(fisi_core.DBManager, "_marker_now",
                                    staticmethod(lambda cur, v=jetzt: (v, 0))):
                 self.assertTrue(db.reset_records())
-            self.assertEqual(db.get_meta("bestenliste_reset_at"), soll)
-            parsed = fisi_sync.parse_marker(soll)
-            vorher = fisi_sync.parse_marker(jetzt)
-            self.assertEqual((vorher[1] - parsed[1]).total_seconds(), 1.0)
+            self.assertEqual(db.get_meta("bestenliste_reset_at"), jetzt)
+
+    # (Marke, Stempel des Geraets (Ortszeit, Abstand min), erwarteter Stempel)
+    _FG100_FAELLE = [
+        # dieselbe Sekunde, gleiche Zone -> Marke + 1 s
+        ("2026-07-01 12:30:15+02:00", ("2026-07-01 12:30:15", 120), ("2026-07-01 12:30:16", 120)),
+        # schon nach der Marke -> unveraendert
+        ("2026-07-01 12:30:15+02:00", ("2026-07-01 12:30:16", 120), ("2026-07-01 12:30:16", 120)),
+        # Marke von einem Geraet in anderer Zone, in UTC gleich -> Marke + 1 s in deren Zone
+        ("2026-07-01 12:30:15-05:30", ("2026-07-01 20:00:15", 120), ("2026-07-01 12:30:16", -330)),
+        # andere Zone, in UTC und als Text danach -> unveraendert
+        ("2026-07-01 12:30:15-05:30", ("2026-07-01 20:00:16", 120), ("2026-07-01 20:00:16", 120)),
+        # Zeitumstellung (doppelte Stunde): als Text spaeter, in UTC frueher -> Marke + 1 s
+        ("2026-10-25 02:30:00+01:00", ("2026-10-25 02:45:00", 120), ("2026-10-25 02:30:01", 60)),
+        # Zeitumstellung: in UTC spaeter, als Text frueher (Mischbetrieb liest als Text)
+        ("2026-10-25 02:59:59+02:00", ("2026-10-25 02:00:00", 60), ("2026-10-25 03:00:00", 120)),
+        # Zeitumstellung Fruehjahr, dieselbe Sekunde
+        ("2026-03-29 03:00:00+02:00", ("2026-03-29 03:00:00", 120), ("2026-03-29 03:00:01", 120)),
+        # Jahreswechsel
+        ("2026-12-31 23:59:59+01:00", ("2026-12-31 23:59:59", 60), ("2027-01-01 00:00:00", 60)),
+        # Marke mit Sekundenbruchteil
+        ("2026-07-01 12:30:15.250000+02:00", ("2026-07-01 12:30:15", 120),
+         ("2026-07-01 12:30:16", 120)),
+        # Marke ohne Zone (wie bis 0.62.3): als Text, Abstand des Geraets bleibt
+        ("2026-07-01 12:30:15", ("2026-07-01 12:30:15", 120), ("2026-07-01 12:30:16", 120)),
+        ("2026-07-01 12:30:15", ("2026-07-01 12:30:16", 120), ("2026-07-01 12:30:16", 120)),
+        # keine bzw. ungueltige Marke -> unveraendert
+        (None, ("2026-07-01 12:30:15", 120), ("2026-07-01 12:30:15", 120)),
+        ("x", ("2026-07-01 12:30:15", 120), ("2026-07-01 12:30:15", 120)),
+        ("2026-02-30 12:00:00+01:00", ("2026-02-28 12:00:00", 60), ("2026-02-28 12:00:00", 60)),
+    ]
+
+    def test_b_g_17_fg100_stempel_zonen_und_zeitumstellung(self):
+        """FG-100 (neu, 0.63.2): Der Eintrag liegt danach nach der Marke - in
+        UTC (Abgleich mit Zone) und als Text (Mischbetrieb) -, und der Abgleich
+        mit der eigenen Datei behaelt ihn."""
+        for marke, stempel, soll in self._FG100_FAELLE:
+            with self.subTest(marke=marke, stempel=stempel):
+                db = neue_db("bg17_stempel")
+                if marke is not None:
+                    db.set_meta("bestenliste_reset_at", marke)
+                with mock.patch.object(fisi_core.DBManager, "_stamp",
+                                       lambda self, v=stempel: v):
+                    self.assertTrue(db.log_record("l", "rekord", "k", 1.0))
+                ist = zeilen(db.db_path, "SELECT timestamp, utc_offset FROM spiel_bestenliste")
+                self.assertEqual(ist, [soll])
+                geparst = fisi_sync.parse_marker(marke)
+                if geparst:
+                    self.assertGreater(soll[0], geparst[0][:19])
+                    if geparst[1] is not None:
+                        utc = (datetime.datetime.strptime(soll[0], "%Y-%m-%d %H:%M:%S")
+                               - datetime.timedelta(minutes=soll[1]))
+                        self.assertGreater(utc, geparst[1])
+                fisi_sync.merge_into_local(db, fisi_sync.export_local(db), check_future=False)
+                self.assertEqual(zeilen(db.db_path, "SELECT count(*) FROM spiel_bestenliste"),
+                                 [(1,)])
+
+    def test_b_g_17_fg100_fremd_selbe_sekunde_vorher_weg(self):
+        """FG-100 (neu, 0.63.2): Ein Eintrag eines anderen Geraets aus derselben
+        Sekunde wie die Marke (vor dem Loeschen entstanden) verschwindet beim
+        Abgleich; der eigene neue Eintrag bleibt."""
+        db = neue_db("bg17_fremd")
+        sekundenanfang()
+        db.reset_records()
+        db.log_record("lauf1", "rekord", "nachher", 2.0)
+        marke = db.get_meta("bestenliste_reset_at")
+        columns = list(fisi_sync.SYNC_TABLES["spiel_bestenliste"])
+        werte = {"timestamp": marke[:19], "utc_offset": int(marke[-6:-3]) * 60 + (
+            1 if marke[-6] == "+" else -1) * int(marke[-2:]), "durchgang": "l2",
+            "art": "rekord", "schluessel": "fremd-selbe-sekunde", "wert": 3.0, "daten": "{}"}
+        fremd = {"format": fisi_sync.FORMAT, fisi_sync.WRITER_KEY: "x", "markers": {},
+                 "columns": {"spiel_bestenliste": columns},
+                 "tables": {"spiel_bestenliste": [["u-fremd"] + [werte[c] for c in columns]]}}
+        fisi_sync.merge_into_local(db, fremd, check_future=False)
+        self.assertEqual(zeilen(db.db_path, "SELECT schluessel FROM spiel_bestenliste"),
+                         [("nachher",)])
 
     def test_b_g_17_schutz_andere_loeschknoepfe(self):
         """Schutz: "Alle Lerndaten loeschen", "Historie loeschen" und
@@ -796,6 +868,42 @@ class GeraeteTest(unittest.TestCase):
         for device in (a, b):
             keys = [json.loads(r)[5] for r in device("inhalt")["tabellen"]["spiel_bestenliste"]]
             self.assertEqual(keys, ["b-neu"], device.name)
+        self.stabil([a, b])
+
+    def test_b_g_17_fg100_mischbetrieb_zonen_und_altes_geraet_loescht(self):
+        """FG-100 (neu, 0.63.2): B (0.63.2, Zone UTC) loescht, sein Eintrag
+        derselben Sekunde traegt Marke + 1 s und bleibt auch auf A (v0.63.1,
+        Europe/Berlin). Loescht danach A (v0.63.1), ist alles weg wie mit
+        0.63.1; ein spaeterer Eintrag von B kommt ueberall an; kein Hin und Her."""
+        a = self.voll("A", code=self.alter_code(ALT))
+        b = self.voll("B", tz="UTC")
+
+        def schluessel():
+            return {d.name: sorted(json.loads(r)[5] for r in
+                                   d("inhalt")["tabellen"]["spiel_bestenliste"]) for d in (a, b)}
+        a("bestenliste", "alt")
+        b("bestenliste", "vorher")
+        self.alle_sync([a, b, a], 1)
+        ta.pause()
+        antwort = b("bestenliste_neu", "neu")
+        marke = antwort["marke"]
+        bericht("FG-100 Mischbetrieb: Marke B %s, Eintrag %s" % (marke, antwort["eintraege"]))
+        self.assertTrue(marke.endswith("+00:00"), marke)
+        self.assertEqual(antwort["eintraege"], [(datetime.datetime.strptime(
+            marke[:19], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(seconds=1)).strftime(
+                "%Y-%m-%d %H:%M:%S")])
+        self.alle_sync([b, a, b, a], 1)
+        self.assertEqual(schluessel(), {"A": ["b-neu"], "B": ["b-neu"]})
+        ta.pause()
+        antwort = a("bestenliste_neu", "neu")
+        bericht("FG-100 Mischbetrieb: Marke A (v0.63.1) %s, Eintrag %s"
+                % (antwort["marke"], antwort["eintraege"]))
+        self.alle_sync([a, b, a, b], 1)
+        self.assertEqual(schluessel(), {"A": [], "B": []})
+        ta.pause()
+        b("bestenliste", "spaeter")
+        self.alle_sync([b, a, b], 1)
+        self.assertEqual(schluessel(), {"A": ["b-spaeter"], "B": ["b-spaeter"]})
         self.stabil([a, b])
 
     # ------------------------------------------------------------ B-G-29 Geraete

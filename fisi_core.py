@@ -1360,11 +1360,23 @@ class DBManager:
 
     def log_record(self, run, kind, key, value, data=""):
         """Eine Zeile der Bestenliste (data ist JSON-Text)."""
+        stamp = self._stamp()
+        # Ab 0.63.2 (B-G-17, FG-100): Liegt der Eintrag nicht nach der Marke von
+        # "Bestenliste loeschen" (gelesen wie beim Abgleich: als Text, mit Zone
+        # in UTC), bekommt er die Marke + 1 s in deren Zone. Sonst entfernte der
+        # naechste Abgleich den Eintrag aus derselben Sekunde wieder.
+        import fisi_sync
+        mark = fisi_sync.parse_marker(self.get_meta("bestenliste_reset_at"))
+        local = mark and datetime.datetime.strptime(mark[0][:19], "%Y-%m-%d %H:%M:%S")
+        if mark and (stamp[0] <= mark[0] or mark[1] and datetime.datetime.strptime(
+                stamp[0], "%Y-%m-%d %H:%M:%S") - datetime.timedelta(minutes=stamp[1]) <= mark[1]):
+            stamp = ((local + datetime.timedelta(seconds=1)).strftime("%Y-%m-%d %H:%M:%S"),
+                     stamp[1] if mark[1] is None else round((local - mark[1]).total_seconds() / 60))
         return bool(self._execute(
             "INSERT INTO spiel_bestenliste (timestamp, utc_offset,"
             " durchgang, art, schluessel, wert,"
             " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (*self._stamp(), run or "", kind, key, value, data or "{}", self._uid()),
+            (*stamp, run or "", kind, key, value, data or "{}", self._uid()),
             commit=True, default=False))
 
     def records(self):
@@ -1392,14 +1404,6 @@ class DBManager:
             for table in RECORD_TABLES:
                 cur.execute("DELETE FROM " + table)
             marker, self.last_clock_fix = self._marker_now(cur)
-            # Ab 0.63.2 (B-G-17): Marke eine Sekunde frueher (Zone bleibt).
-            # Das Spiel traegt den laufenden Spielstand gleich danach neu ein,
-            # oft in derselben Sekunde - mit "nicht nach der Marke = weg"
-            # entfernte der naechste Abgleich ihn sonst wieder (auch auf
-            # Geraeten mit aelterer Version, die die Marke so uebernehmen).
-            marker = (datetime.datetime.strptime(marker[:19], "%Y-%m-%d %H:%M:%S")
-                      - datetime.timedelta(seconds=1)).strftime(
-                          "%Y-%m-%d %H:%M:%S") + marker[19:]
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         ("bestenliste_reset_at", marker))
             conn.commit()
