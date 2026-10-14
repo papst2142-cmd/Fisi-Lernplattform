@@ -247,6 +247,13 @@ class PcTest(unittest.TestCase):
                  for _id, title, text, _t in fo.search_options(query, pc=True)]
         return hits + fc.search_content(query)
 
+    def assert_more_hint(self, extra, count):
+        """Genau ein Hinweis auf weitere Treffer. Der Anfang "..." wird in
+        N8 (N-c) zu "\u2026"; beide Schreibweisen gelten, die Zahl muss stimmen."""
+        self.assertEqual(len(extra), 1, extra)
+        self.assertIn(extra[0], ["%s weitere %d Treffer nicht angezeigt." % (start, count)
+                                 for start in ("...", "\u2026")])
+
     def row_texts(self, hit):
         kind, category, title, detail = hit
         head = "%s · %s" % (kind, self.gui.CATEGORY_SHORT.get(category, "")) \
@@ -303,8 +310,7 @@ class PcTest(unittest.TestCase):
             if not hits:
                 self.assertEqual(extra, ["Keine Treffer. Versuche einen anderen Suchbegriff."])
             elif len(hits) > 60:
-                self.assertEqual(extra, ["... weitere %d Treffer nicht angezeigt."
-                                         % (len(hits) - 60)])
+                self.assert_more_hint(extra, len(hits) - 60)
                 # der Hinweis steht unter der letzten Zeile
                 self.assertEqual(view.results_box.winfo_children()[-1].cget("text"), extra[0])
             else:
@@ -379,7 +385,7 @@ class PcTest(unittest.TestCase):
         self.assertGreater(len(hits), 60)
         rows, extra = self.shown_rows()
         self.assertEqual(rows, [self.row_texts(hit) for hit in hits[:60]])
-        self.assertEqual(extra, ["... weitere %d Treffer nicht angezeigt." % (len(hits) - 60)])
+        self.assert_more_hint(extra, len(hits) - 60)
 
     def test_k5_klick_und_tastatur_auch_nachgereicht(self):
         """K5: Zeile 1 und eine nachgereichte Zeile (40) per Klick, Eingabe
@@ -631,6 +637,35 @@ class PcTest(unittest.TestCase):
             _Clock.shift = 0
             fh.save_name("")
             fl.save_learning_settings(ziel_anzahl=20)
+            view.refresh()
+
+    def test_a_n7_25_abgleich_bringt_fremde_eintraege(self):
+        """A-N7-25: ein Abgleich (merge_into_local) bringt Eintraege eines
+        anderen Geraets; refresh_after_sync zeigt danach dieselben Zahlen wie
+        eine Neuberechnung ohne Zwischenspeicher (ohne eigenes refresh)."""
+        import fisi_sync
+        view = self.dashboard()
+        view.refresh()
+        self.root.update()
+        before = self.snapshot(view)
+        other = fc.DBManager(os.path.join(_TMP, "anderes_geraet.db"))
+        for index in range(5):
+            question = fc.QUIZ_QUESTIONS[900 + index]
+            other.log_quiz_answer(question["cat"], question["q"], index % 2 == 0)
+            card = fc.KARTEIKARTEN[900 + index]
+            other.log_card(card["cat"], card["q"], "freitext", True)
+        scen = fc.AP1_SZENARIEN[3]
+        other.log_ap1(3, scen["title"], scen["theme"], True)
+        try:
+            fisi_sync.merge_into_local(self.app.db, fisi_sync.export_local(other))
+            self.app.refresh_after_sync()
+            self.root.update()
+            after = self.snapshot(view)
+            self.assertNotEqual(after, before)          # der Abgleich aendert etwas
+            self.assertEqual(after, self.uncached_snapshot(view))
+        finally:
+            self.app.db.reset_all()
+            _fill_db(self.app.db.db_path)
             view.refresh()
 
     def test_k12_differenz_nach_jedem_schritt(self):
