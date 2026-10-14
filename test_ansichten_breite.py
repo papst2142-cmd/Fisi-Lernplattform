@@ -285,6 +285,15 @@ Z3_NORMAL_1360_BEKANNT = ()
 # Sehr gross 1120 (Spaltenkoepfe + Datum passen nicht, ohne Text zu kuerzen).
 # Offene Designfrage an Nico (Varianten mit Fotos in ergebnis_nacharbeit_gp.md).
 Z3_GRENZE_BEKANNT = {("fortschritt_daten", 1.3, 1120)}
+# Weisung 44, 2.6 (6a b): Erwartung je Schrift in den bekannten Faellen,
+# fest statt einer Ausnahme. "erwartet": Ueberstand bis zum Deckel
+# (Z3_UEBERSTAND), Erinnerung "Luecke behoben" bleibt; "null": kein
+# Ueberstand. Unbekannte Schrift: nur der Deckel und ein VERMERK im Testlog.
+Z3_SCHRIFT_ERWARTUNG = {
+    "Inter": "erwartet",          # Standardschrift (lokal, Container)
+    "DejaVu Sans": "erwartet",    # GitHub-Standard, lokal die zweite Schrift
+    "TkDefaultFont": "null",      # GitHub, dritte Schrift (Lauf 38549977359)
+}
 
 
 # Nacharbeit Gegenpruefung S1c2 (L2): in bekannten Faellen nur der gemessene
@@ -884,8 +893,12 @@ def worker(faktor, breite, hoehe, namen, z3_aus=False):
     if meldungen:
         for name in namen:
             ergebnis[name]["fehler"].append("Fehlermeldungen: %r" % meldungen)
+    import tkinter.font as tkfont
+    # 6a (b): gezeichnete Familie dazu - belegt die Schrifterkennung
+    gezeichnet = tkfont.Font(root, font=fisi_widgets.F["body"]).actual("family")
     for name in namen:
         ergebnis[name]["schrift"] = fisi_widgets.F.get("family")
+        ergebnis[name]["schrift_gezeichnet"] = gezeichnet
     print("ERG " + json.dumps(ergebnis, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)
@@ -993,9 +1006,15 @@ class AnsichtBreiteBasis(unittest.TestCase):
         print("\n  %s %s %dx%d (%s): %s" % (self.NAME, Z3_STUFEN[faktor], breite, hoehe,
                                            mine["schrift"],
                                            {k: v["inhalt"] for k, v in mine["werte"].items()}))
+        self._schrift_erkannt(mine)
         if faktor == 1.0 and self.NAME in Z3_NORMAL_ANSICHTEN:
             self._nur_wo_noetig(faktor, breite, hoehe, ohne, mine)
-        if getattr(self, "_bekannt", False):
+        erwartung = Z3_SCHRIFT_ERWARTUNG.get(mine["schrift"], "unbekannt")
+        if getattr(self, "_bekannt", False) and erwartung == "null":
+            self.assertEqual(mine["fehler"], [], "%s %s %dx%d: Schrift %s ohne Ueberstand "
+                             "erwartet (Z3_SCHRIFT_ERWARTUNG)"
+                             % (self.NAME, Z3_STUFEN[faktor], breite, hoehe, mine["schrift"]))
+        elif getattr(self, "_bekannt", False):
             # Bekannte Luecke Normal 1120 (cfb32a9): nur Ueberstand erlaubt, aber
             # nichts darf bei Normal umgestellt sein (faengt eine fehlende Normal-Sperre).
             normal = [f for f in mine["fehler"] if "bei Normal" in f]
@@ -1003,18 +1022,32 @@ class AnsichtBreiteBasis(unittest.TestCase):
             self.assertEqual(_bekannte_fehler(self.NAME, faktor, breite, mine["fehler"]), [],
                              "%s %s %dx%d: mehr als der bekannte Ueberstand"
                              % (self.NAME, Z3_STUFEN[faktor], breite, hoehe))
-            if ohne is None:
-                # Erinnerung an die Liste nur mit der Standardschrift: mit
-                # einer anderen Schrift kann der bekannte Ueberstand fehlen
-                # (GitHub, dritte Schrift: Fortschritt mit Daten passt dort)
+            if erwartung == "erwartet":
                 self.assertTrue(mine["fehler"], "%s %s %dx%d: Luecke behoben - "
                                 "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen"
                                 % (self.NAME, Z3_STUFEN[faktor], breite, hoehe))
+            else:
+                print("\n  VERMERK: unbekannte Schrift %r (gezeichnet %r) - %s %s %dx%d nur "
+                      "mit Deckel geprueft, Ueberstand %r"
+                      % (mine["schrift"], mine.get("schrift_gezeichnet"), self.NAME,
+                         Z3_STUFEN[faktor], breite, hoehe, mine["fehler"]))
         else:
             self.assertEqual(mine["fehler"], [], "%s %s %dx%d (Schrift %s)"
                              % (self.NAME, Z3_STUFEN[faktor], breite, hoehe, mine["schrift"]))
         self.assertTrue(mine["werte"], "keine Zustaende geprueft")
         return mine
+
+    def _schrift_erkannt(self, mine):
+        """6a (b): die gemeldete Schrift ist die gezeichnete. TkDefaultFont
+        ist keine Familie; gezeichnet wird dann eine andere als die der
+        Tabelle (die sind abgelehnt oder fehlen)."""
+        schrift, gezeichnet = mine["schrift"], mine.get("schrift_gezeichnet")
+        if schrift == "TkDefaultFont":
+            self.assertNotIn(gezeichnet, Z3_SCHRIFT_ERWARTUNG,
+                             "Schrifterkennung: TkDefaultFont gemeldet, gezeichnet %r" % gezeichnet)
+        else:
+            self.assertEqual(gezeichnet, schrift, "Schrifterkennung: gemeldet %r, gezeichnet %r"
+                             % (schrift, gezeichnet))
 
     def _nur_wo_noetig(self, faktor, breite, hoehe, ohne, mine):
         """B-4b Rest (Z3_NORMAL_ANSICHTEN): bei Normal nur umgestellt, wo die
