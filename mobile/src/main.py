@@ -2795,6 +2795,7 @@ class NotebookScreen(Screen):
         return [e["key"] for e in self.entries if e["source"] == source]
 
     def practice(self, source, keys, first=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         if not keys:
             self.toast("In dieser Auswahl gibt es dazu keine Fragen.")
             return
@@ -2802,10 +2803,10 @@ class NotebookScreen(Screen):
             keys = [first] + [key for key in keys if key != first]
         if source == SRC_CARD:
             self.app.screens["cards"].practice(keys)
-            self.app.open("cards")
+            self.app.open("cards", toast_bis=mark)
         elif source == SRC_QUIZ:
             self.app.screens["quiz"].practice(keys, keep_order=first is not None)
-            self.app.open("quiz")
+            self.app.open("quiz", toast_bis=mark)
         elif source == SRC_PROJECT:
             self.app.screens["testproject"].open_detail(keys[0])
         else:
@@ -5476,13 +5477,16 @@ class FISIMobileApp:
         self.body.content = screen.root
         self.page.update()
 
-    def open(self, key):
+    def open(self, key, toast_bis=None):
         """Unterseite (z.B. Karteikarten, Suche) ueber der aktuellen Seite
         oeffnen - der Zurueck-Pfeil bzw. die Zurueck-Geste fuehrt zurueck."""
+        # Ab 0.63.2 (N-a, Frage 17): Nummer vor on_show lesen oder vom Aufrufer
+        # uebernehmen; Hinweise aus diesem Ereignis bleiben nach push offen.
+        mark = self.toast_mark() if toast_bis is None else toast_bis
         started = time.perf_counter()
         screen = self.screens[key]
         screen.on_show()
-        self.push(screen.crumbs, screen.root)
+        self.push(screen.crumbs, screen.root, toast_bis=mark)
         # Ab 0.63.2 (B-G-23, Nacharbeit M1): Hinweis aus on_show nach push zeigen
         after_open = getattr(screen, "after_open", None)
         if after_open is not None:
@@ -5544,8 +5548,9 @@ class FISIMobileApp:
             pass
 
     def open_cards(self, category, topic=None):
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         self.screens["cards"].set_category(category, topic)
-        self.open("cards")
+        self.open("cards", toast_bis=mark)
 
     def open_help(self, section_id=None):
         """Hilfe oeffnen (ab 0.56), auf Wunsch mit aufgeklapptem Abschnitt."""
@@ -5609,6 +5614,7 @@ class FISIMobileApp:
             return None
 
     def open_search_hit(self, kind, title):
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         if kind == fh.SEARCH_KIND:
             self.open_help(fh.HELP_BY_TITLE[title]["id"])
         elif kind == fo.SEARCH_KIND:
@@ -5619,10 +5625,10 @@ class FISIMobileApp:
                 self.scroll_to_area(self.screens["settings"].open_area(area_id, templates))
         elif kind == "Karteikarte":
             self.screens["cards"].jump_to_question(title)
-            self.open("cards")
+            self.open("cards", toast_bis=mark)
         elif kind == KIND_QUIZ:
             self.screens["quiz"].jump_to_question(title)
-            self.open("quiz")
+            self.open("quiz", toast_bis=mark)
         else:
             key = "ap1scenarios" if kind == "AP1-Szenario" else "scenarios"
             screen = self.screens[key]
@@ -5804,6 +5810,7 @@ class FISIMobileApp:
     def start_review(self):
         """"Jetzt wiederholen" (ab 0.51): erst faellige Karteikarten, dann
         faellige Pruefungstrainer-Fragen."""
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         plan = ReviewPlan.from_db(self.db)
         source = plan.first_source()
         if source is None:
@@ -5811,7 +5818,7 @@ class FISIMobileApp:
             return
         key = "cards" if source == SRC_CARD else "quiz"
         self.screens[key].practice(plan.session(source))
-        self.open(key)
+        self.open(key, toast_bis=mark)
 
     def practice_topic(self, name):
         """"Jetzt ueben" neben einem schwachen Thema (ab 0.54, wie am PC):
@@ -5836,6 +5843,7 @@ class FISIMobileApp:
     def _practice_part(self, parts):
         """Gemischte Runde (ab 0.54, wie am PC): erst die Quizfragen, nach
         ihrem Ergebnis auf Rueckfrage die Karteikarten zum selben Thema."""
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         source, keys = parts[0]
         rest = parts[1:]
         key = "cards" if source == SRC_CARD else "quiz"
@@ -5856,7 +5864,7 @@ class FISIMobileApp:
             self.scroll_top()
             self.page.update()
         else:
-            self.open(key)
+            self.open(key, toast_bis=mark)
 
     def check_reminder(self):
         """Erinnerung ans Tagesziel (ab 0.51) als Hinweis beim Oeffnen bzw.
