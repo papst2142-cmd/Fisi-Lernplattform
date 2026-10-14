@@ -759,6 +759,29 @@ def inhalt_ohne_zeit(inhalt):
     return result
 
 
+# Weisung zu Meldung 41, Frage 9 (erst im Integrationsstand mit S6c/B-G-09):
+# Loescht ein Geraet mit 0.63.2 ein Projekt, schreibt es je Feld eine leere
+# neuere Fassung (B-G-09); 0.63.1 blendet nur aus. Erwartet wird deshalb genau
+# fuer diese Projekte "" statt des Texts - fuer kein anderes Projekt.
+PROJEKTE_LEER = None    # Kontrollfehler: {"Projekt a-2"} zusaetzlich muss rot werden
+
+
+def projekt_leer_erwarten(referenz, projekte):
+    """referenz (inhalt_ohne_zeit) mit leeren Feldern fuer projekte."""
+    projekte = set(projekte) | set(PROJEKTE_LEER or ())
+    if not projekte:
+        return referenz
+    neu = dict(referenz)
+    zeilen_neu = []
+    for zeile in referenz.get("abschlussprojekt", []):
+        werte = json.loads(zeile)
+        if werte[0] in projekte and werte[1] != "_geloescht":
+            werte[2] = ""
+        zeilen_neu.append(json.dumps(werte, ensure_ascii=False))
+    neu["abschlussprojekt"] = sorted(zeilen_neu)
+    return neu
+
+
 class GeraeteTest(unittest.TestCase):
     """Geraete-Prozesse gegen die Attrappe (Werkzeuge aus test_abgleich, ohne
     dessen Tests zu erben)."""
@@ -1003,6 +1026,8 @@ class GeraeteTest(unittest.TestCase):
         den Bestenliste-Eintrag, den 0.63.2 nach eigenem Loeschen behaelt."""
         alt = self.alter_code(ALT)
         referenz, _ = self.mischbetrieb(alt, alt, alt, a_zuerst, lauf="_nur_alt")
+        # T-c: B (0.63.2) loescht "Projekt a-1" (Frage 9)
+        referenz = projekt_leer_erwarten(referenz, () if a_zuerst else ("Projekt a-1",))
         for device in list(self.geraete):
             device.close()
             self.geraete.remove(device)
@@ -2338,6 +2363,8 @@ class BG08Ersetzen(unittest.TestCase):
         vorher, zwischen = self._bg08_haken(ersetzer)
         referenz, _ = self.mischbetrieb(alt, alt, alt, a_zuerst, zwischen=zwischen,
                                         vorher=vorher, lauf="_nur_alt")
+        # T-c: B (0.63.2) loescht "Projekt a-1" (Frage 9)
+        referenz = projekt_leer_erwarten(referenz, () if a_zuerst else ("Projekt a-1",))
         for device in list(self.geraete):
             device.close()
             self.geraete.remove(device)
