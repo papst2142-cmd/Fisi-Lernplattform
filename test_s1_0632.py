@@ -160,6 +160,10 @@ def bisher(zelle):
 # Meldung 41, Auflage 2), belegt logs/n14_g8_zweites_ersetzen.log
 _ALLES = {"a-vorher": 2, "b-vorher": 2}
 ZWEITES_ERSETZEN = {"direkt": _ALLES, "danach": {"A": _ALLES, "B": _ALLES}}
+# Fester Sollwert nach dem ersten Ersetzen (U6-Fall, heutiges Ergebnis) und
+# der Uhr-Hinweis bei As Loeschung t2, belegt logs/n14_g8_zweites_ersetzen.log
+G8_U6_KARTEN = {"A": {}, "B": {}}
+G8_U6_HINWEIS = 0
 
 CI_ZELLEN = sorted(set(BISHER) | {("U5", "A", False), ("U8", "A", False),
                                   ("U1", "A", False)})
@@ -609,8 +613,12 @@ class S1ErsetzenTest(S1Basis):
         Ergebnis fest, auch fuer ein zweites "Alles ersetzen" mit derselben
         Datei (Auflage 2)."""
         stand = self._f2b("U6", zweimal=True)
+        # Fester Sollwert = heutiges Ergebnis (Weisung zu Meldung 42, 4 Nr. 2):
+        # kein Uhr-Hinweis bei t2, nach dem ersten Ersetzen auf A und B leer,
+        # nach dem zweiten Ersetzen direkt und nach 3 Runden je 2/2.
+        self.assertEqual(stand["hinweis"], G8_U6_HINWEIS)
         for name in "AB":
-            self.assertEqual(stand["karten"][name], {}, name)
+            self.assertEqual(stand["karten"][name], G8_U6_KARTEN[name], name)
         self.assertEqual(stand["zweites_direkt"], ZWEITES_ERSETZEN["direkt"])
         for name in "AB":
             self.assertEqual(stand["zweites"][name], ZWEITES_ERSETZEN["danach"][name], name)
