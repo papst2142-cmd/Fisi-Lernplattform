@@ -6,6 +6,9 @@ N-a  Ein Seitenwechsel schliesst nur Hinweise, die vor dem Ereignis offen
      waren: toast vergibt eine laufende Nummer, push(toast_bis=...) schliesst
      nur kleinere Nummern. Szenarien/Testprojekte (open_detail) lesen die
      Nummer vor dem Schreiben (_flush). Ohne Parameter wie bisher.
+     Ab Weisung zu Meldung 41 (Abschnitt 16): open liest die Nummer vor
+     on_show oder nimmt eine mitgegebene an (HA3-HA9), das Spiel gibt sie an
+     den Seitenwechsel (SP1-SP6, SP1 ueber open_site(toast_bis=...)).
 N-b  Z7 im Spiel (mobile/src/spiel.py): Ereignisse, die schreiben und danach
      ohne eigenes Zeichnen enden, zeichnen am Ende mit spiel._redraw (wie
      main._redraw), damit die Anzeige nach einem Datenbank-Hinweis nicht
@@ -249,6 +252,141 @@ class DetailHinweisTest(N15Basis):
                 self.drop_views()
 
 
+def _find_click(control, default):
+    """Steuerelement mit on_click=lambda _e, k=<default>: ... (Kachel)."""
+    stack = [control]
+    while stack:
+        item = stack.pop()
+        handler = getattr(item, "on_click", None)
+        if handler is not None and getattr(handler, "__defaults__", None) == (default,):
+            return handler
+        for name in ("content", "controls"):
+            child = getattr(item, name, None)
+            if isinstance(child, list):
+                stack.extend(child)
+            elif child is not None and not isinstance(child, str):
+                stack.append(child)
+    return None
+
+
+class SeitenwechselHinweisTest(N15Basis):
+    """Weisung zu Meldung 41, Abschnitt 16, Frage 17: HA3-HA9. Ein Hinweis aus
+    dem Ereignis vor dem Seitenwechsel (open) bleibt offen; aeltere schliesst
+    open weiter. Testname test_ha<n>_..."""
+
+    def setUp(self):
+        super().setUp()
+        self.app.close_toast()
+        self.drop_views()
+        self.addCleanup(self.drop_views)
+        self.cards = self.app.screens["cards"]
+        self.addCleanup(setattr, self.cards, "pending", None)
+
+    def pending_card(self):
+        """Karteikarte aufgedeckt, nicht bewertet: _flush schreibt (log_card)."""
+        card = self.cards.cards[0]
+        self.cards.pending = card
+        return card["q"]
+
+    def assert_open(self, text=DB_TEXT):
+        self.assertEqual(len(self.toasts(text)), 1, self.events)
+        snack = self.app._toast
+        self.assertTrue(snack is not None and snack.open,
+                        "Hinweis nach dem Seitenwechsel geschlossen: %r" % self.events)
+        self.assertIn(text, snack.content.value)
+
+    def failing_on_show(self, key):
+        app = self.app
+        return mock.patch.object(app.screens[key], "on_show",
+                                 lambda: app.db.error_handler(DB_TEXT))
+
+    def test_ha3_open_on_show(self):
+        """open liest die Nummer vor on_show (Pruefungstrainer schreibt dort)."""
+        with self.failing_on_show("quiz"):
+            self.app.open("quiz")
+        self.assert_open()
+
+    def test_ha4_lernen_kachel(self):
+        app = self.app
+        app.show_tab("learn")
+        self.addCleanup(app.show_tab, "dashboard")
+        click = _find_click(app.screens["learn"].root, "quiz")
+        self.assertIsNotNone(click, "Kachel Pruefungstrainer nicht gefunden")
+        self.events.clear()
+        with self.failing_on_show("quiz"):
+            click(None)
+        self.assert_open()
+
+    def test_ha5_notizblock_karten(self):
+        key = self.pending_card()
+        with self.db_error("log_card"):
+            self.app.screens["notebook"].practice(self.main.SRC_CARD, [key])
+        self.assert_open()
+
+    def test_ha5_notizblock_pruefung_laeuft(self):
+        """Hinweis "Es laeuft gerade eine Pruefung ..." bleibt nach open stehen."""
+        fp, quiz = self.main.fp, self.app.screens["quiz"]
+        quiz.mode_pills.select_value("pruefung", notify=False)
+        self.addCleanup(quiz.mode_pills.select_value, "uebung", False)
+        self.addCleanup(setattr, quiz.exam, "state", None)
+        fp.save_running(fp.new_exam(fp.WISO, [], seed=5))
+        self.addCleanup(fp.clear_running)
+        question = quiz.questions[0]["q"]
+        self.app.screens["notebook"].practice(self.main.SRC_QUIZ, [question])
+        self.assert_open("Es läuft gerade eine Prüfung")
+
+    def test_ha6_open_cards(self):
+        self.pending_card()
+        with self.db_error("log_card"):
+            self.app.open_cards("Alle")
+        self.assert_open()
+
+    def test_ha7_suchtreffer_karte(self):
+        key = self.pending_card()
+        with self.db_error("log_card"):
+            self.app.open_search_hit("Karteikarte", key)
+        self.assert_open()
+
+    def test_ha8_start_review(self):
+        key = self.pending_card()
+
+        class Plan:
+            def first_source(self):
+                return "card_source"
+
+            def session(self, _source):
+                return [key]
+        with mock.patch.object(self.main, "SRC_CARD", "card_source"), \
+                mock.patch.object(self.main.ReviewPlan, "from_db", lambda _db: Plan()), \
+                self.db_error("log_card"):
+            self.app.start_review()
+        self.assert_open()
+
+    def test_ha9_practice_part(self):
+        key = self.pending_card()
+        with self.db_error("log_card"):
+            self.app._practice_part([(self.main.SRC_CARD, [key])])
+        self.assert_open()
+
+    def test_testnamen_wie_stellen(self):
+        names = sorted(name.split("_")[1] for name in dir(self) if name.startswith("test_ha"))
+        self.assertEqual(sorted(set(names)), ["ha%d" % n for n in range(3, 10)])
+
+    def test_alter_hinweis_wird_geschlossen(self):
+        """Schutz: ein Hinweis von vorher schliesst open weiter (ohne und mit
+        mitgegebener Nummer)."""
+        app = self.app
+        app.toast("alt")
+        snack = app._toast
+        app.open("cards")
+        self.assertFalse(snack.open)
+        self.drop_views()
+        app.toast("alt 2")
+        snack = app._toast
+        app.open_cards("Alle")
+        self.assertFalse(snack.open)
+
+
 def _parse(path):
     with open(path, encoding="utf-8") as handle:
         return ast.parse(handle.read())
@@ -272,41 +410,42 @@ def _callers(path):
 
 # Aufrufer von push/open/show_tab (K6). "ja" = schreibt im selben Ereignis vor
 # dem Seitenwechsel (Beleg in bau_0.63.2/n15/aufrufer_push_open.md).
-# "nummer": gibt toast_bis mit. "offen": Chat entscheidet (N15-F1 fuer open,
-# N15-F4 fuer spiel.py), bis dahin unveraendert.
+# "nummer": gibt toast_bis mit (Weisung zu Meldung 41, Abschnitt 16: SP1-SP6,
+# HA3-HA9). "selbst": der Seitenwechsel open liest die Nummer selbst am Anfang
+# (HA4, Lernen-Kachel ohne Schreiben davor).
 AUFRUFER = [
-    ("main", "LearnScreen", "build", "open", "offen"),            # on_show quiz
+    ("main", "LearnScreen", "build", "open", "selbst"),           # HA4: on_show quiz
     ("main", "ScenarioScreen", "open_detail", "push", "nummer"),
     ("main", "ProjectScreen", "open_detail", "push", "nummer"),
     ("main", "ProjectScreen", "use_as_template", "open", "nein"),
-    ("main", "NotebookScreen", "practice", "open", "offen"),
-    ("main", "NotebookScreen", "practice", "open", "offen"),
+    ("main", "NotebookScreen", "practice", "open", "nummer"),     # HA5
+    ("main", "NotebookScreen", "practice", "open", "nummer"),     # HA5
     ("main", "SettingsScreen", "show_license", "push", "nein"),
     ("main", "SettingsScreen", "show_notices", "push", "nein"),
     ("main", "FISIMobileApp", "__init__", "show_tab", "nein"),     # A12 sammelt
     ("main", "FISIMobileApp", "_appbar", "open", "nein"),
     ("main", "FISIMobileApp", "_nav_changed", "show_tab", "nein"),
     ("main", "FISIMobileApp", "show_tab", "_show_tab", "nein"),
-    ("main", "FISIMobileApp", "open", "push", "offen"),           # on_show vor push
-    ("main", "FISIMobileApp", "open_cards", "open", "offen"),
+    ("main", "FISIMobileApp", "open", "push", "nummer"),          # HA3: on_show vor push
+    ("main", "FISIMobileApp", "open_cards", "open", "nummer"),    # HA6
     ("main", "FISIMobileApp", "open_help", "open", "nein"),
     ("main", "FISIMobileApp", "open_search_hit", "show_tab", "nein"),
-    ("main", "FISIMobileApp", "open_search_hit", "open", "offen"),
-    ("main", "FISIMobileApp", "open_search_hit", "open", "offen"),
+    ("main", "FISIMobileApp", "open_search_hit", "open", "nummer"),   # HA7
+    ("main", "FISIMobileApp", "open_search_hit", "open", "nummer"),   # HA7
     ("main", "FISIMobileApp", "open_achievements", "show_tab", "nein"),
     ("main", "FISIMobileApp", "open_achievements", "show_tab", "nein"),
-    ("main", "FISIMobileApp", "start_review", "open", "offen"),
-    ("main", "FISIMobileApp", "_practice_part", "open", "offen"),
+    ("main", "FISIMobileApp", "start_review", "open", "nummer"),  # HA8
+    ("main", "FISIMobileApp", "_practice_part", "open", "nummer"),    # HA9
     ("spiel", "GameScreen", "open_picker", "show_tab", "nein"),
     ("spiel", "GameScreen", "open_ticket", "push", "nein"),
-    ("spiel", "GameScreen", "open_site", "push", "offen"),
+    ("spiel", "GameScreen", "open_site", "push", "nummer"),       # SP3 (SP1 Parameter)
     ("spiel", "GameScreen", "run_action", "open", "nein"),
-    ("spiel", "GameScreen", "open_journey", "push", "offen"),
-    ("spiel", "GameScreen", "open_firm", "push", "offen"),
-    ("spiel", "GameScreen", "open_farm", "push", "offen"),
+    ("spiel", "GameScreen", "open_journey", "push", "nummer"),    # SP2
+    ("spiel", "GameScreen", "open_firm", "push", "nummer"),       # SP4
+    ("spiel", "GameScreen", "open_farm", "push", "nummer"),       # SP5
     ("spiel", "GameScreen", "open_farm_task", "push", "nein"),
     ("spiel", "GameScreen", "_open_raid", "open", "nein"),
-    ("spiel", "GameScreen", "_open_cards", "open", "offen"),
+    ("spiel", "GameScreen", "_open_cards", "open", "nummer"),     # SP6
 ]
 
 
@@ -333,6 +472,42 @@ class AufruferListeTest(unittest.TestCase):
                     and node.name == "open_detail"][0]
             first = ast.unparse(func.body[0])
             self.assertEqual(first, "mark = self.app.toast_mark()", cls.name)
+
+    def test_nummer_am_anfang_seitenwechsel(self):
+        """SP1-SP6, HA3-HA9: jede Funktion mit "nummer" liest die Nummer als
+        erste Anweisung (nach dem Docstring), vor jedem Schreiben."""
+        expected = {
+            ("main", "FISIMobileApp", "open"):
+                "mark = self.toast_mark() if toast_bis is None else toast_bis",
+            ("spiel", "GameScreen", "open_site"):
+                "mark = self.app.toast_mark() if toast_bis is None else toast_bis"}
+        for name, path in (("main", MAIN_PY), ("spiel", SPIEL_PY)):
+            for cls in [node for node in _parse(path).body if isinstance(node, ast.ClassDef)]:
+                for func in [node for node in cls.body if isinstance(node, ast.FunctionDef)]:
+                    row = (name, cls.name, func.name)
+                    if not any(entry[:3] == row and entry[4] == "nummer"
+                               for entry in AUFRUFER):
+                        continue
+                    body = func.body
+                    if ast.get_docstring(func) is not None:
+                        body = body[1:]
+                    own = "mark = self.toast_mark()" if (
+                        name == "main" and cls.name == "FISIMobileApp") else \
+                        "mark = self.app.toast_mark()"
+                    with self.subTest(row=row):
+                        self.assertEqual(ast.unparse(body[0]), expected.get(row, own))
+
+    def test_feierabend_gibt_nummer_an_open_site(self):
+        """SP1: Feierabend liest die Nummer vor end_day und gibt sie open_site mit."""
+        tree = _parse(SPIEL_PY)
+        func = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+                and node.name == "run_action"][0]
+        branch = [node for node in ast.walk(func) if isinstance(node, ast.If)
+                  and ast.unparse(node.test) == "action == 'feierabend'"][0]
+        self.assertEqual(ast.unparse(branch.body[0]), "mark = self.app.toast_mark()")
+        calls = [ast.unparse(node) for node in ast.walk(ast.Module(branch.body, []))
+                 if isinstance(node, ast.Call) and ast.unparse(node.func) == "self.open_site"]
+        self.assertEqual(calls, ["self.open_site('zuhause', replace=True, toast_bis=mark)"])
 
 
 # ============================================================================
@@ -751,6 +926,82 @@ class SpielEchterWegTest(SpielBasis):
                 call()
             self.assertEqual(len(self.toasts()), 1, (name, self.events))
             self.assert_drawn_after_toast(screen.office, name)
+
+
+class SpielSeitenwechselTest(SpielBasis):
+    """Weisung zu Meldung 41, Abschnitt 16: SP1-SP6. Ein Hinweis aus dem
+    Schreiben vor dem Seitenwechsel im Spiel bleibt offen. Testname test_sp<n>_..."""
+
+    def setUp(self):
+        super().setUp()
+        self.app.close_toast()
+        self.events.clear()
+
+    def assert_open(self):
+        self.assertEqual(len(self.toasts()), 1, self.events)
+        snack = self.app._toast
+        self.assertTrue(snack is not None and snack.open,
+                        "Hinweis nach dem Seitenwechsel geschlossen: %r" % self.events)
+
+    def test_sp1_feierabend(self):
+        with self.game_error("end_day", result={"tag": 2, "gehalt": 0}):
+            self.screen.run_action("feierabend")
+        self.assert_open()
+
+    def test_sp2_reise(self):
+        with self.game_error("check_knowledge"):
+            self.screen.open_journey()
+        self.assert_open()
+
+    def test_sp3_ort(self):
+        with self.game_error("reload"):
+            self.screen.open_site("buero")
+        self.assert_open()
+
+    def test_sp4_firma(self):
+        with self.game_error("reload"):
+            self.screen.open_firm()
+        self.assert_open()
+
+    def test_sp5_farm(self):
+        with self.game_error("reload"):
+            self.screen.open_farm()
+        self.assert_open()
+
+    def test_sp6_karteikarten(self):
+        cards = self.app.screens["cards"]
+        self.addCleanup(setattr, cards, "pending", None)
+        cards.pending = cards.cards[0]
+        with self.db_error("log_card"):
+            self.screen._open_cards("Alle")
+        self.assert_open()
+
+    def test_testnamen_wie_stellen(self):
+        names = {name.split("_")[1] for name in dir(self) if name.startswith("test_sp")}
+        self.assertEqual(sorted(names), ["sp%d" % n for n in range(1, 7)])
+
+    def test_alter_hinweis_wird_geschlossen(self):
+        """Schutz: ein Hinweis von vorher schliesst der Seitenwechsel weiter."""
+        for call in (lambda: self.screen.open_site("buero"), self.screen.open_firm):
+            self.app.toast("alt")
+            snack = self.app._toast
+            call()
+            self.assertFalse(snack.open)
+            self.drop_views()
+
+    def test_sp1_parameter_alter_hinweis(self):
+        """SP1-Parameter: mit mitgegebener Nummer schliesst open_site nur
+        aeltere Hinweise (die Nummer vom Anfang gilt, nicht eine eigene)."""
+        self.app.toast("alt")                      # vor dem Ereignis
+        old = self.app._toast
+        self.screen.open_site("zuhause", toast_bis=self.app.toast_mark())
+        self.assertFalse(old.open)
+        self.drop_views()
+        mark = self.app.toast_mark()               # Anfang des Ereignisses
+        self.app.toast(DB_TEXT)                    # Hinweis aus dem Ereignis
+        new = self.app._toast
+        self.screen.open_site("zuhause", toast_bis=mark)
+        self.assertTrue(new.open, "open_site nimmt die mitgegebene Nummer nicht an")
 
 
 # ============================================================================
