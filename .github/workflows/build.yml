@@ -266,7 +266,7 @@ jobs:
           n=0; fehler=0
           for f in $(find "$PIL" -type f \( -name "*.so" -o -name "*.dylib" \)); do
             n=$((n+1)); a=$(lipo -archs "$f")
-            case " $a " in *" x86_64 "*" arm64 "*|*" arm64 "*" x86_64 "*) ;; *) echo "NICHT universal: $f ($a)"; fehler=1;; esac
+            if [ "$(printf '%s\n' $a | sort | tr '\n' ' ')" != "arm64 x86_64 " ]; then echo "NICHT universal: $f ($a)"; fehler=1; fi
           done
           echo "Pillow: $n Binaerdateien, fehlerhaft: $fehler"
           python -c "import PIL, PIL.Image, PIL._imaging; print('Pillow', PIL.__version__, 'laedt')"
@@ -341,7 +341,7 @@ jobs:
           while IFS= read -r f; do
             if file -b "$f" | grep -q "Mach-O"; then
               n=$((n+1)); a=$(lipo -archs "$f")
-              case " $a " in *" x86_64 "*" arm64 "*|*" arm64 "*" x86_64 "*) ;; *) echo "NICHT universal: $f ($a)"; fehler=1;; esac
+              if [ "$(printf '%s\n' $a | sort | tr '\n' ' ')" != "arm64 x86_64 " ]; then echo "NICHT universal: $f ($a)"; fehler=1; fi
             fi
           done < <(find dist/FISI-Lernplattform.app -type f)
           echo "App: $n Mach-O-Dateien, alle universal: $([ $fehler = 0 ] && echo ja || echo nein)"
