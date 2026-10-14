@@ -175,21 +175,46 @@ def create_project(db, title=""):
 
 
 def delete_project(db, project):
-    return db.save_project_field(project, DELETED_FIELD, "1")
+    """Ab 0.63.2 (B-G-09): loescht wirklich. Erst ausblenden (wie bis 0.63.1;
+    bricht es danach ab, ist das Projekt wenigstens ausgeblendet), dann jedes
+    Feld mit einer neueren, leeren Fassung ueberschreiben. Die Regel
+    "neueste Fassung je Feld gilt" (seit 0.51, purge_superseded_project_rows)
+    entfernt die alten Texte sofort aus der Datenbank und nach dem Abgleich
+    auch auf den anderen Geraeten, auch auf aelteren Versionen."""
+    if not db.save_project_field(project, DELETED_FIELD, "1"):
+        return False
+    done = True
+    for field, value in db.project_fields().get(project, {}).items():
+        if field != DELETED_FIELD and value != "":
+            done = db.save_project_field(project, field, "") and done
+    return done
 
 
-# Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich) - das Projekt
-# wird nur ausgeblendet (DELETED_FIELD), die Eingaben bleiben gespeichert
+# Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich). Ab 0.63.2
+# werden die Eingaben wirklich geloescht; der Satz zum Abgleich und der
+# Hinweis auf GitHub stehen nur bei eingerichtetem Abgleich (Freigabe 4.4)
 DELETE_TITLE = "Projekt löschen"
-DELETE_QUESTION = ("„%s“ löschen? Das Projekt verschwindet aus der Auswahl, nach dem "
-                   "Abgleich auch auf deinen anderen Geräten. Das lässt sich in der App "
-                   "nicht rückgängig machen.\n\nHinweis: Die Eingaben werden nur "
-                   "ausgeblendet, nicht entfernt. Sie bleiben in der Datenbank, in "
-                   "Sicherungen und bei eingerichtetem Abgleich im Repository gespeichert.")
+DELETE_QUESTION_SYNC = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden gelöscht, "
+                        "nach dem Abgleich auch auf deinen anderen Geräten. Das lässt sich "
+                        "in der App nicht rückgängig machen.\n\nHinweis: Ältere "
+                        "Sicherungsdateien und frühere Stände im Verlauf des "
+                        "Abgleich-Repositorys auf GitHub enthalten die Eingaben weiterhin.")
+DELETE_QUESTION_LOCAL = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden "
+                         "gelöscht. Das lässt sich in der App nicht rückgängig machen."
+                         "\n\nHinweis: Ältere Sicherungsdateien enthalten die Eingaben "
+                         "weiterhin.")
 
 
-def delete_question(fields):
-    return DELETE_QUESTION % project_title(fields)
+def delete_question(fields, synced=None):
+    """synced: Abgleich eingerichtet? None = aus den Einstellungen lesen."""
+    if synced is None:
+        try:
+            import fisi_sync
+            synced = fisi_sync.is_configured()
+        except Exception:
+            synced = True      # im Zweifel der Text, der mehr sagt
+    template = DELETE_QUESTION_SYNC if synced else DELETE_QUESTION_LOCAL
+    return template % project_title(fields)
 
 
 def active_project(db, settings):

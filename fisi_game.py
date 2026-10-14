@@ -3409,7 +3409,30 @@ class GameState:
         self.farm_unlocked = None  # Arbeitstag des Feierabends, an dem der Lokschuppen frei wurde
         self.farm = None           # Kampagne ab dem Oeffnen der Ausschreibung (siehe new_farm)
 
+        # Ab 0.63.2 (E-5, Weg A): eindeutige Doppel (dasselbe Ticket mit
+        # derselben Tagesangabe, ein zweiter Feierabend desselben Tages - offline
+        # auf zwei Geraeten gespielt, dann abgeglichen) zaehlen nur einmal, das
+        # erste gilt. Sie werden vor allem anderen uebersprungen und kommen auch
+        # nicht in history; so zaehlen Rueckblick (journey, journey_stats,
+        # run_metrics) und die Kopfzahlen gleich. Regeln wie in 0.62.5 (B-G-26):
+        # ohne gueltige Tagesangabe wird nichts geraten und nichts uebersprungen.
+        counted_once = set()
         for timestamp, kind, data in events:
+            if kind == EV_SOLVED:
+                double = (kind, data.get("aufgabe"), data.get("tag"))
+                if not (isinstance(double[1], str) and double[1] and
+                        type(double[2]) is int and double[2] > 0):
+                    double = None
+            elif kind == EV_DAY_END:
+                double = (kind, data.get("tag"))
+                if not (type(double[1]) is int and double[1] > 0):
+                    double = None
+            else:
+                double = None
+            if double is not None:
+                if double in counted_once:
+                    continue
+                counted_once.add(double)
             self.history.append((timestamp, kind, data))
             if self.first_event is None:
                 self.first_event = str(timestamp)
@@ -3460,17 +3483,7 @@ class GameState:
                 self.profile = {"name": data.get("name", ""),
                                 "aussehen": normalize_appearance(data.get("aussehen"))}
             elif kind in (EV_SOLVED, EV_DEFERRED):
-                # Ab 0.62.5 (B-G-26): Dasselbe Ticket mit derselben Tagesangabe
-                # ein zweites Mal erledigt (offline auf zwei Geraeten gespielt,
-                # dann abgeglichen) zaehlt nur einmal - das erste gilt. Ohne
-                # Tagesangabe wird nichts geraten und nichts uebersprungen.
-                once = self.__dict__.setdefault("_counted_once", set())
-                key = (kind, data.get("aufgabe"), data.get("tag"))
-                if kind == EV_SOLVED and isinstance(key[1], str) and key[1] and \
-                        type(key[2]) is int and key[2] > 0:
-                    if key in once:
-                        continue
-                    once.add(key)
+                # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
                 self._apply_reputation(data.get("reputation") or {})
                 self.money += int(data.get("geld", 0))
                 self._book(today, BOOK_TASKS, data.get("geld", 0))
@@ -3494,16 +3507,7 @@ class GameState:
                         for part_id in data.get("aus_lager") or []:
                             self.used[part_id] = self.used.get(part_id, 0) + 1
             elif kind == EV_DAY_END:
-                # Ab 0.62.5 (B-G-26): Ein zweiter Feierabend mit derselben
-                # Tagesangabe (zweites Geraet, abgeglichen) zaehlt nicht - der
-                # erste gilt mit allem, was er bringt. Feierabende ohne
-                # Tagesangabe zaehlen wie bisher (nicht geraten).
-                once = self.__dict__.setdefault("_counted_once", set())
-                key = (kind, data.get("tag"))
-                if type(key[1]) is int and key[1] > 0:
-                    if key in once:
-                        continue
-                    once.add(key)
+                # Doppel: siehe Schleifenanfang (ab 0.63.2, E-5)
                 self.days_done += 1
                 self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
                 self._book(today, BOOK_SALARY, data.get("gehalt", 0))
