@@ -1003,8 +1003,13 @@ class AnsichtBreiteBasis(unittest.TestCase):
             self.assertEqual(_bekannte_fehler(self.NAME, faktor, breite, mine["fehler"]), [],
                              "%s %s %dx%d: mehr als der bekannte Ueberstand"
                              % (self.NAME, Z3_STUFEN[faktor], breite, hoehe))
-            self.assertTrue(mine["fehler"], "%s Normal %dx%d: Luecke behoben - "
-                            "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen" % (self.NAME, breite, hoehe))
+            if ohne is None:
+                # Erinnerung an die Liste nur mit der Standardschrift: mit
+                # einer anderen Schrift kann der bekannte Ueberstand fehlen
+                # (GitHub, dritte Schrift: Fortschritt mit Daten passt dort)
+                self.assertTrue(mine["fehler"], "%s %s %dx%d: Luecke behoben - "
+                                "Z3_NORMAL_*_BEKANNT/Z3_GRENZE_BEKANNT anpassen"
+                                % (self.NAME, Z3_STUFEN[faktor], breite, hoehe))
         else:
             self.assertEqual(mine["fehler"], [], "%s %s %dx%d (Schrift %s)"
                              % (self.NAME, Z3_STUFEN[faktor], breite, hoehe, mine["schrift"]))
