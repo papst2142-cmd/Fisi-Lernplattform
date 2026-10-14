@@ -797,7 +797,16 @@ class PartsPreloadTest(AppCase):
             frp._ITEM_POINTS.clear()
             self.assertTrue(view.part_waits())
             step()
+            # Weisung 42, 2.16: gewartet wird ueber einen Zeitgeber - der
+            # Schritt kehrt sofort zurueck (kein sleep im Bedienfaden) und
+            # plant sich neu
+            self.assertIsNotNone(pre.job, "Warten ohne neuen Zeitgeber")
+            self.assertIn(pre.job, self.root.tk.splitlist(self.root.tk.call("after", "info")))
+            started = time.perf_counter()
             step()
+            self.assertLess(time.perf_counter() - started,
+                            self.app_gui.PRELOAD_PART_WAIT_MS / 1000.0 / 2,
+                            "Schritt blockiert beim Warten")
             self.assertTrue(view.parts_pending)
             self.assertEqual(frp._ITEM_POINTS, {})
             self.assertEqual(pre.queue, [("part", "cards")])
