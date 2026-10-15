@@ -2,10 +2,9 @@
 """Befund-Test 0.63.2 (Weisung Antwort Nachtrag 45a, Frage 4): Notizblock und
 Fortschritt nach Umbenennen an Ort und Stelle.
 
-KEIN Merge-Test: Er liegt nur auf dem Probezweig version-0632-fg115-probe und
-zeigt, ob die beiden Ansichten nach dem Umbenennen alter Fragetexte durch ein
-zweites Programm (eigener Prozess, wie test_dash_query_0632 Test a) etwas
-Veraltetes zeigen. Rot = Befund (veraltet), kein Bau ohne FG.
+Merge-Test FG-117 (zuerst Befund-Test auf version-0632-fg115-probe): Zeigen die
+beiden Ansichten nach dem Umbenennen alter Fragetexte durch ein zweites Programm
+(eigener Prozess, wie test_dash_query_0632 Test a) Veraltetes? Seit FG-117 gruen.
 
 apply_question_renames (fisi_core) schreibt alte Fragetexte an Ort und Stelle
 um; Anzahl und hoechste Nummer der Tabellen bleiben gleich. NotebookView und
@@ -18,6 +17,7 @@ StatusBook (_status_book), der Fortschritt seine Abdeckung (coverage_key).
   * c Notizblock, explizites refresh() nach Umbenennen
   * d Fortschritt, explizites refresh() nach Umbenennen
   * e Kontrolle: neue Zeile nach Umbenennen -> beide Ansichten richtig
+  * f wie a-d mit Quiz-Antworten (quiz_answers): Seitenwechsel, dann refresh()
 
 Wahrheit ist jeweils die Berechnung direkt aus der Datenbank
 (notebook_entries(StatusBook(db)), frp.Coverage(StatusBook(db), plan).point).
@@ -54,6 +54,9 @@ VALID_CARDS = {card["q"] for card in fc.KARTEIKARTEN}
 # alter nicht (inhalte/umbenennungen.json)
 CARD_RENAMES = [(old, new) for old, new in fc.QUESTION_RENAMES["card_events"].items()
                 if new in VALID_CARDS and old not in VALID_CARDS]
+VALID_QUIZ = {quiz["q"] for quiz in fc.QUIZ_QUESTIONS}
+QUIZ_RENAMES = [(old, new) for old, new in fc.QUESTION_RENAMES["quiz_answers"].items()
+                if new in VALID_QUIZ and old not in VALID_QUIZ]
 YESTERDAY = (datetime.date.today() - datetime.timedelta(days=1)).isoformat() + " 10:00:00"
 TABLES = ("card_events", "quiz_answers")
 
@@ -253,6 +256,30 @@ class ProgressNotebookRenameTest(unittest.TestCase):
         self.assertEqual(self.nb_shown(), self.nb_truth(), "Notizblock, neue Zeile")
         self.show("progress")
         self.assertCoverage("Abdeckung, neue Zeile")
+
+    def test_f_quiz_seitenwechsel_und_refresh(self):
+        """Wie a-d mit Quiz: falsch -> Notizblock, richtig -> Abdeckung."""
+        old, new = [o for o, _n in QUIZ_RENAMES], [n for _o, n in QUIZ_RENAMES]
+        for wrong, right, step in ((new[:2] + old[2:5], new[5:7] + old[7:9], "Seitenwechsel"),
+                                   (old[9:12], old[12:15], "refresh()")):
+            for question in wrong + right:
+                self.db.log_quiz_answer("x", question, question in right)
+            self.show("notebook")
+            self.show("progress")
+            self.assertEqual(self.nb_shown(), self.nb_truth(), "Quiz vor dem Umbenennen")
+            self.assertCoverage("Quiz vor dem Umbenennen")
+            before = self.pr_truth()
+            self.rename_checked(second_program, self.nb_truth)
+            self.assertNotEqual(self.pr_truth(), before, "Vorbedingung: Abdeckung aendert sich")
+            if step == "refresh()":
+                self.notebook.refresh(keep_page=True)
+                self.progress.refresh()
+                self.pump()
+            else:
+                self.show("notebook")
+                self.show("progress")
+            self.assertEqual(self.nb_shown(), self.nb_truth(), "Quiz-Notizblock, " + step)
+            self.assertCoverage("Quiz-Abdeckung, " + step)
 
 
 def tearDownModule():
