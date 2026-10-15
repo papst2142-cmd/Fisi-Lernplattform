@@ -1030,8 +1030,13 @@ class Card(ctk.CTkFrame):
         if flag:
             self.subtitle_label.configure(text="")
             self._sub_below.configure(text=text, text_color=color)
+            # ab 0.63.2 (S1c2-Nachbesserung): eine zugeklappte FoldCard hat
+            # den Inhalt nicht gepackt ("before" scheiterte mit TclError und
+            # brach die ganze Anpassung der Seite ab) - dann unter den Kopf
+            place = ({"before": self.body} if self.body.winfo_manager()
+                     else {"after": self.head})
             self._sub_below.pack(fill="x", padx=(self.pad + 13, self.pad),
-                                 pady=(2, 0), before=self.body)
+                                 pady=(2, 0), **place)
         else:
             self._sub_below.pack_forget()
             self.subtitle_label.configure(text=text, text_color=color)
@@ -1200,6 +1205,29 @@ class FoldCard(Card):
             self.body.pack(**self._body_pack)
         else:
             self.body.pack_forget()
+            self.head.pack(pady=(self._head_top, self._head_top))
+        self._place_sub_below()
+
+    def stack_subtitle(self, flag):
+        changed = super().stack_subtitle(flag)
+        if changed:
+            self._place_sub_below()
+        return changed
+
+    def _place_sub_below(self):
+        """Ab 0.63.2 (S1c2-Nachbesserung): Abstaende, wenn die Unterschrift
+        unter der Ueberschrift steht (Card.stack_subtitle). Aufgeklappt wie
+        bei Card; zugeklappt steht sie direkt unter der Ueberschrift, und der
+        untere Abstand des Kopfes kommt unter die Unterschrift (sonst stand
+        sie ohne Abstand am unteren Rand). Ohne verschobene Unterschrift
+        Kopf wie bisher."""
+        if self.opened:
+            if self._sub_stacked:
+                self._sub_below.pack(pady=(2, 0))
+        elif self._sub_stacked:
+            self.head.pack(pady=(self._head_top, 0))
+            self._sub_below.pack(pady=(2, self._head_top))
+        else:
             self.head.pack(pady=(self._head_top, self._head_top))
 
     def set_opened(self, flag):

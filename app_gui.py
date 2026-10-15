@@ -31,6 +31,7 @@ import webbrowser
 import tkinter as tk
 import _tkinter
 from tkinter import ttk, messagebox
+import tkinter.font as tkfont   # ab 0.63.2 (Z3)
 
 import customtkinter as ctk
 from PIL import Image
@@ -1779,10 +1780,568 @@ class DashboardView(View):
 
 
 # ============================================================================
+#  AB 0.63.2 (Z3): WEITERE ANSICHTEN BEI GROSSER SCHRIFT
+# ============================================================================
+
+class FitRowsMixin(FitWidthMixin):
+    """Ab 0.63.2 (Z3): Notizblock, Fortschritt, Karteikarten, Pruefungstrainer
+    und Optionen passen bei Gross und Sehr gross ohne seitlichen
+    Schieberegler ins Fenster. Wie bei D2 (FitWidthMixin) werden nur
+    Anordnung, Umbruch und Breiten angepasst, keine Elemente kommen dazu:
+    * Zeilen aus nebeneinander gepackten Teilen (Pillen, Knoepfe, Filter)
+      brechen um (FlowRow), wenn sie nicht in die sichtbare Breite passen;
+    * Unterschriften ruecken unter die Ueberschrift der Kachel;
+    * Kacheln in einer Rasterzeile (Notizblock "Lernstand je Bereich")
+      verteilen sich auf mehrere Zeilen;
+    * Tabellenspalten (Fortschritt) werden schmaler, nie schmaler als ihr
+      breitester Text;
+    * lange Texte (auch an Haken und Schaltern) brechen um, Umbruchbreiten
+      folgen dem Platz;
+    * Eingabefelder, die ueber den Rand ragen, werden schmaler.
+    Die Teile werden bei jedem Anpassen neu gesucht (auch Inhalte, die erst
+    spaeter entstehen, z. B. die Pruefung). Jeder Teil bekommt die Breite,
+    die er in einer eigenen Zeile haette - so haengt keine Entscheidung von
+    der Lage ab, die sie selbst veraendert (keine Schleife).
+    Bei Normal bleibt alles genau wie bisher (Z3 gilt fuer Gross/Sehr gross),
+    ausser im Teil aus _z3_normal_part (ab 0.63.2 B-4b: Bewertung der
+    Pruefung im Pruefungstrainer; Notizblock, Fortschritt und Optionen,
+    sobald sie bei Normal breiter sind als sichtbar, Z3_NORMAL)."""
+
+    Z3_GAP = 6          # Abstand der Kacheln im Raster (wie bisher, logische px)
+    Z3_CELL_PAD = 16    # Innenabstand einer Tabellenzelle links + rechts (logische px)
+    # Methoden, nach denen neu angepasst wird, weil sich Inhalt ohne
+    # Groessenaenderung aendert (z. B. neue Tabellenzeilen)
+    Z3_REFIT = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._init_fit()
+        for name in self.Z3_REFIT:
+            method = getattr(self, name)
+
+            def refit(*a, _method=method, **k):
+                result = _method(*a, **k)
+                self._schedule_fit()
+                return result
+            setattr(self, name, refit)
+
+    def _fit_width(self, avail):
+        inside = None
+        if fisi_theme.current_font_size == fisi_theme.FONT_NORMAL:
+            # ab 0.63.2 (B-4b): bei Normal nur der Teil aus _z3_normal_part
+            inside = self._z3_normal_part()
+            if inside is None:
+                return False
+        found = {"rows": [], "cards": [], "tiles": [], "trees": [], "checks": [],
+                 "labels": [], "texts": [], "entries": []}
+        self._z3_scan(self.content, avail, 0, found)
+        if inside is not None:
+            prefix = str(inside) + "."
+            found = {kind: [item for item in items if str(item[0]).startswith(prefix)]
+                     for kind, items in found.items()}
+        changed = False
+        for label, room, frame, row in found["labels"]:
+            changed |= self._z3_label(label, room, frame, row)
+        for label, room in found["texts"]:
+            changed |= self._z3_text(label, room)
+        for entry, room in found["entries"]:
+            changed |= self._z3_entry(entry, room)
+        for frame, room, _depth in sorted(found["rows"], key=lambda item: -item[2]):
+            changed |= FlowRow.of(frame).fit(room)
+        for card, room in found["cards"]:
+            changed |= card.stack_subtitle(self._z3_head_width(card) > room)
+        for frame, room in found["tiles"]:
+            changed |= self._z3_tiles(frame, room)
+        for tree, room in found["trees"]:
+            changed |= self._z3_tree(tree, room)
+        for check, room in found["checks"]:
+            changed |= self._z3_check(check, room)
+        if inside is not None:
+            # ab 0.63.2 (S1c2-Nachbesserung): bei Normal wird die Seite oft erst
+            # nach dem Aufbau schmaler - Tk meldet das der Bildlaufflaeche nicht
+            # immer (der seitliche Balken blieb stehen, obwohl alles passt);
+            # nach jedem Anpassen die Breite nachziehen (aendert nichts, wenn
+            # sie stimmt)
+            self.after(40, self._refit_width)
+        return changed
+
+    # Ab 0.63.2 (B-4b Rest, S1c2-Nachbesserung): Notizblock, Fortschritt und
+    # Optionen passen auch bei Normal (1120, mit breiterer Schrift auch 1360)
+    # ohne seitliches Rollen - aber erst, wenn die Seite bei Normal wirklich
+    # breiter ist als sichtbar. Solange sie passt, bleibt alles genau wie
+    # bisher (z. B. Normal 1360 mit Inter).
+    Z3_NORMAL = False
+    # so lange (ms) muss die Seite zu breit bleiben: waehrend des Aufbaus ist
+    # sie kurz breiter, bis die Umbruchbreiten der Texte angepasst sind
+    # (ScrollArea._fit_wraplengths) - das allein zaehlt nicht
+    Z3_NORMAL_WAIT = 300
+
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Teil der Ansicht, der auch bei Normal nach den
+        gleichen Regeln angepasst wird (None: bei Normal bleibt alles wie
+        bisher). Mit Z3_NORMAL die ganze Ansicht, sobald sie bei Normal
+        laenger als Z3_NORMAL_WAIT breiter ist als sichtbar (danach bleibt die
+        Anpassung an: was wieder passt, stellt sie selbst zurueck)."""
+        if not self.Z3_NORMAL:
+            return None
+        if not self.__dict__.get("_z3_normal_on"):
+            if self.inner.winfo_reqwidth() <= self.canvas.winfo_width():
+                self._z3_normal_since = None
+                return None
+            now = time.monotonic()
+            since = self.__dict__.get("_z3_normal_since")
+            if since is None:
+                self._z3_normal_since = now
+            if since is None or now - since < self.Z3_NORMAL_WAIT / 1000.0:
+                # spaeter noch einmal nachsehen
+                self.after(self.Z3_NORMAL_WAIT + 20, self._schedule_fit)
+                return None
+            self._z3_normal_on = True
+        return self.content
+
+    # -- Teile finden ---------------------------------------------------------
+
+    @staticmethod
+    def _z3_is_row(frame):
+        """Zeile: mindestens zwei nebeneinander gepackte Teile, keiner fuellt
+        die Hoehe (Listenzeilen mit Farbstrich bleiben, wie sie sind)."""
+        if "_fisi_flow" in frame.__dict__:
+            return True
+        slaves = frame.pack_slaves()
+        if len(slaves) < 2:
+            return False
+        for widget in slaves:
+            info = widget.pack_info()
+            if info.get("side") not in ("left", "right") or info.get("fill") in ("y", "both"):
+                return False
+        return True
+
+    @staticmethod
+    def _z3_is_marked(frame):
+        """Listenzeile mit Farbstrich (ein Teil fuellt die Hoehe): bleibt
+        gepackt; nur ihre Texte brechen bei Bedarf um."""
+        slaves = frame.pack_slaves()
+        return (len(slaves) >= 2 and "_fisi_flow" not in frame.__dict__
+                and all(w.pack_info().get("side") in ("left", "right") for w in slaves)
+                and any(w.pack_info().get("fill") in ("y", "both") for w in slaves))
+
+    @staticmethod
+    def _z3_is_tiles(frame):
+        """Kacheln im Raster: mindestens drei gleichartige Teile, zeilenweise
+        der Reihe nach angeordnet (Notizblock "Lernstand je Bereich",
+        Farbkacheln der Optionen)."""
+        if "_fisi_z3_tiles" in frame.__dict__:
+            return True
+        slaves = frame.grid_slaves()
+        if len(slaves) < 3 or len({type(w) for w in slaves}) != 1:
+            return False
+        places = sorted((int(w.grid_info()["row"]), int(w.grid_info()["column"]))
+                        for w in slaves)
+        columns = max(column for _row, column in places) + 1
+        return places == [divmod(index, columns) for index in range(len(places))]
+
+    def _z3_scan(self, widget, room, depth, found):
+        if isinstance(widget, Card) and widget.head is not None:
+            found["cards"].append((widget, room))
+        row = widget is not self.content and self._z3_is_row(widget)
+        marked = not row and widget is not self.content and self._z3_is_marked(widget)
+        if row:
+            found["rows"].append((widget, room, depth))
+        for child in widget.winfo_children():
+            try:
+                manager = child.winfo_manager()
+                if not manager or (manager == "pack" and not child.winfo_ismapped()):
+                    continue
+                if isinstance(child, ttk.Treeview):
+                    found["trees"].append((child, room - child.winfo_x()))
+                    continue
+                if (isinstance(child, ctk.CTkLabel) and not isinstance(child, NeoButton)
+                        and (marked or row)):
+                    found["labels"].append((child, room, widget, row))
+                    continue
+                if (isinstance(child, ctk.CTkLabel) and not isinstance(child, NeoButton)
+                        and not row and not marked and manager == "pack"):
+                    found["texts"].append((child, room - 2 * child.winfo_x()))
+                    continue
+                if isinstance(child, ctk.CTkEntry) and not row:
+                    info = child.grid_info() if manager == "grid" else child.pack_info()
+                    found["entries"].append((child, room - child.winfo_x()
+                                             - FlowRow._pad(info)[1]))
+                    continue
+                if isinstance(child, (ctk.CTkCheckBox, ctk.CTkSwitch)):
+                    found["checks"].append((child, room - (0 if row else child.winfo_x())))
+                    continue
+                if not isinstance(child, tk.Frame) or isinstance(
+                        child, (NumberStepper, OptionList, ctk.CTkOptionMenu, ctk.CTkEntry,
+                                ctk.CTkTextbox, ctk.CTkProgressBar, ctk.CTkScrollbar)):
+                    continue
+                if isinstance(widget, Card) and child is widget.head:
+                    continue
+                if row:
+                    # in einer Zeile, die umbricht: so viel wie in einer eigenen Zeile
+                    child_room = room
+                elif marked:
+                    # Listenzeile: neben den anderen Teilen (Farbstrich, Knopf)
+                    child_room = room - sum(
+                        (0 if other is child else other.winfo_reqwidth())
+                        + sum(FlowRow._pad(other.pack_info()))
+                        for other in widget.pack_slaves())
+                elif manager == "pack":
+                    child_room = room - 2 * child.winfo_x()
+                else:
+                    child_room = room - child.winfo_x()
+                if self._z3_is_tiles(child):
+                    found["tiles"].append((child, child_room))
+                self._z3_scan(child, child_room, depth + 1, found)
+            except tk.TclError:
+                continue
+
+    # -- Anpassen -------------------------------------------------------------
+
+    def _z3_tiles(self, frame, room):
+        """Kacheln auf so viele Spalten verteilen, wie nebeneinander passen
+        (gleich viele je Zeile, so weit es geht). Abstaende wie bisher; kommt
+        eine Zeile dazu, die bisher keinen Abstand nach oben hatte, bekommt
+        sie den waagerechten Abstand. Passt alles: genau wie bisher."""
+        tiles = sorted(frame.grid_slaves(), key=lambda w: (int(w.grid_info()["row"]),
+                                                           int(w.grid_info()["column"])))
+        if not tiles:
+            return False
+        if "_fisi_z3_tiles" not in frame.__dict__ or frame._fisi_z3_tiles[0] != len(tiles):
+            # Ausgangslage merken (auch nach dem Neuaufbau der Kacheln)
+            if frame.__dict__.get("_fisi_z3_umgestellt"):
+                columns = frame._fisi_z3_tiles[1]
+            else:
+                columns = max(int(w.grid_info()["column"]) for w in tiles) + 1
+            first = tiles[0].grid_info()
+            padx = [tiles[min(c, len(tiles) - 1)].grid_info()["padx"] for c in range(columns)]
+            conf = [(int(frame.grid_columnconfigure(c)["weight"]),
+                     str(frame.grid_columnconfigure(c)["uniform"] or ""))
+                    for c in range(columns)]
+            frame._fisi_z3_tiles = (len(tiles), columns, padx, first["pady"], conf)
+        count, base, padx, pady, conf = frame._fisi_z3_tiles
+
+        def pair(value):
+            if isinstance(value, (tuple, list)):
+                return int(value[0]), int(value[-1])
+            return int(value), int(value)
+        gaps = [sum(pair(value)) for value in padx]
+        need = max(tile.winfo_reqwidth() for tile in tiles) + max(gaps)
+        columns = base
+        if base * need > room:
+            columns = max(1, room // need)
+            rows = -(-count // columns)
+            columns = -(-count // rows)
+        top, bottom = pair(pady)
+        gap_y = max(gaps) if top == bottom == 0 else 0
+        changed = False
+        for index, tile in enumerate(tiles):
+            line, column = divmod(index, columns)
+            want = dict(row=line, column=column, padx=pair(padx[column]),
+                        pady=(top + (gap_y if line else 0), bottom))
+            info = tile.grid_info()
+            if (int(info["row"]), int(info["column"]), pair(info["padx"]),
+                    pair(info["pady"])) != (line, column, want["padx"], want["pady"]):
+                # tk.Grid direkt: die Abstaende sind schon Bildschirmpixel
+                tk.Grid.grid_configure(tile, **want)
+                changed = True
+        for column in range(base):
+            wanted = conf[column] if column < columns else (0, "")
+            now = frame.grid_columnconfigure(column)
+            if (int(now["weight"]), str(now["uniform"] or "")) != wanted:
+                frame.grid_columnconfigure(column, weight=wanted[0], uniform=wanted[1])
+                changed = True
+        frame._fisi_z3_umgestellt = columns != base
+        return changed
+
+    def _z3_tree(self, tree, room):
+        """Tabellenspalten schmaler, wenn die Tabelle nicht passt: anteilig,
+        aber keine Spalte schmaler als ihre Ueberschrift oder ihr laengster
+        Eintrag (nichts abgeschnitten). Passt sie: Breiten wie bisher.
+        Ab Gegenpruefung S1c2 (M1): Zellen mit Kurzform (tree._fisi_z3_kurz,
+        {Zeile: {Spalte: (lang, kurz)}}) zeigen die Kurzform, solange die
+        Tabelle mit den langen Texten nicht passt.
+        Ab S1c2-Nachbesserung (Nico, Antwort Meldung 39 Frage 1a, Variante B):
+        Spalten in tree._fisi_z3_weglassen fallen bei "Sehr gross" weg,
+        solange die Tabelle mit ihnen nicht passt (sonst bleiben sie)."""
+        if "_fisi_z3_columns" not in tree.__dict__:
+            tree._fisi_z3_columns = {key: int(tree.column(key, "width"))
+                                     for key in tree["columns"]}
+            tree._fisi_z3_stretch = {key: tree.column(key, "stretch")
+                                     for key in tree["columns"]}
+        base = tree._fisi_z3_columns
+        # nur was neben der Tabelle steht (Rollbalken), nicht darunter
+        others = sum(w.winfo_reqwidth() for w in tree.master.pack_slaves()
+                     if w is not tree and w.pack_info().get("side") in ("left", "right"))
+        room -= others + (px(6) if others else 0)
+        style = tree.cget("style") or "Treeview"
+        lookup = ttk.Style().lookup
+        head_font = tkfont.Font(font=lookup(style + ".Heading", "font") or "TkHeadingFont")
+        body_font = tkfont.Font(font=lookup(style, "font") or "TkDefaultFont")
+        pad = px(self.Z3_CELL_PAD)
+        items = tree.get_children()
+        kurz = {item: cells for item, cells in tree.__dict__.get("_fisi_z3_kurz", {}).items()
+                if item in items}
+
+        def least_for(short):
+            least = {}
+            for key in base:
+                texts = []
+                for item in items:
+                    pair = kurz.get(item, {}).get(key)
+                    texts.append(pair[1 if short else 0] if pair else tree.set(item, key))
+                least[key] = max([head_font.measure(tree.heading(key, "text"))]
+                                 + [body_font.measure(text) for text in texts]) + pad
+            return least
+
+        least = least_for(False)
+        short = bool(kurz) and sum(least.values()) > room
+        if short:
+            least = least_for(True)
+        drop = ()
+        if (fisi_theme.current_font_size == "sehr_gross"
+                and sum(least.values()) > room):
+            drop = tuple(key for key in tree.__dict__.get("_fisi_z3_weglassen", ())
+                         if key in base)
+        all_base = base
+        base = {key: width for key, width in base.items() if key not in drop}
+        least = {key: least[key] for key in base}
+        widths = dict(base)
+        if sum(base.values()) > room or any(least[k] > base[k] for k in base):
+            # anteilig verkleinern; Spalten an ihrer Untergrenze bleiben dort
+            fixed = {}
+            while True:
+                rest = room - sum(fixed.values())
+                free = {k: v for k, v in base.items() if k not in fixed}
+                total = sum(free.values()) or 1
+                widths = dict(fixed)
+                widths.update({k: max(least[k], int(v * rest / total)) for k, v in free.items()})
+                low = {k for k in free if widths[k] == least[k] and int(free[k] * rest / total) < least[k]}
+                if not low:
+                    break
+                fixed.update({k: least[k] for k in low})
+            # nie breiter als bisher, aber nie schmaler als der Text
+            widths = {k: max(least[k], min(base[k], widths[k])) for k in base}
+        # verglichen mit dem zuletzt gesetzten Stand: Tk dehnt Spalten mit
+        # stretch selbst, die gelesene Breite taugt nicht zum Vergleich
+        state = (widths, short, tuple(items), drop)
+        if state == tree.__dict__.get("_fisi_z3_state", (all_base, False, tuple(items), ())):
+            return False
+        if drop != tree.__dict__.get("_fisi_z3_drop", ()):
+            tree.configure(displaycolumns=list(base) if drop else "#all")
+            tree._fisi_z3_drop = drop
+        for item, cells in kurz.items():
+            for key, pair in cells.items():
+                tree.set(item, key, pair[1 if short else 0])
+        for key, width in widths.items():
+            # gedehnte Spalten hielten die Tabelle so breit wie bisher
+            # (Tk verlangt die gedehnte Breite weiter): beim Verkleinern
+            # deshalb ohne Dehnen, sonst wie bisher
+            stretch = tree._fisi_z3_stretch[key] if widths == base else False
+            tree.column(key, width=width, stretch=stretch)
+        # Tk rechnet die verlangte Breite erst beim Konfigurieren neu
+        tree.configure(height=tree.cget("height"))
+        tree._fisi_z3_state = state
+        tree._fisi_z3_umgestellt = widths != base or short or bool(drop)
+        return True
+
+    @staticmethod
+    def _z3_label(label, room, frame, row):
+        """Text in einer Zeile. Mit Umbruchbreite (z. B. "... Fragen
+        verfuegbar" neben "Session starten"): Umbruchbreite = Platz neben den
+        anderen Teilen der Zeile, mindestens 220, hoechstens wie vorgesehen.
+        Ohne Umbruchbreite: bricht nur um, wenn er nicht passt - in einer
+        Zeile, die umbricht (row), in einer eigenen Zeile, in einer
+        Listenzeile mit Farbstrich neben den anderen Teilen. Die allgemeine
+        Anpassung (ScrollArea._fit_wraplengths) rechnet mit der Lage des
+        Textes und wuerde sich mit dem Umbrechen der Zeile abwechseln -
+        deshalb uebernimmt das hier."""
+        if "_fisi_z3_wrap" not in label.__dict__:
+            label._fisi_z3_wrap = (label.__dict__.get("_fisi_wrap") or label.cget("wraplength"),
+                                   label.cget("justify"))
+            label._fisi_wrap = 0     # ScrollArea._fit_wraplengths laesst ihn aus
+        base, justify = label._fisi_z3_wrap
+        if row:
+            infos = dict(FlowRow.of(frame)._capture())
+        else:
+            infos = {widget: widget.pack_info() for widget in frame.pack_slaves()}
+        others = sum(widget.winfo_reqwidth() + sum(FlowRow._pad(info))
+                     for widget, info in infos.items() if widget is not label)
+        own = sum(FlowRow._pad(infos[label])) if label in infos else 0
+        scale = px(1000) / 1000.0
+        free = (room - own - (0 if row and not base else others)
+                - (label.winfo_reqwidth() - label._label.winfo_reqwidth()))
+        text_room = (free - FitRowsMixin._z3_pad(label._label)) / scale
+        if not base:
+            whole = FitRowsMixin._z3_whole(label._label)
+            wrap = 0 if whole <= free else int(max(120, text_room))
+            label._fisi_z3_umgestellt = bool(wrap)
+        else:
+            wrap = int(min(base, max(220, text_room)))
+        if int(label.cget("wraplength")) == wrap:
+            return False
+        label.configure(wraplength=wrap, justify="left" if wrap and not base else justify)
+        return True
+
+    @staticmethod
+    def _z3_whole(tk_label):
+        """Breite eines tk.Label ohne Umbruch (echte Pixel, mit Innenrand).
+        Kurz ohne Umbruchbreite messen und gleich zuruecksetzen: Tk rechnet
+        die verlangte Groesse beim Konfigurieren, gezeichnet wird erst
+        spaeter (die Messung per Schriftart weicht von Tk ab)."""
+        wrap = tk_label.cget("wraplength")
+        if not int(float(str(wrap) or 0)):
+            return tk_label.winfo_reqwidth()
+        tk_label.configure(wraplength=0)
+        whole = tk_label.winfo_reqwidth()
+        tk_label.configure(wraplength=wrap)
+        return whole
+
+    @staticmethod
+    def _z3_pad(tk_label):
+        """Innenrand eines tk.Label links + rechts (echte Pixel)."""
+        return 2 * sum(int(float(tk_label.cget(name)))
+                       for name in ("padx", "borderwidth", "highlightthickness"))
+
+    @staticmethod
+    def _z3_head_width(card):
+        """Breite der Kopfzeile mit der Unterschrift daneben (echte Pixel),
+        samt aller Abstaende (Card.head_width zaehlt die Abstaende der
+        Klappkoepfe der Optionen nicht mit)."""
+        width = 0
+        for widget in card.head.pack_slaves():
+            if widget is card.subtitle_label:
+                continue
+            width += widget.winfo_reqwidth() + sum(FlowRow._pad(widget.pack_info()))
+        sub = FitRowsMixin._z3_sub_width(card)
+        if sub:
+            width += sub + px(12)
+        return max(width, card.head_width() - card.subtitle_width()
+                   - card.frame_width() + sub) + card.frame_width()
+
+    @staticmethod
+    def _z3_sub_width(card):
+        """Breite der Unterschrift neben der Ueberschrift (echte Pixel), auch
+        wenn sie gerade darunter steht. Nacharbeit Gegenpruefung S1c2: die
+        Breite der frisch gestapelten Unterschrift meldet Tk erst spaeter
+        (vorher 1) - ohne den gemerkten Wert sprang der Kopf hin und her
+        (Endlosschleife bei langer Pruefungsueberschrift, Sehr gross 1120)."""
+        if card.subtitle_label is None:
+            return 0
+        text = card._sub_text[0]
+        if not text:
+            return 0
+        known = card.__dict__.get("_fisi_z3_subw")
+        if not card._sub_stacked and card.subtitle_label.winfo_reqwidth() > 1:
+            card._fisi_z3_subw = (text, card.subtitle_label.winfo_reqwidth())
+            return card._fisi_z3_subw[1]
+        if known and known[0] == text:
+            return known[1]
+        font = tkfont.Font(font=card.subtitle_label._label.cget("font"))
+        return font.measure(text) + px(6)
+
+    @staticmethod
+    def _z3_text(label, room):
+        """Text untereinander (nicht in einer Zeile). Ohne Umbruchbreite
+        (z. B. "Nichts zu ueben ...", Ergebniszeilen der Pruefung): bricht
+        um, wenn er nicht passt; passt er, wie bisher. Mit Umbruchbreite
+        (z. B. 800): hoechstens so breit, sonst so breit wie der Platz,
+        mindestens 220 - wie ScrollArea._fit_wraplengths, aber mit dem
+        genauen Platz (dort wird der Rand links auch rechts angenommen;
+        in den verschachtelten Klappbereichen der Optionen fehlten so 2 px)."""
+        if "_fisi_z3_text" not in label.__dict__:
+            label._fisi_z3_text = (label.__dict__.get("_fisi_wrap") or label.cget("wraplength"),
+                                   label.cget("justify"))
+            label._fisi_wrap = 0     # ScrollArea._fit_wraplengths laesst ihn aus
+        base, justify = label._fisi_z3_text
+        scale = px(1000) / 1000.0
+        room -= label.winfo_reqwidth() - label._label.winfo_reqwidth()
+        text_room = (room - FitRowsMixin._z3_pad(label._label)) / scale
+        if base:
+            wrap = int(min(base, max(220, text_room)))
+            label._fisi_z3_umgestellt = False    # Umbruchbreite gab es schon
+        else:
+            whole = FitRowsMixin._z3_whole(label._label)
+            wrap = 0 if whole <= room else int(max(120, text_room))
+            label._fisi_z3_umgestellt = bool(wrap)
+        if int(label.cget("wraplength")) == wrap:
+            return False
+        label.configure(wraplength=wrap, justify="left" if wrap and not base else justify)
+        return True
+
+    @staticmethod
+    def _z3_entry(entry, room):
+        """Eingabefeld, das ueber den Rand ragt: schmaler (der Text laesst
+        sich darin wie bisher verschieben), hoechstens bis 160 logische px.
+        Passt es: Breite wie bisher."""
+        if "_fisi_z3_width" not in entry.__dict__:
+            entry._fisi_z3_width = entry.cget("width")
+        base = entry._fisi_z3_width
+        scale = px(1000) / 1000.0
+        width = base if base * scale <= room else int(max(160, room / scale - 2))
+        if int(entry.cget("width")) == width:
+            return False
+        entry.configure(width=width)
+        entry._fisi_z3_umgestellt = width != base
+        return True
+
+    @staticmethod
+    def _z3_check(check, room):
+        """Langer Text an einem Haken/Schalter bricht um, statt die Seite
+        breiter zu machen. Passt er: wie bisher (eine Zeile)."""
+        label = getattr(check, "_text_label", None)
+        if label is None:
+            return False
+        if "_fisi_z3_justify" not in check.__dict__:
+            check._fisi_z3_justify = label.cget("justify")
+        rest = check.winfo_reqwidth() - label.winfo_reqwidth()
+        whole = FitRowsMixin._z3_whole(label) + rest
+        wrap = 0 if whole <= room else max(px(120), room - rest - FitRowsMixin._z3_pad(label))
+        if int(label.cget("wraplength") or 0) == wrap:
+            return False
+        if wrap:
+            label.configure(wraplength=wrap, justify="left")
+        else:
+            label.configure(wraplength=0, justify=check._fisi_z3_justify)
+        if check.__dict__.get("_fisi_z3_erste_zeile"):
+            FitRowsMixin._z3_check_top(check, label, bool(wrap))
+        check._fisi_z3_umgestellt = bool(wrap)
+        return True
+
+    @staticmethod
+    def _z3_check_top(check, label, wrapped):
+        """Ab 0.63.2 (Nico, Meldung 39 Frage 2c): Bei umbrochenem Text steht
+        das Kaestchen oben, mittig zur ersten Zeile (nicht mittig zum ganzen
+        Text). Einzeilig wie bisher."""
+        box = getattr(check, "_canvas", None)
+        if box is None:
+            return
+        if not wrapped:
+            box.grid_configure(sticky="e", pady=0)
+            label.grid_configure(pady=0)
+            return
+        # Zeilenhoehe so, wie das Label sie zeichnet (die Schriftmetrik
+        # weicht mit Ersatzschriften davon ab): eine Probezeile messen
+        probe = tk.Label(check, font=label.cget("font"), text="Ag",
+                         pady=0, bd=0, highlightthickness=0)
+        line = probe.winfo_reqheight()
+        probe.destroy()
+        inset = int(label.cget("pady")) + int(label.cget("bd")) + int(label.cget("highlightthickness"))
+        height = box.winfo_reqheight()
+        first = inset + line / 2.0       # Mitte der ersten Zeile im Text
+        if height / 2.0 >= first:
+            box.grid_configure(sticky="ne", pady=0)
+            label.grid_configure(pady=(int(round(height / 2.0 - first)), 0))
+        else:
+            box.grid_configure(sticky="ne", pady=(int(round(first - height / 2.0)), 0))
+            label.grid_configure(pady=0)
+
+
+# ============================================================================
 #  KARTEIKARTEN
 # ============================================================================
 
-class CardsView(View):
+class CardsView(FitRowsMixin, View):
     MODES = [("freitext", "Freitext"), ("mc", "Multiple Choice"),
              ("reveal", "Aufdecken")]
 
@@ -2123,7 +2682,7 @@ class CardsView(View):
 #  PRUEFUNGSTRAINER
 # ============================================================================
 
-class QuizView(View):
+class QuizView(FitRowsMixin, View):
     def build(self):
         # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
         outer = self.content
@@ -2135,6 +2694,14 @@ class QuizView(View):
         self.content = self.practice_box
         self._build_practice()
         self.content = outer
+
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Bewertung der Pruefung - lange Kriterien brechen
+        auch bei Normal um, statt die Seite breiter zu machen (1120 und 1360)."""
+        exam = self.exam
+        if exam.grading and exam.winfo_ismapped():
+            return exam.body
+        return None
 
     def _on_mode(self, mode):
         if mode == "pruefung":
@@ -2489,12 +3056,14 @@ class ExamPanel(ctk.CTkFrame):
         self.timer_job = None
         self.save_job = None
         self.result = None
+        self.grading = False   # ab 0.63.2 (B-4b): Bewertung wird gezeigt
         self.body = transparent_frame(self)
         self.body.pack(fill="both", expand=True)
 
     # -- Allgemein ----------------------------------------------------------
 
     def _clear(self):
+        self.grading = False
         self._stop_timer()
         for child in self.body.winfo_children():
             child.destroy()
@@ -2785,6 +3354,7 @@ class ExamPanel(ctk.CTkFrame):
 
     def show_grading(self):
         self._clear()
+        self.grading = True
         state = self.state
         exam = fp.EXAM[state["art"]]
         head = Card(self.body, title="Bewertung", accent=C["green"], subtitle=exam["name"])
@@ -2855,11 +3425,15 @@ class ExamPanel(ctk.CTkFrame):
 
             for index, criterion in enumerate(part["kriterien"]):
                 var = tk.BooleanVar(value=marks[index] if index < len(marks) else False)
-                ctk.CTkCheckBox(card.body, text=criterion, variable=var,
-                                command=lambda i=index, v=var, t=toggled: t(i, v),
-                                font=F["small"], text_color=C["text_soft"],
-                                fg_color=C["green"], border_color=C["border_hi"],
-                                hover_color=C["card_hi"]).pack(anchor="w", pady=2)
+                check = ctk.CTkCheckBox(card.body, text=criterion, variable=var,
+                                        command=lambda i=index, v=var, t=toggled: t(i, v),
+                                        font=F["small"], text_color=C["text_soft"],
+                                        fg_color=C["green"], border_color=C["border_hi"],
+                                        hover_color=C["card_hi"])
+                check.pack(anchor="w", pady=2)
+                # ab 0.63.2 (Nico, Meldung 39 Frage 2c): umbrochen steht das
+                # Kaestchen an der ersten Zeile (FitRowsMixin._z3_check)
+                check._fisi_z3_erste_zeile = True
             row = transparent_frame(card.body)
             row.pack(anchor="w", pady=(8, 0))
             make_label(row, "Punkte", font=F["small"], fg=C["text_dim"]).pack(
@@ -4106,10 +4680,12 @@ SOURCE_COLOR_KEY = {SRC_CARD: "accent", SRC_QUIZ: "purple", SRC_AP1: "blue",
 NOTEBOOK_PAGE = 12
 
 
-class NotebookView(View):
+class NotebookView(FitRowsMixin, View):
     """Zentrale Uebersicht aller Fragen, die noch geuebt werden muessen (rot:
     zuletzt falsch, gelb: danach erst einmal richtig) - ueber Karteikarten,
     Pruefungstrainer, AP1, AP2 und Testprojekte hinweg."""
+
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
 
     def build(self):
         self.page = 0
@@ -5398,7 +5974,10 @@ class CalcView(View):
 #  LERNFORTSCHRITT
 # ============================================================================
 
-class ProgressView(View):
+class ProgressView(FitRowsMixin, View):
+    Z3_REFIT = ("refresh",)   # ab 0.63.2 (Z3): neue Tabellenzeilen
+    Z3_NORMAL = True          # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def build(self):
         row = transparent_frame(self.content)
         row.pack(fill="x")
@@ -5448,6 +6027,9 @@ class ProgressView(View):
         columns = ("datum", "score", "prozent", "note", "dauer")
         self.tree = ttk.Treeview(table_card.body, columns=columns, show="headings",
                                  height=9, style="Dash.Treeview")
+        # ab 0.63.2 (Nico, Meldung 39 Frage 1a): bei "Sehr gross" im schmalen
+        # Fenster faellt "Erfolgsquote" weg (Z3, _z3_tree)
+        self.tree._fisi_z3_weglassen = ("prozent",)
         headings = [("datum", "Datum & Uhrzeit", 170), ("score", "Ergebnis", 110),
                     ("prozent", "Erfolgsquote", 110), ("note", fr.NOTE_KURZ, 150),
                     ("dauer", "Dauer", 90)]
@@ -5560,12 +6142,18 @@ class ProgressView(View):
         for item in self.exam_tree.get_children():
             self.exam_tree.delete(item)
         exams = self.db.exams()
+        # ab 0.63.2 (Z3, Gegenpruefung M1): Kurzname wie in der Pruefungs-
+        # Historie des Pruefungstrainers, falls die Tabelle bei grosser
+        # Schrift mit den langen Namen nicht passt (FitRowsMixin._z3_tree)
+        self.exam_tree._fisi_z3_kurz = {}
         for entry in exams:
             exam = fp.EXAM.get(entry["art"])
-            self.exam_tree.insert("", "end", values=(
+            item = self.exam_tree.insert("", "end", values=(
                 entry["timestamp"], exam["name"] if exam else entry["art"],
                 _points(entry["punkte"]), entry["note"],
                 "%02d:%02d min" % (entry["dauer"] // 60, entry["dauer"] % 60)))
+            if exam:
+                self.exam_tree._fisi_z3_kurz[item] = {"pruefung": (exam["name"], exam["kurz"])}
         for child in self.weak_box.winfo_children():
             child.destroy()
         title, weak = fp.latest_weak(exams)
@@ -5953,7 +6541,9 @@ def merge_error_text(db, error, locked_before):
     return fsi.restore_error_text(error)
 
 
-class SettingsView(View):
+class SettingsView(FitRowsMixin, View):
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
         fisi_optionen). Offen ohne Klappkopf nur Updates (E1; bis 0.59.1 auch
