@@ -44,6 +44,7 @@ import fisi_rechtliches as fr  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
+import fisi_trennung  # noqa: E402  (ab 0.63.2, N8 B-D-06; mobile/vorbereiten.py)
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID_HANDY,
@@ -204,6 +205,9 @@ def rate_row(command):
 
 # Ab 0.56: Beschriftungen fuer Symbol-Knoepfe (TalkBack liest sie vor)
 PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+# Ab 0.63.2 (N8, B-J-N3): Startknoepfe der Pruefung "<Kurzname> starten"
+# statt viermal "Starten" (Weisung 38/40 N8-F4, wie am PC app_gui.EXAM_START_TEXT)
+EXAM_START_TEXT = "%s starten"
 SEARCH_TEXT = "Suchen"
 
 
@@ -1454,7 +1458,7 @@ class ExamPanel(ft.Column):
                 content=ft.Column([
                     ui.text(exam["name"], size=15, weight=ft.FontWeight.BOLD),
                     ui.text(detail, size=12, color=C["muted"]),
-                    ft.Row([ui.GradientButton("Starten",
+                    ft.Row([ui.GradientButton(EXAM_START_TEXT % exam["kurz"],
                                               lambda _e, a=exam["art"]: self.start(a),
                                               height=40)]),
                 ], spacing=6, tight=True),
@@ -1497,9 +1501,18 @@ class ExamPanel(ft.Column):
         ]
 
     def start(self, art):
+        # Ab 0.63.2 (N8, B-D-14, F23 a): Laeuft schon eine Pruefung (gespeichert,
+        # auch "bewerten"), wird sie gezeigt und nie ueberschrieben - vor und
+        # nach der Rueckfrage. Keine neue Meldung (wie am PC).
+        if fp.load_running() is not None:
+            self.show()
+            return
         exam = fp.EXAM[art]
 
         def go():
+            if fp.load_running() is not None:
+                self.show()
+                return
             self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
             fp.save_running(self.state)
             self.task_no = 0
@@ -1912,9 +1925,11 @@ class PagedListBox:
             sub = self.subtitle(self.items[pos])
             if status != Q_OPEN:
                 sub += "  ·  " + Q_STATUS_NAME[status]
+            # Ab 0.63.2 (N8, B-D-06): geschuetztes Leerzeichen nach der
+            # Nummer - "4." bricht nie allein in eine Zeile (wie am PC)
             rows.append(ui.list_row(
-                "%d. %s%s" % (pos + 1, self.items[pos]["title"],
-                              " ✓" if status == Q_DONE else ""),
+                fisi_trennung.nummer_titel(pos + 1, self.items[pos]["title"],
+                                           " ✓" if status == Q_DONE else ""),
                 sub, CATEGORY_COLOR[self.items[pos]["cat"]],
                 lambda _e, p=pos: self.on_select(p),
                 sub_color=status_color(level or status) if status != Q_OPEN else None))
@@ -1979,7 +1994,7 @@ class ScenarioScreen(Screen):
         self.rate_box = rate_row(self.rate)
         self.task_box = ui.read_box()
         self.txt_own = ui.entry(multiline=True, min_lines=4, max_lines=18,
-                                hint="Deine Lösung ...", on_change=self._own_changed)
+                                hint="Deine Lösung …", on_change=self._own_changed)   # ab 0.63.2 (N-c)
         self.solution_box = ui.read_box()
         self.btn_toggle = ui.GradientButton("Musterlösung anzeigen", self.toggle_solution,
                                             expand=True)
@@ -4856,7 +4871,7 @@ class SearchScreen(Screen):
                 on_click=lambda _e, k=kind, t=title: self.app.open_search_hit(k, t))))
         if len(hits) > 60:
             self.results.controls.append(ui.text(
-                "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,
+                "… weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,   # ab 0.63.2 (N-c)
                 color=C["muted"]))
         self.app.page.update()
 

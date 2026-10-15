@@ -29,6 +29,7 @@ import time
 import traceback
 import webbrowser
 import tkinter as tk
+import tkinter.font as tkfont   # ab 0.63.2 (N8): Titelbreiten messen
 import _tkinter
 from tkinter import ttk, messagebox
 import tkinter.font as tkfont   # ab 0.63.2 (Z3)
@@ -113,6 +114,7 @@ from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
+import fisi_trennung  # noqa: E402  (ab 0.63.2, N8 B-D-06: Umbruch der Listentitel)
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
@@ -149,6 +151,14 @@ def _resource_path(filename):
     liegen."""
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, filename)
+
+# Ab 0.63.2 (N8, B-J-N3): Namen der Symbolknoepfe (Tooltip und Beschriftung
+# beim Tab-Fokus) - wie am Handy (main.PAGE_PREV/PAGE_NEXT, ui.py Kalender,
+# Zahlenfeld "Weniger"/"Mehr") - und Text der vier Startknoepfe der Pruefung
+# (Weisung 38/40 N8-F4: "<Kurzname> starten", PC = Handy)
+PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+STEP_LESS, STEP_MORE = "Weniger", "Mehr"
+EXAM_START_TEXT = "%s starten"
 
 NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
@@ -266,13 +276,13 @@ class NumberStepper(ctk.CTkFrame):
         self.step = step
 
         IconButton(self, "minus", lambda: self._change(-self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_LESS).pack(side="left")
         self.label = ctk.CTkLabel(self, text=str(value), fg_color=C["card_alt"],
                                   corner_radius=10, text_color=C["text"],
                                   font=F["body_bold"], width=58, height=34)
         self.label.pack(side="left", padx=6)
         IconButton(self, "plus", lambda: self._change(self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_MORE).pack(side="left")
 
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
@@ -550,31 +560,108 @@ class PagedList:
         self.lbl_empty = make_label(self.rows_box, "Keine Treffer für diese Auswahl.",
                                     font=F["small"], fg=C["muted"])
         self.rows = [self._make_row(slot) for slot in range(LIST_PAGE_SIZE)]
+        # Ab 0.63.2 (N8, B-D-06): Breite der Zeilen geaendert -> Titel neu
+        # umbrechen (nur bei geaenderter Breite, nicht bei neuer Hoehe)
+        for row in self.rows:
+            row["title_box"].bind("<Configure>", self._rewrap_titles, add="+")
 
         pager = transparent_frame(parent)
         pager.pack(fill="x", pady=(10, 0))
         # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
         self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_PREV)
         self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
         self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_NEXT)
         self.btn_next.pack(side="right")
+
+    # Ab 0.63.2 (N8, B-D-06): bisherige feste Umbruchbreite der Titel; sie
+    # bleibt die Breite, die der Titel fuer die Anordnung der Ansicht
+    # verlangt (Spaltenbreiten wie bisher). Umbrochen wird an der wirklichen
+    # Breite der Zeile (fisi_trennung, PC und Handy eine Regel).
+    TITLE_WRAP = 190
 
     def _make_row(self, slot):
         row, marker, inner = clickable_row(self.rows_box, C["purple"])
-        title = ctk.CTkLabel(inner, text="", text_color=C["text_dim"],
+        # Ab 0.63.2 (N8, B-D-06): Titel in einem Rahmen mit fester verlangter
+        # Breite (TITLE_WRAP) - der Titel selbst liegt per place darin und
+        # nutzt die ganze Zeilenbreite, ohne die Spalte breiter zu machen
+        # (sonst wuerde die Anordnung der Ansicht vom Titel abhaengen)
+        title_box = transparent_frame(inner, width=self.TITLE_WRAP, height=1,
+                                      cursor="hand2")
+        title_box.pack(fill="x")
+        title = ctk.CTkLabel(title_box, text="", text_color=C["text_dim"],
                              font=F["small_bold"], height=0, anchor="w",
-                             justify="left", wraplength=190, cursor="hand2")
-        title.pack(anchor="w")
+                             justify="left", wraplength=self.TITLE_WRAP, cursor="hand2")
+        title.place(x=0, y=0, relwidth=1)
+        # Die Hoehe des Rahmens folgt der wirklichen Hoehe des Titels (CTk
+        # meldet die neue Hoehe erst spaeter - sonst blieb die zweite Zeile
+        # abgeschnitten)
+        tk.Misc.bind(title, "<Configure>",
+                     lambda event, box=title_box: self._fit_title_box(box, event.height), "+")
         sub = ctk.CTkLabel(inner, text="", text_color=C["muted"], font=F["tiny"],
                            anchor="w", height=0, cursor="hand2")
         sub.pack(anchor="w")
-        bind_click((row, inner, title, sub, marker), lambda _e, s=slot: self._clicked(s))
+        bind_click((row, inner, title, sub, marker, title_box),
+                   lambda _e, s=slot: self._clicked(s))
         return {"frame": row, "marker": marker, "title": title, "sub": sub,
-                "position": None}
+                "title_box": title_box, "raw": "", "position": None}
+
+    def _title_width(self, row):
+        """Breite, in der der Titel umbricht (echte Pixel): die Breite der
+        Zeile; vor dem ersten Zeichnen die bisherige feste Breite."""
+        width = row["title_box"].winfo_width()
+        if width <= 1:
+            width = px(self.TITLE_WRAP)
+        return width
+
+    def _set_title(self, row, text):
+        """Ab 0.63.2 (N8, B-D-06): Titel umbrechen - Umbruchbreite folgt der
+        Zeile, ein zu langes Wort wird nach der Regel aus fisi_trennung
+        geteilt, die Nummer bleibt beim Titel. Passt der Titel mit dem
+        gewoehnlichen Umbruch, bleibt der Text unveraendert."""
+        row["raw"] = text
+        width = self._title_width(row)
+        font = tkfont.Font(font=tk_font(F["small_bold"]))
+        shown = fisi_trennung.anzeige_text(text, width, font.measure)
+        title = row["title"]
+        scale = px(1000) / 1000.0 or 1.0
+        wrap = width / scale
+        if title.cget("text") != shown or abs((title.cget("wraplength") or 0) - wrap) > 0.5:
+            title.configure(text=shown, wraplength=wrap)
+        height = title.winfo_reqheight()
+        if abs(row["title_box"].winfo_reqheight() - height) > 0:
+            row["title_box"].configure(height=height / scale)
+
+    @staticmethod
+    def _fit_title_box(box, height):
+        try:
+            if height > 1 and box.winfo_height() != height:
+                scale = px(1000) / 1000.0 or 1.0
+                box.configure(height=height / scale)
+        except tk.TclError:
+            pass
+
+    def _rewrap_titles(self, event=None):
+        if event is not None:
+            if event.width == event.widget.__dict__.get("_fisi_title_width"):
+                return
+            event.widget._fisi_title_width = event.width
+        if getattr(self, "_rewrap_pending", False):
+            return
+        self._rewrap_pending = True
+
+        def run():
+            self._rewrap_pending = False
+            try:
+                for row in self.rows:
+                    if row["position"] is not None:
+                        self._set_title(row, row["raw"])
+            except tk.TclError:
+                pass
+        self.rows_box.after_idle(run)
 
     def _clicked(self, slot):
         position = self.rows[slot]["position"]
@@ -611,8 +698,8 @@ class PagedList:
             status, level = self.statuses.get(position, (Q_OPEN, ""))
             mark = " ✓" if status == Q_DONE else ""
             row["position"] = position
-            row["title"].configure(text="%d. %s%s" % (position + 1, item["title"], mark),
-                                   text_color=C["text"] if active else C["text_dim"])
+            row["title"].configure(text_color=C["text"] if active else C["text_dim"])
+            self._set_title(row, "%d. %s%s" % (position + 1, item["title"], mark))
             sub = self.subtitle(item)
             if status != Q_OPEN:
                 sub += "  ·  " + Q_STATUS_NAME[status]
@@ -939,10 +1026,17 @@ class Header(ctk.CTkFrame):
         self.search_entry = ctk.CTkEntry(self.search_box, width=250, height=36,
                                          border_width=0, fg_color=C["card"],
                                          text_color=C["text"],
-                                         placeholder_text="Suchen ...  (Strg+F)",
+                                         placeholder_text="Suchen …  (Strg+F)",   # ab 0.63.2 (N-c): …
                                          placeholder_text_color=C["muted"],
                                          font=F["small"])
-        self.search_entry.pack(side="left", padx=(6, 12), pady=2)
+        # Ab 0.63.2 (N8, B-D-08): Abstand oben/unten aus der Skalierung - bei
+        # Gross/Sehr gross lag das Feld (36 hoch, Abstand 2) nach dem Runden
+        # auf dem 1 px breiten Rahmen und unterbrach ihn unten. Abstand in
+        # echten Pixeln = Rahmenbreite (aufgerundet) + 1, bei Normal wie
+        # bisher 2 px; Hoehe des Felds unveraendert.
+        scale = px(1000) / 1000.0 or 1.0
+        rand = int(-(-1 * scale // 1))
+        self.search_entry.pack(side="left", padx=(6, 12), pady=(rand + 1) / scale)
         self.search_entry._entry.configure(insertbackground=C["accent"],
                                            insertofftime=0)
         self.search_entry.bind("<Return>", lambda _e: self._search())
@@ -1372,6 +1466,10 @@ class DashboardView(View):
                 widget.configure(cursor="hand2")
                 widget.bind("<Button-1>",
                             lambda _e, cat=category: self._toggle_zoom(cat))
+            # Ab 0.63.2 (N8, B-J-05): Kachel per Tab erreichbar, Eingabe-,
+            # Ziffernblock-Eingabe- und Leertaste wie ein Klick; den
+            # Fokusrahmen zeichnet wie bei den uebrigen Elementen focus_ring
+            make_focusable(column, lambda cat=category: self._toggle_zoom(cat))
             self.fach_rings[category] = (ring, detail, name)
 
         # --- Reinzoom: Themen eines Fachbereichs (ab 0.37) ----------------
@@ -3057,6 +3155,7 @@ class ExamPanel(ctk.CTkFrame):
         self.save_job = None
         self.result = None
         self.grading = False   # ab 0.63.2 (B-4b): Bewertung wird gezeigt
+        self._start_rows = []   # ab 0.63.2 (N8, K33): Startzeilen der Auswahl
         self.body = transparent_frame(self)
         self.body.pack(fill="both", expand=True)
 
@@ -3065,6 +3164,7 @@ class ExamPanel(ctk.CTkFrame):
     def _clear(self):
         self.grading = False
         self._stop_timer()
+        self._start_rows = []
         for child in self.body.winfo_children():
             child.destroy()
 
@@ -3120,15 +3220,76 @@ class ExamPanel(ctk.CTkFrame):
             row.pack(fill="x", pady=(10, 0))
             text = transparent_frame(row)
             text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
-            make_label(text, exam["name"], font=F["body_bold"], fg=C["text"]).pack(anchor="w")
+            name = make_label(text, exam["name"], font=F["body_bold"], fg=C["text"],
+                              justify="left")
+            name.pack(anchor="w")
             detail = ("%d Minuten · %d Auswahlfragen · 100 Punkte" % (exam["minuten"],
                                                                       fp.WISO_COUNT)
                       if exam["art"] == fp.WISO else
                       "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
-            make_label(text, detail, font=F["small"], fg=C["muted"]).pack(anchor="w")
-            NeoButton(row, "Starten", lambda a=exam["art"]: self.start(a),
-                      kind="primary").pack(side="right", padx=14)
+            detail = make_label(text, detail, font=F["small"], fg=C["muted"], justify="left")
+            detail.pack(anchor="w")
+            # Ab 0.63.2 (N8, B-J-N3): "<Kurzname> starten" statt viermal "Starten"
+            # (Wortlaut Weisung 38/40 N8-F4, am Handy gleich)
+            button = NeoButton(row, EXAM_START_TEXT % exam["kurz"],
+                               lambda a=exam["art"]: self.start(a), kind="primary")
+            button.pack(side="right", padx=14)
+            self._start_rows.append((row, (name, detail), button))
         self._results_cards(self.body)
+        self._schedule_fit_start()
+
+    # -- Ab 0.63.2 (N8, B-J-N3 K33): Startzeilen passen in die Seite --------
+    # Der laengere Knopftext "<Kurzname> starten" machte die Zeilen bei Sehr
+    # gross und schmalem Fenster breiter als den sichtbaren Bereich. Passen
+    # Name und Angaben nicht links neben den Knopf, brechen sie um (nur
+    # dann; sonst bleibt alles wie bisher, ohne Umbruchbreite).
+
+    def _schedule_fit_start(self):
+        if not getattr(self, "_start_pending", False):
+            self._start_pending = True
+            self.after_idle(self._fit_start_rows)
+
+    def _fit_start_rows(self):
+        self._start_pending = False
+        try:
+            rows = [entry for entry in self._start_rows if entry[0].winfo_exists()]
+            if not rows:
+                return
+            canvas = self.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is None:
+                return
+            if getattr(self, "_start_canvas", None) is not canvas:
+                self._start_canvas = canvas
+                canvas.bind("<Configure>", lambda _e: self._schedule_fit_start(), add="+")
+            self.update_idletasks()
+            inner = canvas.winfo_children()[0]
+            scale = px(1000) / 1000.0 or 1.0
+            changed = False
+            for row, labels, button in rows:
+                # rechter Rand der Zeile im sichtbaren Bereich (der Abstand
+                # der Zeile zum rechten Rand des Inhalts bleibt fest)
+                pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
+                          - (row.winfo_rootx() + row.winfo_width()))
+                right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+                # Polster: Textbereich und Knopf je 14 links und rechts
+                room = (right - row.winfo_rootx() - button.winfo_reqwidth()
+                        - 4 * px(14) - 2 * max(1, px(1)))
+                for label in labels:
+                    font = tkfont.Font(font=tk_font(label.cget("font")))
+                    need = font.measure(str(label.cget("text")))
+                    wrap = 0 if need <= room else max(px(120), room) / scale
+                    if abs(float(label.cget("wraplength") or 0) - wrap) > 0.5:
+                        label.configure(wraplength=wrap)
+                        changed = True
+            if changed:
+                self.update_idletasks()
+                area = canvas.master
+                if hasattr(area, "_refit_width"):
+                    area.after(40, area._refit_width)
+        except tk.TclError:
+            pass
 
     def _results_cards(self, parent):
         history = self.db.exams()
@@ -3153,12 +3314,22 @@ class ExamPanel(ctk.CTkFrame):
         overall_card(parent, self.db)
 
     def start(self, art):
+        # Ab 0.63.2 (N8, B-D-14, F23 a): Laeuft schon eine Pruefung (gespeichert,
+        # auch "bewerten"), wird sie gezeigt und nie ueberschrieben - vor und
+        # nach der Rueckfrage (sie kann waehrenddessen entstanden sein).
+        # Keine neue Meldung (F23 a: durch Absicherung geschlossen).
+        if fp.load_running() is not None:
+            self.show()
+            return
         exam = fp.EXAM[art]
         if not messagebox.askyesno(
                 "Prüfung starten",
                 "%s\n\nDie Zeit (%d Minuten) läuft sofort und lässt sich nicht anhalten - "
                 "auch nicht, wenn du das Programm schließt. Jetzt starten?"
                 % (exam["name"], exam["minuten"])):
+            return
+        if fp.load_running() is not None:
+            self.show()
             return
         self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
         fp.save_running(self.state)
@@ -4764,12 +4935,12 @@ class NotebookView(FitRowsMixin, View):
         pager.pack(fill="x", pady=(10, 0))
         # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
         self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_PREV)
         self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
         self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
-                                   parent_bg=C["card"])
+                                   parent_bg=C["card"], name=PAGE_NEXT)
         self.btn_next.pack(side="right")
         self.refresh()
         # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
@@ -5052,6 +5223,8 @@ class TrainerPanel(ctk.CTkFrame):
         self.lbl_counter.pack(side="left", padx=16)
         self.entries = {}
         self.marks = {}
+        self.field_labels = []      # ab 0.63.2 (N-e): Beschriftungen der Felder
+        self.fields_stacked = False   # ab 0.63.2 (N-e): Beschriftung ueber dem Feld
         self.show_stats()
 
     def show_stats(self):
@@ -5078,18 +5251,26 @@ class TrainerPanel(ctk.CTkFrame):
         for child in self.fields_box.winfo_children():
             child.destroy()
         self.entries, self.marks = {}, {}
+        self.field_labels = []
+        self.fields_stacked = False
         for row, (key, label) in enumerate(task.fields):
-            # Ab 0.63.2 (A1): Zeilen 0, 2, 4, ...; die ungerade Zeile darunter bleibt
-            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld
-            make_label(self.fields_box, label, font=F["small"],
-                       fg=C["text_dim"]).grid(row=2 * row, column=0, sticky="w", pady=4)
+            # Ab 0.63.2 (A1): je Feld eine Zeile; die Zeile darunter bleibt
+            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld.
+            # Ab 0.63.2 (N8, N-e): drei Zeilen je Feld (3r, 3r+1, 3r+2) - die
+            # Zeile darueber nimmt die Beschriftung auf, wenn Beschriftung und
+            # Feld nebeneinander nicht in die Karte passen (_fit_fields);
+            # sonst bleibt sie leer (Hoehe 0), Anordnung wie bisher
+            caption = make_label(self.fields_box, label, font=F["small"], fg=C["text_dim"])
+            caption.grid(row=3 * row + 1, column=0, sticky="w", pady=4)
+            caption.fit_row = 3 * row + 1
+            self.field_labels.append(caption)
             entry = EntryBox(self.fields_box, width=26)
-            entry.grid(row=2 * row, column=1, sticky="w", padx=12, pady=4)
+            entry.grid(row=3 * row + 1, column=1, sticky="w", padx=12, pady=4)
             entry.bind("<Return>", lambda _e: self.check())
             mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"],
                               justify="left")
-            mark.grid(row=2 * row, column=2, sticky="w")
-            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 2 * row, entry
+            mark.grid(row=3 * row + 1, column=2, sticky="w")
+            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 3 * row + 1, entry
             self.entries[key], self.marks[key] = entry, mark
         if task.fields:
             self.entries[task.fields[0][0]].focus_set()
@@ -5098,6 +5279,9 @@ class TrainerPanel(ctk.CTkFrame):
         self.btn_check.set_text("Prüfen")
         self.btn_check.set_enabled(True)
         self.lbl_counter.configure(text="Aufgabe %d / %d" % (self.index + 1, len(self.tasks)))
+        # Ab 0.63.2 (N-e): Anordnung der Felder auch dann pruefen, wenn sich
+        # die Groesse des Feldbereichs nicht aendert (gleich viele Felder)
+        self._schedule_fit_marks()
 
     def check(self):
         if not self.tasks:
@@ -5157,6 +5341,8 @@ class TrainerPanel(ctk.CTkFrame):
             pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
                       - (self.fields_box.winfo_rootx() + self.fields_box.winfo_width()))
             right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+            if self._fit_fields(right - self.fields_box.winfo_rootx()):
+                self.update_idletasks()
             for mark in self.marks.values():
                 raw = getattr(mark, "fit_raw", "")
                 if not raw:
@@ -5201,6 +5387,31 @@ class TrainerPanel(ctk.CTkFrame):
             # Messung fehlgeschlagen: altes Verhalten (Marke neben dem Feld)
             pass
 
+    def _fit_fields(self, room):
+        """Ab 0.63.2 (N8, N-e): Passen Beschriftung und Feld nebeneinander
+        nicht in die sichtbare Breite (Sehr gross, 1120 px, lange
+        Beschriftungen wie "Broadcast-Adresse des 1. vergebenen Subnetzes"),
+        steht jede Beschriftung direkt ueber ihrem Feld (Spalte des Felds);
+        sonst wie bisher links daneben. Entschieden wird nur aus den
+        benoetigten Breiten (nicht aus der aktuellen Anordnung), es entsteht
+        keine Schleife. Liefert True, wenn sich die Anordnung geaendert hat."""
+        if not self.field_labels or room <= 1:
+            return False
+        gap = px(12)
+        entry_width = max(entry.winfo_reqwidth() for entry in self.entries.values())
+        caption_width = max(label.winfo_reqwidth() for label in self.field_labels)
+        stacked = caption_width + 2 * gap + entry_width > room
+        if stacked == self.fields_stacked:
+            return False
+        self.fields_stacked = stacked
+        for label in self.field_labels:
+            if stacked:
+                label.grid(row=label.fit_row - 1, column=1, sticky="w", padx=12,
+                           pady=(4, 0))
+            else:
+                label.grid(row=label.fit_row, column=0, sticky="w", padx=0, pady=4)
+        return True
+
     def advance(self):
         if self.index < len(self.tasks) - 1:
             self.index += 1
@@ -5210,6 +5421,7 @@ class TrainerPanel(ctk.CTkFrame):
         self.tasks = []
         for child in self.fields_box.winfo_children():
             child.destroy()
+        self.field_labels = []   # ab 0.63.2 (N-e)
         self.txt_steps.pack_forget()
         self.lbl_task.configure(text="Runde beendet: %s." % summary)
         self.lbl_feedback.configure(text="Starte eine neue Runde oder wähle eine andere "
@@ -7613,7 +7825,7 @@ class SearchView(View):
             self._result_row(kind, category, title, detail)
         if len(hits) > 60:
             make_label(self.results_box,
-                       "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60),
+                       "… weitere %d Treffer nicht angezeigt." % (len(hits) - 60),   # ab 0.63.2 (N-c)
                        font=F["small"], fg=C["muted"]).pack(anchor="w", pady=8)
 
     def _result_row(self, kind, category, title, detail):
@@ -8763,7 +8975,7 @@ class UpdateDialog(ctk.CTkToplevel):
             if self._downloading and self.winfo_exists():
                 self.progress.set(state["loaded"] / state["total"])
                 self.lbl_status.configure(   # ab 0.63.2 (B-D-05): Dezimalkomma
-                    text="Update wird heruntergeladen ... %s von %s MB"
+                    text="Update wird heruntergeladen … %s von %s MB"   # ab 0.63.2 (N-c)
                          % (fisi_core.de_number(state["loaded"] / 1048576, 1),
                             fisi_core.de_number(state["total"] / 1048576, 1)))
                 self.after(200, refresh)

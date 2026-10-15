@@ -91,7 +91,7 @@ CHAPTERS = [
     ("ist", "2. Ist-Analyse",
      "Bestandsaufnahme und Schwachstellen."),
     ("soll", "3. Soll-Konzept und Lösungsauswahl",
-     "Anforderungen, Alternativen, Entscheidung (z.B. Nutzwertanalyse)."),
+     "Anforderungen, Alternativen, Entscheidung (z. B. Nutzwertanalyse)."),
     ("wirtschaft", "4. Wirtschaftlichkeit",
      "Projektkosten, Make-or-Buy, Amortisation."),
     ("durchfuehrung", "5. Durchführung",

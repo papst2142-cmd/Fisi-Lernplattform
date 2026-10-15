@@ -4509,7 +4509,7 @@ CALC_EXPLAIN_SUBNET = (
     "   IPv6 kennt keine Broadcast-Adresse, daher entfällt dort der\n"
     "   Abzug von 2 Adressen. Gezählt werden alle\n"
     "   2^(128 - Präfixlänge) Adressen (einzelne Adressen sind\n"
-    "   reserviert, z.B. Subnet-Router-Anycast)."
+    "   reserviert, z. B. Subnet-Router-Anycast)."
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
@@ -4740,7 +4740,7 @@ CALC_EXPLAIN_SUBNET_HANDY = (
     " 2^(128 - Präfixlänge)\n"
     " Adressen (einzelne\n"
     " Adressen sind\n"
-    " reserviert, z.B.\n"
+    " reserviert, z. B.\n"
     " Subnet-Router-Anycast)."
 )
 CALC_EXPLAIN_RAID_HANDY = (
