@@ -540,13 +540,16 @@ def _later(first, second, zone=True):
     return max(values)
 
 
-def _merged_markers(local, remote, zone=True):
+def _merged_markers(local, remote, zone=True, remote_first=True):
     markers = {}
     for key in MARKERS:
         # Ab 0.63.2 (FG-116): remote zuerst - bei Gleichstand (dieselbe Zeit in
         # UTC, andere Schreibweise) gilt die Marke der Datei. Sonst laedt jedes
         # Geraet seine Schreibweise bei jedem Abgleich wieder hoch.
-        value = _later(remote.get(key), local.get(key), zone)
+        # FG-119: Beim Zusammenfuehren einer Sicherung (remote_first=False)
+        # gilt wie vor FG-116 die eigene Marke.
+        first, second = (remote, local) if remote_first else (local, remote)
+        value = _later(first.get(key), second.get(key), zone)
         if value:
             markers[key] = value
     return markers
@@ -637,7 +640,8 @@ def merge_into_local(db, remote, check_future=True, stats=None, mixed=None):
             if parsed and parsed[1] is not None and parsed[1] > limit:
                 del remote_markers[key]
                 stats.future += 1
-    markers = _merged_markers(local_markers, remote_markers, zone)
+    markers = _merged_markers(local_markers, remote_markers, zone,
+                              remote_first=not check_future)
     reset = markers.get("reset_at")
     cleared = _later(reset, markers.get("history_cleared_at"), zone)
     game_reset = markers.get("spiel_reset_at")
