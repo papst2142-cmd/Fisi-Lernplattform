@@ -78,6 +78,7 @@ class IconButtonNamenAstTest(unittest.TestCase):
 
     def test_jeder_aufruf_hat_namen(self):
         aufrufe = 0
+        spiel = []
         for rel in self.DATEIEN:
             for node in ast.walk(ast.parse(_source(rel))):
                 if not isinstance(node, ast.Call):
@@ -98,8 +99,13 @@ class IconButtonNamenAstTest(unittest.TestCase):
                     text = _assign(rel, value.id)
                 self.assertTrue(isinstance(text, str) and text.strip(),
                                 "%s:%d leerer Name" % (rel, node.lineno))
-        # 6 in app_gui (Zahlenfeld 2, Blaettern 2 x 2), 2 im Kalender
-        self.assertEqual(aufrufe, 8)
+                if rel == "fisi_game_gui.py":
+                    spiel.append((node.lineno, text))
+        # 6 in app_gui (Zahlenfeld 2, Blaettern 2 x 2), 2 im Kalender, 2 Tickets (Spiel, N2 B-F-03)
+        self.assertEqual(aufrufe, 10)
+        # Ticket-Blaettern im Spiel heisst wie das Blaettern der Listen (PAGE_PREV/PAGE_NEXT)
+        self.assertEqual([text for _, text in sorted(spiel)],
+                         [_assign("app_gui.py", "PAGE_PREV"), _assign("app_gui.py", "PAGE_NEXT")])
 
     def test_namen_wie_am_handy(self):
         self.assertEqual(_assign("app_gui.py", "PAGE_PREV"),

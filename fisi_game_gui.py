@@ -3503,11 +3503,11 @@ class GameView(ReusableView, ScrollArea):
         pager = _frame(body)
         pager.pack(fill="x", pady=(10, 0))
         IconButton(pager, "arrow_left", lambda: self._turn_tickets(-1),
-                   parent_bg=C["card"]).pack(side="left")
+                   parent_bg=C["card"], name="Vorherige Seite").pack(side="left")
         make_label(pager, "Seite %d / %d" % (self.ticket_page[1] + 1, pages),
                    font=F["small_bold"], fg=C["text_dim"]).pack(side="left", expand=True)
         IconButton(pager, "arrow_right", lambda: self._turn_tickets(1),
-                   parent_bg=C["card"]).pack(side="right")
+                   parent_bg=C["card"], name="Nächste Seite").pack(side="right")
 
     def _turn_tickets(self, delta):
         where, page = self.ticket_page
