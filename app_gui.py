@@ -5358,8 +5358,13 @@ class TrainerPanel(ctk.CTkFrame):
                 entry = mark.fit_entry
                 # neben dem Feld (Spalte 2) oder, wenn dort nicht einmal
                 # "richtig wäre:" passt (Schrift Sehr gross), unter dem Feld
-                neben = entry.winfo_rootx() + entry.winfo_width() + 12
-                unter = neben - 12 - entry.winfo_width()
+                # Ab 0.63.2 (FG-121): Spalte 2 beginnt hinter der breitesten
+                # Zelle der Spalte 1 - stehen die Beschriftungen ueber den
+                # Feldern (N-e), ist das die Beschriftung, nicht das Feld
+                neben = max(entry.winfo_rootx() + entry.winfo_width() + 12,
+                            self.fields_box.winfo_rootx()
+                            + self.fields_box.grid_bbox(2, mark.fit_row)[0])
+                unter = entry.winfo_rootx()
                 # (ab 0.63.2: unter das Feld auch dann, wenn die Marke neben
                 # dem Feld selbst umbrochen nicht passt)
                 def setzen(room):
