@@ -429,7 +429,8 @@ HELP_SECTIONS = [
               "• Strg+Eingabe prüft im Antwortfeld einer Karteikarte deine Antwort.\n\n"
               "Die Schrift vergrößerst du in den „Optionen“ unter „Optische "
               "Anpassungen“ bei „Schriftgröße“ mit "
-              "„Groß“ oder „Sehr groß“.")},
+              # Ab 0.63.2 (B-J-06, Weisung zu Meldung 41, Frage 10): alle Stufen
+              "„Groß“, „Sehr groß“, „Extra groß“ oder „Maximal“.")},
     {"id": "schutzprogramm", "titel": "Warnung vom Schutzprogramm",
      "reiter": [],
      "text": ("Manche Schutzprogramme und Browser warnen beim Herunterladen oder "

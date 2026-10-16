@@ -103,6 +103,8 @@ AREAS = [
      "stichwoerter": ["Rundgang", "Hilfe", "Name", "Einführung"]},
     {"id": OPTIK_ID, "titel": OPTIK_TITLE,
      "stichwoerter": ["Schrift", "Schriftgröße", "groß", "Sehr groß",
+                      # Ab 0.63.2 (B-J-06, Weisung zu Meldung 41, Frage 10)
+                      "Extra groß", "Maximal",
                       "Farbe", "Darstellung", "Dunkel", "Hell", TEMPLATES_TITLE,
                       "Grundfarbe", "Hintergrund", "Eigene Farben", "Regler",
                       "Farbton", "Sättigung", "Helligkeit", "Akzent"]

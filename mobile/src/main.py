@@ -136,6 +136,18 @@ SAME_HEIGHT = {"intrinsic_height": True,
                "vertical_alignment": ft.CrossAxisAlignment.STRETCH}
 
 
+def tile_row(controls, spacing=12, **kwargs):
+    """Ab 0.63.2 (B-J-06): Kacheln nebeneinander (ft.Row wie bisher); ab 160 %
+    untereinander in voller Breite - nebeneinander brachen die Titel sonst
+    mitten im Wort um ("KARTEIKARTE/N", "DURCHSCHNI/TT")."""
+    if not ui.large():
+        return ft.Row(controls, spacing=spacing, **kwargs)
+    for control in controls:
+        control.expand = None     # expand gilt nur nebeneinander
+    return ft.Column(controls, spacing=spacing, tight=True,
+                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+
 def safe_content(content):
     """Ab 0.62.1: Inhalt einer Ansicht mit Abstand zu den Systemleisten von
     Android (Bedienleiste unten, im Querformat auch seitlich). Die App zeichnet
@@ -263,6 +275,11 @@ class DashboardScreen(Screen):
         """Innenbreite einer Ringkarte aus der Seitenbreite (vor dem ersten
         Zeichnen); ohne bekannte Breite wie bei 384 dp."""
         width = getattr(getattr(self.app, "page", None), "width", None)
+        if ui.large():
+            # Ab 0.63.2 (B-J-06): ab 160 % eine Ringkarte je Zeile
+            if isinstance(width, (int, float)) and width > self.RING_ROW_EXTRA:
+                return int(width - 2 * 16) - 2
+            return 2 * self.RING_CARD_INNER + 12
         if isinstance(width, (int, float)) and width > self.RING_ROW_EXTRA:
             return int((width - self.RING_ROW_EXTRA) // 2) - 2
         return self.RING_CARD_INNER
@@ -447,10 +464,11 @@ class DashboardScreen(Screen):
             self.notice_holder,
             self.hero,
             self.today_card,
-            ft.Row([ring_card(DASH_RING_CARDS, self.ring_cards),
-                    ring_card(DASH_RING_QUIZ, self.ring_quiz)], spacing=12, **SAME_HEIGHT),
-            ft.Row([ring_card(DASH_RING_AP1, self.ring_ap1),
-                    ring_card(DASH_RING_AP2, self.ring_scen)], spacing=12, **SAME_HEIGHT),
+            # Ab 0.63.2 (B-J-06): tile_row - ab 160 % untereinander
+            tile_row([ring_card(DASH_RING_CARDS, self.ring_cards),
+                      ring_card(DASH_RING_QUIZ, self.ring_quiz)], **SAME_HEIGHT),
+            tile_row([ring_card(DASH_RING_AP1, self.ring_ap1),
+                      ring_card(DASH_RING_AP2, self.ring_scen)], **SAME_HEIGHT),
             ui.Card(DASH_QUOTE_TITLE, [self.lbl_quote, self.lbl_quote_sub],
                     accent=C["accent2"], subtitle=DASH_QUOTE_SUBTITLE),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
@@ -949,8 +967,8 @@ class QuizScreen(Screen):
         self._on_category("Alle")
         # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
         self.practice_box = ft.Column([self.setup_card, status, question,
-                                       ft.Row([self.btn_submit, self.btn_cancel],
-                                              spacing=10)], spacing=14, tight=True)
+                                       tile_row([self.btn_submit, self.btn_cancel],
+                                                spacing=10)], spacing=14, tight=True)
         self.exam = ExamPanel(self.app)
         self.exam.visible = False
         self.mode_pills = ui.PillGroup(QUIZ_MODES, on_change=self._on_mode)
@@ -1536,9 +1554,9 @@ class ExamPanel(ft.Column):
                    vertical_alignment=ft.CrossAxisAlignment.END),
             self.lbl_progress,
             ui.text(exam["name"], size=12, color=C["muted"]),
-            ft.Row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
-                    ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
-                                      expand=True)], spacing=10),
+            tile_row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
+                      ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
+                                        expand=True)], spacing=10),
         ], accent=C["accent"])
         self.task_box = ft.Column(spacing=14, tight=True)
         controls = [head]
@@ -2864,7 +2882,7 @@ class NotebookScreen(Screen):
             if len(answer) > 900:
                 answer = answer[:900].rsplit(" ", 1)[0] + " …"
             controls.append(ui.text(answer, size=13, color=C["text_dim"], selectable=True))
-        controls.append(ft.Row([
+        controls.append(tile_row([
             ui.GradientButton("Antwort ausblenden" if key in self.opened else "Antwort zeigen",
                               lambda _e, k=key: self._toggle(k), kind="ghost", height=36,
                               expand=True),
@@ -3562,8 +3580,9 @@ class ProgressScreen(Screen):
             # Breite; die Lernserie steht nur noch im Banner der Startseite.
             # Namen wie am PC (vorher "Sessions" und "Bestes")
             # Ab 0.63.2 (B-E-05 d): beide Kacheln gleich hoch (Sehr gross)
-            ft.Row([stat("tests", "Test-Sessions", C["accent"]),
-                    stat("avg", "Durchschnitt", C["purple"])], spacing=12, **SAME_HEIGHT),
+            # Ab 0.63.2 (B-J-06): tile_row - ab 160 % untereinander
+            tile_row([stat("tests", "Test-Sessions", C["accent"]),
+                      stat("avg", "Durchschnitt", C["purple"])], **SAME_HEIGHT),
             ft.Row([stat("best", "Bestes Ergebnis", C["accent2"])], spacing=12),
             ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
                                       ft.Container(height=6),
@@ -5143,6 +5162,13 @@ class SyncController:
 #  APP
 # ============================================================================
 
+# Ab 0.63.2 (B-E-06): Navigationsleiste waechst mit der Schrift - Hoehe und
+# Symbole mal Faktor (Flutter-Standard 80 und 24); die Beschriftung bleibt bei
+# hoechstens NAV_LABEL_MAX, damit "Fortschritt" einzeilig bleibt
+NAV_HEIGHT = 80
+NAV_ICON_SIZE = 24
+NAV_LABEL_MAX = 12
+
 NAV = [
     ("dashboard", ft.Icons.DASHBOARD_OUTLINED, ft.Icons.DASHBOARD_ROUNDED, "Start"),
     ("learn", ft.Icons.SCHOOL_OUTLINED, ft.Icons.SCHOOL_ROUNDED, "Lernen"),
@@ -5336,9 +5362,15 @@ class FISIMobileApp:
                 on_surface=C["text"], error=C["red"]),
             navigation_bar_theme=ft.NavigationBarTheme(
                 bgcolor=C["sidebar"], indicator_color=C["card_hi"],
+                # Ab 0.63.2 (B-E-06): Die Leiste waechst mit der Schrift (Hoehe
+                # und Symbole, siehe NAV_ICON_SIZE)
+                height=ui.grow(NAV_HEIGHT),
                 # Ab 0.56: hoechstens 12, sonst bricht "Fortschritt" bei
-                # "Sehr gross" in der schmalen Leiste um
-                label_text_style=ft.TextStyle(size=min(12, ui.fs(11)), color=C["text_dim"])))
+                # "Sehr gross" in der schmalen Leiste um. Ab 0.63.2 (B-E-06)
+                # gemessen: Jede groessere Beschriftung bricht bei 384 dp mitten
+                # im Wort um (6 Eintraege je 64 dp), deshalb bleibt die Grenze
+                label_text_style=ft.TextStyle(size=min(NAV_LABEL_MAX, ui.fs(11)),
+                                              color=C["text_dim"])))
 
         self.screens = {key: cls(self) for key, cls in SCREEN_CLASSES.items()}
         self.tab = "dashboard"
@@ -5352,8 +5384,9 @@ class FISIMobileApp:
         self.body = ft.Container(expand=True)
         self.nav = ft.NavigationBar(
             destinations=[ft.NavigationBarDestination(
-                icon=ft.Icon(icon, color=C["muted"]),
-                selected_icon=ft.Icon(selected, color=C["accent"]), label=caption)
+                icon=ft.Icon(icon, color=C["muted"], size=ui.grow(NAV_ICON_SIZE)),
+                selected_icon=ft.Icon(selected, color=C["accent"],
+                                      size=ui.grow(NAV_ICON_SIZE)), label=caption)
                 for _key, icon, selected, caption in NAV],
             selected_index=0, on_change=self._nav_changed,
             bgcolor=C["sidebar"], indicator_color=C["card_hi"])
@@ -5453,6 +5486,7 @@ class FISIMobileApp:
     # 0); jetzt bricht sie um
     CRUMB_WRAP = {"wrap": True, "run_spacing": 1}
     CRUMB_GAP = 12
+    BAR_HEIGHT = 56   # Kopfzeile (Flutter kToolbarHeight), ab 160 % mal Faktor
 
     def _appbar(self, root, crumbs=None):
         if crumbs:
@@ -5476,9 +5510,13 @@ class FISIMobileApp:
                                             height=30, alignment=ft.Alignment.CENTER)
             leading = ft.Container(content=logo, padding=ft.Padding.only(left=16),
                                    alignment=ft.Alignment.CENTER_LEFT)
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher, sonst schnitt die Leiste die
+        # (umbrochenen) Brotkrumen und die Versionszeile oben und unten ab.
+        # Bis "Sehr gross" Flutter-Standard wie bisher
+        height = {"toolbar_height": ui.grow(self.BAR_HEIGHT)} if ui.large() else {}
         return ft.AppBar(
             leading=leading, leading_width=52 if root else None, title=title,
-            bgcolor=C["bg"], elevation=0, color=C["text"],
+            bgcolor=C["bg"], elevation=0, color=C["text"], **height,
             # Ab 0.56: Hilfe in der Kopfzeile (die untere Leiste hat schon 6 Punkte)
             # Ab 0.60 (K-G): mit Namen fuer Bildschirmleser (ein Element je Knopf)
             actions=[named(fh.HELP_TITLE, ft.IconButton(
