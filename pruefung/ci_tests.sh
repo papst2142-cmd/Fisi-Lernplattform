@@ -14,6 +14,8 @@
 #    rest     alle uebrigen test_*.py (neue Testdateien landen automatisch hier)
 #    rest2    ab 0.63.2 (FG-113): lange Dateien (Abgleich, Anzeige-Seiten);
 #             vorher Teil von "rest"
+#    breite2  ab 0.63.2 (FG-122): Breitentest des Spiels; vorher Teil von "breite"
+#    rest3    ab 0.63.2 (FG-122): Anzeige-/Breitentests aus N8; vorher Teil von "rest"
 #    windows  Auswahl fuer den Windows-Runner (Windows-eigene Wege; ab 0.62.4
 #             auch der Abgleich-Kern, test_abgleich.py laeuft dort nicht)
 #
@@ -26,7 +28,11 @@ PY="${PYTHON:-python}"
 LANG_DATEIEN="test_beenden.py test_leistung.py test_grosse_datenmengen.py test_vorladen.py"
 # Ab 0.63.2 (FG-96): Fehlt eine dieser Dateien im Stand, laeuft sie nirgends
 # (sie gehoert nie zu "rest"); test_ci_teile_0632.py prueft die Zuordnung.
-BREITE_DATEIEN="test_spiel_breite_0632.py test_ansichten_breite.py test_rechner_seite_breite.py"
+BREITE_DATEIEN="test_ansichten_breite.py test_rechner_seite_breite.py"
+# Ab 0.63.2 (FG-122): "breite" und "rest" lagen auf GitHub ueber der Zeitgrenze
+# von 30 min (Lauf 38938085051 abgebrochen); diese Dateien laufen in eigenen Teilen
+BREITE2_DATEIEN="test_spiel_breite_0632.py"
+REST3_DATEIEN="test_anzeige_tastatur_0632.py test_listentitel_breite_0632.py test_startzeilen_breite_0632.py test_suchfeld_rahmen_0632.py test_trainer_breite_0632.py"
 # Ab 0.63.2 (FG-113): "rest" war zu lang (1441 s); diese Dateien laufen in "rest2"
 # (test_abgleich_0632.py kommt mit S6a; fehlt eine im Stand, laeuft sie nirgends).
 REST2_DATEIEN="test_abgleich.py test_abgleich_0632.py test_anzeige_pc_0632.py test_spielstand_inkrementell.py test_trainer_richtig_waere_pc.py"
@@ -36,8 +42,10 @@ case "$TEIL" in
   lang)    DATEIEN="$LANG_DATEIEN" ;;
   breite)  DATEIEN=$(for d in $BREITE_DATEIEN; do [ -e "$d" ] && echo "$d"; done) ;;
   rest2)   DATEIEN=$(for d in $REST2_DATEIEN; do [ -e "$d" ] && echo "$d"; done) ;;
+  breite2) DATEIEN=$(for d in $BREITE2_DATEIEN; do [ -e "$d" ] && echo "$d"; done) ;;
+  rest3)   DATEIEN=$(for d in $REST3_DATEIEN; do [ -e "$d" ] && echo "$d"; done) ;;
   rest)    DATEIEN=$(ls test_*.py | grep -v -x -e test_spiel.py \
-                     $(for d in $LANG_DATEIEN $BREITE_DATEIEN $REST2_DATEIEN; do echo "-e $d"; done)) ;;
+                     $(for d in $LANG_DATEIEN $BREITE_DATEIEN $BREITE2_DATEIEN $REST2_DATEIEN $REST3_DATEIEN; do echo "-e $d"; done)) ;;
   windows) DATEIEN="test_einzelstart.py test_haenger.py test_update.py test_update_fenster.py
                     test_leistung.py test_werkzeuge.py test_optionen.py test_sicherung.py
                     test_beenden.py test_namen.py test_rechtliches.py

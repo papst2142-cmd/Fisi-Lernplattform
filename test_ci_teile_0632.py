@@ -4,7 +4,8 @@
 Tests fuer 0.63.2, FG-96: Aufteilung der Linux-Testteile in der CI.
 
   * Jede Testdatei test_*.py liegt in GENAU EINEM der Linux-Teile
-    spiel, lang, breite, rest, rest2 (FG-113) (keine doppelt, keine in keinem Teil).
+    spiel, lang, breite, breite2, rest, rest2, rest3 (FG-113, FG-122)
+    (keine doppelt, keine in keinem Teil).
   * Teil "breite" enthaelt genau die drei Breitentests (soweit im Stand),
     keiner davon laeuft zusaetzlich in "rest".
   * Eine neue Testdatei landet weiter automatisch in "rest"; kommt
@@ -31,11 +32,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CI_TESTS = os.path.join(HERE, "pruefung", "ci_tests.sh")
 BUILD = os.path.join(HERE, ".github", "workflows", "build.yml")
 
-TEILE = ("spiel", "lang", "breite", "rest", "rest2")
-BREITE = {"test_spiel_breite_0632.py", "test_ansichten_breite.py",
-          "test_rechner_seite_breite.py"}
-# im Stand e0f9c7e vorhanden; test_spiel_breite_0632.py kommt mit N5
-BREITE_PFLICHT = {"test_ansichten_breite.py", "test_rechner_seite_breite.py"}
+TEILE = ("spiel", "lang", "breite", "breite2", "rest", "rest2", "rest3")
+BREITE = {"test_ansichten_breite.py", "test_rechner_seite_breite.py"}
+BREITE_PFLICHT = BREITE
+# FG-122: Teile "breite2" (vorher in "breite") und "rest3" (vorher in "rest")
+BREITE2 = {"test_spiel_breite_0632.py"}
+REST3 = {"test_anzeige_tastatur_0632.py", "test_listentitel_breite_0632.py",
+         "test_startzeilen_breite_0632.py", "test_suchfeld_rahmen_0632.py",
+         "test_trainer_breite_0632.py"}
 # FG-113: Teil "rest2"; test_abgleich_0632.py kommt mit S6a
 REST2 = {"test_abgleich.py", "test_abgleich_0632.py", "test_anzeige_pc_0632.py",
          "test_spielstand_inkrementell.py", "test_trainer_richtig_waere_pc.py"}
@@ -99,7 +103,7 @@ class GenauEinTeilTest(unittest.TestCase):
         vorhanden = {d for d in BREITE if os.path.exists(os.path.join(HERE, d))}
         self.assertTrue(BREITE_PFLICHT <= vorhanden, "Breitentest fehlt im Stand")
         self.assertEqual(set(zuordnung["breite"]), vorhanden)
-        for datei in BREITE:
+        for datei in BREITE | BREITE2:
             self.assertNotIn(datei, zuordnung["rest"])
         # andere Teile unveraendert
         self.assertEqual(zuordnung["spiel"], ["test_spiel.py"])
@@ -109,7 +113,7 @@ class GenauEinTeilTest(unittest.TestCase):
     def test_n5_datei_landet_in_breite_neue_datei_in_rest(self):
         # Nachstellung des Stands nach dem N5-Merge plus einer ganz neuen Datei
         alle = sorted({os.path.basename(p) for p in glob.glob(os.path.join(HERE, "test_*.py"))}
-                      | BREITE | REST2 | {"test_fg96_neu_nachgestellt.py"})
+                      | BREITE | BREITE2 | REST2 | REST3 | {"test_fg96_neu_nachgestellt.py"})
         ordner = _kopie(alle)
         try:
             zuordnung = _zuordnung(ordner)
@@ -117,9 +121,11 @@ class GenauEinTeilTest(unittest.TestCase):
             shutil.rmtree(ordner, ignore_errors=True)
         _genau_ein_teil(self, zuordnung, alle)
         self.assertEqual(set(zuordnung["breite"]), BREITE)
+        self.assertEqual(set(zuordnung["breite2"]), BREITE2)  # FG-122
         self.assertIn("test_fg96_neu_nachgestellt.py", zuordnung["rest"])
         self.assertNotIn("test_spiel_breite_0632.py", zuordnung["rest"])
         self.assertEqual(set(zuordnung["rest2"]), REST2)  # FG-113, nach S6a
+        self.assertEqual(set(zuordnung["rest3"]), REST3)  # FG-122
 
     def test_teil_rest2_genau_die_liste(self):
         # FG-113: "rest2" = genau REST2 (soweit im Stand), keine davon in "rest"
@@ -128,6 +134,14 @@ class GenauEinTeilTest(unittest.TestCase):
         self.assertTrue(REST2_PFLICHT <= vorhanden, "rest2-Datei fehlt im Stand")
         self.assertEqual(set(zuordnung["rest2"]), vorhanden)
         self.assertEqual(set(zuordnung["rest"]) & REST2, set())
+
+    def test_teile_breite2_rest3_genau_die_listen(self):
+        # FG-122: "breite2" und "rest3" = genau ihre Listen, keine davon in "rest"/"breite"
+        zuordnung = _zuordnung(HERE)
+        self.assertEqual(set(zuordnung["breite2"]), BREITE2)
+        self.assertEqual(set(zuordnung["rest3"]), REST3)
+        self.assertEqual(set(zuordnung["rest"]) & (BREITE2 | REST3), set())
+        self.assertEqual(set(zuordnung["breite"]) & BREITE2, set())
 
 
 class MatrixTest(unittest.TestCase):
@@ -146,7 +160,7 @@ class MatrixTest(unittest.TestCase):
     def test_matrix_spiel_lang_breite_rest(self):
         job = self._tests_job()
         matrix = [z for z in job if z.strip().startswith("teil:")]
-        self.assertEqual(matrix, ["        teil: [spiel, lang, breite, rest, rest2]"])  # FG-113
+        self.assertEqual(matrix, ["        teil: [spiel, lang, breite, breite2, rest, rest2, rest3]"])  # FG-113, FG-122
 
     def test_matrix_ohne_teil_ibus(self):
         # FG-94, Weg c: Teil ibus laeuft nur im Container, nicht auf GitHub
