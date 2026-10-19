@@ -84,6 +84,17 @@ StartupWMClass={wm_class}
 SingleMainWindow=true
 """
 
+
+def desktop_entry(exec_name, appimage_version=None):
+    """Ab 0.63.2 (B-H-12): Menueeintrag je Paketart. Nur die Startdatei im
+    AppImage traegt zusaetzlich X-AppImage-Version (Version fuer
+    AppImage-Werkzeuge); das .deb fuehrt seine Version im Paket selbst."""
+    text = DESKTOP_ENTRY.format(exec=exec_name, wm_class=WM_CLASS)
+    if appimage_version is not None:
+        text += "X-AppImage-Version=%s\n" % appimage_version
+    return text
+
+
 # Ab 0.59.1: Fensterklasse unter Linux. app_gui erzeugt das Hauptfenster mit
 # className=PACKAGE_NAME, Tk schreibt den ersten Buchstaben der Klasse gross
 # (gemessen mit xprop: "fisi-lernplattform", "Fisi-lernplattform"). GNOME
@@ -140,6 +151,20 @@ def android_build_number(version):
 VERSION_FORMAT = r"^\d+\.\d+(\.\d+)?$"
 
 
+def check_android_range(version):
+    """Ab 0.63.2 (B-H-08): Unterversion und Fix muessen unter 100 bleiben.
+    Die Formel oben bleibt (eine neue wuerde Updates bestehender Handy-
+    Installationen brechen); ab 100 gaebe es eine Android-Versionsnummer
+    doppelt (0.100 = 1.0 = 10000, 0.62.100 = 0.63 = 6300). Bricht ab, bevor
+    irgendetwas gelesen oder geschrieben wird."""
+    minor, fix = _version_numbers(version)[1:3]
+    if minor >= 100 or fix >= 100:
+        fail("Ungueltige Version %s - Unterversion und Fix muessen kleiner als 100 sein. "
+             "Die Android-Versionsnummer (Hauptversion*10000 + Unterversion*100 + Fix) "
+             "waere sonst doppelt vergeben (z.B. 0.100 = 1.0 = 10000) und Android "
+             "installiert kein Update." % version)
+
+
 def _read(name):
     with open(os.path.join(ROOT, name), encoding="utf-8", newline="") as handle:
         return handle.read()
@@ -150,6 +175,7 @@ def check_versions(version):
     if not re.match(VERSION_FORMAT, version):
         fail("Ungueltige Version %s - erlaubt sind z.B. 0.22 (Update) und 0.22.1 (Fix)."
              % version)
+    check_android_range(version)
     wrong = []
     for name, pattern in VERSION_SPOTS:
         match = re.search(pattern, _read(name), re.MULTILINE)
@@ -172,6 +198,7 @@ def set_version(version):
     if not re.match(VERSION_FORMAT, version):
         fail("Ungueltige Version %s - erlaubt sind z.B. 0.22 (Update) und 0.22.1 (Fix)."
              % version)
+    check_android_range(version)
     spots = [(name, pattern, version) for name, pattern in VERSION_SPOTS]
     spots.append(ANDROID_BUILD_SPOT + (android_build_number(version),))
     for name, pattern, value in spots:
@@ -298,6 +325,7 @@ def build_app(version):
     if not os.path.exists(target):
         fail("PyInstaller hat kein Ergebnis erzeugt: %s" % target)
     check_no_readline(target)
+    remove_ds_store(target)
     write_legal_files(target, version)
     if sys.platform == "darwin":
         _set_macos_version(target, version)
@@ -311,6 +339,24 @@ def check_no_readline(target):
     if found:
         fail("readline ist wieder im Programm (Plan 0.62): " + ", ".join(found))
     info("readline nicht im Programm (geprueft)")
+
+
+def remove_ds_store(target):
+    """Ab 0.63.2 (B-H-12): Finder-Dateien .DS_Store (kommen mit customtkinter)
+    nicht mit ausliefern - weder im Programmordner noch in .deb, AppImage,
+    Windows-Installer oder dmg. Auch die Verweise darauf (macOS-App)."""
+    removed = []
+    for folder, dirs, names in os.walk(target):
+        for name in names + dirs:
+            path = os.path.join(folder, name)
+            if name == ".DS_Store" and (os.path.islink(path) or os.path.isfile(path)):
+                os.remove(path)
+                removed.append(os.path.relpath(path, target))
+    left = [os.path.join(folder, name) for folder, dirs, names in os.walk(target)
+            for name in names + dirs if name == ".DS_Store"]
+    if left:
+        fail(".DS_Store ist noch im Programm: " + ", ".join(left))
+    info(".DS_Store entfernt: %d (%s)" % (len(removed), ", ".join(sorted(removed)) or "keine"))
 
 
 def legal_folder(target):
@@ -537,6 +583,23 @@ def write_doc_files(doc):
         handle.write(DEB_COPYRIGHT.format(name=DISPLAY_NAME, doc="/usr/share/doc/" + PACKAGE_NAME))
 
 
+def write_deb_notices(version, folders):
+    """Ab 0.63.2 (B-H-12): Hinweisdatei des .deb ohne die AppImage-Laufzeit
+    (die steckt nur im AppImage). Gleiche Zuordnung wie im Programmordner,
+    lizenzen.py mit Paketart "linux-deb"."""
+    import lizenzen
+    gen = lizenzen.Generator(os.path.join(DIST, APP_NAME), system="linux-deb")
+    gen.run()
+    if gen.unassigned:
+        fail("Hinweisdatei .deb: ohne Lizenz-Zuordnung: " + ", ".join(gen.unassigned))
+    text = gen.render(version)
+    for folder in folders:
+        with open(os.path.join(folder, "THIRD_PARTY_NOTICES.txt"), "w", encoding="utf-8",
+                  newline="\n") as handle:
+            handle.write(text)
+    info("Hinweisdatei .deb ohne AppImage-Laufzeit: %d Abschnitte" % text.count("\n#### "))
+
+
 def package_deb(version):
     """Installiert nach /opt/fisi-lernplattform, mit Startmenue-Eintrag und
     dem Befehl fisi-lernplattform."""
@@ -553,9 +616,11 @@ def package_deb(version):
     apps = os.path.join(stage, "usr", "share", "applications")
     os.makedirs(apps)
     with open(os.path.join(apps, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
-        handle.write(DESKTOP_ENTRY.format(exec=PACKAGE_NAME, wm_class=WM_CLASS))
+        handle.write(desktop_entry(PACKAGE_NAME))
     write_deb_icons(os.path.join(stage, "usr", "share", "icons", "hicolor"))
     write_doc_files(os.path.join(stage, "usr", "share", "doc", PACKAGE_NAME))
+    write_deb_notices(version, [os.path.join(stage, "opt", PACKAGE_NAME),
+                                os.path.join(stage, "usr", "share", "doc", PACKAGE_NAME)])
 
     size_kb = sum(os.path.getsize(os.path.join(folder, name))
                   for folder, _dirs, names in os.walk(stage) for name in names
@@ -598,7 +663,7 @@ def package_appimage(version):
                      'exec "$HERE/usr/lib/%s/%s" "$@"\n' % (PACKAGE_NAME, APP_NAME))
     os.chmod(apprun, 0o755)
     with open(os.path.join(appdir, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
-        handle.write(DESKTOP_ENTRY.format(exec=APP_NAME, wm_class=WM_CLASS))
+        handle.write(desktop_entry(APP_NAME, appimage_version=version))
     shutil.copy(os.path.join(ROOT, "icon.png"), os.path.join(appdir, PACKAGE_NAME + ".png"))
     write_doc_files(os.path.join(appdir, "usr", "share", "doc", PACKAGE_NAME))
 

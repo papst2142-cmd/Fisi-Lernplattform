@@ -56,6 +56,17 @@ REQUIRES_PYTHON = {
 }
 
 
+# N11 (B-M-05, B-M-06): Fassungen von flet in der Lock-Datei und Container-Bild
+FLET_LOCK_FASSUNGEN = {"flet": "1.0.1", "flet-cli": "1.0.1", "flet-desktop": "1.0.1",
+                       "flet-platform-assets": "1.0.1", "flet-web": "1.0.1"}
+UBUNTU_2204_DIGEST = "5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401"
+
+
+def _flet_lock_fassungen():
+    text = _lesen(os.path.join(CODE, "requirements-lock-flet.txt"))
+    return dict(re.findall(r"^(flet[\w-]*)==(\S+) ", text, re.MULTILINE))
+
+
 def _lesen(pfad):
     with open(pfad, encoding="utf-8") as fh:
         return fh.read()
@@ -145,7 +156,11 @@ class SchutzTest(unittest.TestCase):
     def test_version_pins_unveraendert(self):
         text = _lesen(BUILD)
         self.assertEqual(text.count('python-version: "3.12"'), 5)
-        self.assertEqual(text.count('"flet[all]==1.0.1"'), 3)
+        # N11 (B-M-05): flet[all]==1.0.1 kommt aus der Lock-Datei (dort fest
+        # mit Pruefsummen), die genau die drei bisherigen Stellen nutzen
+        self.assertEqual(text.count('"flet[all]==1.0.1"'), 0)
+        self.assertEqual(text.count("--require-hashes -r requirements-lock-flet.txt"), 3)
+        self.assertEqual(_flet_lock_fassungen(), FLET_LOCK_FASSUNGEN)
         for pin in (
                 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage",
                 "https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64",
@@ -154,9 +169,12 @@ class SchutzTest(unittest.TestCase):
             self.assertEqual(text.count(pin), 1, pin)
         runner = re.findall(r"(?:runs-on|- os):\s*(\S+)", text)
         self.assertEqual(sorted(runner), sorted([
-            "${{", "windows-2025", "ubuntu-22.04", "macos-15", "macos-15-intel",
+            "${{", "windows-2025", "ubuntu-24.04", "macos-15", "macos-15-intel",
             "ubuntu-24.04", "ubuntu-24.04", "windows-2025", "windows-2025",
             "ubuntu-24.04", "ubuntu-24.04"]))
+        # N11 (B-M-06, F29): der Linux-Bau laeuft in Ubuntu 22.04, Bild fest per Digest
+        self.assertEqual(re.findall(r"container: (\S+)", text),
+                         ["${{", "ubuntu:22.04@sha256:" + UBUNTU_2204_DIGEST])
         # GitHub-eigene Actions bleiben auf ihrer Hauptversion
         eigene = sorted(set(re.findall(r"uses: (actions/[\w-]+@\S+)", text)))
         # N10 (B-M-08): actions/cache dazu, genau einmal (Android-Job)
@@ -311,6 +329,14 @@ class ZeitgrenzenTest(unittest.TestCase):
 
     def test_jedes_curl_hat_zeitgrenze(self):
         zeilen = [z for z in _lesen(BUILD).splitlines() if re.search(r"\bcurl\s", z)]
+        # N11 (B-M-06): "curl" als Paketname in der apt-Liste des Containers
+        # ist kein Aufruf - genau diese eine Zeile, sonst nichts
+        paketzeile = ("            binutils file curl ca-certificates git lsb-release "
+                      "squashfs-tools \\")
+        pakete = [z for z in zeilen if z == paketzeile]
+        self.assertEqual(len(pakete), 1)
+        self.assertIn(paketzeile, _schritt(_lesen(BUILD), "Linux-Werkzeuge installieren"))
+        zeilen = [z for z in zeilen if z not in pakete]
         # N10 (CI-a): dazu der Download im Schritt "Android-Laufzeit vorab
         # laden und pruefen"; jedes curl auch mit Wiederholung (B-M-02)
         self.assertEqual(len(zeilen), 4)
@@ -712,7 +738,10 @@ cp "$ATTRAPPE_DIR/server/$name" "$ziel"
         self.assertIn('echo "FLET_CACHE_DIR=$CACHE" >> "$GITHUB_ENV"', skript)
         # flet-Fassung im Schritt = Fassung im Workflow
         self.assertIn("releases/download/v1.0.1", skript)
-        self.assertEqual(_lesen(BUILD).count('"flet[all]==1.0.1"'), 3)
+        # N11 (B-M-05): flet kommt aus der Lock-Datei, dort genau 1.0.1
+        self.assertEqual(_lesen(BUILD).count('"flet[all]==1.0.1"'), 0)
+        self.assertEqual(_lesen(BUILD).count("--require-hashes -r requirements-lock-flet.txt"), 3)
+        self.assertEqual(_flet_lock_fassungen(), FLET_LOCK_FASSUNGEN)
 
     # -- Verhalten -------------------------------------------------------------
 
@@ -953,13 +982,26 @@ class NetzWiederholungTest(unittest.TestCase):
                 if re.search(r"\bpip install\b", zeile) and not zeile.lstrip().startswith("#"):
                     self.assertRegex(zeile, r"pip install --retries \d+ --timeout \d+ ",
                                      "%s:%d" % (os.path.basename(pfad), nr))
-        self.assertEqual(len(re.findall(r"pip install --retries 10 ", _lesen(BUILD))), 8)
+        # N11 (B-N-12): dazu pip-audit in eigener Umgebung (9 statt 8)
+        self.assertEqual(len(re.findall(r"pip install --retries 10 ", _lesen(BUILD))), 9)
 
     def test_apt_mit_wiederholung(self):
         zeilen = [z for z in _lesen(BUILD).splitlines() if "apt-get" in z
                   and not z.lstrip().startswith("#")]
         self.assertEqual(len(zeilen), 4)
-        for z in zeilen:
+        # N11 (B-M-06): im Container (Linux-Bau) laeuft alles als root, ohne
+        # sudo; dort genau die beiden Zeilen des Werkzeug-Schritts (Job build),
+        # die beiden anderen (Job tests) weiter mit sudo
+        jobs = _jobs(_lesen(BUILD))
+        container = [z for z in jobs["build"] if "apt-get" in z]
+        andere = [z for name, teil in jobs.items() if name != "build"
+                  for z in teil if "apt-get" in z and not z.lstrip().startswith("#")]
+        self.assertEqual(len(container), 2)
+        self.assertEqual(len(andere), 2)
+        for z in container:
+            self.assertIn(z, _schritt(_lesen(BUILD), "Linux-Werkzeuge installieren"))
+            self.assertRegex(z, r"^          apt-get -o Acquire::Retries=5 ")
+        for z in andere:
             self.assertIn("sudo apt-get -o Acquire::Retries=5 ", z)
 
     def test_choco_mit_wiederholung(self):
