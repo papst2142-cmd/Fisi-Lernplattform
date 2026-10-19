@@ -10,6 +10,8 @@ angezeigt und bedient - mit denselben Daten und Regeln wie am PC.
 Hinweis wie in ui.py: In Ereignissen (Tippen) nie control.update() aufrufen,
 Flet uebernimmt die Aenderungen danach selbst.
 """
+# Ausnahme ab 0.63.2 (Z7, N-b): Ereignisse, die einen Hinweis zeigen koennen,
+# zeichnen an ihrem Ende die geaenderten Steuerelemente mit _redraw.
 
 import asyncio
 import copy
@@ -24,6 +26,19 @@ from fisi_core import CATEGORY_SHORT, plural
 import fisi_theme
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 import ui
+
+
+def _redraw(*controls):
+    """Geaenderte Steuerelemente sofort zeichnen. Noetig, wenn im selben
+    Ereignis ein Hinweis (toast -> page.show_dialog) kommt: Danach uebernimmt
+    Flet die uebrigen Aenderungen nicht mehr von selbst (ui.PillGroup).
+    Ohne Seite (Tests, Aufbau) passiert nichts."""
+    for control in controls:
+        try:
+            control.update()
+        except (RuntimeError, AssertionError, AttributeError):
+            pass
+
 
 PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"],
                   "kritisch": C["red"]}
@@ -2076,6 +2091,7 @@ class GameScreen:
         self.draft = {}
         self.app.notify_progress()
         self.render()
+        _redraw(self.root)   # ab 0.63.2 (Z7, N-b)
 
     def _edit_profile(self, _event=None):
         self.draft = {"edit": True}
@@ -2364,6 +2380,7 @@ class GameScreen:
             return
         self.app.notify_progress()
         self.render()
+        _redraw(self.root)   # ab 0.63.2 (Z7, N-b)
 
     # -- Ticket als eigene Seite -------------------------------------------
 
@@ -2518,6 +2535,7 @@ class GameScreen:
         self.buttons.controls = [ft.Row([ui.GradientButton(
             RETURN_LABEL.get(self.from_site, "Zurück zur Übersicht"),
             self._close, expand=True)])]
+        _redraw(self.options, self.result_box, self.buttons)   # ab 0.63.2 (Z7, N-b)
 
     def _order_spare(self, part_id):
         """Austausch: fehlendes Ersatzteil nachbestellen, das Ticket wartet."""
@@ -2587,9 +2605,11 @@ class GameScreen:
             return self.place
         return fg.SITE_OFFICE
 
-    def open_site(self, key, replace=False):
+    def open_site(self, key, replace=False, toast_bis=None):
         """Oeffnet eine Grossansicht. replace: die offene Grossansicht ersetzen
         (z.B. vom Buero direkt nach Hause)."""
+        # ab 0.63.2 (N-a): Nummer am Anfang lesen oder vom Aufrufer uebernehmen
+        mark = self.app.toast_mark() if toast_bis is None else toast_bis
         self.game.reload()
         page = self.app.page
         if replace:
@@ -2602,7 +2622,8 @@ class GameScreen:
         self.office = ft.Column(spacing=12, tight=True,
                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_site()
-        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]))
+        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]),
+                      toast_bis=mark)
 
     def open_office(self, _event=None):
         self.open_site("buero")
@@ -2721,6 +2742,7 @@ class GameScreen:
             self.firm_tab = "mitarbeiter"
             self.open_firm()
         elif action == "feierabend":
+            mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor end_day
             try:
                 payload = self.game.end_day()
             except ValueError as exc:
@@ -2735,7 +2757,7 @@ class GameScreen:
                            fg.day_end_money_text(payload)))
             self.app.notify_progress()
             self.render()
-            self.open_site("zuhause", replace=True)
+            self.open_site("zuhause", replace=True, toast_bis=mark)
         elif action == "buero":
             state = self.game.state
             scene = fg.morning_text(state.day, state=state)
@@ -2755,6 +2777,7 @@ class GameScreen:
     # -- Reise des Spielers (ab 0.39) -----------------------------------------
 
     def open_journey(self, _event=None, tab=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.game.check_knowledge()
         self.journey_page = 0
@@ -2763,7 +2786,8 @@ class GameScreen:
         self.journey_box = ft.Column(spacing=12, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_journey()
-        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]))
+        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]),
+                      toast_bis=mark)
 
     def _fill_journey(self):
         state = self.game.state
@@ -2955,12 +2979,14 @@ class GameScreen:
     # -- Firma (ab 0.33) ------------------------------------------------------
 
     def open_firm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.training_for = self.training_cat = None
         self.firm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_firm()
-        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]))
+        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]),
+                      toast_bis=mark)
 
     def _fill_firm(self):
         state = self.game.state
@@ -3172,6 +3198,7 @@ class GameScreen:
             return
         self.assign_for = None
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     # -- Projekte (ab 0.35) -----------------------------------------------------
 
@@ -3350,6 +3377,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_changed(self):
         self.app.notify_progress()
@@ -3642,6 +3670,7 @@ class GameScreen:
             return
         self.training_for = self.training_cat = None
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _decide(self, decision_id, choice):
         try:
@@ -3650,6 +3679,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _coach(self, item):
         offer = fg.coaching_offer(self.game.state, item["id"])
@@ -3710,6 +3740,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_gebaeude(self, state):
         stage = state.firm_stage()
@@ -3855,6 +3886,7 @@ class GameScreen:
         for key in (fg.SITE_OFFICE, fg.SITE_BRANCH):
             self.positions.pop(key, None)
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_rooms(self, state):
         """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""
@@ -4377,6 +4409,7 @@ class GameScreen:
             self._layout_change(lambda: self.game.place_furniture_at(self.selected, x, y,
                                                                      self.turn))
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
         return True
 
     def _select_piece(self, piece):
@@ -4394,11 +4427,13 @@ class GameScreen:
                 self.turn = self.game.rotate_furniture(self.selected)
             self._layout_change(turn)
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _nudge(self, dx, dy):
         """Schiebe-Pfeile: um ein Rasterfeld (dx, dy im Grundriss)."""
         self._layout_change(lambda: self.game.nudge_furniture(self.selected, dx, dy))
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _undo(self, _event=None):
         state = self.game.state
@@ -4411,12 +4446,14 @@ class GameScreen:
             self.selected = None
         self.problem = ""
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _box(self, _event=None):
         self._layout_change(lambda: self.game.box_furniture(self.selected))
         self.selected = None
         self.problem = ""
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _sell(self, _event=None):
         item = fg.furniture_item(self.game.state.furniture.get(self.selected))
@@ -4443,6 +4480,7 @@ class GameScreen:
             return
         self.app.notify_progress()
         self._select_piece(piece)
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _floor(self, room_id, kind=None, color=None):
         state = self.game.state
@@ -4452,6 +4490,7 @@ class GameScreen:
         old_kind, old_color = current or [base.get("boden", "parkett"), None]
         self.game.set_floor(room_id, kind or old_kind, color or old_color)
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _move(self, home):
         rent = fg.rent_mode()
@@ -4571,11 +4610,13 @@ class GameScreen:
     # -- Grossauftrag Serverfarm (ab 0.52) ------------------------------------
 
     def open_farm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.farm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_farm()
-        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]))
+        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]),
+                      toast_bis=mark)
 
     def _fill_farm(self):
         state = self.game.state
@@ -4744,6 +4785,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._farm_changed()
+        _redraw(self.farm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _farm_phases(self, info, start):
         colors = {"fertig": C["green"], "jetzt": C["accent"], "spaeter": C["muted"]}
@@ -4951,6 +4993,7 @@ class GameScreen:
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
             "Zurück zur Serverfarm", self._farm_close, expand=True)])]
+        _redraw(self.options, self.result_box, self.buttons)   # ab 0.63.2 (Z7, N-b)
 
     def _farm_close(self, _event=None):
         page = self.app.page
@@ -4961,8 +5004,9 @@ class GameScreen:
         page.update()
 
     def _open_cards(self, category, topic=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         self.app.screens["cards"].set_category(category, topic)
-        self.app.open("cards")
+        self.app.open("cards", toast_bis=mark)
 
     def _open_learn(self, kind, title):
         self.app.open_search_hit(kind, title)
