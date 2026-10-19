@@ -4458,14 +4458,17 @@ class SettingsScreen(Screen):
 
     @staticmethod
     def _switch(caption, value, handler):
-        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter")
+        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter").
+        # Ab 0.63.2 (FG-114): mehrzeiliger Text -> Schalter oben an der ersten
+        # Zeile (wie ui.check_row); einzeilig steht der Text wie bisher mittig.
         return ft.Row([
-            ft.Semantics(label=caption, content=ft.Switch(
+            ft.Container(content=ft.Semantics(label=caption, content=ft.Switch(
                 value=value, on_change=handler, active_color=C["knob"],
                 active_track_color=C["violet"], inactive_track_color=C["card_alt"],
-                inactive_thumb_color=C["muted"])),
-            ui.text(caption, size=13, color=C["text_dim"], expand=True),
-        ], spacing=8)
+                inactive_thumb_color=C["muted"])), alignment=ft.Alignment.TOP_LEFT),
+            ft.Container(content=ui.text(caption, size=13, color=C["text_dim"]),
+                         expand=True, alignment=ft.Alignment.CENTER_LEFT),
+        ], spacing=8, intrinsic_height=True, vertical_alignment=ft.CrossAxisAlignment.STRETCH)
 
     @staticmethod
     def _reminder_changed(event):
