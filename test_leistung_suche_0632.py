@@ -487,6 +487,7 @@ class PcTest(unittest.TestCase):
         (wie eine frisch gebaute Ansicht ohne Zwischenspeicher)."""
         view._dash_cache.clear()
         view._painted.clear()
+        view._review_index = None      # FG-107: "faellig" voll neu aufbauen
         view.refresh()
         return self.snapshot(view)
 
@@ -530,7 +531,9 @@ class PcTest(unittest.TestCase):
 
     # Zuordnung Aenderungsart -> erneut ausgefuehrte DBManager-Methoden (K11,
     # Tabelle im Bericht). activity_days zaehlt zweimal (Tagesziel + Serie).
-    DAY = {"activity_days": 2, "question_results": 1, "daily_counts": 1,
+    # Ab FG-107 liest "faellig" ueber fisi_lernen.ReviewIndex statt
+    # question_results; gezaehlt wird dann DashboardView._review_plan.
+    DAY = {"activity_days": 2, "faellig": 1, "daily_counts": 1,
            "month_activity": 1, "recent_activities": 1}
     K11 = {
         "karte": dict(DAY, distinct_cards_learned=1, category_coverage=1,
@@ -546,7 +549,7 @@ class PcTest(unittest.TestCase):
         "tagesziel": {"activity_days": 1},
         "name": {},
         "nichts": {},
-        "mitternacht": {"activity_days": 2, "question_results": 1, "daily_counts": 1},
+        "mitternacht": {"activity_days": 2, "faellig": 1, "daily_counts": 1},
     }
     METHODS = ("distinct_cards_learned", "distinct_quiz_questions", "distinct_ap1",
                "distinct_scenarios", "quiz_success_rate", "activity_days",
@@ -621,6 +624,12 @@ class PcTest(unittest.TestCase):
                 counts[_name] = counts.get(_name, 0) + 1
                 return _method(*args, **kwargs)
             setattr(db, name, counted)
+        review_plan = view._review_plan
+
+        def counted_plan():
+            counts["faellig"] = counts.get("faellig", 0) + 1
+            return review_plan()
+        view._review_plan = counted_plan
         try:
             view.refresh()
             for kind, expected in self.K11.items():
@@ -630,6 +639,7 @@ class PcTest(unittest.TestCase):
                 self.assertEqual(counts, expected, kind)
                 self.assertEqual(self.snapshot(view), self.uncached_snapshot(view), kind)
         finally:
+            del view._review_plan
             for name in self.METHODS:
                 delattr(db, name)
             for module, value in saved:
