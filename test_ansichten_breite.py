@@ -977,7 +977,9 @@ def pruefe_optionen(ctx):
     ctx.pruefe("breiter")
     _haken_erste_zeile(ctx, "breiter")
     import fisi_widgets
-    if ctx.faktor == 1.3 and "Inter" not in str(fisi_widgets.F.get("family")):
+    # FG-131: scharf nur bei DejaVu Sans (bricht bei Sehr gross 1120 um); mit
+    # TkDefaultFont (GitHub, zweite Schrift) passt alles einzeilig
+    if ctx.faktor == 1.3 and "DejaVu" in str(fisi_widgets.F.get("family")):
         for zustand, schluessel in (("alles_offen", "haken_mehrzeilig"),
                                     ("breiter", "haken_rueckweg")):
             if not ctx.werte.get("optionen/" + zustand, {}).get(schluessel):
