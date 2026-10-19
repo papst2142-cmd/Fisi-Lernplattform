@@ -311,6 +311,18 @@ jobs:
           path: installer_output/*
           if-no-files-found: error
 
+      # Ab 0.63.2 (FG-102): Warntext-Dialog "Alles ersetzen" auf echtem macOS
+      # (prozessintern, ohne Xvfb und ohne Flet; Text byte-genau, Standard
+      # "Nein", Bildlauf mit <MouseWheel>, Knoepfe sichtbar bei nachgestellter
+      # Bildschirmgroesse). Steht NACH dem Hochladen: Er kann den Installer
+      # nicht veraendern, die Datei liegt auch bei Rot zur Ansicht bereit.
+      # Rot macht den Job rot - wie jeder Test kein Release. Notausweg wie bei
+      # den Test-Jobs (TESTS_UEBERSPRINGEN, nur mit Nicos OK).
+      - name: Dialogtest Warntext (macOS)
+        if: runner.os == 'macOS' && vars.TESTS_UEBERSPRINGEN != 'ja'
+        timeout-minutes: 5
+        run: python test_dialog_warntext_fenster.py
+
   android:
     name: android
     runs-on: ubuntu-24.04

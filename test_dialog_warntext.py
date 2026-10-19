@@ -43,9 +43,10 @@ wie Windows bei 125 %):
 Handy (Struktur, ohne Flet-Anzeige):
   D8 confirm-Dialog rollbar, Text byte-genau, Durchreich-Probe,
   D9 kurze Rueckfragen: alle Eigenschaften wie d54397f ausser scrollable.
-Windows/macOS: nicht geprueft (PC-Teil nur unter Linux mit Xvfb; die
-Windows-Liste in pruefung/ci_tests.sh enthaelt die Datei nicht, kein
-macOS-Testschritt) - Testliste fuer Nico.
+Windows/macOS: ab 0.63.2 (FG-102) prozessintern in
+test_dialog_warntext_fenster.py (Windows-Liste in pruefung/ci_tests.sh,
+macOS-Schritt am Ende des Bau-Jobs); echte Aufloesung, echter Schliessknopf
+und Aussehen bleiben auf der Testliste fuer Nico.
 
 Start:  python test_dialog_warntext.py   (PC-Teil nur unter Linux mit Xvfb)
 Anderer Code (z. B. Gegenprobe gegen d54397f):  DIALOG_CODE=<ordner> python ...

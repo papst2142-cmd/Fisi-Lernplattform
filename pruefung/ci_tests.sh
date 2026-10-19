@@ -18,6 +18,8 @@
 #    rest3    ab 0.63.2 (FG-122): Anzeige-/Breitentests aus N8; vorher Teil von "rest"
 #    windows  Auswahl fuer den Windows-Runner (Windows-eigene Wege; ab 0.62.4
 #             auch der Abgleich-Kern, test_abgleich.py laeuft dort nicht)
+#             Ab 0.63.2 (FG-102) auch der Warntext-Dialog "Alles ersetzen"
+#             prozessintern (test_dialog_warntext_fenster.py, ohne Xvfb)
 #    ibus     ab 0.63.2 (B-A-01): test_eingabe.py mit FISI_TEST_IBUS=1, also mit
 #             den Nachstellungstests mit echtem IBus (braucht ibus, dbus-x11).
 #             Fehlt ein Werkzeug, ist der Teil rot statt still "skipped".
@@ -52,7 +54,8 @@ case "$TEIL" in
   windows) DATEIEN="test_einzelstart.py test_haenger.py test_update.py test_update_fenster.py
                     test_leistung.py test_werkzeuge.py test_optionen.py test_sicherung.py
                     test_beenden.py test_namen.py test_rechtliches.py
-                    test_optionen_0622.py test_reiter_sichtbar.py test_abgleich_kern.py" ;;
+                    test_optionen_0622.py test_reiter_sichtbar.py test_abgleich_kern.py
+                    test_dialog_warntext_fenster.py" ;;
   ibus)    DATEIEN="test_eingabe.py"
            export FISI_TEST_IBUS=1
            # kurzer Zwischenspeicher-Pfad fuer IBus (Stolperstein aus 0.62.4)
