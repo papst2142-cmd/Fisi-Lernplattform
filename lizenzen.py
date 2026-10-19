@@ -507,7 +507,9 @@ class Generator:
         has_deb = any(key.startswith(("deb:libtcl", "deb:libtk")) for key in self.components)
         if has_tk and not has_deb:
             self.tcltk_component()
-        if self.system.startswith("linux"):
+        # Ab 0.63.2 (B-H-12): die AppImage-Laufzeit steckt nur im AppImage;
+        # die Hinweisdatei des .deb (Paketart "linux-deb") nennt sie nicht
+        if self.system.startswith("linux") and self.system != "linux-deb":
             self.appimage_component()
         return files
 

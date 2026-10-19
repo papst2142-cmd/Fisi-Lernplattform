@@ -1,0 +1,7 @@
+# Ab 0.63.2 (B-M-05, FG-52): Lock-Datei mit Pruefsummen - NICHT VON HAND
+# AENDERN, sondern mit pruefung/lock_erzeugen.py neu erzeugen.
+# Zweck: certifi, Jobs update-test und vorab.
+# Systeme: win32, linux (Python 3.12). Fassungen wie im Referenzlauf 38443624150.
+# Installation nur mit: pip install --require-hashes -r requirements-lock-certifi.txt
+certifi==2026.7.22 \
+    --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775
