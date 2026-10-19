@@ -1152,11 +1152,28 @@ class View(ScrollArea):
         """Den naechsten Teil bauen."""
         if self._parts:
             self._parts.pop(0)()
+            self._parts_built()
 
     def complete(self):
         """Alle fehlenden Teile jetzt bauen."""
+        had_parts = bool(self._parts)
         while self._parts:
             self._parts.pop(0)()
+        if had_parts:
+            self._parts_built()
+
+    # Ab 0.63.2 (N6, B-I-04): nach dem letzten Teil die Umbruchbreiten einmal
+    # ganz neu anpassen (ScrollArea._fit_wraplengths). Am Stueck gebaut gibt
+    # es beim ersten Anpassen schon alle Texte; in Teilen kamen spaetere
+    # Texte erst nach dem ersten Anpassen dazu und behielten sonst ihre
+    # urspruengliche Umbruchbreite.
+    REWRAP_AFTER_PARTS = False
+
+    def _parts_built(self):
+        if self._parts or not (self._in_parts and self.REWRAP_AFTER_PARTS):
+            return
+        self._wrap_width = None
+        self._schedule_wrap()
 
     def on_show(self):
         pass
@@ -1226,6 +1243,12 @@ class FitWidthMixin:
         if changed:
             # neue Mindestbreite an die Bildlaufflaeche melden
             self.after_idle(self._schedule_fit)
+        elif self._in_parts:
+            # Ab 0.63.2 (N6): in Teilen vorgeladen hat die Ansicht ihre Groesse
+            # schon; wird der Inhalt durch die Anpassung schmaler, meldet Tk
+            # das der Bildlaufflaeche nicht (kein <Configure>) - selbst nachziehen,
+            # nach dem Leerlauf-Durchgang, der die neuen Groessen berechnet
+            self.after_idle(self._refit_width)
 
     def _fit_width(self, avail):
         raise NotImplementedError
@@ -2609,6 +2632,9 @@ class FitRowsMixin(FitWidthMixin):
 class CardsView(FitRowsMixin, View):
     MODES = [("freitext", "Freitext"), ("mc", "Multiple Choice"),
              ("reveal", "Aufdecken")]
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.cards = list(KARTEIKARTEN)
@@ -2631,7 +2657,12 @@ class CardsView(FitRowsMixin, View):
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
         self.cat_pills = PillGroup(bar, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
+        self._top_bar = bar
+        self.add_parts([self._build_filters, self._build_modes, self._build_question,
+                        self._build_answer, self._build_controls, self.apply_filter])
 
+    def _build_filters(self):
+        bar = self._top_bar
         filters = transparent_frame(bar)
         filters.pack(fill="x", pady=(0, 14))
         status_box = transparent_frame(filters)
@@ -2649,10 +2680,13 @@ class CardsView(FitRowsMixin, View):
         self.lbl_counts = make_label(bar, "", font=F["tiny"], fg=C["muted"])
         self.lbl_counts.pack(anchor="w", pady=(0, 12))
 
+    def _build_modes(self):
+        bar = self._top_bar
         make_label(bar, "LERNMODUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
         self.mode_pills = PillGroup(bar, self.MODES, on_change=self._on_mode)
         self.mode_pills.pack(anchor="w", pady=(8, 0))
 
+    def _build_question(self):
         # Frage
         self.question_card = Card(self.content, title="Frage", accent=C["accent"],
                                   subtitle="")
@@ -2665,6 +2699,7 @@ class CardsView(FitRowsMixin, View):
                                        wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=6)
 
+    def _build_answer(self):
         # Antwortbereich
         self.answer_card = Card(self.content, title="Deine Antwort",
                                 accent=C["purple"])
@@ -2704,6 +2739,7 @@ class CardsView(FitRowsMixin, View):
         # Selbsteinschaetzung im Modus "Aufdecken" (ab 0.39)
         self.rate_box = rate_box(self.answer_card.body, self.rate)
 
+    def _build_controls(self):
         # Steuerung
         controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
@@ -2719,8 +2755,6 @@ class CardsView(FitRowsMixin, View):
         self.lbl_counter = make_label(controls, "", font=F["body_bold"],
                                       fg=C["text_dim"])
         self.lbl_counter.pack(side="right", pady=8)
-
-        self.apply_filter()
 
     # -- Steuerung ----------------------------------------------------------
 
@@ -2773,6 +2807,14 @@ class CardsView(FitRowsMixin, View):
         self.index = 0
         self._counts([card["q"] for card in base])
         self.update_ui()
+
+    def part_waits(self):
+        """Ab 0.63.2 (N6, B-I-04): Der letzte Teil (apply_filter) braucht die
+        Zuordnung zum Rahmenplan. Rechnet frp.warm_up (ab 0.55) sie gerade
+        noch im Hintergrund, wartet das Vorladen darauf, statt sie im Teil
+        am Stueck selbst zu rechnen (ViewPreloader._part_waits)."""
+        return bool(self._parts) and self._parts[0] == self.apply_filter \
+            and not frp._ITEM_POINTS and fresh_order(SRC_CARD) is not None
 
     def _counts(self, keys):
         self.count_keys = keys
@@ -4099,6 +4141,9 @@ class ScenarioViewBase(FitWidthMixin, View):
     LIST_TITLE = "Szenarien"
     TABLE = "scenario_events"
     SOURCE = SRC_AP2
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.index = 0
@@ -4118,15 +4163,27 @@ class ScenarioViewBase(FitWidthMixin, View):
         list_card = Card(layout, title=self.LIST_TITLE,
                          subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self._fit_parts = (layout, list_card)
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_own, self._build_solution, self._build_end])
+
+    def _build_list(self):
+        list_card = self._fit_parts[1]
         self.paged = PagedList(
             list_card.body, self.DATA, self.load_scenario,
             subtitle=lambda item: item["theme"],
             status_source=lambda: position_statuses(StatusBook(self.db), self.SOURCE),
             group_field="theme", group_label="Thema")
+
+    def _fill_list(self):
         self.paged.refresh()
 
+    def _build_task(self):
+        layout, list_card = self._fit_parts
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        self._fit_parts = (layout, list_card, detail)
 
         self.task_card = Card(detail, title="Aufgabenstellung", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
@@ -4140,6 +4197,8 @@ class ScenarioViewBase(FitWidthMixin, View):
         self.txt_task = make_text(self.task_card.body, height=11, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
 
+    def _build_own(self):
+        detail = self._fit_parts[2]
         self.own_card = Card(detail, title="Deine Lösung", accent=C["purple"],
                              subtitle="wächst automatisch mit dem Text")
         self.own_card.pack(fill="x", pady=(14, 0))
@@ -4156,6 +4215,8 @@ class ScenarioViewBase(FitWidthMixin, View):
         self.txt_own.pack(fill="x")
         self.txt_own.bind("<KeyRelease>", self._on_own_change, add="+")
 
+    def _build_solution(self):
+        layout, list_card, detail = self._fit_parts
         self.sol_card = Card(detail, title="Musterlösung", accent=C["green"])
         self.sol_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_solution = make_text(self.sol_card.body, height=11, readonly=True)
@@ -4169,11 +4230,15 @@ class ScenarioViewBase(FitWidthMixin, View):
         self.btn_toggle.pack(side="left")
         NeoButton(controls, "Nächstes Szenario", self.next_scenario,
                   kind="ghost", icon="arrow_right").pack(side="left", padx=10)
-
-        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
         self._fit_parts = (layout, list_card, detail, controls)
+
+    def _build_end(self):
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
         self._init_fit()
         self.load_scenario(0)
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        if self._in_parts:
+            self._schedule_fit()
 
     def _fit_width(self, avail):
         layout, list_card, detail, controls = self._fit_parts
@@ -4288,6 +4353,10 @@ class ProjectView(FitWidthMixin, View):
     Ausgangssituation, Auftrag, Rahmenbedingungen und Arbeitsauftraege zum
     selbststaendigen Bearbeiten, dazu Loesungsansaetze zum Vergleich."""
 
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
+
     def build(self):
         self.index = 0
         self.hints_visible = False
@@ -4301,6 +4370,13 @@ class ProjectView(FitWidthMixin, View):
         list_card = Card(layout, title="Testprojekte",
                          subtitle="%s Kundenaufträge" % fisi_core.de_int(len(PROJEKTARBEITEN)))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self._fit_parts = (layout, list_card)
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_hints, self._build_end])
+
+    def _build_list(self):
+        list_card = self._fit_parts[1]
         self.paged = PagedList(
             list_card.body, PROJEKTARBEITEN, self.load_project,
             subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
@@ -4309,10 +4385,15 @@ class ProjectView(FitWidthMixin, View):
             category_filter=True,
             group_field="schwierigkeit", group_label="Schwierigkeit",
             count_noun="Kundenaufträgen")
+
+    def _fill_list(self):
         self.paged.refresh()
 
+    def _build_task(self):
+        layout, list_card = self._fit_parts
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        self._fit_parts = (layout, list_card, detail)
 
         self.header_label = make_label(detail, "", font=F["h2"], fg=C["text"],
                                        wraplength=760, justify="left", anchor="w")
@@ -4333,6 +4414,8 @@ class ProjectView(FitWidthMixin, View):
         self.txt_task = make_text(self.task_card.body, height=14, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
 
+    def _build_hints(self):
+        layout, list_card, detail = self._fit_parts
         self.hint_card = Card(detail, title="Lösungsansätze", accent=C["green"])
         self.hint_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_hints = make_text(self.hint_card.body, height=14, readonly=True)
@@ -4349,11 +4432,15 @@ class ProjectView(FitWidthMixin, View):
         # Ab 0.51: als Vorlage fuers eigene Abschlussprojekt
         NeoButton(controls, "Als Vorlage fürs Abschlussprojekt", self.use_as_template,
                   kind="ghost").pack(side="right")
-
-        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
         self._fit_parts = (layout, list_card, detail, controls)
+
+    def _build_end(self):
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
         self._init_fit()
         self.load_project(0)
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        if self._in_parts:
+            self._schedule_fit()
 
     def _fit_width(self, avail):
         layout, list_card, detail, controls = self._fit_parts
@@ -6030,6 +6117,11 @@ CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 
 class CalcView(View):
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut (je Karte ein
+    # Teil, View.add_parts); beim direkten Oeffnen wie bisher am Stueck
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
+
     def build(self):
         self.info_visible = {"raid": False, "screen": False, "ups": False}
         self.info_frames = {}
@@ -6044,7 +6136,12 @@ class CalcView(View):
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
+        self.add_parts([self._build_subnet, self._build_raid, self._build_screen,
+                        lambda: self._build_ups(layout), self._build_ups_rest,
+                        self._build_end])
 
+    def _build_subnet(self):
+        layout = self.calc_layout
         # --- Subnetting (ab 0.63 mit Schalter IPv4/IPv6, Plan 0.63 Abschnitt 4) --
         subnet = Card(layout, title=SUBNET_TITLE, accent=C["accent"],
                       subtitle=SUBNET_SUBTITLE["ipv4"])
@@ -6054,6 +6151,8 @@ class CalcView(View):
         subnet.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.subnet = SubnetCalc(subnet)
 
+    def _build_raid(self):
+        layout = self.calc_layout
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title=RAID_TITLE, accent=C["purple"],
                     subtitle=RAID_SUBTITLE)
@@ -6085,6 +6184,8 @@ class CalcView(View):
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
 
+    def _build_screen(self):
+        layout = self.calc_layout
         # --- Bildschirm-Datenvolumen ---------------------------------------
         screen = Card(layout, title=SCREEN_TITLE, accent=C["green"],
                       subtitle=SCREEN_SUBTITLE)
@@ -6121,8 +6222,7 @@ class CalcView(View):
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)
 
-        self._build_ups(layout)
-
+    def _build_end(self):
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
 
@@ -6137,6 +6237,37 @@ class CalcView(View):
         for row in self.ups_button_rows:
             for widget in row.winfo_children():
                 tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        # (LazyViews), ein <Configure> kommt evtl. nicht mehr
+        if self._in_parts:
+            self._schedule_fit()
+            # ... und die uebrigen Subnetting-Ansichten (sonst prepare, siehe
+            # unten) entstehen ebenfalls je eine in einem eigenen Teil
+            self.add_parts([self._build_rest_part] * self._rest_count())
+
+    def _rest_count(self):
+        """Ab 0.63.2 (N6): Wie viele Teile der Subnetting-Karte fehlen noch
+        (je Modus die Pillenzeile mit "netzdaten", je weitere Ansicht eine)?"""
+        subnet = self.subnet
+        count = 0
+        for mode, _name in SUBNET_MODES:
+            if not subnet.built(mode):
+                count += 1
+            count += sum(1 for key, _name in SUBNET_VIEWS[mode]
+                         if key != "netzdaten" and (mode, key) not in subnet.views)
+        return count
+
+    def _build_rest_part(self):
+        """Ab 0.63.2 (N6, B-I-04): einen fehlenden Teil der Subnetting-Karte
+        bauen (verdeckt, wie build_rest - nur einen statt aller)."""
+        subnet = self.subnet
+        for mode, _name in SUBNET_MODES:
+            if subnet.build_mode(mode):
+                return
+            for key, _name in SUBNET_VIEWS[mode]:
+                if (mode, key) not in subnet.views:
+                    subnet._build_view(mode, key)
+                    return
 
     # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
     #
@@ -6185,6 +6316,10 @@ class CalcView(View):
         if changed:
             # neue Breite der Karte: Abstand der Subnetting-Karte neu rechnen
             self.after_idle(self._schedule_fit)
+        if self._in_parts:
+            # Ab 0.63.2 (N6): wie FitWidthMixin._fit - Breite der
+            # Bildlaufflaeche nachziehen, wenn die Seite schmaler wurde
+            self.after_idle(self._refit_width)
 
     def _fit_ups(self, avail):
         """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
@@ -6246,6 +6381,11 @@ class CalcView(View):
                 if key == "last":
                     self.ups_unit = PillGroup(box, UPS_UNITS, initial=0)
                     self.ups_unit.grid(row=row, column=2, sticky="w")
+
+    def _build_ups_rest(self):
+        """Ab 0.63.2 (N6, B-I-04): zweiter Teil der USV-Karte (Knoepfe, Bild,
+        Ergebnis, Rechenweg, Uebungsaufgaben) - beim Vorladen ein eigener Teil."""
+        ups = self.ups_card
         buttons = transparent_frame(ups.body)
         buttons.pack(anchor="w", pady=(14, 0))
         self.ups_button_rows = [buttons]   # ab 0.63.2: brechen bei Bedarf um (_fit)
@@ -8309,6 +8449,10 @@ class PerfMonitor:
         self._bound = False
         self._resize = None
         self._size = None
+        # Ab 0.63.2 (N6, B-I-01, FG-46): Darstellungswechsel bis bedienbar
+        # (Abdeckung weg) in ms - steht in der Zeile "darstellung" in max_ms;
+        # dauer_ms misst wie bisher bis alles fertig ist
+        self.theme_ready_ms = None
         if self.rec.active:
             self._start()
             self.rec.record(fle.EVENT_START, elemente=self.elements(),
@@ -8429,7 +8573,9 @@ class PerfMonitor:
             return
         elapsed = (time.perf_counter() - started) * 1000
         self.rec.record(fle.EVENT_THEME, von=old, nach=new, dauer_ms=elapsed,
+                        max_ms=self.theme_ready_ms,
                         elemente=self.elements(), aufgaben=self.tasks())
+        self.theme_ready_ms = None
         self.rec.flush()
 
     # -- Fenstergroesse -----------------------------------------------------
@@ -9664,6 +9810,7 @@ PRELOAD_START_MS = 800    # nach dem ersten Zeichnen des Dashboards (bis 0.60: 1
 PRELOAD_START_MS_060 = 1500
 PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
 PRELOAD_PART_GAP_MS = 20  # ab 0.60.1: Pause zwischen zwei Teilen derselben Ansicht
+PRELOAD_PART_WAIT_MS = 5000  # ab 0.63.2 (N6): so lange wartet ein Teil hoechstens (part_waits)
 PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste/Mausrad, bevor der naechste Schritt laeuft
 PRELOAD_WAIT_TASK = "vorladen:start"   # ab 0.59.3: Vorgang bis zum ersten Schritt
 # Ab 0.60.1: Notschalter (nur Umgebungsvariable, im LIESMICH beschrieben):
@@ -9741,6 +9888,7 @@ class ViewPreloader:
         self.steps_done = 0
         self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
         self.block_ms = {}          # ab 0.60.1: Schritt -> Dauer bis gezeichnet (laengster)
+        self._wait_since = None     # ab 0.63.2 (N6): seit wann ein Teil wartet (_part_waits)
         self.started_at = None      # ab 0.60.1: Beginn dieser Runde (perf_counter)
         self.finished_ms = None     # ab 0.60.1: Runde fertig nach ... ms
         self.last_input = 0.0
@@ -9800,9 +9948,15 @@ class ViewPreloader:
         if app._closing:
             return
         quiet = time.monotonic() - self.last_input
-        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0:
+        # Ab 0.63.2 (N6, B-I-01): auch solange nach einem Darstellungswechsel
+        # die alte Oberflaeche abgebaut wird (danach beginnt start() neu)
+        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0 \
+                or getattr(app, "recolor_pending", False):
             self._schedule(max(PRELOAD_GAP_MS,
                                int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
+            return
+        if self.queue and self._part_waits(self.queue[0]):
+            self._schedule(PRELOAD_GAP_MS)
             return
         task = None
         while self.queue:
@@ -9818,6 +9972,23 @@ class ViewPreloader:
             self.finished_ms = round((time.perf_counter() - self.started_at) * 1000) \
                 if self.started_at is not None else None
             app.perf.preload_done(self.finished_ms)
+
+    def _part_waits(self, task):
+        """Ab 0.63.2 (N6, B-I-04): Wartet der naechste Teil einer Ansicht auf
+        eine Rechnung im Hintergrund (view.part_waits)? Hoechstens
+        PRELOAD_PART_WAIT_MS lang, danach laeuft er trotzdem."""
+        view = self.app.views.built(task[1]) if task[0] == "part" else None
+        waits = getattr(view, "part_waits", None)
+        if waits is None or not waits():
+            self._wait_since = None
+            return False
+        now = time.monotonic()
+        if self._wait_since is None:
+            self._wait_since = now
+        if (now - self._wait_since) * 1000 < PRELOAD_PART_WAIT_MS:
+            return True
+        self._wait_since = None
+        return False
 
     def _release_task(self, label, before, task=None, started=None):
         """Ab 0.59.3 (K3, nur Diagnose): Tk berechnet Groessen und zeichnet
@@ -9888,14 +10059,20 @@ class ViewPreloader:
                         # ab 0.60.1: nur der erste Teil, der Rest als ("part", ...)
                         view = views.build_in_parts(key)
                         if view.parts_pending:
-                            self.queue.insert(0, ("part", key))
+                            # Ab 0.63.2 (N6, B-I-04): prepare und Reiter erst,
+                            # wenn alle Teile stehen - derselbe Schritt kommt
+                            # nach den Teilen noch einmal (baut dann nichts neu)
+                            self.queue[0:0] = [("part", key), task]
+                            view = None
                     else:
                         view = views[key]   # baut auf und legt nach unten (LazyViews)
                     worked = True
+                elif getattr(view, "parts_pending", False):
+                    view = None   # ab 0.63.2 (N6): Teile stehen noch aus
                 prepare = getattr(view, "prepare", None)
                 if prepare is not None and prepare():
                     worked = True
-                if worked:
+                if worked and view is not None:
                     # Reiter erst nach der Ansicht (sie kennt ihre Reiter)
                     tabs = getattr(view, "preload_tabs", None)
                     if tabs is not None:
@@ -10019,6 +10196,16 @@ class FISIApp:
         fsi.remove_stale_temp()
         self.container = None
         self._recoloring = False
+        # Ab 0.63.2 (N6, B-I-01): Nach einem Darstellungs- oder Schriftwechsel
+        # laufen einige Schritte erst, wenn die neue Oberflaeche schon
+        # bedienbar ist (siehe _continue_recolor): den offenen Bereich
+        # "Optische Anpassungen" fertig bauen, dann die verdeckte alte
+        # Oberflaeche in Teilen abbauen, zuletzt das Vorladen neu starten.
+        self._recolor_job = None
+        self._fill_folds = []        # Klappbereiche, deren Inhalt noch folgt
+        self._teardown = []          # alte Oberflaeche(n), Stueck fuer Stueck
+        self._recolor_origin = None  # Beginn des letzten Neuaufbaus (Vorladen)
+        self._theme_rows = []        # Messzeilen, die nach dem Abbau kommen
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._closing = False      # on_close laeuft schon (ab 0.55.1)
         self.update_exit = False   # Beenden fuer ein Update (ab 0.55.1)
@@ -10155,7 +10342,11 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
             fhg.vorgang(task)
-        self.perf.theme("schrift " + str(before), "schrift " + str(size_id), measured)
+        # Ab 0.63.2 (N6, B-I-01): ab hier bedienbar; die Messzeile kommt,
+        # wenn auch die alte Oberflaeche abgebaut ist (_finish_recolor)
+        self._theme_rows.append(("schrift " + str(before), "schrift " + str(size_id),
+                                 measured, time.perf_counter()))
+        self._continue_recolor()
 
     def change_color(self, preset_id=None, background_id=None, mode=None, custom=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
@@ -10179,7 +10370,9 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
             fhg.vorgang(task)
-        self.perf.theme(before, _theme_name(), measured)
+        # Ab 0.63.2 (N6, B-I-01): wie bei der Schriftgroesse
+        self._theme_rows.append((before, _theme_name(), measured, time.perf_counter()))
+        self._continue_recolor()
 
     def _show_busy(self, title=None, text=None, single=False):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
@@ -10251,6 +10444,15 @@ class FISIApp:
         fisi_game_gui.refresh_theme_tables()
         current = self.current or "settings"
         old = self.container
+        old_views = self.views   # ab 0.63.2 (N6): fuer den Abbau in Teilen
+        # Ab 0.63.2 (N6, B-I-01): Ein offener Bereich "Optische Anpassungen"
+        # bleibt offen, sein Inhalt kommt aber erst im naechsten Schritt
+        # (nach dem Aufdecken, _open_later) - die Optionen sind so frueher da
+        self._fill_folds = []
+        optik_key = fo.state_key(fo.OPTIK_ID)
+        optik_later = current == "settings" and FoldCard._open_state.get(optik_key, False)
+        if optik_later:
+            FoldCard._open_state[optik_key] = False
         # Die neue Oberflaeche wird unsichtbar aufgebaut und dann unter der
         # alten gezeichnet; die alte bleibt bis zuletzt stehen. Sonst sieht
         # man einige Sekunden lang jede Ansicht einzeln aufblitzen (Flackern).
@@ -10271,6 +10473,8 @@ class FISIApp:
             self.show_view(current)
         finally:
             self._rebuilding = False
+            if optik_later:
+                self._open_later(optik_key)
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
         old.lift()
         if overlay is not None:
@@ -10282,12 +10486,123 @@ class FISIApp:
         old.pack_forget()
         old.place_forget()
         self.root.update()
-        old.destroy()
-        self._cancel_orphaned_timers()
-        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        # Ab 0.63.2 (N6, B-I-01): nicht mehr hier am Stueck abbauen (das
+        # dauerte unter der Abdeckung fast eine Sekunde), sondern nach dem
+        # Aufdecken in Teilen, je Ansicht ein Schritt (_continue_recolor).
+        # Das Vorladen beginnt erst danach (_finish_recolor).
+        self._teardown.extend(self._teardown_pieces(old, old_views))
+        self._recolor_origin = recolor_started
         preloader = getattr(self, "preloader", None)
         if preloader is not None:
-            preloader.start(origin=recolor_started)
+            preloader.done = False   # wie bisher: das Vorladen beginnt von vorn
+
+    # -- Ab 0.63.2 (N6, B-I-01): Schritte nach dem Aufdecken ----------------
+
+    def _open_later(self, key):
+        """Den Bereich "Optische Anpassungen" der neuen Optionen offen
+        zeigen, seinen Inhalt aber erst im naechsten Schritt bauen
+        (_fill_folds). Waehrend _building baut FoldCard nichts
+        (ensure_built wartet), Kopf und leerer Inhalt stehen schon offen."""
+        FoldCard._open_state[key] = True
+        settings = self.views.built("settings")
+        fold = getattr(settings, "folds", {}).get(fo.OPTIK_ID) if settings is not None \
+            else None
+        if fold is None or fold.opened or fold.built:
+            return
+        fold._building = True
+        try:
+            fold.set_opened(True)
+        finally:
+            fold._building = False
+        self._fill_folds = [fold]
+
+    @staticmethod
+    def _teardown_pieces(old, views):
+        """Stuecke der alten Oberflaeche in Abbau-Reihenfolge: jede
+        aufgebaute Ansicht einzeln, dann die Teile von Seitenleiste und Kopf
+        einzeln, zuletzt der leere Rahmen."""
+        pieces = [views.built(key) for key in views.keys()]
+        pieces = [view for view in pieces if view is not None]
+        for child in old.winfo_children():          # Seitenleiste, Hauptbereich
+            pieces += [part for part in child.winfo_children() if part not in pieces]
+            pieces.append(child)
+        return pieces + [old]
+
+    def _continue_recolor(self):
+        """Naechsten Schritt nach dem Neuaufbau einplanen. Erst wenn Tk
+        alles Wartende erledigt hat (after_idle, dazu gehoert das Zeichnen)
+        und dann als Zeitgeber: dazwischen kommen Klicks und Tasten dran,
+        und ein update_idletasks irgendwo im Programm fuehrt den Schritt
+        nicht nebenbei aus."""
+        if self._recolor_job is not None or self._closing:
+            return
+
+        def arm():
+            try:
+                self._recolor_job = self.root.after(0, self._recolor_step)
+            except tk.TclError:
+                self._recolor_job = None
+        try:
+            self._recolor_job = self.root.after_idle(arm)
+        except tk.TclError:
+            self._recolor_job = None
+
+    @property
+    def recolor_pending(self):
+        """Stehen nach einem Neuaufbau noch Schritte aus?"""
+        return bool(self._fill_folds or self._teardown or self._theme_rows
+                    or self._recolor_origin is not None)
+
+    def _recolor_step(self):
+        """Ein Schritt: ein Teil des offenen Bereichs bzw. ein Stueck der
+        alten Oberflaeche. Waehrend eines neuen Wechsels ruht der Ablauf
+        (der Wechsel plant ihn danach selbst wieder ein)."""
+        self._recolor_job = None
+        if self._closing or self._recoloring:
+            return
+        task = fhg.vorgang("darstellung:abbau")
+        try:
+            if self._fill_folds:
+                fold = self._fill_folds[0]
+                try:
+                    if fold.winfo_exists() and not fold.built:
+                        fold.build_part()
+                    done = not fold.winfo_exists() or fold.built
+                except tk.TclError:
+                    done = True
+                if done:
+                    self._fill_folds.pop(0)
+            elif self._teardown:
+                piece = self._teardown.pop(0)
+                try:
+                    piece.destroy()
+                except tk.TclError:
+                    pass
+                # Zeitgeber der eben abgebauten Elemente sofort abbrechen
+                # (sonst liefen sie vor dem naechsten Schritt ins Leere)
+                self._cancel_orphaned_timers()
+            if not self._fill_folds and not self._teardown:
+                self._finish_recolor()
+                return
+        finally:
+            fhg.vorgang(task)
+        self._continue_recolor()
+
+    def _finish_recolor(self):
+        """Alte Oberflaeche ganz weg: verwaiste Zeitgeber abbrechen, die
+        Messzeilen schreiben und das Vorladen neu beginnen."""
+        self._cancel_orphaned_timers()
+        rows, self._theme_rows = self._theme_rows, []
+        for before, after, measured, ready in rows:
+            # Spalte max_ms: bis bedienbar (Abdeckung weg); dauer_ms wie
+            # bisher bis alles fertig ist (hier: alte Oberflaeche abgebaut)
+            self.perf.theme_ready_ms = (ready - measured) * 1000
+            self.perf.theme(before, after, measured)
+        origin, self._recolor_origin = self._recolor_origin, None
+        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        preloader = getattr(self, "preloader", None)
+        if preloader is not None and origin is not None:
+            preloader.start(origin=origin)
 
     def _cancel_orphaned_timers(self):
         """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
@@ -10406,6 +10721,10 @@ class FISIApp:
                 hold_size(built, self.view_area)
         fill_area(view)
         view.tkraise()
+        if getattr(view, "_in_parts", False):
+            # Ab 0.63.2 (N6): in Teilen vorgeladen - die Bildlaufflaeche bekam
+            # evtl. kein <Configure> mehr (Groesse schon vorher fest)
+            view.after_idle(view._refit_width)
         # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
         # (sie springen nur beim Neuzeichnen nach oben)
         if not getattr(view, "keeps_scroll", False):
