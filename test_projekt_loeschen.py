@@ -246,9 +246,20 @@ class RueckfrageTest(unittest.TestCase):
                  "App nicht rückgängig machen.\n\nHinweis: Ältere Sicherungsdateien und "
                  "frühere Stände im Verlauf des Abgleich-Repositorys auf GitHub enthalten "
                  "die Eingaben weiterhin.")
+    # Ab 0.63.2 (F31 (b), N16-F4): zweiter Satz im selben "Hinweis:"-Absatz
     WITHOUT_SYNC = ("„Netzplan“ löschen? Das Projekt und alle seine Eingaben werden "
                     "gelöscht. Das lässt sich in der App nicht rückgängig machen.\n\n"
-                    "Hinweis: Ältere Sicherungsdateien enthalten die Eingaben weiterhin.")
+                    "Hinweis: Ältere Sicherungsdateien enthalten die Eingaben weiterhin. "
+                    "Falls du den Abgleich früher genutzt hast, enthalten frühere Stände "
+                    "im Abgleich-Repository auf GitHub die Eingaben weiterhin.")
+    # N16-F5 (Weisung zu Meldung 40): ohne eingerichteten Abgleich darf die
+    # Rueckfrage nichts zusagen, was das Loeschen ueber dieses Geraet hinaus
+    # (andere Geraete, Abgleich, GitHub) oder fuer immer bewirkt
+    VERBOTENE_ZUSAGEN = ("nach dem abgleich", "beim abgleich", "beim nächsten abgleich",
+                         "anderen geräten", "andere geräte", "allen geräten", "überall",
+                         "aus dem abgleich-repository", "aus github", "auf github gelöscht",
+                         "auch auf github", "endgültig", "dauerhaft", "restlos", "spurlos",
+                         "vollständig", "unwiderruflich")
 
     def tearDown(self):
         fisi_sync.save_sync_settings(sync_repo="", sync_token="")
@@ -261,8 +272,16 @@ class RueckfrageTest(unittest.TestCase):
         fisi_sync.save_sync_settings(sync_repo="", sync_token="")
         text = fpj.delete_question({"titel": "Netzplan"})
         self.assertEqual(text, self.WITHOUT_SYNC)
-        self.assertNotIn("Abgleich", text)
-        self.assertNotIn("GitHub", text)
+        # F31 (b) nennt GitHub genau einmal (frueher: assertNotIn "Abgleich"/"GitHub")
+        self.assertEqual(text.count("GitHub"), 1)
+        for wort in self.VERBOTENE_ZUSAGEN:
+            self.assertNotIn(wort, text.lower())
+        # N16-F4: der Satz ist der zweite Satz im selben "Hinweis:"-Absatz
+        absaetze = text.split("\n\n")
+        self.assertEqual(len(absaetze), 2)
+        self.assertTrue(absaetze[1].startswith("Hinweis: Ältere Sicherungsdateien enthalten "
+                                               "die Eingaben weiterhin. Falls du den Abgleich "
+                                               "früher genutzt hast,"), absaetze[1])
         # nur Repository ohne Zugangsschluessel gilt nicht als eingerichtet
         fisi_sync.save_sync_settings(sync_repo="a/b", sync_token="")
         self.assertEqual(fpj.delete_question({"titel": "Netzplan"}), self.WITHOUT_SYNC)

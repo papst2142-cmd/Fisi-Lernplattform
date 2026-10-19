@@ -192,7 +192,9 @@ def delete_project(db, project):
 
 # Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich). Ab 0.63.2
 # werden die Eingaben wirklich geloescht; der Satz zum Abgleich und der
-# Hinweis auf GitHub stehen nur bei eingerichtetem Abgleich (Freigabe 4.4)
+# Hinweis auf GitHub stehen nur bei eingerichtetem Abgleich (Freigabe 4.4).
+# Ab 0.63.2 (F31 (b), N16): ohne Abgleich immer der Satz zu frueheren
+# Staenden im Abgleich-Repository (Abgleich kann frueher eingerichtet gewesen sein)
 DELETE_TITLE = "Projekt löschen"
 DELETE_QUESTION_SYNC = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden gelöscht, "
                         "nach dem Abgleich auch auf deinen anderen Geräten. Das lässt sich "
@@ -202,6 +204,8 @@ DELETE_QUESTION_SYNC = ("„%s“ löschen? Das Projekt und alle seine Eingaben 
 DELETE_QUESTION_LOCAL = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden "
                          "gelöscht. Das lässt sich in der App nicht rückgängig machen."
                          "\n\nHinweis: Ältere Sicherungsdateien enthalten die Eingaben "
+                         "weiterhin. Falls du den Abgleich früher genutzt hast, enthalten "
+                         "frühere Stände im Abgleich-Repository auf GitHub die Eingaben "
                          "weiterhin.")
 
 
