@@ -162,10 +162,16 @@ class NcTexteTest(unittest.TestCase):
     # Zeichenketten mit "z.B.", die bleiben (Datei, Anfang des Texts, Grund).
     # Alle anderen sichtbaren Programmtexte haben "z. B." (Testplan K52).
     BLEIBEN = [
+        # ab N11 (B-H-08): Grenze Unterversion/Fix, ebenfalls nur Konsole beim
+        # Bauen (vor den allgemeinen Eintraegen, die sonst diesen Text naehmen)
+        ("build.py", "Ungueltige Version %s - Unterversion und Fix",
+         "Konsole beim Bauen (N11, B-H-08)"),
         ("build.py", "Ungueltige Version %s", "Konsole beim Bauen (Plan Nr. 44)"),
         ("build.py", "Ungueltige Version %s", "Konsole beim Bauen (Plan Nr. 44)"),
         ("build.py", "Bitte die neue Version", "Konsole beim Bauen (Plan Nr. 44)"),
         ("fisi_pruefung.py", "z.B.", "Abkuerzungserkennung FG-87, kein Anzeigetext"),
+        # ab N10 (B-M-02): Ausgabe der APK-Pruefung im Bau, kein Programmtext
+        ("pruefung/apk_pruefen.py", "%d Bytecode-Reste", "Ausgabe APK-Pruefung (N10)"),
         ("fisi_core.py", "RECHENWEG BILDSCHIRM-DATENVOLUMEN\nAm Beispiel 1920",
          "N8-F7: Handy-Zeile wuerde 27 > 26 Zeichen - gemeldet, PC und Handy gleich"),
         ("fisi_core.py", "RECHENWEG\nBILDSCHIRM-DATENVOLUMEN",
