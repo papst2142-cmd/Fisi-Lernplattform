@@ -719,16 +719,18 @@ def _haken_nur_wo_noetig(ctx, zustand):
 
 
 def _haken_erste_zeile(ctx, zustand):
-    """Nico, Meldung 39 Frage 2c: Bewertungskriterium umbrochen -> das
-    Kaestchen steht auf der Hoehe der ersten Textzeile (Mitte Kaestchen =
-    Mitte erste Zeile, 2 px Spielraum), nicht mittig zum ganzen Text."""
+    """Nico, Meldung 39 Frage 2c / Nachtrag F2 (b), FG-112: jeder Haken und
+    Schalter mit umbrochenem Text -> das Kaestchen steht auf der Hoehe der
+    ersten Textzeile (Mitte Kaestchen = Mitte erste Zeile, 2 px Spielraum),
+    nicht mittig zum ganzen Text. Einzeilig: Lage wie in customtkinter
+    (Haken "e", Schalter mittig), Text ohne Versatz."""
     import customtkinter as ctk
     stack = [ctx.view.inner]
     while stack:
         widget = stack.pop()
         stack.extend(widget.winfo_children())
-        if (not isinstance(widget, ctk.CTkCheckBox) or not widget.winfo_ismapped()
-                or not widget.__dict__.get("_fisi_z3_erste_zeile")):
+        if (not isinstance(widget, (ctk.CTkCheckBox, ctk.CTkSwitch))
+                or not widget.winfo_ismapped()):
             continue
         label, box = widget._text_label, widget._canvas
         # Zeilenhoehe wie das Label sie zeichnet (Probezeile)
@@ -742,6 +744,15 @@ def _haken_erste_zeile(ctx, zustand):
         text_hoch = label.winfo_height() - 2 * inset
         zeilen = int(round(text_hoch / float(line)))
         if zeilen < 2:
+            soll = "e" if isinstance(widget, ctk.CTkCheckBox) else ""
+            if (box.grid_info().get("sticky", "") != soll
+                    or str(label.grid_info().get("pady", 0)) not in ("0", "(0, 0)")):
+                ctx.fehler.append("%s/%s: einzeiliger Haken/Schalter verschoben (%r, %r): %r"
+                                  % (ctx.name, zustand, box.grid_info().get("sticky"),
+                                     label.grid_info().get("pady"), label.cget("text")[:50]))
+            elif "_fisi_z3_box_sticky" in widget.__dict__:
+                werte = ctx.werte.setdefault("%s/%s" % (ctx.name, zustand), {})
+                werte["haken_rueckweg"] = werte.get("haken_rueckweg", 0) + 1
             continue
         ctx.werte.setdefault("%s/%s" % (ctx.name, zustand), {}).setdefault("haken_mehrzeilig", 0)
         ctx.werte["%s/%s" % (ctx.name, zustand)]["haken_mehrzeilig"] += 1
@@ -954,6 +965,28 @@ def pruefe_optionen(ctx):
     ctx.pump(0.8)
     # S1c2-Nachbesserung: wieder zugeklappt (verschobene Unterschriften)
     _z3_pruefe(ctx, "wieder_zu")
+    if ctx.breite >= 1360 or ctx.faktor == 1.0:
+        return          # Normal: Geometrievergleich je Zustand (_geometrie)
+    # FG-112: im selben Lauf breiter (1360) - umbrochene Schalter werden
+    # wieder einzeilig, das Kaestchen muss zurueck an seinen alten Platz
+    for card in view.folds.values():
+        card.set_opened(True)
+        ctx.pump(0.2)
+    ctx.root.geometry("1360x900+0+0")
+    ctx.pump(1.2)
+    ctx.pruefe("breiter")
+    _haken_erste_zeile(ctx, "breiter")
+    import fisi_widgets
+    if ctx.faktor == 1.3 and "Inter" not in str(fisi_widgets.F.get("family")):
+        for zustand, schluessel in (("alles_offen", "haken_mehrzeilig"),
+                                    ("breiter", "haken_rueckweg")):
+            if not ctx.werte.get("optionen/" + zustand, {}).get(schluessel):
+                ctx.fehler.append("optionen/%s: kein %s - Pruefung laeuft ins Leere"
+                                  % (zustand, schluessel))
+    # Vorschlag: Fenster zurueck, sonst laufen die folgenden Ansichten im
+    # selben Prozess (fortschritt_daten) mit 1360x900 statt 1120x720
+    ctx.root.geometry("%dx%d+0+0" % (ctx.breite, ctx.hoehe))
+    ctx.pump(1.2)
 
 
 @ansicht("fortschritt_daten")

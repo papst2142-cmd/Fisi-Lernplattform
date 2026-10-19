@@ -2600,21 +2600,27 @@ class FitRowsMixin(FitWidthMixin):
             label.configure(wraplength=wrap, justify="left")
         else:
             label.configure(wraplength=0, justify=check._fisi_z3_justify)
-        if check.__dict__.get("_fisi_z3_erste_zeile"):
-            FitRowsMixin._z3_check_top(check, label, bool(wrap))
+        # ab 0.63.2 (Nico, Nachtrag Meldung 39 F2 b, FG-112): bei jedem
+        # Haken und Schalter, nicht nur bei den Bewertungskriterien
+        FitRowsMixin._z3_check_top(check, label, bool(wrap))
         check._fisi_z3_umgestellt = bool(wrap)
         return True
 
     @staticmethod
     def _z3_check_top(check, label, wrapped):
-        """Ab 0.63.2 (Nico, Meldung 39 Frage 2c): Bei umbrochenem Text steht
-        das Kaestchen oben, mittig zur ersten Zeile (nicht mittig zum ganzen
-        Text). Einzeilig wie bisher."""
+        """Ab 0.63.2 (Nico, Meldung 39 Frage 2c; ab FG-112 jeder Haken und
+        Schalter): Bei umbrochenem Text steht das Kaestchen oben, mittig zur
+        ersten Zeile (nicht mittig zum ganzen Text). Einzeilig wie bisher
+        (Lage aus customtkinter: Haken "e", Schalter mittig)."""
         box = getattr(check, "_canvas", None)
         if box is None:
             return
+        if "_fisi_z3_box_sticky" not in check.__dict__:
+            if not wrapped:
+                return          # nie umgestellt: nichts anfassen
+            check._fisi_z3_box_sticky = box.grid_info().get("sticky", "")
         if not wrapped:
-            box.grid_configure(sticky="e", pady=0)
+            box.grid_configure(sticky=check._fisi_z3_box_sticky, pady=0)
             label.grid_configure(pady=0)
             return
         # Zeilenhoehe so, wie das Label sie zeichnet (die Schriftmetrik
@@ -3820,9 +3826,6 @@ class ExamPanel(ctk.CTkFrame):
                                         fg_color=C["green"], border_color=C["border_hi"],
                                         hover_color=C["card_hi"])
                 check.pack(anchor="w", pady=2)
-                # ab 0.63.2 (Nico, Meldung 39 Frage 2c): umbrochen steht das
-                # Kaestchen an der ersten Zeile (FitRowsMixin._z3_check)
-                check._fisi_z3_erste_zeile = True
             row = transparent_frame(card.body)
             row.pack(anchor="w", pady=(8, 0))
             make_label(row, "Punkte", font=F["small"], fg=C["text_dim"]).pack(
