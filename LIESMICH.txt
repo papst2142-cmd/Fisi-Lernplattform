@@ -251,7 +251,7 @@ START AUS DEM QUELLCODE (fuer Entwickler)
 Wer am Programm selbst arbeiten moechte, startet es direkt aus den
 .py-Dateien. Dafuer werden benoetigt:
 
-  * Python 3.8 oder neuer mit Tkinter
+  * Python 3.12 oder neuer mit Tkinter (gebaut und getestet wird mit 3.12)
   * CustomTkinter und Pillow (einmalig installieren, siehe unten)
 
 Einmalig im Programmordner ausfuehren:

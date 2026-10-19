@@ -17,6 +17,9 @@
 #  alten Namen hat (kleiner als 0.61).
 #  Ab 0.62 (21 Pruefungen): LICENSE.txt und THIRD_PARTY_NOTICES.txt im
 #  Programmordner (20), Dateieigenschaft LegalCopyright der Exe (21).
+#  Ab 0.63.2 (22 Pruefungen, FG-31): Groesse und SHA-256 der Datenbank
+#  vorher (alte Version laeuft) und nachher (neue Version laeuft) im
+#  Protokoll, dazu -wal/-journal; Pruefung "Lernstand byte-gleich" (22).
 #  Grenze: Auf dem GitHub-Rechner laeuft kein Schutzprogramm (Norton o.ae.).
 #  Ein gruener Test beweist also nicht, dass das Update auf jedem PC klappt.
 # ============================================================================
@@ -60,6 +63,31 @@ function Verknuepfungen($ordner) {
 function Namen($liste) { ($liste | ForEach-Object { $_.FullName.Replace($StartMenue, "Startmenue").Replace($Desktop, "Desktop") }) -join ", " }
 $AlterName = ([version]($AltVersion + ".0" * (3 - $AltVersion.Split(".").Count))) -lt [version]"0.61.0"
 function Prozesse { @(Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue) }
+# Ab 0.63.2 (FG-31): Groesse und SHA-256 einer Datei, die ein laufendes
+# Programm offen haelt (lesen mit FileShare ReadWrite und Delete, sonst verweigert
+# Windows den Zugriff). Fehlt die Datei: Hash "fehlt".
+function DateiAngabe($pfad) {
+  if (-not (Test-Path -LiteralPath $pfad)) { return [pscustomobject]@{ Laenge = $null; Hash = "fehlt" } }
+  try {
+    $fs = [System.IO.FileStream]::new($pfad, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+    try {
+      $sha = [System.Security.Cryptography.SHA256]::Create()
+      $hash = ([System.BitConverter]::ToString($sha.ComputeHash($fs))).Replace("-", "")
+      return [pscustomobject]@{ Laenge = $fs.Length; Hash = $hash }
+    } finally { $fs.Dispose() }
+  } catch {
+    return [pscustomobject]@{ Laenge = $null; Hash = "nicht lesbar: $($_.Exception.Message)" }
+  }
+}
+function DbProtokoll($titel, $db) {
+  $a = DateiAngabe $db
+  Write-Host ("--- Lernstand ({0}): {1} Byte, SHA-256 {2}" -f $titel, $a.Laenge, $a.Hash)
+  foreach ($endung in @("-wal", "-journal", "-shm")) {
+    $z = Get-Item -LiteralPath ($db + $endung) -ErrorAction SilentlyContinue
+    Write-Host ("    {0}: {1}" -f $endung, $(if ($z) { "$($z.Length) Byte" } else { "nicht vorhanden" }))
+  }
+  return $a
+}
 function Liste($titel) {
   Write-Host "--- Prozesse ($titel):"
   $p = Prozesse
@@ -97,6 +125,7 @@ Pruefung "Alte Version laeuft" ($null -ne $alt) "Prozess $($alt.Id)"
 Liste "alte Version laeuft"
 $DB = Join-Path $Daten "fisi_lernplattform.db"
 $dbVorher = Get-Item $DB -ErrorAction SilentlyContinue
+$dbVorherAngabe = DbProtokoll "vorher, alte Version laeuft" $DB
 
 Write-Host "=== 3. Update auf $NeuVersion wie aus dem Programm heraus"
 $UpdDir = Join-Path $env:TEMP "FISI-Lernplattform-Update"
@@ -138,8 +167,13 @@ Pruefung "Desktop: genau eine Verknuepfung, neuer Name" (($dn.Count -eq 1) -and 
 $en = @(Eintraege)
 Pruefung "Apps und Features: genau ein Eintrag" (($en.Count -eq 1) -and ($en[0].DisplayName -like "Fachinformatiker Lernplattform*") -and ($en[0].Publisher -eq "Nico H") -and ($en[0].DisplayVersion -eq $NeuVersion) -and ($AppKeyAlt.Count -eq 1) -and ($en[0].PSChildName -eq $AppKeyAlt[0])) "$($en.Count): $(($en | ForEach-Object { '{0} / {1} / {2} / Schluessel {3}' -f $_.DisplayName, $_.Publisher, $_.DisplayVersion, $_.PSChildName }) -join '; ') (vorher $($AppKeyAlt -join ', '))"
 $dbNachher = Get-Item $DB -ErrorAction SilentlyContinue
+$dbNachherAngabe = DbProtokoll "nachher, neue Version laeuft" $DB
 $neuOrdner = @(Get-ChildItem $env:APPDATA -Directory -Filter "Fachinformatiker*" -ErrorAction SilentlyContinue)
 Pruefung "Lernstand im selben Ordner" (($null -ne $dbVorher) -and ($null -ne $dbNachher) -and ($dbNachher.LastWriteTime -ge $dbVorher.LastWriteTime) -and ($neuOrdner.Count -eq 0)) "$DB, vorher $(if ($dbVorher) { $dbVorher.Length } else { 'fehlt' }) Byte, nachher $(if ($dbNachher) { $dbNachher.Length } else { 'fehlt' }) Byte, neue Ordner: $($neuOrdner.Count)"
+# 22 (ab 0.63.2, FG-31): Lernstand vorher/nachher byte-gleich (Groesse und
+# SHA-256). Ungleich = rot; die Ursache wird belegt, nicht still erlaubt.
+$gleich = ($null -ne $dbVorherAngabe.Laenge) -and ($null -ne $dbNachherAngabe.Laenge) -and ($dbVorherAngabe.Laenge -eq $dbNachherAngabe.Laenge) -and ($dbVorherAngabe.Hash -ceq $dbNachherAngabe.Hash)
+Pruefung "Lernstand byte-gleich" $gleich "vorher $($dbVorherAngabe.Laenge) Byte SHA-256 $($dbVorherAngabe.Hash), nachher $($dbNachherAngabe.Laenge) Byte SHA-256 $($dbNachherAngabe.Hash)"
 Copy-Item "$Daten\update.log" "$Out\update.log" -ErrorAction SilentlyContinue
 Copy-Item "$Daten\update_installer.log" "$Out\update_installer.log" -ErrorAction SilentlyContinue
 $log = Get-Content "$Daten\update.log" -Encoding utf8 -ErrorAction SilentlyContinue
