@@ -279,7 +279,7 @@ def to_number(text, default=0.0):
 
 def euro(value):
     text = "{:,.2f}".format(value).replace(",", "X").replace(".", ",").replace("X", ".")
-    return text + " €"
+    return text + "\u00a0€"  # ab 0.63.2 (FG-109): geschuetztes Leerzeichen
 
 
 def hours_text(value):

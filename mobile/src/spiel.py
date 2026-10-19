@@ -77,7 +77,9 @@ def cat_color(key):
 
 
 def euro(value):
-    return "%s €" % "{:,.0f}".format(value).replace(",", ".")
+    # Ab 0.63.2 (FG-109): geschuetztes Leerzeichen, damit "€" am Handy nicht
+    # allein in die naechste Zeile rutscht
+    return "%s\u00a0€" % "{:,.0f}".format(value).replace(",", ".")
 
 
 def screen_list(controls, spacing=14):
@@ -3048,7 +3050,7 @@ class GameScreen:
         for ticket in tickets:
             rows.append(self._customer_ticket_box(state, ticket, levels))
         return [ui.Card("Kundenanfragen", offers, accent=C["pink"],
-                        subtitle="Handlungskosten %d %%, USt %d %%"
+                        subtitle="Handlungskosten %d\u00a0%%, USt %d\u00a0%%"
                         % (rules["handlungskosten"], rules["ust"])),
                 ui.Card("Kundentickets", rows, accent=C["accent"],
                         subtitle="%d von %d verteilt" % (len(tickets) - free, len(tickets)))]

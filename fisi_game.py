@@ -6222,8 +6222,8 @@ def staff_money_text(item, content=None):
     revenue = item.get("umsatz")
     if revenue is None:
         revenue = staff_revenue(item["werte"], content)
-    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro(item["gehalt"]),
-                                                     _whole_euro(revenue))
+    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro_shown(item["gehalt"]),
+                                                     _whole_euro_shown(revenue))
 
 
 def training_text(state, item):
@@ -8072,10 +8072,11 @@ def tax_status_lines(item):
         "Dieser Zeitraum (%s): Umsatzsteuer %s aus %s Einnahmen, Vorsteuer %s aus %s "
         "Ausgaben, Zahllast bisher %s" % (
             "noch kein Feierabend" if not item["tage"] else
-            term_text(item["tage"]), _whole_euro(item["ust"]), _whole_euro(item["umsatz"]),
-            _whole_euro(item["vorsteuer"]), _whole_euro(item["ausgaben"]),
-            ("Erstattung " + _whole_euro(-item["zahllast"])) if item["zahllast"] < 0 else
-            _whole_euro(item["zahllast"]))]
+            term_text(item["tage"]), _whole_euro_shown(item["ust"]),
+            _whole_euro_shown(item["umsatz"]),
+            _whole_euro_shown(item["vorsteuer"]), _whole_euro_shown(item["ausgaben"]),
+            ("Erstattung " + _whole_euro_shown(-item["zahllast"])) if item["zahllast"] < 0 else
+            _whole_euro_shown(item["zahllast"]))]
     if item["anzahl"]:
         lines.append("Bisher %d Voranmeldungen · gezahlt %s%s" % (
             item["anzahl"], _whole_euro(item["gezahlt"]),
@@ -8297,8 +8298,9 @@ def ad_price_text(item):
     """ "Laufend 110 € pro Arbeitstag · Einmalig 900 € für 10 Arbeitstage" """
     once = item["einmalig"]
     return "Laufend %s pro Arbeitstag · einmalig %s für %s (%s pro Tag)" % (
-        _whole_euro(item["laufend"]), _whole_euro(once["preis"]), term_text(once["tage"]),
-        _whole_euro(int(round(once["preis"] / float(once["tage"])))))
+        _whole_euro_shown(item["laufend"]), _whole_euro_shown(once["preis"]),
+        term_text(once["tage"]),
+        _whole_euro_shown(int(round(once["preis"] / float(once["tage"])))))
 
 
 def ad_confirm_text(offer, content=None):
@@ -13933,6 +13935,15 @@ def move_offer(state, home, rent, content=None):
 
 def _whole_euro(value):
     return "%s €" % "{:,.0f}".format(value).replace(",", ".")
+
+
+def _whole_euro_shown(value):
+    """Ab 0.63.2 (FG-109): wie _whole_euro, aber mit geschuetztem Leerzeichen
+    vor "€" - nur fuer die Anzeige staff_money_text, tax_status_lines (Zeile
+    "Dieser Zeitraum") und ad_price_text, damit "€" am Handy bei 200 % nicht
+    allein umbricht. _whole_euro selbst bleibt (steckt u. a. im Kreditnamen im
+    Ereignis EV_LOAN)."""
+    return _whole_euro(value).replace(" €", "\u00a0€")
 
 
 def move_texts(state, home, rent, content=None):
