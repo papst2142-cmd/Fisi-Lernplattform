@@ -946,12 +946,14 @@ class PcTest(unittest.TestCase):
         seen, shown = [], []
         original = fsi.replace_all
         saved = (messagebox.askyesno, messagebox.showerror, messagebox.showinfo)
+        saved_long = self.gui.ask_long_question     # Dialog Warntext (Schritt 2)
 
         def fake_replace(*args, **kwargs):
             seen.append(self.wait_labels())
             return original(*args, **kwargs)
         fsi.replace_all = fake_replace
         messagebox.askyesno = lambda *a, **k: True
+        self.gui.ask_long_question = lambda *a, **k: True
         messagebox.showinfo = lambda title, text: shown.append(("info", self.wait_labels()))
         messagebox.showerror = lambda title, text: shown.append(("fehler", text,
                                                                  self.wait_labels()))
@@ -980,6 +982,7 @@ class PcTest(unittest.TestCase):
         finally:
             fsi.replace_all = original
             messagebox.askyesno, messagebox.showerror, messagebox.showinfo = saved
+            self.gui.ask_long_question = saved_long
             _fill_db(self.app.db.db_path)
         self.root.update()
 
