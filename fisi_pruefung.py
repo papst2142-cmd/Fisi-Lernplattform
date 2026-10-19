@@ -117,12 +117,19 @@ _ABBREVIATIONS = ("z.B.", "z. B.", "d.h.", "d. h.", "ca.", "bzw.", "u.a.", "usw.
 _CAPITAL_EXAMPLE = re.compile(r"(?<![^\W\d_])Z\.( ?)B\.")
 
 
+# Ab 0.63.2 (FG-103): Aufzaehlungszeichen ("-", "•", "*") am Zeilenanfang
+# nur, wenn Leerraum oder das Zeilenende folgt. Bis 0.63.1 fiel auch das
+# "-" einer Option weg ("1. -c 1 schickt ..." wurde "c 1 schickt ...",
+# ebenso "-mtime", "-rw-r-----", "-rw-r--r--").
+_BULLET = re.compile(r"^[-•*]+(?=\s|$)")
+
+
 def criteria(text):
     """Bewertungskriterien aus einer Musterloesung: jeder Satz bzw. jede
     Aufzaehlungszeile ein Kriterium."""
     items = []
     for line in text.split("\n"):
-        line = line.strip().lstrip("-•*").strip()
+        line = _BULLET.sub("", line.strip()).strip()
         if not line:
             continue
         protected = _CAPITAL_EXAMPLE.sub(lambda m: "Z\x02" + m.group(1) + "B\x02", line)
