@@ -540,6 +540,7 @@ BESTAND = [
     ("_toggle_member", "toggle_project_member", "haengt"), ("_found", "found_firm", "update"),
     ("_train", "train", "haengt"), ("_decide", "decide", "haengt"),
     ("_coach", "coach", "update"), ("_fire", "fire", "update"),
+    ("_fire", "fire_question", "liest"),     # ab N1 (Frage 26 b), nur Text
     ("_hire", "hire", "haengt"), ("_open_branch", "open_branch", "update"),
     ("_expand_branch", "expand_branch", "update"), ("_transfer", "transfer", "haengt"),
     ("_build_room", "build_room", "update"), ("_expand", "expand", "update"),

@@ -88,7 +88,7 @@ class _App:
         self.slot_chosen = True
         self.pushed = []
 
-    def push(self, crumbs, content):
+    def push(self, crumbs, content, toast_bis=None):     # toast_bis ab N15 (N-a)
         self.pushed.append((crumbs, content))
 
     def __getattr__(self, name):        # toast, info, confirm, show_unlocks ...
