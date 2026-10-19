@@ -211,7 +211,7 @@ class IbusTeilTest(unittest.TestCase):
     def test_matrix_ohne_teil_ibus(self):
         # Weg (c): Teil ibus laeuft nur im Container, nicht auf GitHub
         jobs = _jobs(_lesen(BUILD))
-        self.assertIn("        teil: [spiel, lang, rest]", jobs["tests"])
+        self.assertIn("        teil: [spiel, lang, breite, breite2, rest, rest2, rest3]", jobs["tests"])
         self.assertNotIn("ibus", "\n".join(z for z in jobs["tests"]
                                             if not z.lstrip().startswith("#")))
 
@@ -935,7 +935,7 @@ class BytecodeTest(unittest.TestCase):
     def test_apk_mit_pycache_rot(self):
         # so sah die APK von 0.63.1 aus (18 Dateien, gut 2 MB)
         fehler, zeilen = self._check(["main.pyc", "fisi_rechtliches.pyc", "LICENSE.txt",
-                                      "THIRD_PARTY_NOTICES.txt",
+                                      "THIRD_PARTY_NOTICES.txt", "fisi_trennung.pyc",
                                       "__pycache__/fisi_game.cpython-312.pyc",
                                       "__pycache__/spiel.cpython-312.pyc"])
         self.assertEqual(len(fehler), 1, fehler)
@@ -944,7 +944,8 @@ class BytecodeTest(unittest.TestCase):
 
     def test_apk_ohne_pycache_gruen(self):
         fehler, zeilen = self._check(["main.pyc", "fisi_rechtliches.pyc", "LICENSE.txt",
-                                      "THIRD_PARTY_NOTICES.txt", "inhalte/lerninhalte.json"])
+                                      "THIRD_PARTY_NOTICES.txt", "fisi_trennung.pyc",
+                                      "inhalte/lerninhalte.json"])
         self.assertEqual(fehler, [])
         self.assertIn("Bytecode-Reste (__pycache__) in app.zip: 0", zeilen)
 
@@ -965,7 +966,8 @@ class BytecodeTest(unittest.TestCase):
                      "a/__pycache__/b.opt-1.pyc", "d.cpython-312.pyc"):
             self.assertEqual(modul.bytecode_reste([name, "main.pyc", "e.py"]), [name], name)
         fehler, zeilen = self._check(["main.pyc", "fisi_rechtliches.pyc", "LICENSE.txt",
-                                      "THIRD_PARTY_NOTICES.txt", "__pycache__/x.pyc"])
+                                      "THIRD_PARTY_NOTICES.txt", "fisi_trennung.pyc",
+                                      "__pycache__/x.pyc"])
         self.assertEqual(len(fehler), 1, fehler)
         self.assertIn("Bytecode-Reste (__pycache__) in app.zip: 1", zeilen)
 
