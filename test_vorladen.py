@@ -307,11 +307,23 @@ class GamePreloadTest(AppCase):
 
 @unittest.skipUnless(HAS_DISPLAY, "keine Anzeige (z.B. mit xvfb-run starten)")
 class LoadingHintTest(AppCase):
+    # Ab 0.63.2 (FG-118): Vorlader aus, sonst kann er unter Last schon in
+    # setUp (pump(0.2)) "progress" bzw. "quiz" bauen - dann gibt es nichts
+    # zu laden und keine Ladeanzeige (Diagnose LoadingHint 14.10.)
+    def setUp(self):
+        os.environ["FISI_VORLADEN"] = "0"
+        super().setUp()
+
+    def tearDown(self):
+        os.environ.pop("FISI_VORLADEN", None)
+        super().tearDown()
+
     def test_anzeige_bei_langsamer_ansicht(self):
         app = self.app
         self.stop_preloader()
         theme = self.app_gui.fisi_theme
         hint = self.watch_hint()
+        self.assertIsNone(app.views.built("progress"), "Voraussetzung: noch nicht vorgeladen")
         app.show_view("progress")   # gross und noch nicht vorgeladen
         self.root.update()
         self.assertEqual(hint["shown"], 1)
@@ -371,6 +383,7 @@ class LoadingHintTest(AppCase):
             inner.append(app.views.built("calc"))
             return frame
         app._show_loading = shown
+        self.assertIsNone(app.views.built("quiz"), "Voraussetzung: noch nicht vorgeladen")
         app.show_view("quiz")
         self.root.update()
         self.assertEqual(inner, [None])
