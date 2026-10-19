@@ -450,6 +450,16 @@ class PcTest(unittest.TestCase):
             time.sleep(0.005)
 
     @classmethod
+    def wait_until(cls, check, timeout):
+        """Pumpt, bis check() wahr ist; nach timeout Sekunden Testfehler."""
+        end = time.monotonic() + timeout
+        while not check():
+            if time.monotonic() >= end:
+                raise AssertionError("Zustand nach %.0f s nicht erreicht" % timeout)
+            cls.root.update()
+            time.sleep(0.005)
+
+    @classmethod
     def wait_preload(cls, timeout=120):
         pre = cls.app.preloader
         end = time.monotonic() + timeout
@@ -508,10 +518,15 @@ class PcTest(unittest.TestCase):
         saved = monitor.RESIZE_END_MS
         monitor.RESIZE_END_MS = 5000
         try:
+            perf = self.app.perf
             for width in range(1360, 1480, 20):
                 self.root.geometry("%dx900" % width)
-                self.pump(0.03)
-            self.pump(monitor.RESIZE_END_MS / 1000 + 0.3)
+                # Ab 0.63.2 (FG-60): auf den Zustand warten statt fester Pause -
+                # jeder Schritt gilt erst, wenn der Monitor die Groesse gesehen hat
+                self.wait_until(lambda w=width: perf._size == (w, 900), 10)
+            # Zug zu Ende, wenn der Monitor ihn abgeschlossen hat (nach der Pause)
+            self.wait_until(lambda: perf._resize is None,
+                            monitor.RESIZE_END_MS / 1000 + 10)
         finally:
             monitor.RESIZE_END_MS = saved
         self.app.change_color(mode="hell")

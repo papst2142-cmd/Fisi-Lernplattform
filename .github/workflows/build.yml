@@ -111,6 +111,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
+          # Release-Laeufe bauen ohne Cache (nachvollziehbar)
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
+          cache-dependency-path: requirements-build.txt
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
@@ -128,16 +132,18 @@ jobs:
         if: runner.os == 'Linux'
         # Ab 0.63.2 (B-M-03): normal unter 1 min, ein Haenger lief 41 min
         timeout-minutes: 10
+        # Ab 0.63.2 (B-M-02): Netzfehler werden innerhalb des Schritts
+        # wiederholt (apt und Downloads je bis zu 5x), nie der ganze Job
         run: |
-          sudo apt-get update
-          sudo apt-get install -y tk-dev xvfb
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y tk-dev xvfb
           # Ab 0.62 (A5): feste Fassungen statt "continuous", mit SHA-256-
           # Pruefung - stimmt eine Pruefsumme nicht, bricht der Bau ab.
           # appimagetool 1.9.1 und die AppImage-Laufzeit type2-runtime
           # 20251108 (ihre Lizenzen stehen in THIRD_PARTY_NOTICES.txt).
-          curl -fsSL --connect-timeout 30 --max-time 300 -o appimagetool \
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 30 --max-time 300 -o appimagetool \
             https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
-          curl -fsSL --connect-timeout 30 --max-time 300 -o runtime-x86_64 \
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 30 --max-time 300 -o runtime-x86_64 \
             https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
           printf '%s\n' \
             "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool" \
@@ -150,13 +156,20 @@ jobs:
       - name: Inno Setup bereitstellen
         if: runner.os == 'Windows'
         shell: pwsh
+        # Ab 0.63.2 (B-M-02): bei Netzfehler bis zu 3 Versuche im Schritt
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup -y --no-progress
+            foreach ($versuch in 1..3) {
+              choco install innosetup -y --no-progress
+              if ($LASTEXITCODE -eq 0) { break }
+              if ($versuch -eq 3) { exit 1 }
+              Write-Host "Wiederholung wegen Netzfehler (choco, Versuch $versuch)"
+              Start-Sleep -Seconds 10
+            }
           }
 
       - name: Abhaengigkeiten installieren
-        run: python -m pip install -r requirements-build.txt
+        run: python -m pip install --retries 10 --timeout 60 -r requirements-build.txt
 
       # Ab 0.61 (M1): Namens-Waechter auch auf echtem macOS (Datenordner-Weg).
       # Unter macOS laeuft sonst keine Testsammlung.
@@ -206,6 +219,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
+          # Release-Laeufe bauen ohne Cache (nachvollziehbar)
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
+          cache-dependency-path: .github/workflows/build.yml
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
         if: env.IS_RELEASE == 'true'
@@ -217,13 +234,112 @@ jobs:
           fi
           python -c "import build; build.check_versions('$VERSION')"
 
-      - name: Flet installieren
-        run: python -m pip install "flet[all]==1.0.1" certifi
+      # Ab 0.63.2 (B-M-08): Flutter, Flet-Cache und Gradle-Zwischenspeicher
+      # nur in normalen Laeufen wiederverwenden, Release-Laeufe und
+      # Testversionen (Feld "vorab" gesetzt, N10-F3) bauen ohne Cache - wie
+      # der pip-Cache in allen setup-python-Schritten. Die Laufzeit-Dateien
+      # prueft der Schritt "Android-Laufzeit vorab laden und pruefen" auch
+      # nach dem Wiederherstellen.
+      - uses: actions/cache@v6
+        if: env.IS_RELEASE != 'true' && !inputs.vorab
+        with:
+          path: |
+            ~/flutter
+            ~/.flet/cache
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: android-werkzeug-${{ runner.os }}-flet-1.0.1-${{ hashFiles('mobile/pyproject.toml') }}
 
+      - name: Flet installieren
+        run: python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1" certifi
+
+      # Ab 0.63.2 (B-H-09): ohne Bytecode-Dateien - sonst landen
+      # mobile/src/__pycache__/*.cpython-312.pyc (gut 2 MB, auf dem Handy
+      # unbenutzt) in der APK; "APK pruefen" verlangt das jetzt
       - name: Gemeinsame Dateien kopieren und Selbsttest
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
         run: |
           python mobile/vorbereiten.py
           FISI_DB_PATH="$RUNNER_TEMP/selbsttest.db" python mobile/src/main.py --selbsttest
+
+      # Ab 0.63.2 (CI-a, B-E-07): Laufzeit-Dateien fuer den APK-Bau vorab
+      # laden - mit Wiederholung im Schritt, Pruefung auf leere Datei, Datei
+      # nur aus Nullbytes, gueltiges Archiv und feste SHA-256-Pruefsumme. Sie
+      # liegen dort, wo flet und Gradle (serious_python_android 4.7.2) sie
+      # suchen. Eine vorhandene Datei, die neuer ist als die auf dem Server,
+      # laedt Gradle nicht noch einmal (onlyIfModified). Bisher luden sechs
+      # Gradle-Aufgaben gleichzeitig; in mindestens 7 von etwa 110 Bauten brach
+      # der Bau mit einer Datei aus Nullbytes ab.
+      # Feste Fassungen: flet 1.0.1, python-build 20260921 (Python 3.14.7),
+      # dart-bridge 1.10.0. Neue Flet-Fassung -> Liste und Pruefsummen neu.
+      - name: Android-Laufzeit vorab laden und pruefen
+        run: |
+          CACHE="$HOME/.flet/cache"
+          echo "FLET_CACHE_DIR=$CACHE" >> "$GITHUB_ENV"
+          PB=https://github.com/flet-dev/python-build/releases/download/20260921
+          DB=https://github.com/flet-dev/dart-bridge/releases/download/v1.10.0
+          FL=https://github.com/flet-dev/flet/releases/download/v1.0.1
+          # Prueft eine Datei; Grund steht danach in GRUND
+          pruefe() {
+            GRUND=""
+            if [ ! -e "$1" ]; then GRUND="fehlt"; return 1; fi
+            if [ ! -s "$1" ]; then GRUND="leer (0 Bytes)"; return 1; fi
+            if [ "$(tr -d '\000' < "$1" | wc -c)" -eq 0 ]; then GRUND="nur Nullbytes"; return 1; fi
+            case "$1" in
+              *.tar.gz|*.tar.gz.tmp)
+                if ! tar -tzf "$1" > /dev/null 2>&1; then GRUND="kein gueltiges Archiv"; return 1; fi ;;
+              *.zip|*.zip.tmp)
+                if ! python3 -c "import sys, zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)" "$1" 2> /dev/null; then
+                  GRUND="kein gueltiges Archiv"; return 1
+                fi ;;
+            esac
+            if [ "$(sha256sum "$1" | cut -d' ' -f1)" != "$2" ]; then GRUND="Pruefsumme falsch"; return 1; fi
+            return 0
+          }
+          : > "$RUNNER_TEMP/laufzeit_liste.txt"
+          : > "$RUNNER_TEMP/laufzeit_vorher.txt"
+          while read -r SUMME DATEI URL; do
+            ZIEL="$CACHE/$DATEI"
+            mkdir -p "$(dirname "$ZIEL")"
+            if pruefe "$ZIEL" "$SUMME"; then
+              echo "vorhanden und geprueft: $DATEI"
+            else
+              if [ "$GRUND" != "fehlt" ]; then
+                echo "Datei im Cache unbrauchbar ($GRUND), wird neu geladen: $DATEI"
+              fi
+              rm -f "$ZIEL"
+              for VERSUCH in 1 2 3; do
+                curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 30 --max-time 300 -o "$ZIEL.tmp" "$URL" || true
+                if pruefe "$ZIEL.tmp" "$SUMME"; then
+                  mv "$ZIEL.tmp" "$ZIEL"
+                  echo "geladen und geprueft: $DATEI"
+                  break
+                fi
+                rm -f "$ZIEL.tmp"
+                if [ "$VERSUCH" = 3 ]; then
+                  echo "FEHLER: $DATEI nach 3 Versuchen unbrauchbar ($GRUND)"
+                  exit 1
+                fi
+                echo "Wiederholung wegen Download-Fehler ($GRUND): $DATEI"
+                sleep 10
+              done
+            fi
+            # neuer als die Datei auf dem Server -> Gradle laedt nicht nach
+            touch "$ZIEL"
+            echo "$SUMME $DATEI" >> "$RUNNER_TEMP/laufzeit_liste.txt"
+            echo "$(stat -c '%i %Y %s' "$ZIEL") $DATEI" >> "$RUNNER_TEMP/laufzeit_vorher.txt"
+          done <<LISTE
+          a60e8905a4844c7f3329178daabb54fa1966bc6ab3d81b318266fa6bf83e43d9 python-build/v3.14.7/python-android-dart-3.14.7-arm64-v8a.tar.gz $PB/python-android-dart-3.14.7-arm64-v8a.tar.gz
+          8d41be58a14c81015c5f39fea0030152e7cc9e9a266133a891ddfcaab57389a2 python-build/v3.14.7/python-android-dart-3.14.7-x86_64.tar.gz $PB/python-android-dart-3.14.7-x86_64.tar.gz
+          d7d9e27b359bd83625adde7121ae7efc8e1d13a220735078b29e387093756216 python-build/v3.14.7/python-android-dart-3.14.7-armeabi-v7a.tar.gz $PB/python-android-dart-3.14.7-armeabi-v7a.tar.gz
+          34df57631381d163e722c22e93210f22b4056f119609d0009c86a3d8f5d8ed64 dart-bridge/v1.10.0/libdart_bridge-android-arm64-v8a-py3.14.so $DB/libdart_bridge-android-arm64-v8a-py3.14.so
+          d53528f6a8896083330ad7956dfeac7e31e6dfda9dc0ec3be8b867f60c0b4dad dart-bridge/v1.10.0/libdart_bridge-android-x86_64-py3.14.so $DB/libdart_bridge-android-x86_64-py3.14.so
+          46f16cddf53095c91a950b1b6ae4bf1525a1c2732c1625dc3410fb6c09aaa6f4 dart-bridge/v1.10.0/libdart_bridge-android-armeabi-v7a-py3.14.so $DB/libdart_bridge-android-armeabi-v7a-py3.14.so
+          486dccbbb82b36bac92ce094e92911d6100efb32958dd0f56aa2cab12b5a4391 python-build/manifest-20260921.json $PB/manifest.json
+          1a44947dab5eefb30c72ade66e257cdc6b2edcdf6d8e2badea4c42a97d15ac87 build-template/v1.0.1/flet-build-template.zip $FL/flet-build-template.zip
+          LISTE
+          echo "Android-Laufzeit: $(wc -l < "$RUNNER_TEMP/laufzeit_liste.txt") Dateien vorab geladen und geprueft"
 
       - name: Signaturschluessel bereitstellen
         env:
@@ -245,6 +361,37 @@ jobs:
           FLET_ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: flet build apk --yes --no-rich-output --skip-flutter-doctor
 
+      # Ab 0.63.2 (CI-a, B-E-07): Gradle hat die vorab geladenen Dateien
+      # benutzt und nichts selbst geladen oder ersetzt
+      - name: Android-Laufzeit unveraendert (nichts nachgeladen)
+        run: |
+          FEHLER=0
+          while read -r SUMME DATEI; do
+            ZIEL="$FLET_CACHE_DIR/$DATEI"
+            if ! grep -qxF "$(stat -c '%i %Y %s' "$ZIEL") $DATEI" "$RUNNER_TEMP/laufzeit_vorher.txt"; then
+              echo "FEHLER: $DATEI wurde waehrend des Baus neu geladen oder ersetzt"
+              FEHLER=1
+            fi
+            if [ "$(sha256sum "$ZIEL" | cut -d' ' -f1)" != "$SUMME" ]; then
+              echo "FEHLER: Pruefsumme von $DATEI stimmt nach dem Bau nicht"
+              FEHLER=1
+            fi
+          done < "$RUNNER_TEMP/laufzeit_liste.txt"
+          # Keine weiteren Laufzeit-Dateien (andere Python- oder Bridge-Fassung)
+          find "$FLET_CACHE_DIR/python-build" "$FLET_CACHE_DIR/dart-bridge" -type f \
+            \( -name 'python-android-*' -o -name 'libdart_bridge-*' \) | sort > "$RUNNER_TEMP/laufzeit_gefunden.txt"
+          while read -r GEFUNDEN; do
+            if ! cut -d' ' -f2 "$RUNNER_TEMP/laufzeit_liste.txt" | grep -qxF "${GEFUNDEN#"$FLET_CACHE_DIR/"}"; then
+              echo "FEHLER: Gradle hat eine andere Laufzeit-Datei geladen: ${GEFUNDEN#"$FLET_CACHE_DIR/"}"
+              echo "(neue Flet-Fassung? Liste im Schritt \"Android-Laufzeit vorab laden und pruefen\" anpassen)"
+              FEHLER=1
+            fi
+          done < "$RUNNER_TEMP/laufzeit_gefunden.txt"
+          if [ "$FEHLER" = 0 ]; then
+            echo "Android-Laufzeit: alle $(wc -l < "$RUNNER_TEMP/laufzeit_liste.txt") Dateien unveraendert, nichts nachgeladen"
+          fi
+          exit "$FEHLER"
+
       - name: APK umbenennen
         run: |
           VERSION=$(python -c "import build; print(build.app_version())")
@@ -263,7 +410,7 @@ jobs:
           VERSION=$(python -c "import build; print(build.app_version())")
           ALT=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url')
           echo "Vergleich mit: $ALT"
-          curl -fsSL --connect-timeout 30 --max-time 300 -o "$RUNNER_TEMP/alt.apk" "$ALT"
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 30 --max-time 300 -o "$RUNNER_TEMP/alt.apk" "$ALT"
           python pruefung/apk_pruefen.py "installer_output/FISI-Lernplattform-${VERSION}-Android.apk" "$RUNNER_TEMP/alt.apk"
 
       # Ab 0.62 (Weg B, E5): Lizenzliste der Handy-App mit der neuen APK
@@ -312,19 +459,25 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
+          # Release-Laeufe bauen ohne Cache (nachvollziehbar)
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
+          cache-dependency-path: |
+            requirements.txt
+            .github/workflows/build.yml
 
       - name: Werkzeuge fuer die Tests
         env:
           TEIL: ${{ matrix.teil }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb openbox x11-utils desktop-file-utils \
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y xvfb openbox x11-utils desktop-file-utils \
             hunspell hunspell-de-de
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
-          python -m pip install -r requirements.txt psutil
-          python -m pip install "flet[all]==1.0.1"
+          python -m pip install --retries 10 --timeout 60 -r requirements.txt psutil
+          python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1"
           python mobile/vorbereiten.py
 
       - name: Tests ausfuehren
@@ -345,11 +498,17 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
+          # Release-Laeufe bauen ohne Cache (nachvollziehbar)
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
+          cache-dependency-path: |
+            requirements.txt
+            .github/workflows/build.yml
 
       - name: Abhaengigkeiten (PC und Handy)
         run: |
-          python -m pip install -r requirements.txt psutil
-          python -m pip install "flet[all]==1.0.1"
+          python -m pip install --retries 10 --timeout 60 -r requirements.txt psutil
+          python -m pip install --retries 10 --timeout 60 "flet[all]==1.0.1"
           python mobile/vorbereiten.py
 
       - name: Tests ausfuehren
@@ -371,6 +530,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # Ab 0.63.2 (B-M-08): pip-Zwischenspeicher nur in normalen Laeufen,
+          # Release-Laeufe bauen ohne Cache (nachvollziehbar)
+          cache: ${{ env.IS_RELEASE != 'true' && !inputs.vorab && 'pip' || '' }}
+          cache-dependency-path: .github/workflows/build.yml
 
       - name: Alte Version bestimmen (letztes normales Release)
         id: alt
@@ -391,7 +554,7 @@ jobs:
           path: alt
 
       - name: Abhaengigkeiten
-        run: python -m pip install certifi
+        run: python -m pip install --retries 10 --timeout 60 certifi
 
       - uses: actions/download-artifact@v8
         with:
@@ -530,7 +693,7 @@ jobs:
         run: |
           LATEST=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
           PRE=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/vorab-$VORAB" --jq .prerelease)
-          python3 -m pip install --quiet certifi
+          python3 -m pip install --retries 10 --timeout 60 --quiet certifi
           # ab 0.59.1 fuer alle drei Installationsarten der Testversionen
           ANGEBOT=$(python3 -c "import fisi_update as u; print(' '.join((lambda i: i.version if i else '-')(u.check_for_update('0.1', kind=k)) for k in ('windows', 'deb', 'android')))")
           {
