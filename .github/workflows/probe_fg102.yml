@@ -1,7 +1,8 @@
 # ============================================================================
 #  PROBE FG-102 (Weisung 42 2.8 / Weisung 55 Abschnitt 3) - NIE MERGEN
 # ============================================================================
-#  Kopie von build.yml (Stand version-0632-fg102), nur von Hand startbar,
+#  Kopie von build.yml (Stand version-0632-fg102), startet beim Push auf den
+#  Probezweig (Lauf 2 und 3: ganzer neuer Versuch aller Jobs),
 #  ohne die Jobs vorab und release (kein Tag, kein Release, keine
 #  Testversion). Zweck: drei ganze Laeufe mit dem Dialogtest unter Windows
 #  (Job tests-windows) und auf beiden Macs (Schritt am Ende des Bau-Jobs).
@@ -10,6 +11,8 @@
 name: Probe FG-102 (nie mergen)
 
 on:
+  push:
+    branches: [version-0632-fg102-probe]
   workflow_dispatch: {}
 
 # Tag des Laufs: beim Aufruf aus release.yml uebergeben, sonst der gepushte Tag
