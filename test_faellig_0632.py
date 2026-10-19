@@ -522,7 +522,7 @@ class IndexTest(Base):
         deshalb baut der Index voll auf, solange er alte Texte haelt (FG-110,
         FG110Test)."""
         allowed = {("fisi_core.py", "UPDATE %s SET question = ? WHERE question = ?"),
-                   ("fisi_core.py", "UPDATE %s SET uid = lower(hex(randomblob(16))) "),
+                   ("fisi_core.py", "UPDATE %s SET uid = ? WHERE rowid = ?"),   # B-G-29
                    ("fisi_sync.py", "UPDATE %s SET utc_offset = ? WHERE rowid = ?")}
         found = set()
         names = [n for n in os.listdir(HERE) if n.endswith(".py") and not n.startswith("test_")]
