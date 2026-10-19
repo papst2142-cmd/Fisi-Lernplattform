@@ -622,6 +622,27 @@ def clock_deviation(value, now=None):
     return seconds
 
 
+def clock_jump_unknown(value, now=None):
+    """Ab 0.63.2 (S-1, Weg b, FG-58): True, wenn eine gespeicherte Messung
+    mit einer Abweichung ueber CLOCK_TOLERANCE gilt, ein Sprung der Uhr seit
+    der Messung aber nicht feststellbar ist (_clock_jump liefert None:
+    Messung ohne Laufzeit-Uhr, anderer Systemstart, ohne Kennung des
+    Systemstarts ein anderer Prozess). clock_deviation liefert dann die
+    Messung selbst. Gleiche Lesart wie clock_deviation, liest nur."""
+    try:
+        data = json.loads(value)
+        seconds = float(data["s"])
+        measured = datetime.datetime.fromisoformat(data["gemessen"])
+    except (TypeError, ValueError, KeyError):
+        return False
+    if measured.tzinfo is None:
+        return False
+    age = ((now or device_now()) - measured).total_seconds()
+    if age < 0 or age > CLOCK_VALID:
+        return False
+    return abs(seconds) > CLOCK_TOLERANCE and _clock_jump(data, age) is None
+
+
 # ============================================================================
 #  DATENBANKFEHLER (ab 0.62.5, B-G-01, B-G-03, B-G-06, B-G-12)
 # ============================================================================
@@ -1025,10 +1046,20 @@ class DBManager:
         eine Loeschung erfasst auch Eintraege, die mit der falschen Uhr
         entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher.
         Ab 0.62.5 nicht mehr, sobald die Uhr seit der Messung richtig gestellt
-        wurde (clock_deviation, Restrisiko 3)."""
+        wurde (clock_deviation, Restrisiko 3).
+        Ab 0.63.2 (S-1, Weg b): Ist ein Sprung seit der Messung nicht
+        feststellbar (clock_jump_unknown), wird eine Vorlauf-Abweichung (Uhr
+        ging vor) nicht eingerechnet - der Eintrag liegt dann eher spaeter
+        und faellt nicht unter eine Loeschung, die nach ihm kam; eine
+        Nachlauf-Abweichung weiter. Ein so gestempelter Eintrag wird spaeter
+        nicht nachgetragen (fisi_sync._correct_own_entries, unveraendert)."""
         moment = device_now()
         offset = offset_minutes(moment)
-        deviation = clock_deviation(self.get_meta(CLOCK_KEY), moment)
+        value = self.get_meta(CLOCK_KEY)
+        deviation = clock_deviation(value, moment)
+        if (deviation is not None and deviation > CLOCK_TOLERANCE
+                and clock_jump_unknown(value, moment)):
+            deviation = None
         if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
             offset += int(round(deviation / 60.0))
         return moment.strftime("%Y-%m-%d %H:%M:%S"), offset
@@ -1039,12 +1070,19 @@ class DBManager:
         Wich die Uhr beim letzten Abgleich um mehr als CLOCK_TOLERANCE von
         GitHub ab, gilt stattdessen die Uhrzeit von GitHub - ab 0.62.5 nicht
         mehr, sobald die Uhr seit der Messung richtig gestellt wurde
-        (clock_deviation, Restrisiko 3). Liefert (Text, korrigierte Sekunden
+        (clock_deviation, Restrisiko 3). Ab 0.63.2 (S-1, Weg b): Ist ein
+        Sprung seit der Messung nicht feststellbar (clock_jump_unknown), wird
+        eine Nachlauf-Abweichung (Uhr ging nach) nicht eingerechnet - die
+        Marke liegt dann eher frueher und nimmt nichts mit, was nach ihr kam;
+        eine Vorlauf-Abweichung weiter. Liefert (Text, korrigierte Sekunden
         oder 0)."""
         moment = device_now()
         row = cur.execute("SELECT value FROM sync_meta WHERE key = ?",
                           (CLOCK_KEY,)).fetchone()
         deviation = clock_deviation(row[0], moment) if row else None
+        if (deviation is not None and deviation < -CLOCK_TOLERANCE
+                and clock_jump_unknown(row[0], moment)):
+            deviation = None
         if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
             moment = (moment - datetime.timedelta(seconds=deviation)).astimezone()
             return format_with_zone(moment), deviation

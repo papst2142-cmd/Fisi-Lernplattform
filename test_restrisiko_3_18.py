@@ -243,8 +243,12 @@ class RestrisikoTest(unittest.TestCase):
     def test_grenze_3_ohne_startkennung_neu_gestartet(self):
         """BEWUSST FESTGEHALTENE GRENZE: Ohne Kennung des Systemstarts
         (Windows, macOS) und nach einem Neustart des Programms ist nicht zu
-        erkennen, ob die Laufzeit-Uhr weiterlief. Dann wie 0.62.4 (Messung bis
-        24 h eingerechnet): Bs Eintraege vor der Loeschung bleiben. Sicher
+        erkennen, ob die Laufzeit-Uhr weiterlief. Die Loeschmarke rechnet die
+        gemessene Vorlauf-Abweichung dann weiter ein (bis 24 h wie 0.62.4; ab
+        0.63.2 S-1 Behalten-Regel: Marke eher frueher): Bs Eintraege vor der
+        Loeschung bleiben. Eigene Eintraege rechnen sie ab 0.63.2 nicht mehr
+        ein (Gegentest P1: test_s1_0632.S1AblaufTest.
+        test_risiko_3_eigener_eintrag_ohne_startkennung_neu_gestartet). Sicher
         statt ungewiss: ein Neustart des Systems mit weiter falscher Uhr darf
         die Abweichung nicht verlieren (test_neustart_bekannte_abweichung).
         Der PC gleicht beim Programmstart ab und misst dann neu.
