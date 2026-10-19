@@ -547,7 +547,10 @@ def _later(first, second, zone=True):
 def _merged_markers(local, remote, zone=True):
     markers = {}
     for key in MARKERS:
-        value = _later(local.get(key), remote.get(key), zone)
+        # Ab 0.63.2 (FG-116): remote zuerst - bei Gleichstand (dieselbe Zeit in
+        # UTC, andere Schreibweise) gilt die Marke der Datei. Sonst laedt jedes
+        # Geraet seine Schreibweise bei jedem Abgleich wieder hoch.
+        value = _later(remote.get(key), local.get(key), zone)
         if value:
             markers[key] = value
     return markers
