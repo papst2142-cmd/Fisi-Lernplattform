@@ -1,0 +1,18 @@
+# ============================================================================
+#  Fachinformatiker Lernplattform - Dependabot (ab 0.63.2, B-M-04, F9)
+# ============================================================================
+#  Prueft einmal pro Woche, ob es neuere Staende der Actions gibt, die die
+#  Ablaeufe in .github/workflows verwenden (z.B. actions/checkout,
+#  softprops/action-gh-release), und schlaegt sie als Pull Request vor.
+#  Nur "github-actions" - keine Python- oder Handy-Pakete. Nichts wird
+#  automatisch uebernommen: Jeder Vorschlag wird wie jede Aenderung an den
+#  Ablaeufen geprueft und nur von Hand gemergt.
+#  Kosten: Dependabot-Versionsupdates sind kostenlos; die Vorschlaege starten
+#  keinen Bau (build.yml laeuft nicht bei Pull Requests).
+# ============================================================================
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
