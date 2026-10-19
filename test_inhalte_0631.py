@@ -277,17 +277,20 @@ ANZAHL = {"karteikarten.json": 1565, "quizfragen.json": 2120, "szenarien_ap1.jso
 # sich auf dem Stand 0.63.1 (14b3bd4): ausserhalb der geplanten Felder ist nichts
 # geaendert. Werte bis 0.63.1: adfb69fb...7165, 7cc29b85...c9c3, 321e2e6e...9a95,
 # d1dc2c96...af35, bfc9e918...00c6.
+# Ab N12 (B-N-08, FG-60): ueber die vereinheitlichte Schreibweise (pruefwert). Derselbe
+# Wert ergibt sich auf 0.63.1 (14b3bd4), auf S4 (29558a8) und auf N12. Werte bis S4:
+# cbd53db8...0e99, 84ed04c7...acfd, 13c8429f...26c1, 4b783630...9879, eda3cfcd...7f83.
 PRUEFWERT = {
     "karteikarten.json":
-        "cbd53db8dcb19862ea601aeee64e8bd7e01cf26ea37f5736d1aef700296d0e99",
+        "e9149975d55f9aae6f9146b66f75a0c9712df8be11bd0d3d2770b8d816863f71",
     "quizfragen.json":
-        "84ed04c712799f04c4f9f173165f4b9ad3cba74c26c41317b433f26db3a9acfd",
+        "b8fe31e1c966c74c36de8b6f7bee0d328b64e7c9e237622c4fa4744f19a37390",
     "szenarien_ap1.json":
-        "13c8429fcc4bd64b66ed854bdcd07d210b482ba22ef442a08f3e2557f9a326c1",
+        "d01f914c26a343647108a684952c77523628503154336dbc36e9f3b53716b1dc",
     "szenarien_ap2.json":
-        "4b7836306538051516a606f0472b87be9ad86ed28509776d8d75d3fb5d249879",
+        "29f38b3469a89fcea80f9c56ab517f86870c4b42b9202307a83bca1a270aba0c",
     "projektarbeiten.json":
-        "eda3cfcd6bd42e9094dc66d779476f898ecf7fa01c3078ff631df190a7727f83",
+        "6a0fbd580712968144a83df65d119ea65b7615892f723e0fb36c26c4fbdd26cf",
 }
 PRUEFWERT_UMBENENNUNGEN = "a2ae7b3264d79cf6d82353de5277f03d91f4122507731609e6af031719d0706f"
 P1480_NEU = ("Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB "
@@ -304,6 +307,16 @@ def pruefwert(datei, eintraege):
                 ziel = ziel[teil]
             ziel[pfad[-1]] = "*"
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
+    # Ab 0.63.2 (N12, B-N-08, FG-60): "z.B." -> "z. B." und "Broadcastadresse" ->
+    # "Broadcast-Adresse" in fast 950 Feldern. Der Pruefwert wird deshalb ueber die
+    # vereinheitlichte Schreibweise gebildet (beide Formen gleich behandelt); jede
+    # andere Aenderung bleibt rot. Dass wirklich nur diese Ersetzung geschah und
+    # keine Stelle verschwand, pruefen test_inhalte_zb (Zahl je Datei, kein "z.B."
+    # mehr) und das Werkzeug des Eintrag-fuer-Eintrag-Vergleichs.
+    # Ab FG-87 (0.63.2, Zusatz von Nico): ebenso die 13 Stellen "Z.B." -> "Z. B."
+    # (Zahl je Datei und kein "Z.B." mehr: test_inhalte_zb.KriterienGrossZbTest)
+    text = text.replace("z. B.", "z.B.").replace("Broadcast-Adresse", "Broadcastadresse")
+    text = text.replace("Z. B.", "Z.B.")
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -344,6 +357,17 @@ def pruefwert_umbenennungen(daten):
     for art, alte in UMBENENNUNGEN_0632.items():
         kopie[art] = {alt: neu for alt, neu in kopie[art].items() if alt not in alte}
     kopie["quiz"] = {alt: neu for alt, neu in kopie["quiz"].items() if neu != P1480_NEU}
+    # Ab 0.63.2 (N12, B-N-08): angehaengte Eintraege, deren neuer Text genau der alte
+    # mit "z. B." statt "z.B." ist; einzeln geprueft in test_inhalte_zb (27 Stueck).
+    # Nacharbeit N12 (Meldung 24, Frage 4 a, FG-60): ebenso die 2 Eintraege, deren
+    # neuer Text genau der alte mit "Broadcast-Adresse" statt "Broadcastadresse" ist
+    # (P1487, P1488; einzeln geprueft in test_inhalte_zb.UMBENANNT_BC)
+    for art in ("karte", "quiz"):
+        kopie[art] = {alt: neu for alt, neu in kopie[art].items()
+                      if not ("z.B." in alt and neu == alt.replace("z.B.", "z. B."))
+                      and not ("Broadcastadresse" in alt
+                               and neu == alt.replace("Broadcastadresse",
+                                                      "Broadcast-Adresse"))}
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 

@@ -14,7 +14,7 @@
    "id": "a02",
    "cat": null,
    "q": "Welche Alternativen haben Sie geprüft und warum haben Sie sich dagegen entschieden?",
-   "hinweis": "Mindestens zwei Alternativen, Entscheidungskriterien (z.B. Nutzwertanalyse), nachvollziehbare Begründung."
+   "hinweis": "Mindestens zwei Alternativen, Entscheidungskriterien (z. B. Nutzwertanalyse), nachvollziehbare Begründung."
   },
   {
    "id": "a03",
@@ -104,7 +104,7 @@
    "id": "a17",
    "cat": null,
    "q": "Welche Qualitätsmerkmale hat Ihre Lösung?",
-   "hinweis": "Z.B. Verfügbarkeit, Wartbarkeit, Skalierbarkeit, Benutzerfreundlichkeit; wie geprüft."
+   "hinweis": "Z. B. Verfügbarkeit, Wartbarkeit, Skalierbarkeit, Benutzerfreundlichkeit; wie geprüft."
   },
   {
    "id": "a18",
@@ -116,7 +116,7 @@
    "id": "a19",
    "cat": null,
    "q": "Was ist ein Meilenstein und welche Meilensteine hatte Ihr Projekt?",
-   "hinweis": "Prüfbarer Zwischenstand ohne Dauer, z.B. Konzept freigegeben, Testsystem läuft, Abnahme."
+   "hinweis": "Prüfbarer Zwischenstand ohne Dauer, z. B. Konzept freigegeben, Testsystem läuft, Abnahme."
   },
   {
    "id": "a20",
@@ -128,13 +128,13 @@
    "id": "a21",
    "cat": null,
    "q": "Welche Lizenzmodelle kamen in Ihrem Projekt vor?",
-   "hinweis": "Z.B. pro Gerät, pro Nutzer, Abonnement, Open Source (Pflichten der Lizenz beachten)."
+   "hinweis": "Z. B. pro Gerät, pro Nutzer, Abonnement, Open Source (Pflichten der Lizenz beachten)."
   },
   {
    "id": "a22",
    "cat": null,
    "q": "Wie überwachen Sie den Betrieb nach der Einführung?",
-   "hinweis": "Monitoring (z.B. SNMP, Agenten), Schwellwerte, Alarmierung, Protokolle, Wartungsplan."
+   "hinweis": "Monitoring (z. B. SNMP, Agenten), Schwellwerte, Alarmierung, Protokolle, Wartungsplan."
   },
   {
    "id": "a23",
@@ -158,7 +158,7 @@
    "id": "a26",
    "cat": null,
    "q": "Was verstehen Sie unter einem Service Level Agreement?",
-   "hinweis": "Vereinbarung über Leistungen und Kennzahlen, z.B. Verfügbarkeit, Reaktionszeit, Wiederherstellungszeit."
+   "hinweis": "Vereinbarung über Leistungen und Kennzahlen, z. B. Verfügbarkeit, Reaktionszeit, Wiederherstellungszeit."
   },
   {
    "id": "a27",
@@ -170,7 +170,7 @@
    "id": "a28",
    "cat": null,
    "q": "Welche Normen oder Vorgaben waren für Ihr Projekt wichtig?",
-   "hinweis": "Z.B. DSGVO, BSI IT-Grundschutz, ISO 27001, Verkabelungsnormen, Herstellervorgaben."
+   "hinweis": "Z. B. DSGVO, BSI IT-Grundschutz, ISO 27001, Verkabelungsnormen, Herstellervorgaben."
   },
   {
    "id": "a29",
@@ -206,13 +206,13 @@
    "id": "net04",
    "cat": "netzwerk",
    "q": "Wie funktioniert die Redundanz in Ihrem Netz?",
-   "hinweis": "Z.B. zweite Leitung, Link-Aggregation, Spanning Tree, VRRP/HSRP; Ausfall getestet."
+   "hinweis": "Z. B. zweite Leitung, Link-Aggregation, Spanning Tree, VRRP/HSRP; Ausfall getestet."
   },
   {
    "id": "net05",
    "cat": "netzwerk",
    "q": "Welche Verkabelung und welche Kategorie haben Sie gewählt und warum?",
-   "hinweis": "Kategorie nach Bandbreite und Länge (z.B. Cat 6A bis 100 m für 10 Gbit/s), Glasfaser für Backbone."
+   "hinweis": "Kategorie nach Bandbreite und Länge (z. B. Cat 6A bis 100 m für 10 Gbit/s), Glasfaser für Backbone."
   },
   {
    "id": "net06",
@@ -284,7 +284,7 @@
    "id": "sys05",
    "cat": "systeme",
    "q": "Wie verteilen Sie Updates auf die Clients?",
-   "hinweis": "Zentrale Verwaltung (z.B. WSUS/Intune/Paketverwaltung), Testgruppe, Wartungsfenster."
+   "hinweis": "Zentrale Verwaltung (z. B. WSUS/Intune/Paketverwaltung), Testgruppe, Wartungsfenster."
   },
   {
    "id": "sys06",
@@ -296,7 +296,7 @@
    "id": "wir01",
    "cat": "wirtschaft",
    "q": "Wie haben Sie Angebote verglichen und den Lieferanten ausgewählt?",
-   "hinweis": "Quantitativ (Preis, Rabatt, Skonto, Lieferkosten) und qualitativ (Service, Lieferzeit) z.B. per Nutzwertanalyse."
+   "hinweis": "Quantitativ (Preis, Rabatt, Skonto, Lieferkosten) und qualitativ (Service, Lieferzeit) z. B. per Nutzwertanalyse."
   },
   {
    "id": "wir02",

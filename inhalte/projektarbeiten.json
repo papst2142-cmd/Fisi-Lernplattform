@@ -24,10 +24,10 @@
     ],
     "hinweise": [
       "Grundriss und Anzahl der Arbeitsplätze, vorhandene Verkabelung, Position von Serverraum/Technikschrank, Stromversorgung, bauliche Gegebenheiten (Kabelwege), bestehende Provider-Verträge sowie die genauen Anforderungen des Warenwirtschaftssystems.",
-      "Mindestens drei VLANs sind sinnvoll: Kassen/Warenwirtschaft (hohe Priorität, QoS), Büro/Verwaltung und Kunden-WLAN (isoliert, eigenes Gastnetz ohne Zugriff auf interne Ressourcen) - je eigener privater IP-Bereich, z.B. 10.13.10.0/24, 10.13.20.0/24, 10.13.30.0/24.",
-      "Arbeitspakete z.B.: Materialbeschaffung, Verkabelung, Installation aktiver Komponenten, Konfiguration VLANs/Firewall, Einrichtung VPN zum Hauptsitz, Funktionstest, Schulung des Personals, Pufferzeit vor der Eröffnung.",
+      "Mindestens drei VLANs sind sinnvoll: Kassen/Warenwirtschaft (hohe Priorität, QoS), Büro/Verwaltung und Kunden-WLAN (isoliert, eigenes Gastnetz ohne Zugriff auf interne Ressourcen) - je eigener privater IP-Bereich, z. B. 10.13.10.0/24, 10.13.20.0/24, 10.13.30.0/24.",
+      "Arbeitspakete z. B.: Materialbeschaffung, Verkabelung, Installation aktiver Komponenten, Konfiguration VLANs/Firewall, Einrichtung VPN zum Hauptsitz, Funktionstest, Schulung des Personals, Pufferzeit vor der Eröffnung.",
       "Grobkalkulation: verwaltbarer PoE-Switch ca. 400-600 Euro, Firewall/Router ca. 500-800 Euro, 2 Access Points ca. 300-400 Euro, Verkabelung/Patchpanel/Material ca. 1.000-1.500 Euro - Arbeitszeit separat kalkulieren und eine Reserve für Unvorhergesehenes einplanen.",
-      "Eine zweite, unabhängige Anbindung (z.B. LTE/5G-Backup-Router mit automatischem Failover) sichert die Verbindung zum Hauptsitz gegen den Ausfall der Hauptleitung ab.",
+      "Eine zweite, unabhängige Anbindung (z. B. LTE/5G-Backup-Router mit automatischem Failover) sichert die Verbindung zum Hauptsitz gegen den Ausfall der Hauptleitung ab.",
       "Funktionstest aller Arbeitsplätze und der Anbindung vor Eröffnung, ein Abnahmeprotokoll mit dem Kunden sowie eine vollständige Dokumentation (Netzplan, IP-Konzept, Zugangsdaten), die dem Kunden übergeben wird."
     ]
   },
@@ -57,10 +57,10 @@
     "hinweise": [
       "Zuerst Microsoft 365 (E-Mail, Cloud-Daten) und der VPN-Zugang (Einfallstor fürs Homeoffice), da hier das größte Schadenspotenzial und die höchste Angriffswahrscheinlichkeit durch Phishing bestehen.",
       "Eine Authenticator-App (TOTP) ist für die meisten Mitarbeiter praktikabel und kostengünstig; Hardware-Token als Alternative für Mitarbeiter ohne Diensthandy. SMS-basierte Verfahren möglichst vermeiden (anfällig für SIM-Swapping).",
-      "Phase 1: Pilotgruppe (z.B. Geschäftsleitung/IT-affine Mitarbeiter, ca. 1 Woche Testbetrieb), Phase 2: schrittweiser Rollout nach Abteilungen, Phase 3: verpflichtende Aktivierung mit Stichtag, begleitet von Support-Sprechstunden.",
+      "Phase 1: Pilotgruppe (z. B. Geschäftsleitung/IT-affine Mitarbeiter, ca. 1 Woche Testbetrieb), Phase 2: schrittweiser Rollout nach Abteilungen, Phase 3: verpflichtende Aktivierung mit Stichtag, begleitet von Support-Sprechstunden.",
       "Stolpersteine: fehlende Diensthandys, Akzeptanzprobleme, Geräteverlust, erhöhtes Support-Aufkommen in der ersten Woche - gegensteuern mit Hardware-Token als Alternative, klarer Anleitung und einem benannten Ansprechpartner.",
       "Kurzanleitung mit Schritt-für-Schritt-Bildern, eine kurze Präsenzschulung oder ein Kurzvideo, ein FAQ-Dokument sowie ein begleiteter Test-Login pro Mitarbeiter.",
-      "Bei der Einrichtung Backup-Codes generieren und sicher hinterlegen (z.B. verschlüsselt beim IT-Verantwortlichen) sowie einen definierten Prozess zur Identitätsprüfung festlegen, bevor bei Verlust ein Reset durchgeführt wird."
+      "Bei der Einrichtung Backup-Codes generieren und sicher hinterlegen (z. B. verschlüsselt beim IT-Verantwortlichen) sowie einen definierten Prozess zur Identitätsprüfung festlegen, bevor bei Verlust ein Reset durchgeführt wird."
     ]
   },
   {
@@ -88,7 +88,7 @@
     ],
     "hinweise": [
       "CPU-/RAM-Auslastung, Speicherbedarf und dessen Wachstum, Anzahl gleichzeitiger Nutzer, kritische Dienste und ihre Abhängigkeiten sowie bisherige Ausfallzeiten und Wartungsaufwand je Server.",
-      "Ein Typ-1-Hypervisor (z.B. Proxmox VE oder VMware ESXi), da er direkt auf der Hardware läuft und dadurch ressourcenschonender und für den Produktivbetrieb geeigneter ist als ein Typ-2-Hypervisor.",
+      "Ein Typ-1-Hypervisor (z. B. Proxmox VE oder VMware ESXi), da er direkt auf der Hardware läuft und dadurch ressourcenschonender und für den Produktivbetrieb geeigneter ist als ein Typ-2-Hypervisor.",
       "Die summierte Spitzenlast der fünf bisherigen Server plus Reserve (ca. 30-40 %) für Wachstum und gleichzeitige Lastspitzen; ausreichend RAM für alle VMs plus Hypervisor-Overhead; Storage nach heutigem Bedarf plus Wachstumsprognose für die kommenden drei bis fünf Jahre.",
       "RAID 10 oder RAID 6 für eine gute Balance aus Performance und Ausfallschutz, dazu ein Backup-Konzept nach der 3-2-1-Regel mit mindestens einer extern bzw. per Air Gap getrennt gelagerten Kopie gegen Ransomware.",
       "Vorbereitung und Tests unter der Woche, die eigentliche Migration am Wochenende mit klar definierten Zeitfenstern je Dienst, ein vollständiges Backup vor Beginn als Rollback-Basis, Funktionstests nach jedem Schritt sowie ein festgelegter Zeitpunkt, bis zu dem notfalls auf die alte Umgebung zurückgeschaltet wird.",
@@ -121,7 +121,7 @@
       "Kauf: Anschaffungspreis, ggf. Finanzierungskosten, Wartung/Reparatur nach Garantieablauf, Restwert am Ende der Nutzungsdauer. Leasing: monatliche Raten, ggf. Anzahlung, im Vertrag enthaltene Leistungen (Austauschservice), kein Restwert, da Rückgabe.",
       "Kauf: 15 x 2.200 Euro = 33.000 Euro Anschaffung, plus Wartung ab Jahr 3 (2 Jahre x 150 Euro x 15 Geräte = 4.500 Euro) = ca. 37.500 Euro, abzüglich eines möglichen Restwerts. Leasing: 15 x 55 Euro x 48 Monate = 39.600 Euro, dafür planbare Kosten ohne separates Wartungsrisiko - bei diesen Annahmen ist der Kauf rechnerisch etwas günstiger.",
       "Bilanzielle Behandlung (Kauf als Anlagevermögen mit Abschreibung, Leasing meist als laufender Aufwand), Flexibilität bei technologischem Wandel, Verwaltungsaufwand sowie Ausfallrisiko und Reaktionszeit bei Defekten.",
-      "Kauf bindet sofort Kapital (Liquiditätsabfluss), Leasing verteilt die Belastung gleichmäßig über die Laufzeit und schont die Liquidität - relevant, wenn das Kapital anderweitig, z.B. für Investitionen, benötigt wird.",
+      "Kauf bindet sofort Kapital (Liquiditätsabfluss), Leasing verteilt die Belastung gleichmäßig über die Laufzeit und schont die Liquidität - relevant, wenn das Kapital anderweitig, z. B. für Investitionen, benötigt wird.",
       "Beispiel: Bei ausreichender Liquidität und Fokus auf die geringsten Gesamtkosten spricht die Berechnung für den Kauf; sind Planungssicherheit und Schonung der Liquidität wichtiger, ist Leasing trotz höherer Gesamtkosten die passendere Wahl - die Entscheidung hängt von der individuellen Unternehmenssituation ab, nicht allein vom reinen Zahlenvergleich."
     ]
   },
@@ -179,10 +179,10 @@
       "Kalkulieren Sie überschlägig die notwendige Hardware/Software im Rahmen des Budgets."
     ],
     "hinweise": [
-      "RPO = maximal 1 Arbeitstag (mindestens tägliche Sicherung notwendig), RTO = maximal 4 Stunden (der Wiederherstellungsprozess muss entsprechend vorbereitet und geübt sein, z.B. durch ein Standby-System oder eine schnell einspielbare Vollsicherung).",
-      "Tägliche automatisierte Sicherung (z.B. inkrementell unter der Woche, wöchentliche Vollsicherung) nach der 3-2-1-Regel: mindestens 3 Kopien, 2 unterschiedliche Medien (z.B. NAS und externe Festplatte/Cloud), mindestens 1 Kopie extern bzw. per Air Gap getrennt gelagert.",
+      "RPO = maximal 1 Arbeitstag (mindestens tägliche Sicherung notwendig), RTO = maximal 4 Stunden (der Wiederherstellungsprozess muss entsprechend vorbereitet und geübt sein, z. B. durch ein Standby-System oder eine schnell einspielbare Vollsicherung).",
+      "Tägliche automatisierte Sicherung (z. B. inkrementell unter der Woche, wöchentliche Vollsicherung) nach der 3-2-1-Regel: mindestens 3 Kopien, 2 unterschiedliche Medien (z. B. NAS und externe Festplatte/Cloud), mindestens 1 Kopie extern bzw. per Air Gap getrennt gelagert.",
       "Gesundheitsdaten zählen nach Art. 9 DSGVO zu besonders sensiblen Daten und erfordern erhöhte Schutzmaßnahmen: Verschlüsselung der Backups, Zugriffsbeschränkung, ggf. ein Auftragsverarbeitungsvertrag bei Nutzung eines Cloud-Anbieters sowie dokumentierte Löschkonzepte nach den gesetzlichen Aufbewahrungsfristen.",
-      "Regelmäßige Testwiederherstellungen (z.B. quartalsweise) auf einem Testsystem durchführen und protokollieren - ein ungetestetes Backup ist kein verlässliches Backup.",
+      "Regelmäßige Testwiederherstellungen (z. B. quartalsweise) auf einem Testsystem durchführen und protokollieren - ein ungetestetes Backup ist kein verlässliches Backup.",
       "Beispielkalkulation: NAS-System mit ausreichender Kapazität und RAID (ca. 800-1.200 Euro), externe Wechselfestplatten für die extern gelagerte Kopie (ca. 200-300 Euro), Backup-Software-Lizenz (ca. 200-400 Euro/Jahr), Rest als Puffer für Einrichtung/Dienstleistung."
     ]
   },
@@ -203,16 +203,16 @@
     ],
     "aufgaben": [
       "Führen Sie eine Ist-Analyse durch: Welche Informationen erheben Sie, und wie?",
-      "Vergleichen Sie mögliche Lösungen (z.B. WSUS/Gruppenrichtlinien, Windows Update for Business, kommerzielle Patch-Management-Software).",
+      "Vergleichen Sie mögliche Lösungen (z. B. WSUS/Gruppenrichtlinien, Windows Update for Business, kommerzielle Patch-Management-Software).",
       "Entwerfen Sie ein Patch-Konzept mit Testgruppe, Freigabe und Zeitfenstern.",
       "Wie berücksichtigen Sie die Produktionsrechner, die nicht jederzeit neu starten dürfen?",
       "Wie weisen Sie dem Versicherer den Patchstand nach?",
       "Erstellen Sie eine grobe Zeit- und Kostenplanung."
     ],
     "hinweise": [
-      "Inventarisierung aller Geräte mit Betriebssystem, Build-Version, installierter Software und letztem Update-Datum (z.B. per Inventarisierungstool oder Skript), dazu Befragung der Abteilungen zu kritischen Anwendungen und Betriebszeiten.",
-      "WSUS mit Gruppenrichtlinien ist lizenzkostenfrei, deckt aber nur Microsoft-Produkte ab. Kommerzielle Lösungen patchen auch Drittanbieter-Software (z.B. Browser, PDF-Reader) und bieten Berichte. Entscheidung per Nutzwertanalyse (Kosten, Abdeckung, Aufwand, Berichtswesen).",
-      "Ringe: Testgruppe (IT und einige ausgewählte Rechner) erhält Updates sofort, nach 3-5 Tagen ohne Probleme folgt die breite Verteilung. Kritische Sicherheitsupdates beschleunigt freigeben. Feste Wartungsfenster für Server (z.B. nach dem Patchday nachts) mit vorherigem Snapshot/Backup.",
+      "Inventarisierung aller Geräte mit Betriebssystem, Build-Version, installierter Software und letztem Update-Datum (z. B. per Inventarisierungstool oder Skript), dazu Befragung der Abteilungen zu kritischen Anwendungen und Betriebszeiten.",
+      "WSUS mit Gruppenrichtlinien ist lizenzkostenfrei, deckt aber nur Microsoft-Produkte ab. Kommerzielle Lösungen patchen auch Drittanbieter-Software (z. B. Browser, PDF-Reader) und bieten Berichte. Entscheidung per Nutzwertanalyse (Kosten, Abdeckung, Aufwand, Berichtswesen).",
+      "Ringe: Testgruppe (IT und einige ausgewählte Rechner) erhält Updates sofort, nach 3-5 Tagen ohne Probleme folgt die breite Verteilung. Kritische Sicherheitsupdates beschleunigt freigeben. Feste Wartungsfenster für Server (z. B. nach dem Patchday nachts) mit vorherigem Snapshot/Backup.",
       "Eigene Gruppe/OU für Produktionsrechner mit Installation nur in Schichtpausen oder am Wochenende, Neustarts erst nach Rücksprache bzw. im Wartungsfenster. Bis dahin ggf. zusätzliche Absicherung (Netzsegmentierung).",
       "Regelmäßige, automatisch erzeugte Berichte über den Patchstand je Gerät (Compliance-Report) sowie ein dokumentierter Prozess mit Verantwortlichkeiten und Fristen für kritische Updates.",
       "Phasen: Analyse (1 Woche), Auswahl und Konzept (1 Woche), Aufbau und Test mit Pilotgruppe (2 Wochen), Rollout und Dokumentation (1 Woche). Kosten: Lizenzen je nach Lösung, interne und externe Arbeitsstunden mit Stundensatz, ggf. Serverressourcen - Summe mit dem Budget von 3.500 Euro abgleichen."
@@ -241,9 +241,9 @@
       "Welche Kennzahlen kann die Geschäftsführung künftig auswerten?"
     ],
     "hinweise": [
-      "Z.B. Ticket-Erfassung per E-Mail und Webportal, Anmeldung per Active Directory (SSO), Kategorien und Prioritäten, Zuweisung an Bearbeiter, Statusverfolgung für den Anwender, Wissensdatenbank, Berichte, deutschsprachige Oberfläche, DSGVO-konformer Betrieb (Serverstandort EU, Auftragsverarbeitungsvertrag).",
+      "Z. B. Ticket-Erfassung per E-Mail und Webportal, Anmeldung per Active Directory (SSO), Kategorien und Prioritäten, Zuweisung an Bearbeiter, Statusverfolgung für den Anwender, Wissensdatenbank, Berichte, deutschsprachige Oberfläche, DSGVO-konformer Betrieb (Serverstandort EU, Auftragsverarbeitungsvertrag).",
       "Cloud: schnell verfügbar, keine eigene Wartung, laufende Lizenzkosten, Datenschutz über Auftragsverarbeitungsvertrag klären. On-Premises: volle Datenhoheit, aber Aufwand für Server, Updates und Backup. Entscheidung per Nutzwertanalyse mit Blick auf nur zwei IT-Mitarbeiter.",
-      "Meldung (Portal/E-Mail) - Erfassung und Kategorisierung - Priorisierung nach Auswirkung und Dringlichkeit (z.B. Prio 1: Standort arbeitsunfähig) - Zuweisung - Bearbeitung mit Statusinformationen an den Anwender - Lösung und Dokumentation - Rückmeldung/Abschluss durch den Anwender. Wiederkehrende Störungen an das Problem-Management übergeben.",
+      "Meldung (Portal/E-Mail) - Erfassung und Kategorisierung - Priorisierung nach Auswirkung und Dringlichkeit (z. B. Prio 1: Standort arbeitsunfähig) - Zuweisung - Bearbeitung mit Statusinformationen an den Anwender - Lösung und Dokumentation - Rückmeldung/Abschluss durch den Anwender. Wiederkehrende Störungen an das Problem-Management übergeben.",
       "Kurze Einführung für alle Mitarbeiter, einfache Anleitung, eindeutige Regel \"Nur Tickets werden bearbeitet\" mit Unterstützung der Geschäftsführung, Übergangsphase, in der Anrufe von der IT selbst als Ticket erfasst werden, und schnelle, sichtbare Bearbeitung als Motivation.",
       "Anzahl Tickets je Zeitraum und Kategorie, durchschnittliche Reaktions- und Lösungszeit, Anteil der beim ersten Kontakt gelösten Tickets, Einhaltung vereinbarter Service-Level, häufigste Störungsursachen und Aufwand je Standort."
     ]
@@ -273,8 +273,8 @@
     ],
     "hinweise": [
       "Geräteliste mit Standort, MAC- und IP-Adresse, Switchport, Funktion und Kommunikationsbedarf. Hilfreich sind Switch-Tabellen (MAC-Adressen pro Port), ein Netzwerkscan und Gespräche mit Produktion und Herstellern.",
-      "Z.B. VLAN 10 Verwaltung 10.20.10.0/24, VLAN 20 Produktion 10.20.20.0/24, VLAN 30 Kameras 10.20.30.0/24, VLAN 40 Drucker 10.20.40.0/24, VLAN 50 Server 10.20.50.0/24, VLAN 99 Gäste 10.20.99.0/24, VLAN 100 Management 10.20.100.0/24. Die dritte Stelle entspricht der VLAN-ID, das erleichtert die Übersicht.",
-      "Grundsatz Default Deny. Verwaltung darf auf Server und Drucker, aber nicht direkt auf die Produktion. Produktion nur auf die benötigten Server (z.B. Auftragsdaten). Kameras nur zum Videorekorder. Gäste nur ins Internet. Management nur von Admin-Arbeitsplätzen erreichbar.",
+      "Z. B. VLAN 10 Verwaltung 10.20.10.0/24, VLAN 20 Produktion 10.20.20.0/24, VLAN 30 Kameras 10.20.30.0/24, VLAN 40 Drucker 10.20.40.0/24, VLAN 50 Server 10.20.50.0/24, VLAN 99 Gäste 10.20.99.0/24, VLAN 100 Management 10.20.100.0/24. Die dritte Stelle entspricht der VLAN-ID, das erleichtert die Übersicht.",
+      "Grundsatz Default Deny. Verwaltung darf auf Server und Drucker, aber nicht direkt auf die Produktion. Produktion nur auf die benötigten Server (z. B. Auftragsdaten). Kameras nur zum Videorekorder. Gäste nur ins Internet. Management nur von Admin-Arbeitsplätzen erreichbar.",
       "Kein dauerhaft offener Zugang. Fernwartung über ein VPN oder einen Fernwartungs-Gateway mit Freischaltung nur bei Bedarf (Vier-Augen-Prinzip), MFA, Zugriff nur auf die jeweilige Maschine, Protokollierung der Sitzungen und vertragliche Regelung mit dem Hersteller.",
       "Vorher: Konfigurationen sichern, Switch-Konfigurationen vorbereiten und testen, Ansprechpartner der Produktion vor Ort. Reihenfolge: Server und Management, dann Verwaltung, zuletzt Produktion. Rückfallplan: gesicherte Konfiguration zurückspielen, Zeitpunkt für die Entscheidung zum Abbruch festlegen.",
       "Testliste pro Segment: Adressvergabe (DHCP), Erreichbarkeit der erlaubten Dienste, Blockierung der verbotenen Wege, Funktionstest jeder Maschine mit der Produktion, Kontrolle der Firewall-Logs. Ergebnisse im Abnahmeprotokoll festhalten und Netzplan aktualisieren."
@@ -304,10 +304,10 @@
       "Welche Dokumentation ist nach DSGVO erforderlich?"
     ],
     "hinweise": [
-      "Berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Diebstahl), abzuwägen gegen die Persönlichkeitsrechte der Beschäftigten. Die Überwachung muss geeignet, erforderlich und angemessen sein, mildere Mittel (z.B. Zutrittskontrolle) sind zu prüfen. Für Beschäftigte ist zusätzlich § 26 BDSG zu beachten. Nach dem Urteil des EuGH vom 30.03.2023 (C-34/21) zur gleichlautenden hessischen Regelung ist auch die allgemeine Regel des § 26 Abs. 1 Satz 1 BDSG in vielen Fällen nicht anwendbar; die Rechtsgrundlage bleibt dann Art. 6 Abs. 1 DSGVO.",
+      "Berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Diebstahl), abzuwägen gegen die Persönlichkeitsrechte der Beschäftigten. Die Überwachung muss geeignet, erforderlich und angemessen sein, mildere Mittel (z. B. Zutrittskontrolle) sind zu prüfen. Für Beschäftigte ist zusätzlich § 26 BDSG zu beachten. Nach dem Urteil des EuGH vom 30.03.2023 (C-34/21) zur gleichlautenden hessischen Regelung ist auch die allgemeine Regel des § 26 Abs. 1 Satz 1 BDSG in vielen Fällen nicht anwendbar; die Rechtsgrundlage bleibt dann Art. 6 Abs. 1 DSGVO.",
       "Eine Videoüberwachung ist eine technische Einrichtung zur Überwachung von Verhalten und Leistung, daher hat der Betriebsrat nach § 87 Abs. 1 Nr. 6 BetrVG ein Mitbestimmungsrecht. Die Details werden in einer Betriebsvereinbarung geregelt.",
-      "Keine Aufnahme von Sozialräumen, Toiletten oder Arbeitsplätzen mit Daueraufenthalt. Kamerawinkel auf Lagerbereiche und Rampe beschränken, Privatzonen maskieren. Speicherdauer z.B. 72 Stunden mit automatischer Löschung. Zugriff nur für wenige Berechtigte im Vier-Augen-Prinzip, mit Protokollierung.",
-      "Eigenes Kamera-VLAN ohne Internetzugang, nur der NVR ist erreichbar. PoE-Budget: Die 12,95 W stehen am Gerät zur Verfügung, der Switch muss dafür je Port bis zu 15,4 W bereitstellen, weil ein Teil in der Leitung verloren geht (PoE nach IEEE 802.3af). Also 8 * 15,4 W = 123,2 W, der Switch braucht mindestens rund 124 W PoE-Leistung, sinnvoll mit Reserve z.B. 150 W oder mehr. Standardpasswörter ändern, Firmware aktualisieren, Zeit per NTP synchronisieren.",
+      "Keine Aufnahme von Sozialräumen, Toiletten oder Arbeitsplätzen mit Daueraufenthalt. Kamerawinkel auf Lagerbereiche und Rampe beschränken, Privatzonen maskieren. Speicherdauer z. B. 72 Stunden mit automatischer Löschung. Zugriff nur für wenige Berechtigte im Vier-Augen-Prinzip, mit Protokollierung.",
+      "Eigenes Kamera-VLAN ohne Internetzugang, nur der NVR ist erreichbar. PoE-Budget: Die 12,95 W stehen am Gerät zur Verfügung, der Switch muss dafür je Port bis zu 15,4 W bereitstellen, weil ein Teil in der Leitung verloren geht (PoE nach IEEE 802.3af). Also 8 * 15,4 W = 123,2 W, der Switch braucht mindestens rund 124 W PoE-Leistung, sinnvoll mit Reserve z. B. 150 W oder mehr. Standardpasswörter ändern, Firmware aktualisieren, Zeit per NTP synchronisieren.",
       "Hinweisschilder vor dem überwachten Bereich mit Kamerasymbol, Verantwortlichem, Zweck, Kontakt des Datenschutzbeauftragten und Hinweis auf weitere Informationen (Art. 13 DSGVO). Beschäftigte zusätzlich schriftlich informieren.",
       "Eintrag im Verzeichnis von Verarbeitungstätigkeiten, dokumentierte Interessenabwägung, ggf. Datenschutz-Folgenabschätzung (bei systematischer Überwachung von Beschäftigten oft erforderlich), Löschkonzept und TOM."
     ]
@@ -338,10 +338,10 @@
     "hinweise": [
       "4 TB * 1,2^5 = 4 TB * 2,48832 = 9,95 TB. Bei max. 80 % Füllgrad werden ca. 12,44 TB Nutzkapazität benötigt. Beispiel: RAID 6 aus 6 Platten zu je 4 TB = 16 TB nutzbar, zwei Platten dürfen ausfallen, dazu eine Hot-Spare.",
       "Physisch: volle Kontrolle, aber eigene Hardware und Wartung. VM: nutzt vorhandene Infrastruktur, einfaches Backup per Snapshot, abhängig von der Kapazität des Hosts. Cloud: keine Hardware, aber laufende Kosten, Bandbreite und Datenschutz klären. Entscheidung per Nutzwertanalyse.",
-      "Benutzer in globale Gruppen nach Abteilung (z.B. G_Konstruktion), Berechtigungen auf domänenlokale Gruppen je Ordner und Recht (z.B. DL_Projekte_Lesen, DL_Projekte_Ändern), globale Gruppen in die DL-Gruppen aufnehmen. Keine Rechte direkt an Benutzer.",
+      "Benutzer in globale Gruppen nach Abteilung (z. B. G_Konstruktion), Berechtigungen auf domänenlokale Gruppen je Ordner und Recht (z. B. DL_Projekte_Lesen, DL_Projekte_Ändern), globale Gruppen in die DL-Gruppen aufnehmen. Keine Rechte direkt an Benutzer.",
       "Vorab-Kopie mit robocopy /MIR /COPYALL (oder /SEC) im laufenden Betrieb, am Umstellungstag nur noch eine Differenzkopie, danach alter Server schreibgeschützt. Protokolle der Kopie prüfen, Stichproben der Rechte vergleichen.",
       "Laufwerkszuordnungen per Gruppenrichtlinie auf den neuen Server bzw. einen DFS-Namespace umstellen. Ein DFS-Namespace entkoppelt den Pfad vom Servernamen und erleichtert spätere Migrationen. Anwender vorab informieren.",
-      "Backup nach 3-2-1-Regel einrichten (z.B. NAS vor Ort und Kopie außer Haus oder in der Cloud, eine Kopie unveränderbar), Restore-Test einzelner Dateien und eines kompletten Ordners, Dokumentation der Ergebnisse und regelmäßige Wiederholung."
+      "Backup nach 3-2-1-Regel einrichten (z. B. NAS vor Ort und Kopie außer Haus oder in der Cloud, eine Kopie unveränderbar), Restore-Test einzelner Dateien und eines kompletten Ordners, Dokumentation der Ergebnisse und regelmäßige Wiederholung."
     ]
   },
   {
@@ -370,7 +370,7 @@
       "Einkauf: 890 + 2 * 310 + 1.450 = 2.960 Euro. Mit 20 % Aufschlag: 2.960 * 1,2 = 3.552 Euro netto.",
       "Dienstleistung: 12 * 95 = 1.140 Euro. Gesamt netto: 3.552 + 1.140 = 4.692 Euro. Umsatzsteuer: 4.692 * 19 % = 891,48 Euro. Brutto: 5.583,48 Euro.",
       "Absender und Empfänger, Datum und Angebotsnummer, genaue Beschreibung der Leistungen und Mengen, Einzel- und Gesamtpreise netto, Umsatzsteuer und Bruttobetrag, Liefer- und Zahlungsbedingungen, Gültigkeitsdauer (Bindefrist), ggf. Hinweis auf AGB.",
-      "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z.B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
+      "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z. B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
       "Wartungsvertrag mit Updates für Firewall und Access Points, Monitoring, Firewall-Lizenzverlängerung, Schulung der Mitarbeiter, Backup-Lösung, später Erweiterung um ein Gäste-WLAN."
     ]
   },
@@ -398,8 +398,8 @@
     ],
     "hinweise": [
       "64 - 56 = 8 Bit, also 256 Netze. Schema mit VLAN-Nummer in den letzten Hexziffern: VLAN 10: 2001:db8:c0:a10::/64, VLAN 20: 2001:db8:c0:a20::/64, VLAN 30: 2001:db8:c0:a30::/64, VLAN 40: 2001:db8:c0:a40::/64, VLAN 99: 2001:db8:c0:a99::/64.",
-      "Clients per SLAAC (Router Advertisements), DNS-Server per RDNSS oder stateless DHCPv6; Privacy Extensions sind möglich. Server, Router und Drucker erhalten statische Adressen (z.B. ::10, ::20), damit DNS-Einträge und Regeln stabil bleiben.",
-      "Die IPv4-Regeln müssen für IPv6 nachgebildet werden: eingehend alles verbieten außer erlaubten Diensten (z.B. HTTPS zum Portal), ausgehend wie bei IPv4. ICMPv6 wird für Neighbor Discovery, Router Advertisements und Path MTU Discovery (Packet Too Big) gebraucht; ohne diese Nachrichten funktioniert IPv6 nicht richtig.",
+      "Clients per SLAAC (Router Advertisements), DNS-Server per RDNSS oder stateless DHCPv6; Privacy Extensions sind möglich. Server, Router und Drucker erhalten statische Adressen (z. B. ::10, ::20), damit DNS-Einträge und Regeln stabil bleiben.",
+      "Die IPv4-Regeln müssen für IPv6 nachgebildet werden: eingehend alles verbieten außer erlaubten Diensten (z. B. HTTPS zum Portal), ausgehend wie bei IPv4. ICMPv6 wird für Neighbor Discovery, Router Advertisements und Path MTU Discovery (Packet Too Big) gebraucht; ohne diese Nachrichten funktioniert IPv6 nicht richtig.",
       "Es gibt genug globale Adressen für jedes Gerät. Schutz bietet die zustandsorientierte Firewall: Verbindungen von außen werden nur zugelassen, wenn eine Regel sie erlaubt, Antworten auf ausgehende Verbindungen werden automatisch erlaubt.",
       "Schulung und Planung, Test im Labor, Firewall-Regeln und Monitoring für IPv6 vorbereiten, Management- und Server-VLAN, dann DMZ mit dem Lieferantenportal (AAAA-Eintrag), zuletzt Clients und WLAN. Nach jedem Schritt testen, Dokumentation und IPAM aktualisieren."
     ]
@@ -427,8 +427,8 @@
       "Nennen Sie Messwerte und Tests, mit denen Sie die Sprachqualität vor dem Go-Live prüfen."
     ],
     "hinweise": [
-      "90 * 100 kbit/s = 9.000 kbit/s = 9 Mbit/s je Richtung. Im Upload sind das 9 / 40 = 22,5 %. Der Anschluss reicht, aber nur mit QoS am Router, damit Uploads (z.B. Backups) die Sprache nicht verdrängen. Alternativ eigener Anschluss für den SIP-Trunk.",
-      "120 * 7 W = 840 W. Mit 20 % Reserve: 840 * 1,2 = 1.008 W. Das Budget muss auf die Access-Switches verteilt werden, z.B. vier Switches mit je mindestens 252 W (besser 370 W).",
+      "90 * 100 kbit/s = 9.000 kbit/s = 9 Mbit/s je Richtung. Im Upload sind das 9 / 40 = 22,5 %. Der Anschluss reicht, aber nur mit QoS am Router, damit Uploads (z. B. Backups) die Sprache nicht verdrängen. Alternativ eigener Anschluss für den SIP-Trunk.",
+      "120 * 7 W = 840 W. Mit 20 % Reserve: 840 * 1,2 = 1.008 W. Das Budget muss auf die Access-Switches verteilt werden, z. B. vier Switches mit je mindestens 252 W (besser 370 W).",
       "Voice-VLAN, das die Telefone per LLDP-MED erhalten, PC-Verkehr bleibt ungetaggt im Daten-VLAN. Sprachpakete mit DSCP EF (46) und CoS 5 markieren, Priority Queue in Switches und Router, Traffic Shaping am Internetanschluss knapp unter der Leitungsrate, damit die Priorisierung greift.",
       "USV für Core-Switch, Access-Switches, Router und Firewall mit mindestens 30 Minuten Laufzeit bei Last, Überwachung der USV. Alternativ ein Notfalltelefon über Mobilfunk. Dazu die Standortangabe für Notrufe beim Provider pflegen.",
       "Latenz unter 150 ms, Jitter unter 30 ms, Paketverlust unter 1 %, MOS-Wert über 4. Testanrufe unter Last, Messung mit Monitoring bzw. der Telefonanlage, Prüfung von Rufumleitung, Faxgeräten und Notruf."
@@ -458,7 +458,7 @@
     ],
     "hinweise": [
       "Zweistufig: Offline-Root-CA (ausgeschaltet, sicher verwahrt, lange Laufzeit) und eine Issuing CA in der Domäne für Server-, Computer- und Benutzerzertifikate. Die Root signiert nur die Issuing CA. So bleibt der wertvollste Schlüssel geschützt, die Issuing CA ist bei Kompromittierung ersetzbar. Sperrlisten (CRL) und OCSP hochverfügbar veröffentlichen, private Schlüssel der CAs idealerweise im HSM.",
-      "Root-Zertifikat per Gruppenrichtlinie und MDM verteilen. Notebooks erhalten Computerzertifikate per Autoenrollment (Zertifikatsvorlage), Handys per SCEP über das MDM. Linux-Server erhalten Zertifikate per ACME (z.B. interne ACME-Schnittstelle) oder per CSR; die Root-CA wird in den Systemspeicher aufgenommen. Laufzeiten und Erneuerung überwachen.",
+      "Root-Zertifikat per Gruppenrichtlinie und MDM verteilen. Notebooks erhalten Computerzertifikate per Autoenrollment (Zertifikatsvorlage), Handys per SCEP über das MDM. Linux-Server erhalten Zertifikate per ACME (z. B. interne ACME-Schnittstelle) oder per CSR; die Root-CA wird in den Systemspeicher aufgenommen. Laufzeiten und Erneuerung überwachen.",
       "Jedes Gerät hat ein eigenes Zertifikat mit privatem Schlüssel, der das Gerät nicht verlässt (idealerweise im TPM). Es gibt kein gemeinsames Passwort, das weitergegeben oder abgegriffen werden kann. Der Client prüft zudem das Serverzertifikat des RADIUS-Servers und fällt nicht auf gefälschte Access Points herein.",
       "Zertifikat des Geräts widerrufen (CRL/OCSP), Gerät im AD bzw. MDM deaktivieren oder löschen. Der RADIUS-Server prüft den Sperrstatus bzw. die Kontoeigenschaften und lehnt die Anmeldung ab. Das greift sofort und betrifft nur dieses eine Gerät.",
       "Neue SSID mit WPA2/WPA3-Enterprise parallel zur alten ausstrahlen, zuerst Pilotgruppe (IT), dann abteilungsweise per Richtlinie das neue WLAN-Profil verteilen, Anmeldungen am RADIUS überwachen. Wenn alle Geräte umgestellt sind, alte SSID abschalten und Passwort ungültig machen."
@@ -490,8 +490,8 @@
       "Firewall und VPN: erlaubte und blockierte Verbindungen, VPN-Anmeldungen. Domänencontroller: Anmeldungen, fehlgeschlagene Anmeldungen, Änderungen an Gruppen und Konten. Server: Systemereignisse, Dienststarts, Anmeldungen. Webshop: Admin-Anmeldungen, Fehler. Cloud-Mail: Anmeldungen, Weiterleitungsregeln.",
       "12 GB / 4 = 3 GB pro Tag komprimiert. 3 GB * 90 Tage = 270 GB. Mit 30 % Reserve: 270 * 1,3 = 351 GB.",
       "Mehr als 10 fehlgeschlagene Anmeldungen in 5 Minuten für ein Konto (Brute Force). Anmeldung eines Admin-Kontos außerhalb der Arbeitszeit oder aus dem Ausland. Neues Mitglied in einer Admin-Gruppe. Neue automatische Weiterleitungsregel an externe Adressen im Mailsystem (typisch nach Kontoübernahme).",
-      "Logs enthalten personenbezogene Daten: Zweck (IT-Sicherheit) festlegen, Rechtsgrundlage (berechtigtes Interesse), Speicherdauer begrenzen, Zugriff nur für wenige berechtigte Admins, Eintrag im Verarbeitungsverzeichnis. Die Auswertung ist zur Leistungs- und Verhaltenskontrolle geeignet, daher Mitbestimmung des Betriebsrats und Betriebsvereinbarung (z.B. keine Leistungsauswertung).",
-      "Alle Quellen per NTP synchronisieren, Übertragung verschlüsselt (z.B. Syslog über TLS), Überwachung, ob jede Quelle regelmäßig liefert, Speicherung schreibgeschützt bzw. mit Hashes und eingeschränkten Löschrechten, Backup des Logspeichers."
+      "Logs enthalten personenbezogene Daten: Zweck (IT-Sicherheit) festlegen, Rechtsgrundlage (berechtigtes Interesse), Speicherdauer begrenzen, Zugriff nur für wenige berechtigte Admins, Eintrag im Verarbeitungsverzeichnis. Die Auswertung ist zur Leistungs- und Verhaltenskontrolle geeignet, daher Mitbestimmung des Betriebsrats und Betriebsvereinbarung (z. B. keine Leistungsauswertung).",
+      "Alle Quellen per NTP synchronisieren, Übertragung verschlüsselt (z. B. Syslog über TLS), Überwachung, ob jede Quelle regelmäßig liefert, Speicherung schreibgeschützt bzw. mit Hashes und eingeschränkten Löschrechten, Backup des Logspeichers."
     ]
   },
   {
@@ -520,7 +520,7 @@
       "Pro Gerät: 60 Geräte (45 Smartphones + 15 Tablets) + 10 private Handys = 70 Geräte * 6 Euro * 12 = 5.040 Euro pro Jahr. Pro Benutzer: 45 Monteure (Smartphone und Tablet zusammen; 15 davon haben beides) * 8 Euro * 12 = 4.320 Euro pro Jahr. Die private Nutzung ist darin enthalten, da sie zu denselben Benutzern gehört. Die Benutzerlizenz ist günstiger.",
       "PIN bzw. Biometrie mit Sperre nach wenigen Minuten, Geräteverschlüsselung, automatische Updates mit Mindestversion, nur freigegebene Apps aus einem Firmenkatalog, E-Mail- und WLAN-Profile zentral verteilt, Sperren gerooteter Geräte.",
       "Kein vollständiges Gerätemanagement auf Privatgeräten. Stattdessen App-Schutzrichtlinien bzw. ein getrennter Arbeitsbereich: Firmendaten nur in verwalteten Apps, kein Kopieren in private Apps, bei Austritt wird nur der Firmenbereich gelöscht. Einwilligung und Regelung in einer Nutzungsvereinbarung, Betriebsrat einbeziehen.",
-      "Automatische Registrierung über die Programme der Hersteller (z.B. Apple Business Manager, Android Zero-Touch) mit dem Händler: Beim ersten Einschalten meldet sich das Gerät beim MDM und lädt Profile und Apps.",
+      "Automatische Registrierung über die Programme der Hersteller (z. B. Apple Business Manager, Android Zero-Touch) mit dem Händler: Beim ersten Einschalten meldet sich das Gerät beim MDM und lädt Profile und Apps.",
       "Verlust sofort melden, Gerät im MDM sperren und bei Bedarf komplett löschen, Zugangsdaten bzw. Sitzungen zurücksetzen, Vorfall dokumentieren und prüfen, ob eine Datenschutzmeldung nötig ist (bei verschlüsseltem, gesperrtem Gerät meist nicht)."
     ]
   },
@@ -577,11 +577,11 @@
       "Welche Netzwerke planen Sie für den Cluster, und wie testen Sie die Hochverfügbarkeit vor dem Go-Live?"
     ],
     "hinweise": [
-      "RAM: 320 GB * 1,3 = 416 GB, plus 16 GB Hypervisor = 432 GB, also 512 GB je Knoten. vCPU: 64 * 1,3 = 83,2, also 84 vCPU. Bei 4 : 1 sind 84 / 4 = 21 Kerne nötig, z.B. 2 CPUs mit je 12 Kernen (24 Kerne). Im Normalbetrieb ist jeder Knoten nur zur Hälfte ausgelastet.",
+      "RAM: 320 GB * 1,3 = 416 GB, plus 16 GB Hypervisor = 432 GB, also 512 GB je Knoten. vCPU: 64 * 1,3 = 83,2, also 84 vCPU. Bei 4 : 1 sind 84 / 4 = 21 Kerne nötig, z. B. 2 CPUs mit je 12 Kernen (24 Kerne). Im Normalbetrieb ist jeder Knoten nur zur Hälfte ausgelastet.",
       "Daten: 6 TB * 1,3 = 7,8 TB. Bei 80 % Füllstand: 7,8 / 0,8 = 9,75 TB Nutzkapazität. RAID 10 liefert je Spiegelpaar 3,84 TB: 9,75 / 3,84 = 2,54, also 3 Paare mit 6 SSDs und 11,52 TB Nutzkapazität.",
       "Bei zwei Knoten kann keiner allein die Mehrheit bilden. Ohne Zeugen würden bei einer Netztrennung beide Knoten die VMs starten wollen (Split-Brain) oder beide stoppen. Der Zeuge liefert die dritte Stimme: Datenträgerzeuge auf dem gemeinsamen Speicher, Dateifreigabezeuge auf einem dritten System oder Cloud-Zeuge.",
       "Die VMs wandern zwischen den Knoten, jeder Knoten muss für alle 18 VMs lizenziert sein. Mit Standard wären 9 Lizenzierungen je Knoten nötig, daher Datacenter: 24 Kernlizenzen je Knoten, zusammen 48. Dazu die Zugriffslizenzen (CALs) für Benutzer oder Geräte.",
-      "Getrennte Netze bzw. VLANs für Management, VM-Verkehr, Live-Migration, Cluster-Kommunikation und Speicher (z.B. iSCSI mit MPIO über zwei Switches). Tests: Clustervalidierung ausführen, Live-Migration jeder VM, harten Ausfall eines Knotens simulieren (Strom trennen) und Neustart der VMs messen, Ausfall eines Speicherpfades und eines Switches testen, Ergebnisse dokumentieren."
+      "Getrennte Netze bzw. VLANs für Management, VM-Verkehr, Live-Migration, Cluster-Kommunikation und Speicher (z. B. iSCSI mit MPIO über zwei Switches). Tests: Clustervalidierung ausführen, Live-Migration jeder VM, harten Ausfall eines Knotens simulieren (Strom trennen) und Neustart der VMs messen, Ausfall eines Speicherpfades und eines Switches testen, Ergebnisse dokumentieren."
     ]
   },
   {
@@ -610,8 +610,8 @@
       "Webserver (nginx oder Apache), PHP-FPM und MariaDB. Härtung: nur benötigte Pakete, automatische Sicherheitsupdates, SSH nur mit Schlüsseln und ohne Root-Anmeldung, Paketfilter (nftables bzw. ufw) nur für 443, 80 (Umleitung) und SSH aus dem Management-Netz, fail2ban, Datenbank nur lokal erreichbar, eigener Benutzer mit minimalen Rechten für die Anwendung.",
       "Zertifikat von Let's Encrypt per certbot oder acme.sh mit automatischer Verlängerung (Timer), HTTP auf HTTPS umleiten, HSTS setzen, nur TLS 1.2 und 1.3 zulassen. Das Monitoring prüft zusätzlich die Restlaufzeit des Zertifikats.",
       "Datenbank per mysqldump mit --single-transaction bzw. mariadb-backup sichern, danach Dateien und Dump mit einem Werkzeug wie restic oder BorgBackup verschlüsselt und dedupliziert zum anderen Standort übertragen. 7 + 4 + 6 = 17 Sicherungsstände. Rücksicherung regelmäßig auf einer Test-VM prüfen.",
-      "CPU, RAM, Plattenfüllstand (Warnung ab 80 %, kritisch ab 90 %), Antwortzeit und Statuscode der Webseite von außen, Dienste nginx, PHP-FPM und MariaDB, Zertifikatslaufzeit (Warnung unter 14 Tagen), Erfolg der nächtlichen Sicherung und ausstehende Updates. Werkzeuge z.B. Zabbix, Checkmk oder Prometheus mit Alarmierung per Mail oder Chat.",
-      "730 * 0,005 = 3,65 Stunden pro Monat, also knapp 3 Stunden 39 Minuten. Nachweis über eine externe Verfügbarkeitsprüfung (z.B. jede Minute), monatlicher Bericht aus dem Monitoring. Geplante Wartungsfenster vorher vereinbaren und festlegen, ob sie mitzählen."
+      "CPU, RAM, Plattenfüllstand (Warnung ab 80 %, kritisch ab 90 %), Antwortzeit und Statuscode der Webseite von außen, Dienste nginx, PHP-FPM und MariaDB, Zertifikatslaufzeit (Warnung unter 14 Tagen), Erfolg der nächtlichen Sicherung und ausstehende Updates. Werkzeuge z. B. Zabbix, Checkmk oder Prometheus mit Alarmierung per Mail oder Chat.",
+      "730 * 0,005 = 3,65 Stunden pro Monat, also knapp 3 Stunden 39 Minuten. Nachweis über eine externe Verfügbarkeitsprüfung (z. B. jede Minute), monatlicher Bericht aus dem Monitoring. Geplante Wartungsfenster vorher vereinbaren und festlegen, ob sie mitzählen."
     ]
   },
   {
@@ -667,11 +667,11 @@
       "Was passiert, wenn beide RADIUS-Server nicht erreichbar sind, und wie planen Sie dafür?"
     ],
     "hinweise": [
-      "Supplicant (Client) meldet sich am Authenticator (Switch) per EAPoL. Der Switch leitet die Anfrage per RADIUS an den Authentication Server (z.B. NPS oder FreeRADIUS) weiter. Dieser prüft gegen AD bzw. Zertifikat und antwortet mit Accept oder Reject, optional mit VLAN-Zuweisung. Erst dann gibt der Switch den Port frei.",
+      "Supplicant (Client) meldet sich am Authenticator (Switch) per EAPoL. Der Switch leitet die Anfrage per RADIUS an den Authentication Server (z. B. NPS oder FreeRADIUS) weiter. Dieser prüft gegen AD bzw. Zertifikat und antwortet mit Accept oder Reject, optional mit VLAN-Zuweisung. Erst dann gibt der Switch den Port frei.",
       "EAP-TLS mit Computerzertifikaten aus der internen PKI, automatisch per Gruppenrichtlinie verteilt. Es gibt keine Passwörter, die abgefangen oder erraten werden können, und die Anmeldung erfolgt schon vor der Benutzeranmeldung. Der Client prüft das Zertifikat des RADIUS-Servers.",
       "MAB: Der Switch nutzt die MAC-Adresse als Kennung, der RADIUS-Server gleicht sie mit einer Liste ab (60 + 40 = 100 Einträge) und weist das passende VLAN zu. Schwäche: MAC-Adressen lassen sich fälschen. Daher Geräte-VLANs mit strengen Firewall-Regeln, Profiling und Alarm, wenn eine bekannte MAC an einem anderen Port auftaucht.",
       "Zuerst Überwachungsmodus (Ports bleiben offen, Anmeldungen werden nur protokolliert), Fehler auswerten und beheben, dann Pilot auf einem Stockwerk. Danach höchstens 22 / 2 = 11 Nächte für alle Switches (sind die Switches des Pilotbereichs schon umgestellt, entsprechend weniger). Ports für medizinische Geräte zuletzt und nur mit Medizintechnik abgestimmt umstellen, Rückfallplan je Switch bereithalten.",
-      "Ohne RADIUS können sich neue Geräte nicht anmelden. Daher zwei RADIUS-Server an verschiedenen Standorten bzw. Hosts, beide auf allen Switches eingetragen. Zusätzlich eine Regel für kritische Ports (z.B. Medizingeräte bleiben im bisherigen VLAN, wenn kein Server antwortet). Überwachung der RADIUS-Dienste und Zertifikatslaufzeiten."
+      "Ohne RADIUS können sich neue Geräte nicht anmelden. Daher zwei RADIUS-Server an verschiedenen Standorten bzw. Hosts, beide auf allen Switches eingetragen. Zusätzlich eine Regel für kritische Ports (z. B. Medizingeräte bleiben im bisherigen VLAN, wenn kein Server antwortet). Überwachung der RADIUS-Dienste und Zertifikatslaufzeiten."
     ]
   },
   {
@@ -700,8 +700,8 @@
       "A: 34.000 + 5 * (3.000 + 900) = 53.500 Euro. B: 28.000 + 5 * (4.500 + 1.100) = 56.000 Euro. C: 41.000 + 5 * (2.000 + 700) = 54.500 Euro. Trotz des niedrigsten Preises ist B über 5 Jahre am teuersten.",
       "A: 0,3 * 9 + 0,25 * 7 + 0,2 * 6 + 0,15 * 7 + 0,1 * 8 = 7,50. B: 0,3 * 7 + 0,25 * 6 + 0,2 * 8 + 0,15 * 5 + 0,1 * 7 = 6,65. C: 0,3 * 8 + 0,25 * 9 + 0,2 * 8 + 0,15 * 9 + 0,1 * 6 = 8,20. Rangfolge: C, A, B.",
       "Empfehlung C: höchster Nutzwert, bei den Kosten über 5 Jahren nur 1.000 Euro teurer als A und 1.500 Euro günstiger als B. Leistung und Erweiterbarkeit sind für große CAD- und Bilddateien und das Datenwachstum besonders wichtig. Der niedrige Anschaffungspreis von B wird durch hohe laufende Kosten aufgezehrt.",
-      "Sensitivitätsanalyse: Gewichtung verändern (z.B. Kosten auf 50 % erhöhen) und neu rechnen. Bleibt C vorn, ist die Entscheidung stabil. Die Gewichtung sollte vor dem Öffnen der Angebote mit der Geschäftsführung festgelegt werden, damit sie nicht nachträglich angepasst wird.",
-      "Liefertermin und Leistungsumfang (Installation, Datenmigration), Gewährleistung und Garantie, Wartungslaufzeit mit Reaktionszeiten (z.B. Vor-Ort-Service am nächsten Arbeitstag), Preis für Verlängerung nach 5 Jahren, Umgang mit defekten Platten (Datenträger bleiben beim Kunden), Zahlungsbedingungen und Abnahme."
+      "Sensitivitätsanalyse: Gewichtung verändern (z. B. Kosten auf 50 % erhöhen) und neu rechnen. Bleibt C vorn, ist die Entscheidung stabil. Die Gewichtung sollte vor dem Öffnen der Angebote mit der Geschäftsführung festgelegt werden, damit sie nicht nachträglich angepasst wird.",
+      "Liefertermin und Leistungsumfang (Installation, Datenmigration), Gewährleistung und Garantie, Wartungslaufzeit mit Reaktionszeiten (z. B. Vor-Ort-Service am nächsten Arbeitstag), Preis für Verlängerung nach 5 Jahren, Umgang mit defekten Platten (Datenträger bleiben beim Kunden), Zahlungsbedingungen und Abnahme."
     ]
   },
   {
@@ -759,7 +759,7 @@
       "Welche Schritte folgen nach der Entscheidung bis zur Inbetriebnahme?"
     ],
     "hinweise": [
-      "Menge und Liefertermin, technische Mindestanforderungen (z.B. CPU-Klasse, 16 GB RAM, 512 GB SSD, TPM 2.0, zwei Monitoranschlüsse), Betriebssystem, Garantie mit Vor-Ort-Service über 5 Jahre, Lieferung und Entsorgung der Altgeräte, Zahlungsbedingungen und Angebotsfrist. Die Anforderungen sollten herstellerneutral formuliert sein, damit mehrere Anbieter vergleichbare Angebote abgeben können.",
+      "Menge und Liefertermin, technische Mindestanforderungen (z. B. CPU-Klasse, 16 GB RAM, 512 GB SSD, TPM 2.0, zwei Monitoranschlüsse), Betriebssystem, Garantie mit Vor-Ort-Service über 5 Jahre, Lieferung und Entsorgung der Altgeräte, Zahlungsbedingungen und Angebotsfrist. Die Anforderungen sollten herstellerneutral formuliert sein, damit mehrere Anbieter vergleichbare Angebote abgeben können.",
       "A: 30 * 780 = 23.400 Euro, minus 8 % Rabatt (1.872 Euro) = 21.528 Euro, minus 2 % Skonto (430,56 Euro) = 21.097,44 Euro, Lieferung frei. B: 30 * 720 = 21.600 Euro plus 150 Euro Versand = 21.750 Euro. C: 30 * 810 = 24.300 Euro, minus 10 % Rabatt (2.430 Euro) = 21.870 Euro, minus 3 % Skonto (656,10 Euro) = 21.213,90 Euro, plus 90 Euro Versand = 21.303,90 Euro.",
       "A erfüllt die Pflicht von 5 Jahren Vor-Ort-Garantie erst mit der Verlängerung: 30 * 25 = 750 Euro, also 21.097,44 + 750 = 21.847,44 Euro. Rangfolge: C (21.303,90 Euro), B (21.750 Euro), A (21.847,44 Euro). Das scheinbar günstigste Angebot A ist bei gleicher Leistung das teuerste. C ist 446,10 Euro günstiger als B und 543,54 Euro günstiger als A.",
       "Der Zahlbetrag bei Skontoabzug beträgt 21.303,90 Euro. Er muss 20 Tage früher gezahlt werden (Tag 10 statt Tag 30). Zinsen: 21.303,90 * 0,11 * 20 / 360 = 130,19 Euro. Das Skonto bringt 656,10 Euro. Der Vorteil beträgt 525,91 Euro, also Skonto nutzen.",
@@ -793,7 +793,7 @@
       "Personalkosten: 54.000 * 1,21 = 65.340 Euro. Vertretung: 40 * 95 = 3.800 Euro. Summe: 65.340 + 2.500 + 1.500 + 3.800 = 73.140 Euro pro Jahr.",
       "Arbeitsplätze: 60 * 65 * 12 = 46.800 Euro. Server: 5 * 180 * 12 = 10.800 Euro. Projekte: 120 * 95 = 11.400 Euro. Koordination: 3 * 46 * 40 = 5.520 Euro. Summe: 74.520 Euro pro Jahr. Der Managed Service ist heute 1.380 Euro pro Jahr teurer, die Kosten liegen also fast gleichauf.",
       "Je Arbeitsplatz kostet der Managed Service 65 * 12 = 780 Euro pro Jahr, die übrigen Kosten betragen 10.800 + 11.400 + 5.520 = 27.720 Euro. Gleichstand: 780 * n + 27.720 = 73.140, also n = 58,2. Ab 59 Arbeitsplätzen ist die eigene Stelle günstiger. Bei 75 Arbeitsplätzen kostet der Managed Service 780 * 75 + 27.720 = 86.220 Euro, die eigene Stelle ist dann 13.080 Euro pro Jahr günstiger.",
-      "Servicezeit: 11 Stunden * 5 Tage * 52 Wochen = 2.860 Stunden. Zulässiger Ausfall: 2.860 * 0,005 = 14,3 Stunden pro Jahr. Außerhalb der Servicezeit gilt keine Zusage. Ein SLA regelt außerdem Leistungsumfang, Reaktions- und Lösungszeiten je Priorität, Erreichbarkeit und Eskalationswege, regelmäßige Berichte, Folgen bei Verstößen (z.B. Gutschriften), Laufzeit, Kündigung und die Rückgabe von Daten und Dokumentation am Vertragsende.",
+      "Servicezeit: 11 Stunden * 5 Tage * 52 Wochen = 2.860 Stunden. Zulässiger Ausfall: 2.860 * 0,005 = 14,3 Stunden pro Jahr. Außerhalb der Servicezeit gilt keine Zusage. Ein SLA regelt außerdem Leistungsumfang, Reaktions- und Lösungszeiten je Priorität, Erreichbarkeit und Eskalationswege, regelmäßige Berichte, Folgen bei Verstößen (z. B. Gutschriften), Laufzeit, Kündigung und die Rückgabe von Daten und Dokumentation am Vertragsende.",
       "Für die eigene Stelle: Wissen bleibt im Haus, kurze Wege, Kenntnis der Abläufe im Lager. Dagegen: Abhängigkeit von einer Person, schwierige Suche nach Fachkräften, Vertretung nur eingeschränkt. Für den Managed Service: Team mit breitem Wissen, Vertretung gesichert, planbare Kosten. Dagegen: Abhängigkeit vom Dienstleister, weniger Nähe zum Betrieb. Empfehlung: Wegen des geplanten Wachstums die Stelle neu besetzen und für Vertretung und Spezialthemen einen kleineren Rahmenvertrag mit dem Systemhaus schließen."
     ]
   },
@@ -854,8 +854,8 @@
     "hinweise": [
       "Initiierung des Sicherheitsprozesses durch die Leitung, Organisation und Leitlinie, Festlegung des Geltungsbereichs, Auswahl und Priorisierung der Bausteine (Modellierung), IT-Grundschutz-Check nur für die Basis-Anforderungen, Umsetzung der fehlenden Anforderungen, danach Entscheidung über die Folgevorgehensweise. Die Basis-Absicherung schließt schnell die größten Lücken und ist mit zwei Administratoren und begrenzter Beratung machbar. Eine Schutzbedarfsfeststellung ist dafür noch nicht nötig.",
       "Der Vorstand trägt die Gesamtverantwortung und beschließt die Leitlinie. Der ISB berichtet direkt an den Vorstand und sollte nicht zugleich Administrator sein, weil er sonst seine eigene Arbeit kontrolliert. Der Datenschutzbeauftragte bleibt eine eigene Rolle, beide arbeiten eng zusammen. Die Administratoren setzen Maßnahmen um. Leitlinie: Stellenwert der Informationssicherheit, Sicherheitsziele, Geltungsbereich, Rollen und Verantwortung, Verpflichtung der Beschäftigten, Überprüfung und Fortschreibung.",
-      "Geschäftsprozesse, Anwendungen, IT-Systeme, Netze und Räume erfassen und gleichartige Objekte gruppieren (z.B. alle Windows-Clients als eine Gruppe). Für jedes Objekt passende Bausteine aus dem IT-Grundschutz-Kompendium zuordnen. Das Mieterportal wird über Bausteine zur Auslagerung bzw. Cloud-Nutzung abgebildet. Zuerst die Bausteine mit Umsetzungsreihenfolge R1 bearbeiten (z.B. ISMS.1, ORP.4, OPS.1.1.3). Im Check je Basis-Anforderung festhalten: ja, teilweise, nein oder entbehrlich mit Begründung, dazu Verantwortlichen und Termin.",
-      "Ransomware 3 * 4 = 12 (hoch), Notebookverlust 3 * 3 = 9 (hoch), Hostausfall 2 * 3 = 6 (mittel), Fehlversand 3 * 2 = 6 (mittel), Brand 1 * 4 = 4 (mittel). Reihenfolge: Ransomware, Notebookverlust, Hostausfall (höhere Auswirkung als Fehlversand), Fehlversand, Brand. Maßnahmen z.B. Offline- bzw. unveränderbare Sicherung und Schulungen, Festplattenverschlüsselung, zweiter Host oder Wiederanlaufplan, Verschlüsselung und Freigabeprüfung beim Mailversand. Beim Brand trotz mittlerer Einstufung günstige Maßnahmen umsetzen (Rauchmelder, Sicherung außer Haus), weil die Auswirkung maximal ist.",
+      "Geschäftsprozesse, Anwendungen, IT-Systeme, Netze und Räume erfassen und gleichartige Objekte gruppieren (z. B. alle Windows-Clients als eine Gruppe). Für jedes Objekt passende Bausteine aus dem IT-Grundschutz-Kompendium zuordnen. Das Mieterportal wird über Bausteine zur Auslagerung bzw. Cloud-Nutzung abgebildet. Zuerst die Bausteine mit Umsetzungsreihenfolge R1 bearbeiten (z. B. ISMS.1, ORP.4, OPS.1.1.3). Im Check je Basis-Anforderung festhalten: ja, teilweise, nein oder entbehrlich mit Begründung, dazu Verantwortlichen und Termin.",
+      "Ransomware 3 * 4 = 12 (hoch), Notebookverlust 3 * 3 = 9 (hoch), Hostausfall 2 * 3 = 6 (mittel), Fehlversand 3 * 2 = 6 (mittel), Brand 1 * 4 = 4 (mittel). Reihenfolge: Ransomware, Notebookverlust, Hostausfall (höhere Auswirkung als Fehlversand), Fehlversand, Brand. Maßnahmen z. B. Offline- bzw. unveränderbare Sicherung und Schulungen, Festplattenverschlüsselung, zweiter Host oder Wiederanlaufplan, Verschlüsselung und Freigabeprüfung beim Mailversand. Beim Brand trotz mittlerer Einstufung günstige Maßnahmen umsetzen (Rauchmelder, Sicherung außer Haus), weil die Auswirkung maximal ist.",
       "PDCA-Zyklus: Maßnahmen planen, umsetzen, prüfen, verbessern. Jährliche Überprüfung durch interne Audits, Bericht des ISB an den Vorstand (Management-Review), Kennzahlen wie Umsetzungsgrad der Anforderungen, Patchstand und Schulungsquote, regelmäßige Sensibilisierung, geregelter Umgang mit Sicherheitsvorfällen. Danach den Geltungsbereich erweitern und zur Standard-Absicherung mit Schutzbedarfsfeststellung übergehen. Eine spätere ISO-27001-Zertifizierung auf Basis von IT-Grundschutz ist mit der Standard- oder der Kern-Absicherung möglich, mit der Basis-Absicherung allein nicht."
     ]
   },
@@ -885,7 +885,7 @@
     "hinweise": [
       "Session Hosts (führen die Sitzungen aus), Verbindungsbroker (verteilt die Benutzer und verbindet getrennte Sitzungen neu), Web Access (Webseite mit den freigegebenen Anwendungen), Gateway (leitet RDP über HTTPS aus dem Internet weiter) und Lizenzserver. Broker, Web Access und Gateway können gemeinsam auf zwei VMs laufen, für Ausfallsicherheit mit hochverfügbarem Broker und Lastverteilung. Das Gateway steht in der DMZ oder hinter einem Reverse Proxy.",
       "RAM: (96 - 8) / 1,5 = 58,7, also 58 Benutzer. CPU: 16 * 4 = 64 Benutzer. Der Arbeitsspeicher begrenzt auf 58 Benutzer je Host. 120 / 58 = 2,07, also 3 Hosts im Normalbetrieb. Fällt einer aus, tragen zwei Hosts nur 2 * 58 = 116 Benutzer, es fehlen 4 Plätze. Daher 4 Session Hosts, verteilt auf verschiedene Virtualisierungshosts.",
-      "Profilcontainer (z.B. FSLogix) als virtuelle Festplatte je Benutzer auf einer Dateifreigabe. Der Container wird bei der Anmeldung eingebunden, dadurch ist die Anmeldung auf jedem Session Host gleich schnell und das Profil überall gleich. Speicher für alle 140 Benutzer, nicht nur für die gleichzeitigen: 140 * 5 = 700 GB, mit 30 % Reserve 910 GB. Die Freigabe muss ausfallsicher sein und gesichert werden.",
+      "Profilcontainer (z. B. FSLogix) als virtuelle Festplatte je Benutzer auf einer Dateifreigabe. Der Container wird bei der Anmeldung eingebunden, dadurch ist die Anmeldung auf jedem Session Host gleich schnell und das Profil überall gleich. Speicher für alle 140 Benutzer, nicht nur für die gleichzeitigen: 140 * 5 = 700 GB, mit 30 % Reserve 910 GB. Die Freigabe muss ausfallsicher sein und gesichert werden.",
       "Zugang nur über das RD-Gateway auf Port 443, kein offener RDP-Port 3389 im Internet. Mehrfaktor-Authentifizierung am Gateway, Zugriff nur für eine AD-Gruppe. Zwischenablage und Laufwerksumleitung per Gruppenrichtlinie sperren, damit keine Daten auf private Geräte gelangen. Bandbreite: 80 * 150 kbit/s = 12 Mbit/s, mit 50 % Reserve 18 Mbit/s Upload am Firmenstandort.",
       "Je Benutzer eine RDS-Benutzer-CAL (140 Stück) auf dem Lizenzserver, dazu Windows-Server-CALs und die Lizenzen der Session-Host-VMs. Office auf Terminalservern braucht eine dafür zugelassene Lizenz (Volumenlizenz oder Microsoft-365-Tarif mit Shared Computer Activation). Einführung: Pilot mit einer Abteilung, Lasttest mit vielen gleichzeitigen Anmeldungen am Morgen, dann schrittweise Umstellung. Für Updates einen Host für neue Anmeldungen sperren (Drain Mode), leer laufen lassen, patchen und wieder freigeben."
     ]
