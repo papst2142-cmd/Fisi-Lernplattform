@@ -15,8 +15,9 @@ Datenschutz wie bei der Sicherung (fisi_sicherung.py): Von den Einstellungen
 kommt nur Unbedenkliches in den Bericht (Tagesziel, ob der Abgleich
 eingerichtet ist). Zugangsschluessel und Passwoerter werden zusaetzlich aus
 dem ganzen Text entfernt (scrub) - auch wenn sie in fehler.log stehen, z.B.
-in einer Fehlermeldung mit Adresse oder Kopfzeile. Persoenliche Inhalte
-(Antworten, Projekttexte) stehen nie darin.
+in einer Fehlermeldung mit Adresse oder Kopfzeile. Andere Angaben aus
+Fehlermeldungen (z.B. der Rechnername) koennen darin stehen; deshalb bittet
+HELP darum, den Bericht vor dem Weitergeben anzusehen (ab 0.63.2, B-L-04).
 
 Ablauf:
   text = build_report(db, "0.54", geraet="PC")   -> fertiger, gefilterter Text
@@ -37,10 +38,11 @@ TITLE = "Problem melden"
 SUBTITLE = "Angaben für die Fehlersuche"
 HELP = ("Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. "
         "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
-        "entfernt, deine Antworten und "
-        "Projekttexte stehen nicht darin. Speichere den Bericht als Datei (oder "
-        "kopiere ihn) und gib ihn mit deiner Beschreibung des Problems an die "
-        "Person weiter, von der du das Programm hast.")
+        "entfernt. Andere Angaben aus Fehlermeldungen, zum Beispiel der Name "
+        "deines Rechners, können darin stehen. Sieh dir den Bericht vor dem "
+        "Weitergeben an. Speichere ihn als Datei (oder kopiere ihn) und gib ihn "
+        "mit deiner Beschreibung des Problems an die Person weiter, von der du "
+        "das Programm hast.")
 BTN_COPY = "Kopieren"
 BTN_SAVE = "Als Datei speichern"
 BTN_FOLDER = "Datenordner öffnen"
@@ -69,9 +71,17 @@ _PATTERNS = [
     (re.compile(r"(?i)(authorization['\"]?\s*[:=]\s*['\"]?)(?:bearer\s+|token\s+|basic\s+)?"
                 r"[^\s'\",}]+"), r"\1" + REDACTED),
     (re.compile(r"(?i)\b(bearer\s+)[A-Za-z0-9._~+/=-]{8,}"), r"\1" + REDACTED),
-    # Schluessel = Wert bzw. "schluessel": "wert"
-    (re.compile(r"(?i)([\"']?[\w-]*(?:token|passw\w*|kennwort|secret|api[_-]?key)[\"']?"
-                r"\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}]+)"), r"\1" + REDACTED),
+    # Schluessel = Wert bzw. "schluessel": "wert". Der Schluessel ist ein
+    # ganzes Wort aus [\w-] (ab 0.63.2 linear, gleiche Treffer wie vorher
+    # "[\w-]*(?:token|passw\w*|kennwort|secret|api[_-]?key)"): es beginnt
+    # nicht mitten in einem Wort (sonst wuerde die Suche bei langen Ketten
+    # ohne Leerzeichen an jeder Stelle neu zuruecklaufen) und endet auf
+    # token/kennwort/secret/api[_-]?key oder enthaelt "passw" im letzten
+    # Teil ohne "-".
+    (re.compile(r"(?i)([\"']?(?<![\w-])"
+                r"(?:[\w-]+(?:(?<=token)|(?<=kennwort)|(?<=secret)|(?<=apikey)|(?<=api_key)"
+                r"|(?<=api-key))|(?:[\w-]*-)?(?:(?!passw)\w)*passw\w*)"
+                r"[\"']?\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}]+)"), r"\1" + REDACTED),
     # Zugangsdaten in Adressen: https://name:passwort@host oder https://token@host
     (re.compile(r"(?i)\b(https?://)[^\s/@]+@"), r"\1" + REDACTED + "@"),
 ]

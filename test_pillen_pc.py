@@ -250,14 +250,18 @@ class BestandPillenTest(unittest.TestCase):
                     self.assertEqual(rechts[0], links[0] + links[2] + erg["gap"])
 
     def test_standard_ohne_umbrechen(self):
-        # Quelltext: Standard bleibt False, nur der Trainer schaltet um
+        # Quelltext: Standard bleibt False, nur der Trainer schaltet um und
+        # ab 0.63.2 (A6) die Farbtiefe-Knoepfe der Bildschirm-Karte - genau
+        # diese beiden Stellen, keine weitere
         with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
             text = handle.read()
         import re
         self.assertTrue("umbrechen=False" in text, "PillGroup ohne Schluessel umbrechen=False")
-        self.assertEqual(len(re.findall(r"PillGroup\([^)]*umbrechen=True", text)), 1)
+        self.assertEqual(len(re.findall(r"PillGroup\([^)]*umbrechen=True", text)), 2)
         self.assertTrue("PillGroup(setup.body, TRAINER_KINDS, umbrechen=True)" in text,
                         "Trainer-Pillen ohne umbrechen=True")
+        self.assertTrue("PillGroup(screen.body, COLOR_DEPTHS, initial=2, umbrechen=True)"
+                        in text, "Farbtiefe-Pillen (A6) ohne umbrechen=True")
 
 
 if __name__ == "__main__":

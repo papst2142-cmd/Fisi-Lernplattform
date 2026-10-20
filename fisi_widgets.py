@@ -849,11 +849,92 @@ class NeoButton(ctk.CTkLabel):
         self._render()
 
 
+class Tooltip:
+    """Ab 0.63.2 (N8, B-J-N3): Name eines Symbolknopfs als kleines Schild
+    unter dem Knopf - bei Mausberuehrung nach DELAY ms und sofort beim
+    Tab-Fokus (Tastatur), weg beim Verlassen, Klick, Fokusverlust,
+    Ausblenden und Abbau des Knopfs. Ein Zeitgeber wird immer abgebrochen,
+    es bleibt kein Fenster stehen."""
+
+    DELAY = 600   # ms bis zum Schild bei Mausberuehrung
+    GAP = 6       # Abstand unter dem Knopf (logische Pixel)
+
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.window = None
+        self._job = None
+        for sequence, handler in (("<Enter>", self._enter), ("<Leave>", self.hide),
+                                  ("<Button-1>", self.hide), ("<FocusOut>", self.hide),
+                                  ("<Unmap>", self.hide), ("<Destroy>", self.hide),
+                                  ("<FocusIn>", self._focus)):
+            tk.Misc.bind(widget, sequence, handler, "+")
+
+    def _cancel(self):
+        if self._job is not None:
+            try:
+                self.widget.after_cancel(self._job)
+            except tk.TclError:
+                pass
+            self._job = None
+
+    def _enter(self, _event=None):
+        self._cancel()
+        try:
+            self._job = self.widget.after(self.DELAY, self.show)
+        except tk.TclError:
+            self._job = None
+
+    def _focus(self, _event=None):
+        # erst nach dem Hineinscrollen (focus_widget -> see) zeigen, sonst
+        # stuende das Schild an der alten Stelle des Knopfs
+        if _keyboard[0]:
+            self._cancel()
+            try:
+                self._job = self.widget.after_idle(self.show)
+            except tk.TclError:
+                self._job = None
+
+    def show(self):
+        self._job = None
+        if self.window is not None or not self.text:
+            return
+        try:
+            if not self.widget.winfo_ismapped():
+                return
+            self.widget.update_idletasks()   # Lage nach dem Scrollen
+            window = tk.Toplevel(self.widget)
+            window.wm_overrideredirect(True)
+            window.configure(bg=C["border"])
+            tk.Label(window, text=self.text, bg=C["card_hi"], fg=C["text"],
+                     font=tk_font(F["small"]), padx=px(8), pady=px(4)).pack(
+                         padx=max(1, px(1)), pady=max(1, px(1)))
+            x = self.widget.winfo_rootx()
+            y = self.widget.winfo_rooty() + self.widget.winfo_height() + px(self.GAP)
+            window.wm_geometry("+%d+%d" % (x, y))
+            self.window = window
+        except tk.TclError:
+            self.window = None
+
+    def hide(self, _event=None):
+        self._cancel()
+        if self.window is not None:
+            try:
+                self.window.destroy()
+            except tk.TclError:
+                pass
+            self.window = None
+
+
 class IconButton(tk.Canvas):
-    """Kleiner, runder Symbolknopf (z.B. Pfeile im Kalender)."""
+    """Kleiner, runder Symbolknopf (z.B. Pfeile im Kalender).
+
+    Ab 0.63.2 (N8, B-J-N3): name = Name des Knopfs (z. B. "Vorherige Seite"),
+    als Tooltip und beim Tab-Fokus gezeigt (Tooltip)."""
 
     def __init__(self, parent, icon, command=None, size=30, parent_bg=None,
-                 color=None, icon_size=None, press_color=None):
+                 color=None, icon_size=None, press_color=None, name=""):
+        self.name = name
         self.parent_bg = parent_bg or _bg_of(parent)
         self.icon = icon
         self.command = command
@@ -864,6 +945,7 @@ class IconButton(tk.Canvas):
         self.press_color = press_color
         self._hover = False
         self._pressed = False
+        self._enabled = True     # ab 0.63.2 (Z6): set_enabled
         self._photos = {}
         super().__init__(parent, width=px(size), height=px(size),
                          bg=self.parent_bg, highlightthickness=0, bd=0,
@@ -873,16 +955,31 @@ class IconButton(tk.Canvas):
         self.bind("<Button-1>", self._on_press)
         self.bind("<ButtonRelease-1>", lambda e: self._set_pressed(False))
         make_focusable(self, self._on_key)   # ab 0.56
+        self.tooltip = Tooltip(self, name)   # ab 0.63.2 (N8, B-J-N3)
         self._draw()
 
     def _on_key(self):
-        if self.command:
+        if self.command and self._enabled:
             self.command()
 
     def _on_press(self, _event=None):
+        if not self._enabled:
+            return
         self._set_pressed(True)
         if self.command:
             self.command()
+
+    def set_enabled(self, flag):
+        """Ab 0.63.2 (Z6): Gesperrt (z.B. Blaettern auf der ersten Seite) ist
+        das Symbol blass, ein Klick wirkt nicht und Tab ueberspringt den
+        Knopf - wie NeoButton.set_enabled."""
+        flag = bool(flag)
+        if flag == self._enabled:
+            return
+        self._enabled = flag
+        self.configure(cursor="hand2" if flag else "arrow")
+        set_takefocus(self, flag)
+        self._draw()
 
     def _set_pressed(self, flag):
         if self.press_color:
@@ -898,13 +995,15 @@ class IconButton(tk.Canvas):
     def _draw(self):
         self.delete("all")
         size = px(self.size)
-        fill = C["card_hi"] if self._hover else C["card_alt"]
+        fill = C["card_hi"] if self._hover and self._enabled else C["card_alt"]
         photo = self._photos.get(fill)
         if photo is None:
             photo = tk_photo(circle_image(self.size, fill=fill), size, size)
             self._photos[fill] = photo
         self.create_image(size / 2, size / 2, image=photo)
-        if self._pressed:
+        if not self._enabled:
+            icon_color = C["muted"]
+        elif self._pressed:
             icon_color = self.press_color
         elif self._hover:
             icon_color = C["accent"]
@@ -1013,8 +1112,13 @@ class Card(ctk.CTkFrame):
         if flag:
             self.subtitle_label.configure(text="")
             self._sub_below.configure(text=text, text_color=color)
+            # ab 0.63.2 (S1c2-Nachbesserung): eine zugeklappte FoldCard hat
+            # den Inhalt nicht gepackt ("before" scheiterte mit TclError und
+            # brach die ganze Anpassung der Seite ab) - dann unter den Kopf
+            place = ({"before": self.body} if self.body.winfo_manager()
+                     else {"after": self.head})
             self._sub_below.pack(fill="x", padx=(self.pad + 13, self.pad),
-                                 pady=(2, 0), before=self.body)
+                                 pady=(2, 0), **place)
         else:
             self._sub_below.pack_forget()
             self.subtitle_label.configure(text=text, text_color=color)
@@ -1031,7 +1135,7 @@ class FoldCard(Card):
     Farbwechsel neu gebaut wird.
 
     Ab 0.59 (Optionen, marker=True): grosser Pfeil links in der Akzentfarbe,
-    rechts gut lesbar "aufklappen"/"einklappen", Kopfzeile hebt sich beim
+    rechts gut lesbar "aufklappen"/"zuklappen", Kopfzeile hebt sich beim
     Darueberfahren ab. Die Optionen setzen den gemerkten Zustand beim
     Oeffnen zurueck (reset_states).
 
@@ -1102,7 +1206,7 @@ class FoldCard(Card):
     @classmethod
     def reset_states(cls, prefix):
         """Ab 0.59 (E4): gemerkte Zustaende mit diesem Schluessel-Anfang
-        vergessen (die Optionen starten dann wieder eingeklappt, ab 0.62.2
+        vergessen (die Optionen starten dann wieder zugeklappt, ab 0.62.2
         bis auf "Über das Programm")."""
         for key in [key for key in cls._open_state if key.startswith(prefix)]:
             del cls._open_state[key]
@@ -1112,7 +1216,7 @@ class FoldCard(Card):
 
     def accessible_name(self):
         """Ab 0.59: Beschriftung fuer Tastatur und Screenreader, z.B.
-        "Optische Anpassungen, eingeklappt" (gleich wie am Handy)."""
+        "Optische Anpassungen, zugeklappt" (gleich wie am Handy)."""
         return fold_label(self.fold_title, self.opened)
 
     def _hover_in(self, _event=None):
@@ -1144,7 +1248,7 @@ class FoldCard(Card):
 
     def ensure_built(self):
         """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
-        (auch eingeklappt, z.B. fuer den Selbsttest)."""
+        (auch zugeklappt, z.B. fuer den Selbsttest)."""
         while self._builder is not None and not self._building:
             self.build_part()
 
@@ -1183,6 +1287,29 @@ class FoldCard(Card):
             self.body.pack(**self._body_pack)
         else:
             self.body.pack_forget()
+            self.head.pack(pady=(self._head_top, self._head_top))
+        self._place_sub_below()
+
+    def stack_subtitle(self, flag):
+        changed = super().stack_subtitle(flag)
+        if changed:
+            self._place_sub_below()
+        return changed
+
+    def _place_sub_below(self):
+        """Ab 0.63.2 (S1c2-Nachbesserung): Abstaende, wenn die Unterschrift
+        unter der Ueberschrift steht (Card.stack_subtitle). Aufgeklappt wie
+        bei Card; zugeklappt steht sie direkt unter der Ueberschrift, und der
+        untere Abstand des Kopfes kommt unter die Unterschrift (sonst stand
+        sie ohne Abstand am unteren Rand). Ohne verschobene Unterschrift
+        Kopf wie bisher."""
+        if self.opened:
+            if self._sub_stacked:
+                self._sub_below.pack(pady=(2, 0))
+        elif self._sub_stacked:
+            self.head.pack(pady=(self._head_top, 0))
+            self._sub_below.pack(pady=(2, self._head_top))
+        else:
             self.head.pack(pady=(self._head_top, self._head_top))
 
     def set_opened(self, flag):
@@ -1249,6 +1376,26 @@ class GradientPanel(tk.Canvas):
         self._texts = (title, subtitle, big, big_sub)
         self._draw()
 
+    def _cover_corners(self, width, height):
+        """Ab 0.63.2 (N8, B-D-08, Banner-Ecke): Die Zierkreise ragten ueber
+        die abgerundeten Ecken des Verlaufs hinaus (Linie im Hintergrund
+        unten rechts, z. B. Normal 1920 px). Die Flaeche ausserhalb der
+        Rundung wird mit dem Hintergrund abgedeckt; im Verlauf aendert sich
+        nichts."""
+        radius = 18 * _SCALE[0] + 0.5
+        steps = 12
+        for cx, cy, ex, ey, sx, sy in ((radius, radius, 0, 0, -1, -1),
+                                       (width - radius, radius, width, 0, 1, -1),
+                                       (radius, height - radius, 0, height, -1, 1),
+                                       (width - radius, height - radius, width, height, 1, 1)):
+            points = [ex, ey]
+            for step in range(steps + 1):
+                angle = math.pi / 2 * step / steps
+                x = cx + sx * radius * math.cos(angle)
+                y = cy + sy * radius * math.sin(angle)
+                points += [x, y]
+            self.create_polygon(points, fill=self.bg, outline="")
+
     def _schedule(self, _event=None):
         # Beim Ziehen des Fensters nicht bei jedem Pixel neu rendern
         if self._job is not None:
@@ -1276,6 +1423,7 @@ class GradientPanel(tk.Canvas):
             self.create_oval(width * cx - radius, height * cy - radius,
                              width * cx + radius, height * cy + radius,
                              outline=color, width=max(1, px(2)))
+        self._cover_corners(width, height)
         title, subtitle, big, big_sub = self._texts
         left = px(28)
         limit = width - left - px(28)
@@ -1387,7 +1535,8 @@ class MiniRing(tk.Canvas):
                            C["ring_bg"])
         self._photo = tk_photo(image, size, size)
         self.create_image(size / 2, size / 2, image=self._photo)
-        self.create_text(size / 2, size / 2, text="%d%%" % round(self._pct),
+        # Ab 0.63.2 (B-D-07): "0 %" mit geschuetztem Leerzeichen
+        self.create_text(size / 2, size / 2, text="%d\u00a0%%" % round(self._pct),
                          fill=C["text"], font=tk_font(F["small_bold"]))
 
 
@@ -2093,6 +2242,10 @@ def darken_bg(color):
 #  KALENDER
 # ============================================================================
 
+# Ab 0.63.2 (N8, B-J-N3): Namen der Monatspfeile (wie am Handy, ui.py)
+MONTH_PREV, MONTH_NEXT = "Vorheriger Monat", "Nächster Monat"
+
+
 class CalendarPanel(ctk.CTkFrame):
     """Monatskalender, der Lerntage hervorhebt."""
 
@@ -2110,13 +2263,16 @@ class CalendarPanel(ctk.CTkFrame):
 
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x")
+        # Ab 0.63.2 (N8, B-J-N3): Namen wie am Handy (ui.py Kalender)
         IconButton(header, "arrow_left", self._prev_month, parent_bg=self.bg,
-                   color=C["accent"], press_color=C["green"]).pack(side="left")
+                   color=C["accent"], press_color=C["green"],
+                   name=MONTH_PREV).pack(side="left")
         self.lbl_month = ctk.CTkLabel(header, text="", text_color=C["text"],
                                       font=F["h3"], height=0)
         self.lbl_month.pack(side="left", expand=True)
         IconButton(header, "arrow_right", self._next_month, parent_bg=self.bg,
-                   color=C["accent"], press_color=C["green"]).pack(side="right")
+                   color=C["accent"], press_color=C["green"],
+                   name=MONTH_NEXT).pack(side="right")
 
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 height=px(190), width=px(160))
@@ -2200,7 +2356,8 @@ class CalendarPanel(ctk.CTkFrame):
                     self.canvas.create_image(cx, cy, image=self._circle(
                         diameter, outline=C["accent"], outline_width=2))
                 if active:
-                    color = "#12071F"
+                    # ab 0.63.2 (B-J-03): C["card"] auf Lila, bis 0.63.1 #12071F
+                    color = lesbare_schrift(C["card"], "#12071F", C["purple"])
                 elif col >= 5:
                     color = C["accent2"]
                 else:
@@ -2256,7 +2413,7 @@ class ThemeTimeline(tk.Canvas):
             photo = tk_photo(image, diameter, diameter)
             self._photos.append(photo)
             self.create_image(cx, ring_cy, image=photo)
-            self.create_text(cx, ring_cy, text="%d%%" % round(pct), fill=C["text"],
+            self.create_text(cx, ring_cy, text="%d\u00a0%%" % round(pct), fill=C["text"],
                              font=tk_font(F["small_bold"]))
             dot = px(12) if pct > 0 else px(10)
             dot_photo = tk_photo(circle_image(
@@ -2633,6 +2790,10 @@ class ScrollArea(tk.Frame):
                     if isinstance(child, (OptionList, NeoButton)):
                         continue
                     if isinstance(child, ctk.CTkLabel):
+                        if child.__dict__.get("_fisi_wrap_own"):
+                            # ab 0.63.2 (D2): Umbruchbreite regelt die Ansicht
+                            # selbst (an die Spaltenbreite gekoppelt)
+                            continue
                         base = child.__dict__.get("_fisi_wrap")
                         if base is None:
                             base = child.cget("wraplength") or 0
@@ -2678,6 +2839,221 @@ class ScrollArea(tk.Frame):
                     move(max(0.0, target) / total)
         except tk.TclError:
             pass
+
+
+# ============================================================================
+#  AB 0.63.2 (D2): ZEILEN, DIE BEI ZU WENIG BREITE UMBRECHEN
+# ============================================================================
+
+class FlowRow:
+    """Ab 0.63.2 (D2, grosse Schrift): Zeile aus Knoepfen, Auswahllisten,
+    Feldern und Beschriftungen, die mit pack(side="left"/"right")
+    nebeneinander liegen. Reicht die Breite (fit(room), echte Pixel) fuer
+    alle Teile nebeneinander, bleibt die Zeile genau wie gepackt (das
+    abgenommene Aussehen). Sonst:
+    * ein Feld, das die Zeile fuellt (fill="x"), wird schmaler, hoechstens
+      bis SHRINK_MIN (logische px) - dann bleibt alles in einer Zeile;
+    * reicht auch das nicht, verteilen sich die Teile in der sichtbaren
+      Reihenfolge (links -> rechts) auf mehrere Zeilen: erste Zeile so voll
+      wie moeglich, Abstand wie vorher (mindestens 8 px), Zeilenabstand
+      8 px (line_gap). Links gepackte Teile bleiben links-, rechts gepackte
+      rechtsbuendig; die rechts gepackten bleiben beisammen (eigene Zeile,
+      wenn sie nicht mehr daneben passen). Ein fuellendes Feld fuellt den
+      Rest seiner Zeile.
+    Es entstehen keine neuen Elemente; nur die Lage aendert sich (place
+    statt pack, wie PillGroup(umbrechen=True)). Die Entscheidung haengt nur
+    von room und den gewuenschten Breiten der Teile ab, nie von der Lage
+    selbst (keine Schleife)."""
+
+    GAP = 8            # logische px, Mindestabstand und Zeilenabstand
+    SHRINK_MIN = 240   # logische px, so schmal darf ein fuellendes Feld werden
+
+    def __init__(self, frame, line_gap=None, wrapped_pad=0):
+        """line_gap: Zeilenabstand beim Umbruch (logische px, sonst GAP);
+        wrapped_pad: zusaetzlicher Abstand unter der umbrochenen Zeile.
+        Formularzeilen (Bezeichnung + Betrag) nutzen einen kleinen
+        line_gap und etwas wrapped_pad, damit zusammengehoerige Teile
+        naeher beieinander stehen als an der naechsten Zeile."""
+        self.frame = frame
+        self.line_gap = self.GAP if line_gap is None else line_gap
+        self.wrapped_pad = wrapped_pad
+        self.items = None      # [(widget, pack_info)] in Packreihenfolge
+        self.wrapped = False
+        self.shape = None
+        self.room = None
+        self._relayout_pending = False
+        frame._fisi_flow = self
+
+    @classmethod
+    def of(cls, frame):
+        """Die FlowRow eines Rahmens (wird beim ersten Mal angelegt)."""
+        return frame.__dict__.get("_fisi_flow") or cls(frame)
+
+    def _capture(self):
+        if not self.wrapped:
+            self.items = []
+            for widget in self.frame.pack_slaves():
+                info = widget.pack_info()
+                info.pop("in", None)
+                self.items.append((widget, info))
+        return self.items
+
+    @staticmethod
+    def _pad(info):
+        padx = info.get("padx", 0)
+        if isinstance(padx, (tuple, list)):
+            return int(padx[0]), int(padx[-1])
+        return int(padx), int(padx)
+
+    @staticmethod
+    def _fills(info):
+        return info.get("fill") in ("x", "both")
+
+    def _need(self, widget, info):
+        """Kleinste Breite eines Teils (fuellende Felder: SHRINK_MIN)."""
+        width = widget.winfo_reqwidth()
+        if self._fills(info):
+            return min(width, px(self.SHRINK_MIN))
+        return width
+
+    def natural_width(self):
+        """Breite (echte Pixel), die alle Teile nebeneinander brauchen."""
+        return sum(widget.winfo_reqwidth() + sum(self._pad(info))
+                   for widget, info in self._capture())
+
+    def min_width(self):
+        """Breite des breitesten Teils (je Teil eine eigene Zeile)."""
+        return max([self._need(widget, info) for widget, info in self._capture()] or [0])
+
+    def _space(self, info_before, info):
+        return max(px(self.GAP), self._pad(info_before)[1], self._pad(info)[0])
+
+    def _width(self, line):
+        width = 0
+        for index, (widget, info) in enumerate(line):
+            if index:
+                width += self._space(line[index - 1][1], info)
+            width += self._need(widget, info)
+        return width
+
+    def _plan(self, room):
+        """Zeilen (Listen von (widget, pack_info)) fuer die Breite room."""
+        items = self._capture()
+        left = [item for item in items if item[1].get("side") != "right"]
+        right = [item for item in items if item[1].get("side") == "right"][::-1]
+        lines, line = [], []
+        for item in left:
+            if line and self._width(line + [item]) > room:
+                lines.append(line)
+                line = []
+            line.append(item)
+        if right:
+            if line and self._width(line + right) > room:
+                lines.append(line)
+                line = []
+            for item in right:
+                if line and self._width(line + [item]) > room:
+                    lines.append(line)
+                    line = []
+                line.append(item)
+        if line:
+            lines.append(line)
+        return lines
+
+    def fit(self, room):
+        """Nebeneinander, wenn alles in room passt, sonst schmaler bzw.
+        umbrechen. True, wenn sich die Anordnung geaendert hat."""
+        try:
+            if not self._capture():
+                return False
+            self.room = room
+            if self.natural_width() <= room:
+                return self._unwrap()
+            return self._wrap(self._plan(room), room)
+        except tk.TclError:
+            return False
+
+    def _child_resized(self, _event=None):
+        """Ein Teil hat seine Groesse geaendert (z. B. neuer Knopftext): im
+        umgebrochenen Zustand neu verteilen (place folgt nicht von selbst)."""
+        if self.wrapped and not self._relayout_pending:
+            self._relayout_pending = True
+            self.frame.after_idle(self._relayout)
+
+    def _relayout(self):
+        self._relayout_pending = False
+        if self.wrapped and self.room is not None:
+            self.shape = None
+            self.fit(self.room)
+
+    def _unwrap(self):
+        if not self.wrapped:
+            return False
+        for widget, _info in self.items:
+            tk.Place.place_forget(widget)
+        for widget, info in self.items:
+            # tk.Pack direkt: pack_info liefert schon Bildschirmpixel
+            tk.Pack.pack_configure(widget, in_=self.frame, **info)
+        self.wrapped = False
+        self.shape = None
+        return True
+
+    def _wrap(self, lines, room):
+        shape = ([[str(widget) for widget, _info in line] for line in lines], room)
+        if self.wrapped and shape == self.shape:
+            return False
+        if not self.wrapped:
+            for widget, _info in self.items:
+                tk.Pack.pack_forget(widget)
+                if "_fisi_flow_bound" not in widget.__dict__:
+                    widget._fisi_flow_bound = True
+                    tk.Misc.bind(widget, "<Configure>", self._child_resized, "+")
+        y = 0
+        widest = 1
+        for line in lines:
+            height = max(widget.winfo_reqheight() for widget, _info in line)
+            right = [item for item in line if item[1].get("side") == "right"]
+            left = line[:len(line) - len(right)]
+            # rechts gepackte Teile rechtsbuendig (wie vorher)
+            offset = 0
+            for index, (widget, info) in enumerate(reversed(right)):
+                if index:
+                    offset += self._space(info, right[len(right) - index][1])
+                tk.Place.place_configure(
+                    widget, relx=1.0, x=-offset, anchor="ne", relwidth="", width="",
+                    y=y + (height - widget.winfo_reqheight()) // 2)
+                offset += widget.winfo_reqwidth()
+            right_part = offset + (self._space(left[-1][1], right[0][1])
+                                   if left and right else 0)
+            x = 0
+            for index, (widget, info) in enumerate(left):
+                if index:
+                    x += self._space(left[index - 1][1], info)
+                # tk.Place direkt: x/y sind schon Bildschirmpixel
+                options = dict(x=x, y=y + (height - widget.winfo_reqheight()) // 2,
+                               relx=0.0, anchor="nw", relwidth="", width="")
+                rest = sum(self._need(*item) + self._space(left[i][1], item[1])
+                           for i, item in enumerate(left[index + 1:], start=index))
+                if self._fills(info):
+                    # fuellt den Rest der Zeile (bis zu den folgenden Teilen)
+                    options.update(relwidth=1.0, width=-(x + rest + right_part))
+                    x += max(self._need(widget, info),
+                             min(widget.winfo_reqwidth(), room - x - rest - right_part))
+                else:
+                    x += widget.winfo_reqwidth()
+                tk.Place.place_configure(widget, **options)
+            widest = max(widest, x + right_part)
+            y += height + px(self.line_gap)
+        frame = self.frame
+        scale = getattr(frame, "_reverse_widget_scaling", None)
+        width, height = widest, max(1, y - px(self.line_gap)) + px(self.wrapped_pad)
+        if scale is not None:
+            frame.configure(width=scale(float(width)), height=scale(float(height)))
+        else:
+            frame.configure(width=width, height=height)
+        self.wrapped = True
+        self.shape = shape
+        return True
 
 
 # ============================================================================
@@ -2768,6 +3144,29 @@ ctk.CTkLabel.destroy = _release_image(ctk.CTkLabel.destroy)
 ctk.CTkButton.destroy = _release_image(ctk.CTkButton.destroy)
 
 
+# Ab 0.63.2 (Nacharbeit M2): Schriftfarbe auf einer Flaeche ohne Rueckschritt.
+# Mit den Farbwelten gilt immer die neue Farbe (dort >= 4,5:1). Mit eigenen
+# Farben (apply_custom) kann sie bei manchen Reglerstellungen schlechter lesbar
+# sein als die Farbe bis 0.63.1 - dann bleibt die bisherige.
+MIN_SCHRIFT = 4.5
+
+
+def lesbare_schrift(neu, alt, flaeche, minimum=MIN_SCHRIFT):
+    """Die neue Schriftfarbe, wenn sie auf der Flaeche >= minimum erreicht oder
+    nicht schlechter ist als die alte; sonst die alte (besser lesbare)."""
+    neu_k = fisi_theme.contrast(neu, flaeche)
+    if neu_k >= minimum or neu_k >= fisi_theme.contrast(alt, flaeche):
+        return neu
+    return alt
+
+
+def tabellen_auswahl():
+    """Ab 0.63.2 (B-J-02): Flaeche und Schrift der ausgewaehlten Tabellenzeile
+    (bis 0.63.1 Weiss)."""
+    flaeche = mix(C["card_alt"], C["purple"], 0.45)
+    return flaeche, lesbare_schrift(C["text"], "#FFFFFF", flaeche)
+
+
 def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
     """Abgerundetes, mehrzeiliges Textfeld. height ist die Zeilenanzahl.
     Ab 0.63.1: wrap="none" fuer Kaesten, die selbst umbrechen (fit_lines);
@@ -2782,7 +3181,9 @@ def make_text(parent, height=6, readonly=False, font=None, wrap="word"):
                             padx=6, pady=6, insertofftime=0)
     widget._textbox.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"],
-                              selectforeground="#FFFFFF")
+                              # ab 0.63.2 (B-J-01), bis 0.63.1 Weiss
+                              selectforeground=lesbare_schrift(C["card"], "#FFFFFF",
+                                                               C["purple"]))
     if readonly:
         widget.configure(state="disabled")
     # Ab 0.56: Tab springt wie in Eingabefeldern zum naechsten Bedienelement

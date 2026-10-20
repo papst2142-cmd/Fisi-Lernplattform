@@ -15,13 +15,16 @@ Gemeinsam fuer PC und Handy:
 Die Oberflaechen (app_gui.py, mobile/src/main.py) zeichnen nur.
 """
 
+import bisect
 import datetime
 import hashlib
 import ipaddress
 import random
+import sqlite3
 import sys
 
-from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
+from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUESTION_RENAMES,
+                       QUIZ_QUESTIONS,
                        SRC_CARD, SRC_QUIZ, TOPIC_NAME, StatusBook, learning_streak,
                        plural)
 
@@ -88,12 +91,26 @@ def _stable_rank(source, key):
     return _md5(("%s|%s" % (source, key)).encode("utf-8")).hexdigest()
 
 
+def review_info(entries, start):
+    """Ab 0.63.2 (FG-107): was ReviewPlan je Frage aus ihren Antworten
+    (aelteste zuerst) braucht. None, wenn keine bewertet ist, sonst
+    (stufe, faellig_am, alt, erster_neuer_tag): alt = bewertet vor start,
+    erster_neuer_tag = Tag der ersten Bewertung ab start oder None."""
+    graded = [(t, v) for t, v in entries if v is not None]
+    if not graded:
+        return None
+    stage, due = review_state(graded)
+    days = [_date(t) for t, _v in graded]
+    new = [day for day in days if day >= start]
+    return stage, due, any(day < start for day in days), (new[0] if new else None)
+
+
 class ReviewPlan:
     """Faellige Wiederholungen fuer einen Tag, einmal aus dem StatusBook
     berechnet. due[quelle] = Liste der faelligen Schluessel (zuerst die am
     laengsten ueberfaelligen)."""
 
-    def __init__(self, book, today=None, valid=None):
+    def __init__(self, book, today=None, valid=None, infos=None):
         self.today = today or datetime.date.today()
         start = datetime.date.fromisoformat(SR_START)
         if valid is None:
@@ -105,17 +122,18 @@ class ReviewPlan:
         for (source, key), entries in book.results.items():
             if source not in SR_SOURCES or key not in valid[source]:
                 continue
-            graded = [(t, v) for t, v in entries if v is not None]
-            if not graded:
+            # Ab 0.63.2 (FG-107): Teil je Frage in review_info, mit infos
+            # (ReviewIndex) schon fertig berechnet - Ergebnis gleich
+            info = infos[(source, key)] if infos is not None else \
+                review_info(entries, start)
+            if info is None:
                 continue
-            stage, due = review_state(graded)
+            stage, due, old, first_new = info
             self.state[(source, key)] = (stage, due)
-            old = [t for t, _v in graded if _date(t) < start]
-            new = [t for t, _v in graded if _date(t) >= start]
-            if old and not new:
+            if old and first_new is None:
                 legacy.append((source, key))
                 continue
-            if old and new and _date(new[0]) == self.today:
+            if old and first_new == self.today:
                 migrated_today += 1
             if due <= self.today:
                 regular.append((due, source, key))
@@ -165,6 +183,128 @@ class ReviewPlan:
             if self.due[source]:
                 return source
         return None
+
+
+class _IndexBook(StatusBook):
+    """StatusBook ueber den Antworten eines ReviewIndex; vergisst den Stand
+    einzelner Fragen, wenn neue Antworten dazukommen."""
+
+    def forget(self, keys):
+        for key in keys:
+            self._cache.pop(key, None)
+
+
+class ReviewIndex:
+    """Ab 0.63.2 (FG-107, B-I-03): ReviewPlan.from_db schrittweise.
+
+    Haelt die Antworten zu Karteikarten und Pruefungstrainer (wie
+    question_results, nur SR_SOURCES) und je Frage review_info. Kamen seit
+    dem letzten Mal nur neue Zeilen dazu (Anzahl waechst genau um die Zeilen
+    mit hoeherer Nummer; AUTOINCREMENT), werden nur diese gelesen und nur
+    ihre Fragen neu berechnet. Jede andere Aenderung (geloeschte Zeilen,
+    "Alles ersetzen", Abgleich mit Loeschmarke) baut alles neu auf, ein
+    Fehler faellt auf ReviewPlan.from_db zurueck. Das Ergebnis ist immer
+    dasselbe wie ReviewPlan.from_db(db, today).
+
+    Ab FG-110: Haelt der Index alte Fragetexte (umbenennungen.json), kann
+    apply_question_renames sie an Ort und Stelle umschreiben (Abgleich nach
+    "Alles ersetzen", Start eines zweiten Programms); ohne AUTOINCREMENT
+    kann eine geloeschte Nummer wiederkommen. In beiden Faellen baut der
+    Index bei jedem Aufruf alles neu auf (always_full)."""
+
+    TABLES = ((SRC_CARD, "card_events"), (SRC_QUIZ, "quiz_answers"))
+
+    def __init__(self, db):
+        self.db = db
+        self.stamp = None            # {tabelle: (Anzahl, hoechste Nummer)}
+        self.results = {}
+        self.infos = {}
+        self.book = _IndexBook(results=self.results)
+        self.full_builds = self.steps = 0
+        self.always_full = False     # FG-110
+
+    def plan(self, today=None):
+        try:
+            self._update()
+        except (sqlite3.Error, TypeError, ValueError):
+            self.stamp = None        # naechstes Mal alles neu
+            return ReviewPlan.from_db(self.db, today=today)
+        return ReviewPlan(self.book, today=today, infos=self.infos)
+
+    def _update(self):
+        conn = self.db.get_connection()
+        try:
+            conn.execute("BEGIN")    # ein Lesestand fuer Stempel und Zeilen
+            stamp = {table: tuple(conn.execute(
+                "SELECT COUNT(*), MAX(rowid) FROM %s" % table).fetchone())
+                for _source, table in self.TABLES}
+            if stamp == self.stamp and not self.always_full:
+                return
+            new_rows = None if self.always_full else {}
+            if self.stamp is not None and new_rows is not None:
+                for _source, table in self.TABLES:
+                    count, top = self.stamp[table]
+                    rows = conn.execute(
+                        "SELECT timestamp, question, correct FROM %s WHERE rowid > ?"
+                        " ORDER BY timestamp, id" % table, (top or 0,)).fetchall()
+                    if count + len(rows) != stamp[table][0]:
+                        new_rows = None      # etwas wurde geloescht: alles neu
+                        break
+                    new_rows[table] = rows
+            if new_rows is None or self.stamp is None:
+                self._full(conn)
+            else:
+                self._step(new_rows)
+            self.stamp = stamp
+        finally:
+            conn.close()
+
+    def _full(self, conn):
+        self.full_builds += 1
+        self.results.clear()
+        self.infos.clear()
+        self.book.forget(list(self.book._cache))
+        self.always_full = False
+        for source, table in self.TABLES:
+            sql = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table'"
+                               " AND name = ?", (table,)).fetchone()
+            if "AUTOINCREMENT" not in str(sql and sql[0]).upper():
+                self.always_full = True
+            old = QUESTION_RENAMES.get(table, {})
+            for timestamp, key, correct in conn.execute(
+                    "SELECT timestamp, question, correct FROM %s ORDER BY timestamp, id"
+                    % table):
+                self.always_full = self.always_full or key in old
+                value = None if correct is None else bool(correct)
+                self.results.setdefault((source, key), []).append((timestamp, value))
+        self._recompute(self.results)
+
+    def _step(self, new_rows):
+        """Neue Zeilen haben hoehere Nummern: bei gleicher Zeit kommen sie
+        nach den vorhandenen (wie ORDER BY timestamp, id)."""
+        self.steps += 1
+        touched = set()
+        for source, table in self.TABLES:
+            old = QUESTION_RENAMES.get(table, {})
+            for timestamp, key, correct in new_rows[table]:
+                if not isinstance(timestamp, str):
+                    raise TypeError("timestamp")
+                self.always_full = self.always_full or key in old
+                value = None if correct is None else bool(correct)
+                entries = self.results.setdefault((source, key), [])
+                times = [t for t, _v in entries]
+                entries.insert(bisect.bisect_right(times, timestamp), (timestamp, value))
+                touched.add((source, key))
+        self.book.forget(touched)
+        self._recompute(touched)
+
+    def _recompute(self, keys):
+        start = datetime.date.fromisoformat(SR_START)
+        for item in keys:
+            entries = self.results[item]
+            if any(not isinstance(t, str) for t, _v in entries):
+                raise TypeError("timestamp")
+            self.infos[item] = review_info(entries, start)
 
 
 def due_text(plan):
@@ -315,16 +455,16 @@ LEARN_CHART_SERIES = "Lernaktivitäten pro Tag"
 # Ab 0.60 (K-B): Beschriftungen von Dashboard (PC) und Start (Handy), an
 # beiden Stellen gleich. "Prüfungstrainer" ist der Menuename; "bearbeitet"
 # heisst angesehen oder beantwortet (auch falsch), "richtig" nur richtig.
-DASH_LEARNED = "%d von %d Karten und Fragen bearbeitet"
+DASH_LEARNED = "%s von %s Karten und Fragen bearbeitet"
 DASH_RATE = "Prüfungstrainer %d %% richtig"
 DASH_TOTAL = "Gesamtfortschritt"
 DASH_RING_CARDS = "Karteikarten"
 DASH_RING_QUIZ = "Prüfungstrainer"
 DASH_RING_AP1 = "AP1-Szenarien"
 DASH_RING_AP2 = "AP2-Szenarien"
-DASH_CARDS_SUB = "von %d Karten bearbeitet"
-DASH_QUIZ_SUB = "von %d Fragen beantwortet"
-DASH_SCEN_SUB = "von %d bearbeitet"
+DASH_CARDS_SUB = "von %s Karten bearbeitet"
+DASH_QUIZ_SUB = "von %s Fragen beantwortet"
+DASH_SCEN_SUB = "von %s bearbeitet"
 DASH_QUOTE_TITLE = "Erfolgsquote"
 DASH_QUOTE_SUBTITLE = "Prüfungstrainer gesamt"
 DASH_QUOTE_EMPTY = "noch keine Antworten erfasst"
@@ -577,7 +717,7 @@ TRAINER_KINDS = [
     ("ipv4", "IPv4-Subnetz"),
     ("vlsm", "VLSM"),
     ("zahlen", "Binär/Hex/Dezimal"),
-    ("ipv6", "IPv6 kürzen"),
+    ("ipv6", "IPv6-Schreibweise"),      # ab 0.63.2 (B-N-07 4.13), kuerzen und ausschreiben
     ("teilen", "Netz aufteilen"),
     ("bedarf", "Nach Hostbedarf"),
 ]
@@ -585,6 +725,9 @@ TRAINER_KIND_NAME = dict(TRAINER_KINDS)
 TRAINER_LEVELS = [(1, "Leicht"), (2, "Mittel"), (3, "Schwer")]
 TRAINER_LEVEL_NAME = dict(TRAINER_LEVELS)
 TRAINER_ROUND = 10
+# Ab 0.63.2 (B-N-07 4.12): Kartentitel PC und Handy; der Trainer hat auch
+# Zahlensysteme und IPv6, nicht nur Subnetting
+TRAINER_TITLE = "Rechen-Trainer"
 
 
 class TrainerTask:
@@ -625,7 +768,7 @@ def _ip_matcher(expected):
 def _int_matcher(expected):
     def match(text):
         value = _clean(text).replace(".", "")
-        return value.isdigit() and int(value) == expected
+        return _digits(value) and int(value) == expected    # ab 0.63.2 (A10)
     return match
 
 
@@ -729,13 +872,18 @@ def _ipv4_task(rng, level, schmal=False):
                      % (block_octet + 1, mask_octet, 256 - mask_octet,
                         address.packed[block_octet],
                         network.network_address.packed[block_octet]))
+        if block_octet < 3:      # ab 0.63.2 (B-N-07 5.11)
+            steps.append("   Die folgenden Oktette sind in der Netzadresse 0 und in der "
+                         "Broadcast-Adresse 255.")
     steps += [
         "4. Broadcast-Adresse: alle Hostbits auf 1 = %s" % network.broadcast_address,
         "5. Hostbereich: %s bis %s (Netzadresse + 1 bis Broadcast-Adresse - 1)"
         % (first_host, last_host),
         "6. Nutzbare Hosts: 2^%d - 2 = %d" % (32 - prefix, hosts),
     ]
-    text = "Berechne zur Adresse %s/%d die Netzdaten." % (address, prefix)
+    # ab 0.63.2 (B-N-07 3.16): die Adresse kann selbst Netz- oder Broadcast-Adresse sein
+    text = ("Berechne zur Adresse %s/%d die Netzdaten (die Adresse kann auch selbst "
+            "die Netz- oder Broadcast-Adresse sein)." % (address, prefix))
     return TrainerTask("ipv4", level, text, fields, solution, steps, matchers)
 
 
@@ -783,7 +931,7 @@ def _vlsm_task(rng, level):
     solution = {"netz%d" % i: str(nets[i]) for i in range(count)}
     matchers = {"netz%d" % i: _network_matcher(nets[i]) for i in range(count)}
     text = ("Teile das Netz %s nach VLSM auf (größtes Netz zuerst, lückenlos ab der "
-            "ersten Adresse). Gib je Abteilung Netzadresse/Präfix an, z.B. "
+            "ersten Adresse). Gib je Abteilung Netzadresse/Präfix an, z. B. "
             "192.168.1.0/26." % base)
     return TrainerTask("vlsm", level, text, fields, solution, steps, matchers)
 
@@ -812,19 +960,25 @@ def _number_task(rng, level):
             rest //= 2
         steps.append("Dezimal -> Binär (fortgesetzt durch 2 teilen, Reste von unten "
                      "nach oben lesen):")
-        steps += ["   " + line for line in lines[:12]]
-        if len(lines) > 12:
-            steps.append("   ...")
+        steps += ["   " + line for line in lines]     # ab 0.63.2 (B-N-06): alle Zeilen
     elif given == "hex":
         hex_digits = format(value, "X")
         terms = ["%s x 16^%d" % (digit, len(hex_digits) - 1 - i)
                  for i, digit in enumerate(hex_digits)]
         steps.append("Hex -> Dezimal: %s = %d" % (" + ".join(terms), value))
+        letters = sorted(set(digit for digit in hex_digits if digit in "ABCDEF"))
+        if letters:              # ab 0.63.2 (B-N-07 5.9)
+            steps.append("   Hex-Ziffern: %s" % ", ".join(
+                "%s = %d" % (digit, int(digit, 16)) for digit in letters))
     else:
         steps.append("Stellenwerte der Einsen addieren: %s = %d"
                      % (" + ".join(parts), value))
-    steps.append("Binär -> Hex: in Vierergruppen (Nibbles) von rechts teilen: %s"
-                 % " ".join(n.zfill(4) for n in nibbles))
+    if given == "hex":           # ab 0.63.2 (B-N-07 5.9): Richtung Hex -> Binaer
+        steps.append("Hex -> Binär: jede Hex-Ziffer als Vierergruppe (Nibble) "
+                     "schreiben: %s" % " ".join(n.zfill(4) for n in nibbles))
+    else:
+        steps.append("Binär -> Hex: in Vierergruppen (Nibbles) von rechts teilen: %s"
+                     % " ".join(n.zfill(4) for n in nibbles))
     steps.append("Jede Gruppe ist eine Hex-Ziffer: %s"
                  % " ".join("%s=%X" % (n.zfill(4), int(n, 2)) for n in nibbles))
     text = "Rechne %s %s in die anderen Zahlensysteme um." % (names[given], shown[given])
@@ -861,12 +1015,15 @@ def _ipv6_task(rng, level):
         solution = {"kurz": short}
         matchers = {"kurz": _ipv6_text_matcher(short)}
         text = "Kürze die IPv6-Adresse %s so weit wie möglich." % full
+        # ab 0.63.2 (B-N-07 1.19 und 5.12)
         steps = ["1. Führende Nullen in jedem Block weglassen: %s"
                  % ":".join("%x" % g for g in groups),
-                 "2. Den längsten Block aufeinanderfolgender Nullblöcke (mindestens "
-                 "zwei) durch '::' ersetzen, bei Gleichstand den ersten.",
-                 "3. '::' darf nur einmal vorkommen; Kleinbuchstaben verwenden.",
-                 "Ergebnis: %s" % short]
+                 "2. Die längste Folge von Nullblöcken (mindestens zwei) durch "
+                 "'::' ersetzen, bei Gleichstand die erste."]
+        if "::" not in short:
+            steps.append("   Hier gibt es keine solche Folge, dieser Schritt entfällt.")
+        steps += ["3. '::' darf nur einmal vorkommen; Kleinbuchstaben verwenden.",
+                  "Ergebnis: %s" % short]
     return TrainerTask("ipv6", level, text, fields, solution, steps, matchers)
 
 

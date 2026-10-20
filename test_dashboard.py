@@ -72,8 +72,8 @@ class TexteTest(unittest.TestCase):
 
     def test_abgesprochene_texte(self):
         self.assertEqual(fl.DASH_RING_QUIZ, "Prüfungstrainer")
-        self.assertEqual(fl.DASH_QUIZ_SUB % 2174, "von 2174 Fragen beantwortet")
-        self.assertEqual(fl.DASH_CARDS_SUB % 1565, "von 1565 Karten bearbeitet")
+        self.assertEqual(fl.DASH_QUIZ_SUB % fc.de_int(2174), "von 2.174 Fragen beantwortet")
+        self.assertEqual(fl.DASH_CARDS_SUB % fc.de_int(1565), "von 1.565 Karten bearbeitet")
         self.assertEqual(fl.LEARN_CHART_SERIES, "Lernaktivitäten pro Tag")
         self.assertEqual(fc.KIND_QUIZ, "Prüfungsfrage")
         self.assertEqual(fl.dash_quote_text(3, 4), "3 von 4 Antworten richtig")
@@ -136,7 +136,7 @@ class HandyTest(unittest.TestCase):
         texts = self.dashboard_texts()
         index = texts.index(fl.DASH_RING_QUIZ.upper())
         self.assertIn("20", texts[index:index + 4])
-        self.assertIn(fl.DASH_QUIZ_SUB % len(fc.QUIZ_QUESTIONS), texts)
+        self.assertIn(fl.DASH_QUIZ_SUB % fc.de_int(len(fc.QUIZ_QUESTIONS)), texts)
         self.assertIn(fl.dash_quote_text(25, 50), texts)
 
     def test_lernserie_nur_im_banner(self):
@@ -144,7 +144,7 @@ class HandyTest(unittest.TestCase):
         streak = [text for text in texts if "Lernserie" in text]
         self.assertEqual(len(streak), 1, streak)
         self.assertTrue(streak[0].startswith("Lernserie: "))
-        self.assertIn(fl.DASH_LEARNED % (50, len(fc.KARTEIKARTEN) + len(fc.QUIZ_QUESTIONS)),
+        self.assertIn(fl.DASH_LEARNED % ("50", fc.de_int(len(fc.KARTEIKARTEN) + len(fc.QUIZ_QUESTIONS))),
                       streak[0])
 
     def test_schalter_lernserie_wirkt_am_banner(self):
@@ -260,7 +260,7 @@ class PcTest(unittest.TestCase):
         texts = self.texts(self.show("dashboard")) + self.texts(self.app.sidebar)
         streak = [text for text in texts if "Lernserie" in text]
         self.assertEqual(len(streak), 1, streak)
-        self.assertIn(fl.DASH_QUIZ_SUB % len(fc.QUIZ_QUESTIONS), texts)
+        self.assertIn(fl.DASH_QUIZ_SUB % fc.de_int(len(fc.QUIZ_QUESTIONS)), texts)
         self.assertIn("20", texts)
         self.assertIn(fl.DASH_SIDEBAR_BAR, texts)
 

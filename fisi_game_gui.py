@@ -308,12 +308,39 @@ class FloorPlan(tk.Canvas):
         # verzerrt; bei sehr breitem Fenster wird es mittig gesetzt.
         margin = fg.PLAN_MARGIN
         self.scale = min(width / (building["breite"] + 2 * margin),
-                         px(self.max_height) / (building["hoehe"] + 2 * margin))
+                         self._height_cap() / (building["hoehe"] + 2 * margin))
         self.offset = (width - self.scale * building["breite"]) / 2.0
         self.offset_y = margin * self.scale
         height = int(round(self.scale * (building["hoehe"] + 2 * margin)))
         if abs(int(self.cget("height")) - height) > 2:
             self.configure(height=height)
+
+    # Ab 0.63.2 (B-D-10 Teil b): Grossansicht und Weltkarte wachsen in einem
+    # breiten Fenster mit. Bis GROW_FROM logische px Breite bleibt die Hoehe
+    # bei max_height (wie bisher); darueber waechst die erlaubte Hoehe im
+    # gleichen Verhaeltnis wie die Breite, hoechstens so weit, dass alles
+    # darueber (Kopf, Kartenkopf), die Zeichnung und GROW_BELOW logische px
+    # darunter (z. B. Knoepfe unter der Karte) ohne Bildlauf sichtbar sind.
+    GROW = False
+    GROW_FROM = 1040
+    GROW_BELOW = 8
+
+    def _height_cap(self):
+        cap = px(self.max_height)
+        if not self.GROW:
+            return cap
+        factor = self.winfo_width() / float(px(self.GROW_FROM))
+        if factor <= 1.0:
+            return cap
+        area = self.master
+        while area is not None and not isinstance(area, ScrollArea):
+            area = area.master
+        if area is None or not self.winfo_ismapped():
+            return cap
+        # Abstand vom oberen Rand des Inhalts (unabhaengig vom Bildlauf)
+        top = self.winfo_rooty() - area.inner.winfo_rooty()
+        room = area.canvas.winfo_height() - top - px(self.GROW_BELOW)
+        return max(cap, min(int(cap * factor), room))
 
     def _building(self, with_player=True):
         profile = self.state.profile
@@ -384,12 +411,21 @@ class FloorPlan(tk.Canvas):
             font = tk_font(F["h3"])
         x, y = self._xy(shape["x"], shape["y"])
         text = shape["text"]
-        if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
+        if shape.get("maxw") and role == "ort":
+            # Ab 0.63.2 (B-D-10): Ortsschilder der Karte nach derselben Regel
+            # wie die Klickflaeche (fg.place_at, Massstab je Schriftgroesse) -
+            # so heisst ein Ort bei jeder Schriftgroesse gleich (bisher nur
+            # bei "Gross" mit Kurznamen, z. B. "Verwaltung")
+            if len(text) * fg.MAP_CHAR_PX > shape["maxw"] * self.scale / px(1):
+                text = shape["kurz"]
+        elif shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
                 shape["maxw"] * self.scale:
             text = shape["kurz"]
         item = self.create_text(x, y, text=text, fill=shape["color"], font=font,
                                 anchor="w" if shape["anchor"] == "w" else "center",
                                 tags=tags)
+        if shape.get("bg") and role == "raum":
+            self._clear_furniture(item, shape)
         if shape.get("bg"):
             x1, y1, x2, y2 = self.bbox(item)
             pad_x, pad_y = px(8), px(3)
@@ -397,6 +433,37 @@ class FloorPlan(tk.Canvas):
                                 (y2 - y1) / 2.0 + pad_y, fill=shape["bg"],
                                 outline=shape.get("border", ""), width=px(1), tags=tags)
             self.tag_lower(back, item)
+
+    def _clear_furniture(self, item, shape):
+        """Ab 0.63.2 (B-D-10): Ein Raumschild, das frei beginnt, aber mit der
+        Schriftgroesse in die Einrichtung hineinwaechst (z. B. "Bahnsteig 1"
+        ueber dem ersten Fahrkartenautomaten), rueckt unter diese
+        Einrichtung. Schilder, die schon immer auf einem Moebel stehen
+        (Kueche), bleiben, wo sie sind."""
+        try:
+            rooms = self.content()["gebaeude"]["raeume"]
+        except (AttributeError, KeyError, TypeError):
+            return
+        room = next((entry for entry in rooms if entry.get("name") == shape["text"]), None)
+        if room is None:
+            return
+        pad_x, pad_y = px(8), px(3)
+        x1, y1, x2, y2 = self.bbox(item)
+        boxes = []
+        for deco in room.get("deko", []):
+            left, top = self._xy(deco["x"], deco["y"])
+            right, bottom = self._xy(deco["x"] + deco["w"], deco["y"] + deco["h"])
+            boxes.append((left, top, right, bottom))
+        start = (x1 - pad_x, y1 - pad_y, x1 + pad_x, y2 + pad_y)
+
+        def hits(a, b):
+            return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+        if any(hits(start, box) for box in boxes):
+            return
+        sign = (x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y)
+        hit = [box for box in boxes if hits(sign, box)]
+        if hit:
+            self.move(item, 0, max(box[3] for box in hit) + pad_y + px(4) - (y1 - pad_y))
 
     def to_building(self, event):
         return ((event.x - self.offset) / self.scale,
@@ -416,6 +483,7 @@ class WalkPlan(FloorPlan):
     genau wie auf dem Handy. on_click(x, y) darf einen Klick selbst behandeln
     (True zurueckgeben), z.B. beim Einrichten der Wohnung."""
 
+    GROW = True            # ab 0.63.2 (B-D-10 Teil b): waechst im breiten Fenster mit
     SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
     TICK = 16              # Millisekunden pro Bild
 
@@ -556,6 +624,8 @@ class WorldMap(FloorPlan):
     ein Gebaeude oder sein Schild ruft on_place(ort) auf."""
 
     MAX_HEIGHT = 620
+    GROW = True            # ab 0.63.2 (B-D-10 Teil b): waechst im breiten Fenster mit
+    GROW_BELOW = 60        # Knoepfe "Firma oeffnen" / "Meine Reise" unter der Karte
 
     def __init__(self, parent, on_place, bg=None, max_height=None):
         super().__init__(parent, lambda _room: None, bg=bg, max_height=max_height)
@@ -571,7 +641,7 @@ class WorldMap(FloorPlan):
     def _layout(self):
         width = self.winfo_width()
         map_w, map_h = fg.map_size()
-        self.scale = min(width / map_w, px(self.max_height) / map_h)
+        self.scale = min(width / map_w, self._height_cap() / map_h)
         self.offset = (width - self.scale * map_w) / 2.0
         self.offset_y = 0.0
         height = int(round(self.scale * map_h))
@@ -1405,6 +1475,27 @@ class FitBoard(ctk.CTkFrame):
             button_hover_color=C["card_hi"], text_color=C["text"],
             dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
             dropdown_text_color=C["text"], font=F["small"], dropdown_font=F["small"])
+        # Ab 0.63.2 (FG-80): 1 px Rahmen in C["field_border"] wie die
+        # uebrigen Aufklapplisten der App (app_gui.FramedOptionMenu, B-D-11);
+        # CTkOptionMenu kennt keinen Rahmen, die Zeichenhilfe aber schon
+        plain_draw = menu._draw
+
+        def framed_draw(no_color_updates=False):
+            plain_draw(no_color_updates)
+            try:
+                menu._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                    menu._apply_widget_scaling(menu._current_width),
+                    menu._apply_widget_scaling(menu._current_height),
+                    menu._apply_widget_scaling(menu._corner_radius),
+                    menu._apply_widget_scaling(1),
+                    menu._apply_widget_scaling(menu._current_width - menu._current_height))
+                menu._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                        fill=C["field_border"])
+                menu._canvas.tag_lower("border_parts")
+            except (tk.TclError, AttributeError):
+                pass    # ohne Rahmen wie bis 0.63.1
+        menu._draw = framed_draw
+        menu._draw()
         if self.locked:
             menu.configure(state="disabled")
         self.menus.append(menu)
@@ -2148,6 +2239,11 @@ class TabCache:
         self._tab_base = None
         self._parked = []           # vorgebaute Reiter (ab 0.56, prepare_tab)
 
+    # Ab 0.63.2 (B-N-01): Meldung, wenn ein Reiter nicht aufgebaut werden kann
+    TAB_ERROR_TITLE = "Reiter nicht geöffnet"
+    TAB_ERROR_TEXT = ("Der Reiter „%s“ ließ sich wegen eines Programmfehlers nicht "
+                      "öffnen. Der Fehler steht in fehler.log.")
+
     def _tab_build(self, build):
         outer = self.content
         body = _frame(outer)
@@ -2155,10 +2251,52 @@ class TabCache:
         self.content = body
         try:
             build()
+        except Exception as exc:
+            # Ab 0.63.2 (B-N-01): den halb gebauten Inhalt nicht stehen lassen
+            # (er lag sonst ueber jedem anderen Reiter). Beim Vorladen meldet
+            # der Vorlader selbst (fehler.log, still), sonst Meldung und
+            # zurueck auf den zuletzt funktionierenden Reiter.
+            self.content = outer
+            body.destroy()
+            if getattr(self.app, "preloading", False):
+                raise
+            self._tab_failed(build, (type(exc), exc, exc.__traceback__))
+            return
         finally:
             self.content = outer
         self._tab_body = body
         self._tab_frames[self.tab] = (self._render_key(), body)
+        self._tab_ok = self.tab
+
+    def _tab_failed(self, build, exc_info):
+        """Ab 0.63.2 (B-N-01): Fehler wie jeden unerwarteten Fehler melden
+        (report_callback_exception: fehler.log), dazu ein Fenster. Reiterzeile
+        und Inhalt zeigen danach wieder den zuletzt funktionierenden Reiter."""
+        failed = self.tab
+        names = dict(self._tab_list())
+        self._tab_frames.pop(failed, None)
+        self.app.root.report_callback_exception(*exc_info)
+        # Im Starttest (FISI_SELFTEST) kein modales Fenster: es wartete auf
+        # einen Klick, der Lauf endete nie. Der Fehler zaehlt dort schon ueber
+        # report_callback_exception (Starttest-Protokoll, Exit-Code 1).
+        import os
+        if not os.environ.get("FISI_SELFTEST"):
+            messagebox.showerror(self.TAB_ERROR_TITLE,
+                                 self.TAB_ERROR_TEXT % names.get(failed, failed))
+        back = getattr(self, "_tab_ok", None)
+        if back is None or back == failed or back not in names:
+            return
+        self.tab = back
+        cached = self._tab_frames.get(back)
+        if cached is not None and cached[1].winfo_exists():
+            cached[1].pack(fill="x")
+            self._tab_body = cached[1]
+        else:
+            self._tab_build(build)
+        row = getattr(self, "_tab_row", None)
+        if row is not None and row.value != self.tab:
+            row.value = self.tab
+            row._paint()
 
     def _tabs_done(self):
         self._tab_base = _base_key(self._render_key())
@@ -2258,7 +2396,9 @@ class TabCache:
             self._tab_build(build)
         # Ab 0.62.3: ein vorgebauter Reiter liegt unter der Hintergrundflaeche
         # (prepare_tab legt ihn mit lower() nach unten) - nach vorn holen
-        self._tab_body.lift()
+        # Ab 0.63.2 (B-N-01): nach einem Fehler im Aufbau kann der Rahmen fehlen
+        if self._tab_body is not None and self._tab_body.winfo_exists():
+            self._tab_body.lift()
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()
@@ -2269,6 +2409,448 @@ class TabCache:
             self._rendered = self._render_key()
         self.to_top()
         return True
+
+
+def _pad_pair(value):
+    """padx aus pack_info/grid_info als (links, rechts) in echten Pixeln."""
+    if isinstance(value, (tuple, list)):
+        parts = list(value)
+    else:
+        parts = str(value).split()
+    if not parts:
+        return 0, 0
+    return int(float(parts[0])), int(float(parts[-1]))
+
+
+class FitWidth:
+    """Ab 0.63.2 (B-D-01/B-D-02) fuer Firma und Reise: Passt der Inhalt so,
+    wie er gebaut ist, in die sichtbare Breite, bleibt er genau so (das
+    abgenommene Aussehen). Sonst wird nur zurechtgerueckt, ohne neue
+    Elemente und ohne Farb- oder Stilaenderung:
+    * Texte mit Umbruchbreite (wraplength) brechen schmaler um, so dass sie
+      neben den Knoepfen ihrer Zeile Platz haben; Texte ohne Umbruchbreite
+      brechen erst um, wenn sie allein breiter als ihr Platz sind;
+    * eine Reihe nebeneinander gepackter Knoepfe, die nicht mehr passt,
+      verteilt sich auf mehrere Zeilen (Reihenfolge wie vorher);
+    * ein Balken, der seine Zeile fuellt (fill="x"), verlangt weniger
+      Mindestbreite (er fuellt den Rest weiter aus), ausser er ist mit
+      _fit_keep markiert;
+    * ein Kachelraster (_fit_columns) bekommt eine Spalte weniger, solange
+      seine Kacheln sonst nicht nebeneinander passen;
+    * passt eine Zeile aus Text und Knopfspalte rechts auch mit schmalstem
+      Text nicht (z. B. breiter Auswahlknopf im Text), kommt die
+      Knopfspalte unter den Text.
+    Der Platz eines Elements wird von der sichtbaren Breite aus nach innen
+    gerechnet (Abstaende, Teile links und rechts daneben, Spalten eines
+    Rasters), nie aus seiner eigenen Lage - so gibt es keine Schleife.
+    Geprueft wird beim Aufbau, beim Reiterwechsel und wenn sich die Breite
+    aendert."""
+
+    FIT_MIN_WRAP = 120     # logische px: schmaler bricht kein Text um
+    FIT_GAP = 6            # logische px: Abstand umbrochener Knopfzeilen
+    FIT_MIN_BAR = 40       # logische px: so schmal darf ein Balken werden
+
+    def _fit_init(self):
+        self._fit_width = None
+        self._fit_pending = False
+        self._fit_overflow = 0      # Ueberstand nach dem Zurechtruecken (Test)
+        self._fit_built = 0         # Ueberstand so, wie gebaut (Test)
+        self._fit_changed = 0       # zurechtgerueckte Elemente (Test)
+        self._fit_grids = []        # (Kachelraster, Platz) im letzten Durchgang
+        self.canvas.bind("<Configure>", self._fit_on_canvas, add="+")
+
+    def _fit_on_canvas(self, event):
+        if event.width != self._fit_width:
+            self._fit_later()
+
+    def _fit_later(self):
+        if not getattr(self, "_fit_pending", True):
+            self._fit_pending = True
+            self.after_idle(self._fit_now)
+
+    def _tabs_done(self):
+        super()._tabs_done()
+        self._fit_later()
+
+    def _tab_switch(self, build):
+        switched = super()._tab_switch(build)
+        if switched:
+            self._fit_later()
+        return switched
+
+    # -- Elemente ------------------------------------------------------------
+
+    @staticmethod
+    def _fit_container(widget):
+        return isinstance(widget, ctk.CTkFrame) or type(widget) is tk.Frame
+
+    @staticmethod
+    def _fit_label(widget):
+        return isinstance(widget, ctk.CTkLabel) and not isinstance(widget, NeoButton)
+
+    @staticmethod
+    def _fit_stretch(widget, info):
+        """Balken (Fortschritt oder schlichter Balken ohne Inhalt), der seine
+        Zeile ausfuellt: seine Breite ist nur eine Mindestbreite."""
+        if info.get("fill") not in ("x", "both") or widget.__dict__.get("_fit_keep"):
+            return False
+        if isinstance(widget, ctk.CTkProgressBar):
+            return True
+        return isinstance(widget, ctk.CTkFrame) and not widget.pack_slaves() \
+            and not widget.grid_slaves() and bool(widget.place_slaves())
+
+    @staticmethod
+    def _fit_flow_row(widget):
+        """Rahmen, dessen Teile alle nebeneinander gepackt sind (mindestens
+        zwei, darunter ein Knopf)."""
+        slaves = widget.pack_slaves()
+        if len(slaves) < 2 or not any(isinstance(item, NeoButton) for item in slaves):
+            return False
+        return all(item.pack_info().get("side") in ("left", "right") for item in slaves)
+
+    def _fit_restore(self):
+        """Alles wie gebaut: Umbruchbreiten und Knopfzeilen zuruecksetzen."""
+        stack = [self.inner]
+        while stack:
+            widget = stack.pop()
+            for child in widget.winfo_children():
+                if self._fit_label(child):
+                    # nur zuruecknehmen, was FitWidth selbst gesetzt hat: hat
+                    # die Ansicht die Umbruchbreite seitdem selbst angepasst
+                    # (z. B. _wrap_to an die Kachelbreite), bleibt ihr Wert
+                    before = child.__dict__.pop("_fit_before", None)
+                    if before is not None and \
+                            child.cget("wraplength") == child.__dict__.get("_fit_set"):
+                        child.configure(wraplength=before)
+                    continue
+                width = child.__dict__.get("_fit_min")
+                if width is not None and child.cget("width") != width:
+                    child.configure(width=width)
+                if self._fit_container(child):
+                    if child.__dict__.get("_fit_flow") is not None:
+                        self._fit_unflow(child)
+                    if child.__dict__.get("_fit_stacked") is not None:
+                        self._fit_unstack(child)
+                    columns = child.__dict__.get("_fit_columns")
+                    if columns and child.__dict__.get("_fit_cols_now", columns) != columns:
+                        self._fit_regrid(child, columns)
+                    stack.append(child)
+
+    def _fit_now(self):
+        """Zurechtruecken. Waehrend der Runden (nur bei Ueberstand) ist
+        _fit_running gesetzt: Ansichten, die selbst etwas an die Breite
+        anpassen, machen dann nur schmaler (siehe JourneyView._badge_wrap) -
+        sonst kann sich beides in den update_idletasks-Aufrufen hier
+        gegenseitig aufschaukeln. Beim Zuruecksetzen und Messen passen sie
+        sich wie gebaut an."""
+        self._fit_running = False
+        try:
+            self._fit_run()
+        finally:
+            self._fit_running = False
+
+    def _fit_run(self):
+        self._fit_pending = False
+        try:
+            width = self.canvas.winfo_width()
+            if width <= 1:
+                return
+            self._fit_width = width
+            self._fit_restore()
+            self.update_idletasks()
+            self._fit_changed = 0
+            # Ueberstand so, wie gebaut (Test: ohne Ueberstand keine Aenderung)
+            self._fit_built = max(0, self.inner.winfo_reqwidth() - width)
+            # dieselbe Schwelle wie der Rest-Durchgang unten: jeder Ueberstand
+            overflow = self._fit_built > 0
+            self._fit_running = overflow
+            for _round in range(4 if overflow else 0):
+                # jede Runde rechnet von aussen neu (auch nach weniger Spalten)
+                self._fit_grids = []
+                self._fit_area(self.inner, width)
+                self.update_idletasks()
+                narrower = [grid for grid, room in self._fit_grids
+                            if grid.winfo_reqwidth() > room + 1 and
+                            grid.__dict__.get("_fit_cols_now", grid._fit_columns) > 1]
+                if not narrower:
+                    break
+                for grid in narrower:
+                    self._fit_regrid(grid, grid.__dict__.get("_fit_cols_now",
+                                                            grid._fit_columns) - 1)
+                self.update_idletasks()
+            # Bleibt ein Rest (Schriften messen anders als angenommen), wird mit
+            # entsprechend weniger Platz noch einmal gerechnet, bis es passt
+            extra = 0
+            for _round in range(6):
+                rest = self.inner.winfo_reqwidth() - width
+                if rest <= 0:
+                    break
+                extra += rest
+                self._fit_grids = []
+                self._fit_area(self.inner, width - extra)
+                self.update_idletasks()
+            self._fit_overflow = max(0, self.inner.winfo_reqwidth() - width)
+            self.after(40, self._refit_width)
+        except tk.TclError:
+            pass
+
+    # -- Platz von aussen nach innen -----------------------------------------
+
+    def _fit_area(self, widget, room):
+        """Verteilt room (echte px, Platz von widget) auf seine Kinder."""
+        if widget.__dict__.get("_fit_flow") is not None:
+            # schon auf Zeilen verteilt: mit dem neuen Platz neu verteilen
+            self._fit_flow(widget, room)
+            return
+        packed = widget.pack_slaves()
+        if packed and self._fit_flow_row(widget):
+            natural = sum(item.winfo_reqwidth() +
+                          sum(_pad_pair(item.pack_info().get("padx", 0)))
+                          for item in packed)
+            if natural > room:
+                self._fit_flow(widget, room)
+                return
+        sides = [(item, item.pack_info()) for item in packed]
+        if self._fit_must_stack(sides, room):
+            self._fit_stack(widget, sides)
+            sides = [(item, item.pack_info()) for item in packed]
+        before = 0      # Breite der vorher links/rechts gepackten Teile
+        for item, info in sides:
+            left, right = _pad_pair(info.get("padx", 0))
+            space = room - left - right
+            if info.get("side") in ("left", "right"):
+                for other, other_info in sides:
+                    if other is not item and other_info.get("side") in ("left", "right"):
+                        space -= other.winfo_reqwidth() + sum(
+                            _pad_pair(other_info.get("padx", 0)))
+                before += item.winfo_reqwidth() + left + right
+            else:
+                # oben/unten gepackt: bekommt nur, was die vorher seitlich
+                # gepackten Teile uebrig lassen (pack-Hohlraum)
+                space -= before
+            if self._fit_stretch(item, info):
+                self._fit_shrink(item, space)
+                continue
+            self._fit_child(item, space)
+        gridded = widget.grid_slaves()
+        if gridded and widget.__dict__.get("_fit_columns"):
+            self._fit_grids.append((widget, room))
+        if gridded:
+            columns = max(1, widget.grid_size()[0])
+            weights = []
+            for column in range(columns):
+                conf = widget.grid_columnconfigure(column)
+                weights.append(int(conf.get("weight", 0)) if conf.get("uniform") else 0)
+            total = sum(weights)
+            for item in gridded:
+                info = item.grid_info()
+                column, span = int(info["column"]), int(info.get("columnspan", 1))
+                left, right = _pad_pair(info.get("padx", 0))
+                share = room if total <= 0 else \
+                    room * sum(weights[column:column + span]) / float(total)
+                self._fit_child(item, int(share) - left - right)
+
+    # -- Knopfspalte rechts unter den Text ------------------------------------
+
+    def _fit_hard(self, widget):
+        """Breite (echte px), unter die widget nicht schmaler werden kann:
+        Knoepfe und Bilder ganz, Texte bis FIT_MIN_WRAP, Balken bis
+        FIT_MIN_BAR, Knopfzeilen bis zum breitesten Knopf."""
+        if self._fit_label(widget):
+            return min(widget.winfo_reqwidth(), px(self.FIT_MIN_WRAP))
+        if not self._fit_container(widget):
+            return widget.winfo_reqwidth()
+        packed = widget.pack_slaves()
+        if not packed and not widget.grid_slaves():
+            # leerer Rahmen (z. B. Farbstreifen links einer Zeile): feste Breite
+            return widget.winfo_reqwidth()
+        if packed and self._fit_flow_row(widget):
+            return max(self._fit_hard(item) for item in packed)
+        wide = 0
+        across = 0
+        for item in packed:
+            info = item.pack_info()
+            need = sum(_pad_pair(info.get("padx", 0)))
+            need += px(self.FIT_MIN_BAR) if self._fit_stretch(item, info) \
+                else self._fit_hard(item)
+            if info.get("side") in ("left", "right"):
+                across += need
+            else:
+                # neben den vorher seitlich gepackten Teilen
+                wide = max(wide, across + need)
+        if widget.grid_slaves():
+            if widget.__dict__.get("_fit_columns"):
+                wide = max([wide] + [self._fit_hard(item) for item in widget.grid_slaves()])
+            else:
+                wide = max(wide, widget.winfo_reqwidth())
+        return max(wide, across)
+
+    def _fit_must_stack(self, sides, room):
+        """Passt eine Zeile aus Text links und Knopfspalte rechts selbst mit
+        schmalstem Text nicht, kommt die Knopfspalte unter den Text."""
+        across = [(item, info) for item, info in sides
+                  if info.get("side") in ("left", "right")]
+        right = [item for item, info in across
+                 if info.get("side") == "right" and self._fit_container(item)]
+        if len(across) < 2 or not right:
+            return False
+        need = sum(self._fit_hard(item) + sum(_pad_pair(info.get("padx", 0)))
+                   for item, info in across)
+        return need > room
+
+    def _fit_stack(self, widget, sides):
+        widget._fit_stacked = [(item, info.get("side"), info.get("anchor"))
+                               for item, info in sides
+                               if info.get("side") == "right" and self._fit_container(item)]
+        for item, _side, _anchor in widget._fit_stacked:
+            item.pack_configure(side="bottom", anchor="w")
+        self._fit_changed += 1
+
+    def _fit_unstack(self, widget):
+        for item, side, anchor in widget.__dict__.pop("_fit_stacked", None) or []:
+            item.pack_configure(side=side, anchor=anchor)
+
+    def _fit_child(self, child, room):
+        if self._fit_label(child):
+            self._fit_wrap(child, room)
+        elif self._fit_container(child):
+            self._fit_area(child, room)
+
+    def _fit_wrap(self, label, room):
+        base = label.__dict__.get("_fit_base")
+        if base is None:
+            base = label.cget("wraplength") or 0
+            label._fit_base = base
+        scale = label._get_widget_scaling() or 1.0
+        limit = max(self.FIT_MIN_WRAP, int(room / scale) - 4)
+        if base:
+            wrap = min(base, limit)
+        else:
+            natural = label.__dict__.get("_fit_natural")
+            if natural is None or not label.cget("wraplength"):
+                natural = label._fit_natural = label.winfo_reqwidth()
+            wrap = limit if natural > room else 0
+        if wrap != label.cget("wraplength"):
+            if label.__dict__.get("_fit_before") is None:
+                label._fit_before = label.cget("wraplength")
+            label._fit_set = wrap
+            label.configure(wraplength=wrap, justify="left")
+            self._fit_changed += 1
+
+    def _fit_shrink(self, bar, room):
+        base = bar.__dict__.get("_fit_min")
+        if base is None:
+            base = bar.cget("width")
+            bar._fit_min = base
+        scale = bar._get_widget_scaling() or 1.0
+        width = max(self.FIT_MIN_BAR, min(base, int(room / scale)))
+        if width != bar.cget("width"):
+            bar.configure(width=width)
+            self._fit_changed += 1
+
+    # -- Kachelraster: weniger Spalten ---------------------------------------
+
+    def _fit_regrid(self, grid, columns):
+        """Kacheln in gleicher Reihenfolge auf columns Spalten verteilen
+        (6 px zwischen den Kacheln). Bei der vollen Spaltenzahl kommt alles
+        genau wie gebaut zurueck (Spalten-Gewichte und Abstaende)."""
+        saved = grid.__dict__.get("_fit_saved")
+        if saved is None:
+            saved = grid._fit_saved = {
+                "spalten": [{key: grid.grid_columnconfigure(column).get(key)
+                             for key in ("weight", "uniform", "minsize")}
+                            for column in range(grid._fit_columns)],
+                "kacheln": [(tile, self._fit_gridded(tile)) for tile in sorted(
+                    grid.grid_slaves(), key=lambda item: (int(item.grid_info()["row"]),
+                                                          int(item.grid_info()["column"])))]}
+        if columns >= grid._fit_columns:
+            for column, conf in enumerate(saved["spalten"]):
+                grid.columnconfigure(column, weight=conf["weight"],
+                                     uniform=conf["uniform"] or "", minsize=conf["minsize"])
+            for tile, kwargs in saved["kacheln"]:
+                # neu einordnen: nicht angegebene Abstaende (z. B. pady der
+                # unteren Kachel bei weniger Spalten) fallen auf 0 zurueck
+                tile.grid_forget()
+                tile.grid(**kwargs)
+            grid._fit_cols_now = grid._fit_columns
+            return
+        group = str(saved["spalten"][0]["uniform"] or "") or "fit"
+        for column in range(grid._fit_columns):
+            used = column < columns
+            grid.columnconfigure(column, weight=1 if used else 0,
+                                 uniform=group if used else "")
+        for index, (tile, _kwargs) in enumerate(saved["kacheln"]):
+            tile.grid(row=index // columns, column=index % columns, sticky="nsew",
+                      padx=(0 if index % columns == 0 else 6, 0),
+                      pady=(0 if index < columns else 6, 0))
+        grid._fit_cols_now = columns
+        self._fit_changed += 1
+
+    @staticmethod
+    def _fit_gridded(item):
+        """Grid-Angaben eines Teils so, wie sie beim Einordnen angegeben waren
+        (CustomTkinter merkt sich den Aufruf als super().grid, dessen Name
+        grid_configure ist, und rechnet Abstaende beim Einordnen selbst um;
+        grid_info() liefert dagegen echte px, die CustomTkinter beim erneuten
+        Einordnen noch einmal umrechnen wuerde)."""
+        call = item.__dict__.get("_last_geometry_manager_call")
+        if call and call.get("function") is not None and \
+                getattr(call["function"], "__name__", "") in ("grid", "grid_configure") and \
+                call.get("kwargs") is not None:
+            return dict(call["kwargs"])
+        info = dict(item.grid_info())
+        info.pop("in", None)
+        return info
+
+    # -- Knopfzeilen umbrechen -----------------------------------------------
+
+    @staticmethod
+    def _fit_packed(item):
+        """Pack-Angaben eines Teils so, wie sie beim Packen angegeben waren
+        (CustomTkinter rechnet Abstaende selbst um, Tk-Widgets nicht)."""
+        call = item.__dict__.get("_last_geometry_manager_call")
+        if call and call.get("kwargs") is not None:
+            return dict(call["kwargs"])
+        info = dict(item.pack_info())
+        info.pop("in", None)
+        return info
+
+    def _fit_flow(self, frame, room):
+        """Nebeneinander gepackte Teile auf Zeilen verteilen (Raster statt
+        pack, gleiche Reihenfolge: links gepackte, dann rechts gepackte)."""
+        items = frame.__dict__.get("_fit_flow")
+        if items is None:
+            items = [(item, item.pack_info().get("side"), self._fit_packed(item))
+                     for item in frame.pack_slaves()]
+            frame._fit_flow = items
+            for item, _side, _kwargs in items:
+                item.pack_forget()
+        ordered = [entry for entry in items if entry[1] != "right"] + \
+            [entry for entry in items if entry[1] == "right"][::-1]
+        gap = px(self.FIT_GAP)
+        needs = [item.winfo_reqwidth() for item, _side, _kwargs in ordered]
+        # Raster-Spalten sind so breit wie ihr breitester Teil: so viele
+        # Spalten, wie mit diesen Breiten nebeneinander passen
+        columns = 1
+        for count in range(len(ordered), 1, -1):
+            widths = [max(needs[column::count]) for column in range(count)]
+            if sum(widths) + gap * (count - 1) <= room:
+                columns = count
+                break
+        for index, (item, _side, _kwargs) in enumerate(ordered):
+            row, column = divmod(index, columns)
+            # CustomTkinter-Widgets bekommen logische px (rechnen selbst um)
+            space = self.FIT_GAP if hasattr(item, "_apply_argument_scaling") else gap
+            item.grid(row=row, column=column, sticky="w",
+                      padx=(space if column else 0, 0), pady=(space if row else 0, 0))
+        self._fit_changed += 1
+
+    def _fit_unflow(self, frame):
+        items = frame.__dict__.pop("_fit_flow", None) or []
+        for item, _side, _kwargs in items:
+            item.grid_forget()
+        for item, _side, kwargs in items:
+            item.pack(**kwargs)
 
 
 class GameView(ReusableView, ScrollArea):
@@ -2732,9 +3314,10 @@ class GameView(ReusableView, ScrollArea):
                     subtitle="Ort anklicken, um hinzugehen")
         card.pack(fill="x")
         if card.head is not None:
+            # Ab 0.63.2 (B-D-10): Abstand auch rechts, zum Hinweistext
             NeoButton(card.head, "Karte" if as_list else "Liste",
                       lambda: self._toggle_map_list(not as_list), kind="ghost", height=28,
-                      font=F["small_bold"]).pack(side="right", padx=(10, 0))
+                      font=F["small_bold"]).pack(side="right", padx=(10, 10))
         if as_list:
             self._build_place_list(card.body, state)
             self.world = None
@@ -2872,8 +3455,12 @@ class GameView(ReusableView, ScrollArea):
                 NeoButton(body, "Firma gründen", lambda: self.app.show_view("firma"),
                           kind="primary").pack(anchor="w", pady=(8, 0))
 
-        for task, status in tickets:
+        # Ab 0.63.2 (B-F-03): hoechstens TICKET_PAGE Eintraege je Seite. Mit
+        # 150 und mehr Eintraegen wurde die Ansicht so hoch, dass X das Bild
+        # ablehnte und das Programm endete. Die Kopfzeile zaehlt weiter alle.
+        for task, status in self._ticket_page(tickets):
             self._ticket_row(body, task, status)
+        self._ticket_pager(body, tickets)
 
         if not item:
             footer = _frame(body)
@@ -2889,6 +3476,43 @@ class GameView(ReusableView, ScrollArea):
                     "Heute ist nichts mehr zu tun.")
             make_label(footer, hint, font=F["small"], fg=C["muted"]).pack(side="left",
                                                                           padx=14)
+
+    # Ab 0.63.2 (B-F-03): Eintraege je Seite in "Tickets heute" bzw. im Raum.
+    # Im normalen Spiel sind es hoechstens etwa 37 an einem Tag, dort
+    # erscheint also nie ein Blaettern.
+    TICKET_PAGE = 50
+
+    def _ticket_page(self, tickets):
+        """Sichtbarer Ausschnitt der Ticketliste. Die Seite gilt fuer den
+        Arbeitstag und den Raum, in dem geblaettert wurde; sonst Seite 1."""
+        where = (self.game.state.day, self.room)
+        mark = getattr(self, "ticket_page", None)
+        page = mark[1] if isinstance(mark, tuple) and mark[0] == where else 0
+        pages = max(1, -(-len(tickets) // self.TICKET_PAGE))
+        page = max(0, min(page, pages - 1))
+        self.ticket_page = (where, page)
+        return tickets[page * self.TICKET_PAGE:(page + 1) * self.TICKET_PAGE]
+
+    def _ticket_pager(self, body, tickets):
+        """Blaettern wie in den Listen der Lernplattform (app_gui, Pfeile und
+        "Seite x / y"); nur bei mehr als TICKET_PAGE Eintraegen."""
+        pages = -(-len(tickets) // self.TICKET_PAGE)
+        if pages <= 1:
+            return
+        from fisi_widgets import IconButton   # nur fuer dieses Blaettern
+        pager = _frame(body)
+        pager.pack(fill="x", pady=(10, 0))
+        IconButton(pager, "arrow_left", lambda: self._turn_tickets(-1),
+                   parent_bg=C["card"], name="Vorherige Seite").pack(side="left")
+        make_label(pager, "Seite %d / %d" % (self.ticket_page[1] + 1, pages),
+                   font=F["small_bold"], fg=C["text_dim"]).pack(side="left", expand=True)
+        IconButton(pager, "arrow_right", lambda: self._turn_tickets(1),
+                   parent_bg=C["card"], name="Nächste Seite").pack(side="right")
+
+    def _turn_tickets(self, delta):
+        where, page = self.ticket_page
+        self.ticket_page = (where, page + delta)
+        self.render(keep_scroll=True)
 
     def _build_warehouse(self, parent, state):
         """Lager: was unterwegs ist, was da ist und was ausgeliefert wurde."""
@@ -4377,7 +5001,7 @@ class HomeView(SiteView):
                                                                            padx=4)
 
 
-class FirmView(TabCache, ReusableView, ScrollArea):
+class FirmView(FitWidth, TabCache, ReusableView, ScrollArea):
     """Unterpunkt "Firma" (ab 0.33): Gruendung, Mitarbeiter, Bewerbungen,
     Gebaeude und Finanzen. Vor der Gruendung nur die Finanzen und was fuer
     die Gruendung noch fehlt."""
@@ -4406,6 +5030,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         self.loan_amount = None      # frei gewaehlte Kreditsumme (ab 0.41)
         self.loan_term = 50          # gewaehlte Laufzeit
         self.plans_for = set()       # Kredite mit aufgeklapptem Tilgungsplan
+        self._fit_init()             # ab 0.63.2 (B-D-01/B-D-02)
 
     @property
     def game(self):
@@ -5200,8 +5825,8 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         self._changed()
 
     def _fire(self, item):
-        if not messagebox.askyesno("Entlassen", "%s wirklich entlassen? Die Person bewirbt "
-                                   "sich danach nicht erneut." % item["name"]):
+        if not messagebox.askyesno("Entlassen", self.game.fire_question(item["id"],
+                                                                     item["name"])):
             return
         try:
             self.game.fire(item["id"])
@@ -5610,11 +6235,16 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             elif booking:
                 make_label(side, "gebucht", font=F["small_bold"], fg=C["green"]).pack()
             else:
+                # Ab 0.63.2 (B-D-10): beide Knoepfe so breit wie der laengere
+                # Text ("Laufend buchen" / "Einmalig buchen"), mindestens 110
+                from fisi_widgets import text_width   # wie NeoButton selbst
+                wide = max(110, max(int(text_width(label, F["small_bold"]) + 44)
+                                    for _mode, label in fg.AD_MODES))
                 for mode, label in fg.AD_MODES:
                     offer = item["angebote"][mode]
                     button = NeoButton(side, label, lambda o=offer: self._book_ad(o),
                                        kind="primary" if mode == fg.AD_RUNNING else "ghost",
-                                       height=32, width=110, font=F["small_bold"])
+                                       height=32, width=wide, font=F["small_bold"])
                     button.pack(pady=(0, 6))
                     button.set_enabled(not offer["problem"])
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \
@@ -6079,7 +6709,7 @@ def tier_color(key):
     return fg.TIER_COLORS.get(key, C["muted"])
 
 
-class JourneyView(TabCache, ReusableView, ScrollArea):
+class JourneyView(FitWidth, TabCache, ReusableView, ScrollArea):
     """Unterpunkt "Reise": Reiter "Rueckblick" (Statistik und Tagebuch der
     wichtigsten Momente) und ab 0.46 "Erfolge" (Bestwerte ueber alle
     Spielstaende und Abzeichen) - alles aus dem Ereignisprotokoll berechnet."""
@@ -6093,6 +6723,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
         self.page = 0
         self.tab = "rueckblick"
         self.badge_group = "alle"
+        self._fit_init()             # ab 0.63.2 (B-D-01)
 
     @property
     def game(self):
@@ -6165,6 +6796,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
         card.pack(fill="x")
         grid = _frame(card.body)
         grid.pack(fill="x")
+        grid._fit_columns = 3      # ab 0.63.2 (FitWidth): weniger Spalten, wenn eng
         for column in range(3):
             grid.columnconfigure(column, weight=1, uniform="bw")
         for index, item in enumerate(board["werte"]):
@@ -6193,6 +6825,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
                   self._choose_badges).pack(anchor="w", pady=(0, 10))
         grid = _frame(card.body)
         grid.pack(fill="x")
+        grid._fit_columns = BADGE_COLUMNS   # ab 0.63.2 (FitWidth)
         for column in range(BADGE_COLUMNS):
             grid.columnconfigure(column, weight=1, uniform="ab")
         visible = [item for item in items
@@ -6218,8 +6851,9 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
                           justify="left", anchor="w")
         name.pack(anchor="w")
         # ab 0.53: lange Namen in schmalen Kacheln umbrechen statt abschneiden
-        info.bind("<Configure>", lambda event, label=name: _wrap_to(label, event.width),
+        info.bind("<Configure>", lambda event, label=name: self._badge_wrap(label, event.width),
                   add="+")
+        name._fit_base = 200     # ab 0.63.2 (FitWidth): Umbruchbreite wie gebaut
         status, color = fg.badge_status(item)
         make_label(info, status, font=F["small_bold"], fg=fg.tier_text_color(color),
                    wraplength=200, justify="left", anchor="w").pack(anchor="w")
@@ -6228,6 +6862,9 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
                                      progress_color=tier_color(item["naechste"]["tier"]))
             bar.pack(fill="x", pady=(5, 0))
             bar.set(item["anteil"])
+            # ab 0.63.2 (FitWidth): Balken behaelt seine Breite - er haelt die
+            # Kachel so breit, dass der Namens-Umbruch (_wrap_to) ruhig bleibt
+            bar._fit_keep = True
         text = "Noch nicht entdeckt." if item["geheim"] else item["text"]
         goals = fg.badge_goals(item) if len(item["stufen"]) > 1 else ""
         make_label(tile, text, font=F["small"], fg=C["text_dim"], wraplength=300,
@@ -6237,6 +6874,17 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
             make_label(tile, goals, font=F["tiny"], fg=C["muted"], wraplength=300,
                        justify="left", anchor="w").pack(anchor="w", padx=12, pady=(0, 12))
         return tile
+
+    def _badge_wrap(self, label, width):
+        """Namens-Umbruch an die Kachelbreite (ab 0.53). Ab 0.63.2: waehrend
+        FitWidth zurechtrueckt, nur schmaler - sonst schaukeln sich Umbruch
+        und Spaltenbreite des Rasters gegenseitig auf (Sehr gross,
+        1920 -> 1120: haengt)."""
+        if self.__dict__.get("_fit_running"):
+            wrap = max(1, int(width / label._get_widget_scaling()))
+            if wrap >= (label.cget("wraplength") or 0):
+                return
+        _wrap_to(label, width)
 
     def _choose_badges(self, group):
         self.badge_group = group
@@ -6262,6 +6910,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
              "gewonnen von %d" % stats["angebote"]),
             ("Verdient", _euro(stats["verdient"]), "alle Einnahmen zusammen"),
         ]
+        grid._fit_columns = 3      # ab 0.63.2 (FitWidth): weniger Spalten, wenn eng
         for column in range(3):
             grid.columnconfigure(column, weight=1, uniform="rb")
         for index, (title, value, detail) in enumerate(tiles):
@@ -6280,6 +6929,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
         row.pack(fill="x", pady=(14, 0))
         row.columnconfigure(0, weight=3, uniform="rc")
         row.columnconfigure(1, weight=2, uniform="rc")
+        row._fit_columns = 2       # ab 0.63.2 (FitWidth): untereinander, wenn eng
         left = _frame(row)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         card = Card(left, title="Tickets je Arbeitstag", accent=C["accent"],

@@ -179,7 +179,7 @@
       "Ein Verschlüsselungsprotokoll"
     ],
     "a": "Ein abgeschirmtes Zwischennetz für öffentlich erreichbare Server",
-    "exp": "Die DMZ trennt öffentlich erreichbare Dienste (z.B. Webserver) vom internen, schützenswerten Netz."
+    "exp": "Die DMZ trennt öffentlich erreichbare Dienste (z. B. Webserver) vom internen, schützenswerten Netz."
   },
   {
     "cat": "netzwerk",
@@ -374,7 +374,7 @@
       "Ein Netzwerkprotokoll"
     ],
     "a": "Umwandlung von Daten in einen Prüfwert fester Länge, der nicht umkehrbar ist",
-    "exp": "Hashfunktionen erzeugen aus beliebigen Daten einen eindeutigen Prüfwert, z.B. zur Integritätsprüfung oder Passwortspeicherung - Hashing ist nicht umkehrbar."
+    "exp": "Hashfunktionen erzeugen aus beliebigen Daten einen charakteristischen Prüfwert, z. B. zur Integritätsprüfung oder Passwortspeicherung - Hashing ist nicht umkehrbar. Zwei verschiedene Eingaben mit gleichem Hashwert (Kollision) gibt es zwar, bei sicheren Verfahren sind sie aber praktisch nicht zu finden."
   },
   {
     "cat": "sicherheit",
@@ -543,7 +543,7 @@
       "Es wird auf Backups vollständig verzichtet"
     ],
     "a": "Mindestens eine Sicherungskopie ist physisch/logisch komplett vom Netzwerk getrennt",
-    "exp": "Ein Air Gap schützt Backups z.B. vor Ransomware, da eine getrennte Kopie von einem Netzwerkangriff nicht erreicht werden kann."
+    "exp": "Ein Air Gap schützt Backups z. B. vor Ransomware, da eine getrennte Kopie von einem Netzwerkangriff nicht erreicht werden kann."
   },
   {
     "cat": "sicherheit",
@@ -563,12 +563,12 @@
     "thema": "angriffe",
     "q": "Was ist ein Keylogger?",
     "options": [
-      "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z.B. Passwörter abzugreifen",
+      "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z. B. Passwörter abzugreifen",
       "Ein Programm zur Protokollierung von Serverauslastung",
       "Ein Tool zur Verwaltung von Verschlüsselungsschlüsseln",
       "Ein Protokoll zur Fernwartung von Systemen"
     ],
-    "a": "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z.B. Passwörter abzugreifen",
+    "a": "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z. B. Passwörter abzugreifen",
     "exp": "Keylogger zeichnen Tastatureingaben mit, um vertrauliche Informationen wie Zugangsdaten unbemerkt auszuspähen."
   },
   {
@@ -582,7 +582,7 @@
       "Application-Layer-Firewalls filtern nur E-Mails"
     ],
     "a": "Paketfilter prüft nur Header-Informationen, Application-Layer-Firewall analysiert den Inhalt auf Anwendungsebene",
-    "exp": "Application-Layer-Firewalls (Proxies) können den Inhalt von Anwendungsprotokollen (z.B. HTTP) tiefergehend prüfen als einfache Paketfilter."
+    "exp": "Application-Layer-Firewalls (Proxies) können den Inhalt von Anwendungsprotokollen (z. B. HTTP) tiefergehend prüfen als einfache Paketfilter."
   },
   {
     "cat": "systeme",
@@ -621,7 +621,7 @@
       "Wird ausschließlich in Webbrowsern ausgeführt"
     ],
     "a": "Läuft direkt auf der Hardware ohne zugrunde liegendes Host-Betriebssystem",
-    "exp": "Typ-1-Hypervisoren (z.B. VMware ESXi, Proxmox VE) werden direkt auf der nackten Hardware installiert."
+    "exp": "Typ-1-Hypervisoren (z. B. VMware ESXi, Proxmox VE) werden direkt auf der nackten Hardware installiert."
   },
   {
     "cat": "systeme",
@@ -816,7 +816,7 @@
       "Ein Backup-Verfahren ohne Wiederherstellungsmöglichkeit"
     ],
     "a": "Das Vorhandensein zusätzlicher, funktional gleicher Komponenten, um Ausfälle abzufedern",
-    "exp": "Redundante Komponenten (z.B. Netzteile, RAID, Cluster-Knoten) übernehmen die Funktion, wenn eine andere Komponente ausfällt, und erhöhen so die Verfügbarkeit."
+    "exp": "Redundante Komponenten (z. B. Netzteile, RAID, Cluster-Knoten) übernehmen die Funktion, wenn eine andere Komponente ausfällt, und erhöhen so die Verfügbarkeit."
   },
   {
     "cat": "systeme",
@@ -860,7 +860,7 @@
   {
     "cat": "systeme",
     "thema": "windows",
-    "q": "Was ist der Zweck eines Betriebssystem-Images (z.B. per Clonezilla) in der Systemadministration?",
+    "q": "Was ist der Zweck eines Betriebssystem-Images (z. B. per Clonezilla) in der Systemadministration?",
     "options": [
       "Schnelle, identische Wiederherstellung oder Verteilung eines vorkonfigurierten Systemzustands",
       "Verschlüsselung des gesamten Netzwerkverkehrs",
@@ -925,7 +925,7 @@
   {
     "cat": "wirtschaft",
     "thema": "service",
-    "q": "Welche Phase gehört zum ITIL-Service-Lebenszyklus?",
+    "q": "Welche Phase gehört zum ITIL-Service-Lebenszyklus (ITIL v3/2011)?",
     "options": [
       "Service Operation",
       "Code Deployment",
@@ -933,7 +933,7 @@
       "Database Indexing"
     ],
     "a": "Service Operation",
-    "exp": "Service Operation sichert den laufenden Betrieb von IT-Services nach ITIL."
+    "exp": "Service Operation ist eine der fünf Phasen des Service-Lebenszyklus nach ITIL v3/2011 und sichert den laufenden Betrieb von IT-Services. ITIL 4 (seit 2019) ersetzt den Lebenszyklus durch das Service Value System."
   },
   {
     "cat": "wirtschaft",
@@ -985,7 +985,7 @@
       "CAPEX bezeichnet nur Personalkosten"
     ],
     "a": "OPEX sind laufende Betriebskosten, CAPEX sind Investitionsausgaben",
-    "exp": "CAPEX (Capital Expenditure) sind einmalige Investitionen, OPEX (Operational Expenditure) laufende Betriebskosten - relevant z.B. bei Cloud gegenüber eigener Hardware."
+    "exp": "CAPEX (Capital Expenditure) sind einmalige Investitionen, OPEX (Operational Expenditure) laufende Betriebskosten - relevant z. B. bei Cloud gegenüber eigener Hardware."
   },
   {
     "cat": "wirtschaft",
@@ -998,7 +998,7 @@
       "Ein Sicherheitskonzept"
     ],
     "a": "Eine visuelle Tafel zur Darstellung von Arbeitsschritten und Aufgabenstatus",
-    "exp": "Kanban visualisiert den Arbeitsfluss in Spalten (z.B. To-Do, In Arbeit, Fertig) zur Steuerung von Arbeitslast und Durchlaufzeit."
+    "exp": "Kanban visualisiert den Arbeitsfluss in Spalten (z. B. To-Do, In Arbeit, Fertig) zur Steuerung von Arbeitslast und Durchlaufzeit."
   },
   {
     "cat": "wirtschaft",
@@ -1141,7 +1141,7 @@
       "Verkauf von Firmenanteilen an der Börse"
     ],
     "a": "Auslagerung von Unternehmensfunktionen oder IT-Dienstleistungen an externe Dienstleister",
-    "exp": "Beim Outsourcing werden bestimmte Aufgaben (z.B. IT-Support, Hosting) bewusst an spezialisierte externe Anbieter vergeben."
+    "exp": "Beim Outsourcing werden bestimmte Aufgaben (z. B. IT-Support, Hosting) bewusst an spezialisierte externe Anbieter vergeben."
   },
   {
     "cat": "wirtschaft",
@@ -1219,7 +1219,7 @@
       "Nur das Entwicklungsteam"
     ],
     "a": "Alle Personen oder Gruppen mit einem Interesse am oder Einfluss auf das Projekt",
-    "exp": "Stakeholder umfassen z.B. Auftraggeber, Nutzer, Management, Betriebsrat oder externe Partner - ihre Interessen sollten im Projektverlauf berücksichtigt werden."
+    "exp": "Stakeholder umfassen z. B. Auftraggeber, Nutzer, Management, Betriebsrat oder externe Partner - ihre Interessen sollten im Projektverlauf berücksichtigt werden."
   },
   {
     "cat": "netzwerk",
@@ -1289,7 +1289,7 @@
   {
     "cat": "netzwerk",
     "thema": "dienste",
-    "q": "Welchen Port verwendet TFTP, z.B. beim Booten über das Netzwerk?",
+    "q": "Welchen Port verwendet TFTP, z. B. beim Booten über das Netzwerk?",
     "options": [
       "UDP 69",
       "TCP 21",
@@ -1297,7 +1297,7 @@
       "UDP 161"
     ],
     "a": "UDP 69",
-    "exp": "TFTP (Trivial File Transfer Protocol) nutzt UDP-Port 69 - z.B. für PXE-Boot oder Firmware-Updates von Netzwerkgeräten."
+    "exp": "TFTP (Trivial File Transfer Protocol) nutzt UDP-Port 69 - z. B. für PXE-Boot oder Firmware-Updates von Netzwerkgeräten."
   },
   {
     "cat": "netzwerk",
@@ -1375,7 +1375,7 @@
       "Ein Port mit Stromversorgung per PoE"
     ],
     "a": "Ein Port, der mehrere VLANs getaggt überträgt",
-    "exp": "Ein Trunk überträgt Frames mehrerer VLANs mit 802.1Q-Tag, z.B. zwischen Switches. Ein Access-Port gehört dagegen genau einem VLAN an."
+    "exp": "Ein Trunk überträgt Frames mehrerer VLANs mit 802.1Q-Tag, z. B. zwischen Switches. Ein Access-Port gehört dagegen genau einem VLAN an."
   },
   {
     "cat": "netzwerk",
@@ -1414,7 +1414,7 @@
       "LDAP"
     ],
     "a": "NTP",
-    "exp": "NTP (Network Time Protocol, UDP 123) sorgt für eine einheitliche Uhrzeit - wichtig z.B. für Kerberos-Anmeldungen und nachvollziehbare Logdateien."
+    "exp": "NTP (Network Time Protocol, UDP 123) sorgt für eine einheitliche Uhrzeit - wichtig z. B. für Kerberos-Anmeldungen und nachvollziehbare Logdateien."
   },
   {
     "cat": "sicherheit",
@@ -1518,7 +1518,7 @@
       "Ein verschlüsseltes Firmennetz"
     ],
     "a": "Ein Verbund kompromittierter Rechner, die ferngesteuert werden",
-    "exp": "Infizierte Rechner (Bots) werden über einen Command-and-Control-Server gesteuert, z.B. für DDoS-Angriffe oder Spam-Versand."
+    "exp": "Infizierte Rechner (Bots) werden über einen Command-and-Control-Server gesteuert, z. B. für DDoS-Angriffe oder Spam-Versand."
   },
   {
     "cat": "sicherheit",
@@ -1531,7 +1531,7 @@
       "Ein Angriff auf WLAN-Router"
     ],
     "a": "Gezieltes Phishing auf bestimmte Personen mit persönlich zugeschnittenen Nachrichten",
-    "exp": "Beim Spear-Phishing recherchiert der Angreifer vorher (z.B. in sozialen Netzwerken) und formuliert glaubwürdige, persönliche Nachrichten an ausgewählte Personen."
+    "exp": "Beim Spear-Phishing recherchiert der Angreifer vorher (z. B. in sozialen Netzwerken) und formuliert glaubwürdige, persönliche Nachrichten an ausgewählte Personen."
   },
   {
     "cat": "sicherheit",
@@ -1700,7 +1700,7 @@
       "Die Fernwartung per Bildschirmübertragung"
     ],
     "a": "Das Starten eines Rechners über das Netzwerk",
-    "exp": "Per PXE lädt ein Rechner beim Start ein Boot-Image über das Netzwerk (DHCP + TFTP) - z.B. für die automatische Installation vieler Clients."
+    "exp": "Per PXE lädt ein Rechner beim Start ein Boot-Image über das Netzwerk (DHCP + TFTP) - z. B. für die automatische Installation vieler Clients."
   },
   {
     "cat": "systeme",
@@ -1752,12 +1752,12 @@
       "System Maintenance and Repair Tool"
     ],
     "a": "Self-Monitoring, Analysis and Reporting Technology",
-    "exp": "S.M.A.R.T. überwacht Zustandswerte des Datenträgers (z.B. defekte Sektoren, Temperatur) und warnt frühzeitig vor einem drohenden Ausfall."
+    "exp": "S.M.A.R.T. überwacht Zustandswerte des Datenträgers (z. B. defekte Sektoren, Temperatur) und warnt frühzeitig vor einem drohenden Ausfall."
   },
   {
     "cat": "systeme",
     "thema": "virtualisierung",
-    "q": "Was ist ein Container-Image (z.B. bei Docker)?",
+    "q": "Was ist ein Container-Image (z. B. bei Docker)?",
     "options": [
       "Eine unveränderliche Vorlage mit Anwendung und Abhängigkeiten",
       "Eine Sicherung der gesamten Festplatte",
@@ -1778,7 +1778,7 @@
       "On-Premises"
     ],
     "a": "PaaS",
-    "exp": "IaaS: nur Infrastruktur (VMs, Speicher). PaaS: zusätzlich Betriebssystem und Laufzeitumgebung. SaaS: fertige Anwendung (z.B. Microsoft 365)."
+    "exp": "IaaS: nur Infrastruktur (VMs, Speicher). PaaS: zusätzlich Betriebssystem und Laufzeitumgebung. SaaS: fertige Anwendung (z. B. Microsoft 365)."
   },
   {
     "cat": "systeme",
@@ -1791,7 +1791,7 @@
       "Backups auf Band schreiben"
     ],
     "a": "Systeme und Dienste laufend überwachen und bei Problemen alarmieren",
-    "exp": "Monitoring prüft z.B. Erreichbarkeit, Auslastung, Speicherplatz und Dienste und benachrichtigt die Administratoren, bevor Benutzer den Fehler bemerken."
+    "exp": "Monitoring prüft z. B. Erreichbarkeit, Auslastung, Speicherplatz und Dienste und benachrichtigt die Administratoren, bevor Benutzer den Fehler bemerken."
   },
   {
     "cat": "systeme",
@@ -1954,13 +1954,13 @@
     "thema": "recht",
     "q": "Was schuldet ein IT-Dienstleister bei einem Werkvertrag?",
     "options": [
-      "Einen konkreten Erfolg, z.B. ein funktionierendes Netzwerk",
+      "Einen konkreten Erfolg, z. B. ein funktionierendes Netzwerk",
       "Nur das Tätigwerden, unabhängig vom Ergebnis",
       "Die Überlassung eines Mitarbeiters",
       "Ausschließlich eine Beratung"
     ],
-    "a": "Einen konkreten Erfolg, z.B. ein funktionierendes Netzwerk",
-    "exp": "Beim Werkvertrag (§ 631 BGB) wird ein Erfolg geschuldet, der abgenommen wird. Beim Dienstvertrag (§ 611 BGB) wird nur die Tätigkeit geschuldet, z.B. Beratung nach Stunden."
+    "a": "Einen konkreten Erfolg, z. B. ein funktionierendes Netzwerk",
+    "exp": "Beim Werkvertrag (§ 631 BGB) wird ein Erfolg geschuldet, der abgenommen wird. Beim Dienstvertrag (§ 611 BGB) wird nur die Tätigkeit geschuldet, z. B. Beratung nach Stunden."
   },
   {
     "cat": "wirtschaft",
@@ -2056,7 +2056,7 @@
   {
     "cat": "netzwerk",
     "thema": "grundlagen",
-    "q": "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?",
+    "q": "Welche Information steht im Ethernet-Frame, aber NICHT im IP-Paket?",
     "options": [
       "Die MAC-Adresse von Absender und Empfänger",
       "Die IP-Adresse des Empfängers",
@@ -2090,7 +2090,7 @@
       "FE:80:00:00:00:01"
     ],
     "a": "FF:FF:FF:FF:FF:FF",
-    "exp": "Frames an FF:FF:FF:FF:FF:FF werden von allen Geräten im Segment angenommen, z.B. ARP-Requests."
+    "exp": "Frames an FF:FF:FF:FF:FF:FF werden von allen Geräten im Segment angenommen, z. B. ARP-Requests."
   },
   {
     "cat": "netzwerk",
@@ -2350,7 +2350,7 @@
       "Exklusion"
     ],
     "a": "Reservierung",
-    "exp": "Eine Reservierung sorgt dafür, dass ein Gerät (z.B. ein Drucker) per DHCP immer dieselbe Adresse erhält."
+    "exp": "Eine Reservierung sorgt dafür, dass ein Gerät (z. B. ein Drucker) per DHCP immer dieselbe Adresse erhält."
   },
   {
     "cat": "netzwerk",
@@ -2714,7 +2714,7 @@
       "Die Stromaufnahme des Switches"
     ],
     "a": "Belegung, Länge und Übertragungswerte wie Dämpfung und Nebensprechen",
-    "exp": "Ein Zertifizierer weist nach, dass die Strecke die Werte der Kategorie (z.B. Cat 6A) einhält."
+    "exp": "Ein Zertifizierer weist nach, dass die Strecke die Werte der Kategorie (z. B. Cat 6A) einhält."
   },
   {
     "cat": "netzwerk",
@@ -2844,7 +2844,7 @@
       "Switched Dual WAN"
     ],
     "a": "Software-Defined Wide Area Network",
-    "exp": "SD-WAN steuert mehrere WAN-Leitungen zentral per Software und verteilt den Verkehr nach Regeln, z.B. nach Anwendung."
+    "exp": "SD-WAN steuert mehrere WAN-Leitungen zentral per Software und verteilt den Verkehr nach Regeln, z. B. nach Anwendung."
   },
   {
     "cat": "sicherheit",
@@ -3111,12 +3111,12 @@
     "thema": "netzsicherheit",
     "q": "Was ist eine Next-Generation-Firewall (NGFW)?",
     "options": [
-      "Eine Firewall, die zusätzlich Anwendungen erkennt und z.B. IPS und TLS-Inspektion bietet",
+      "Eine Firewall, die zusätzlich Anwendungen erkennt und z. B. IPS und TLS-Inspektion bietet",
       "Eine Firewall ohne Regelwerk",
       "Eine rein softwarebasierte Personal Firewall",
       "Eine Firewall für WLAN-Kanäle"
     ],
-    "a": "Eine Firewall, die zusätzlich Anwendungen erkennt und z.B. IPS und TLS-Inspektion bietet",
+    "a": "Eine Firewall, die zusätzlich Anwendungen erkennt und z. B. IPS und TLS-Inspektion bietet",
     "exp": "NGFWs arbeiten bis zur Anwendungsschicht und kombinieren Paketfilter, Application Control, IPS und oft Benutzererkennung."
   },
   {
@@ -3143,7 +3143,7 @@
       "Ein Backupserver für Webseiten"
     ],
     "a": "Ein vorgeschalteter Server, der Anfragen aus dem Internet entgegennimmt und intern weiterleitet",
-    "exp": "Der Reverse Proxy schützt und entlastet die internen Server, z.B. durch TLS-Terminierung und Lastverteilung."
+    "exp": "Der Reverse Proxy schützt und entlastet die internen Server, z. B. durch TLS-Terminierung und Lastverteilung."
   },
   {
     "cat": "sicherheit",
@@ -3182,7 +3182,7 @@
       "Das Umleiten von DNS-Anfragen"
     ],
     "a": "Ein Angreifer bringt den Browser eines angemeldeten Nutzers dazu, ungewollt Aktionen auszuführen",
-    "exp": "Schutz bieten z.B. Anti-CSRF-Tokens und das SameSite-Attribut von Cookies."
+    "exp": "Schutz bieten z. B. Anti-CSRF-Tokens und das SameSite-Attribut von Cookies."
   },
   {
     "cat": "sicherheit",
@@ -3247,7 +3247,7 @@
       "Das Kopieren eines Zertifikats"
     ],
     "a": "Das Fälschen der Absender-IP-Adresse in Paketen",
-    "exp": "Gefälschte Absenderadressen werden z.B. bei DDoS-Reflexionsangriffen genutzt."
+    "exp": "Gefälschte Absenderadressen werden z. B. bei DDoS-Reflexionsangriffen genutzt."
   },
   {
     "cat": "sicherheit",
@@ -3260,7 +3260,7 @@
       "Das Überlasten eines Access Points"
     ],
     "a": "Gefälschte ARP-Antworten leiten Verkehr im LAN über den Rechner des Angreifers",
-    "exp": "Der Angreifer gibt sich z.B. als Gateway aus und wird so zum Man-in-the-Middle. Schutz: Dynamic ARP Inspection, Port Security."
+    "exp": "Der Angreifer gibt sich z. B. als Gateway aus und wird so zum Man-in-the-Middle. Schutz: Dynamic ARP Inspection, Port Security."
   },
   {
     "cat": "sicherheit",
@@ -3338,7 +3338,7 @@
       "Ein Backupverfahren für Router"
     ],
     "a": "Ein Verfahren, das Geräte vor dem Netzzugang prüft und je nach Zustand zulässt oder isoliert",
-    "exp": "NAC prüft z.B. Identität, Patchstand und Virenschutz und verschiebt unsichere Geräte in ein Quarantäne-VLAN."
+    "exp": "NAC prüft z. B. Identität, Patchstand und Virenschutz und verschiebt unsichere Geräte in ein Quarantäne-VLAN."
   },
   {
     "cat": "sicherheit",
@@ -3436,12 +3436,12 @@
     "thema": "haertung",
     "q": "Was ist Hardening (Härtung) eines Systems?",
     "options": [
-      "Das Reduzieren der Angriffsfläche, z.B. durch Deaktivieren unnötiger Dienste",
+      "Das Reduzieren der Angriffsfläche, z. B. durch Deaktivieren unnötiger Dienste",
       "Das Einbauen einer robusteren Festplatte",
       "Das Erhöhen der CPU-Leistung",
       "Das Verschlüsseln des Gehäuses"
     ],
-    "a": "Das Reduzieren der Angriffsfläche, z.B. durch Deaktivieren unnötiger Dienste",
+    "a": "Das Reduzieren der Angriffsfläche, z. B. durch Deaktivieren unnötiger Dienste",
     "exp": "Dazu gehören u.a. unnötige Dienste und Konten entfernen, sichere Konfiguration, Updates und restriktive Rechte."
   },
   {
@@ -3494,7 +3494,7 @@
       "Für die WLAN-Verbindung"
     ],
     "a": "Zum sicheren Speichern von Schlüsseln und zur Prüfung der Systemintegrität beim Start",
-    "exp": "Das Trusted Platform Module hält z.B. BitLocker-Schlüssel und misst den Bootvorgang (Measured Boot)."
+    "exp": "Das Trusted Platform Module hält z. B. BitLocker-Schlüssel und misst den Bootvorgang (Measured Boot)."
   },
   {
     "cat": "sicherheit",
@@ -3767,7 +3767,7 @@
       "16.384"
     ],
     "a": "65.536",
-    "exp": "2^16 = 65.536 Werte, z.B. die Portnummern 0 bis 65.535."
+    "exp": "2^16 = 65.536 Werte, z. B. die Portnummern 0 bis 65.535."
   },
   {
     "cat": "systeme",
@@ -3949,7 +3949,7 @@
       "fstab"
     ],
     "a": "cron (crontab)",
-    "exp": "In der crontab legt man fest, wann ein Befehl regelmäßig laufen soll, z.B. täglich um 2 Uhr ein Backup."
+    "exp": "In der crontab legt man fest, wann ein Befehl regelmäßig laufen soll, z. B. täglich um 2 Uhr ein Backup."
   },
   {
     "cat": "systeme",
@@ -3988,7 +3988,7 @@
       "Registrierungs-Editor"
     ],
     "a": "Ereignisanzeige (eventvwr)",
-    "exp": "In der Ereignisanzeige findet man Fehler, Warnungen und Anmeldeereignisse, z.B. Ereignis-ID 4625 für fehlgeschlagene Anmeldungen."
+    "exp": "In der Ereignisanzeige findet man Fehler, Warnungen und Anmeldeereignisse, z. B. Ereignis-ID 4625 für fehlgeschlagene Anmeldungen."
   },
   {
     "cat": "systeme",
@@ -4105,7 +4105,7 @@
       "CNAME"
     ],
     "a": "SRV",
-    "exp": "SRV-Einträge (z.B. _ldap._tcp.dc._msdcs.firma.local) zeigen auf die Server, die einen Dienst anbieten."
+    "exp": "SRV-Einträge (z. B. _ldap._tcp.dc._msdcs.firma.local) zeigen auf die Server, die einen Dienst anbieten."
   },
   {
     "cat": "systeme",
@@ -4287,7 +4287,7 @@
       "Ein Backup, das nie geprüft wird"
     ],
     "a": "Eine Sicherung, die für eine festgelegte Zeit nicht gelöscht oder verändert werden kann",
-    "exp": "Immutable Storage (z.B. WORM, Object Lock) schützt Sicherungen vor Ransomware und versehentlichem Löschen."
+    "exp": "Immutable Storage (z. B. WORM, Object Lock) schützt Sicherungen vor Ransomware und versehentlichem Löschen."
   },
   {
     "cat": "systeme",
@@ -4500,7 +4500,7 @@
   {
     "cat": "wirtschaft",
     "thema": "recht",
-    "q": "Wie lange kann ein Verbraucher einen Fernabsatzvertrag, z.B. einen Onlinekauf, in der Regel widerrufen?",
+    "q": "Wie lange kann ein Verbraucher einen Fernabsatzvertrag, z. B. einen Onlinekauf, in der Regel widerrufen?",
     "options": [
       "14 Tage",
       "7 Tage",
@@ -4846,7 +4846,7 @@
       "Entscheidung über die Rechtsform"
     ],
     "a": "Einführung technischer Einrichtungen zur Überwachung von Leistung oder Verhalten",
-    "exp": "§ 87 Abs. 1 Nr. 6 BetrVG: z.B. Software, die Leistung oder Verhalten der Mitarbeiter auswerten kann."
+    "exp": "§ 87 Abs. 1 Nr. 6 BetrVG: z. B. Software, die Leistung oder Verhalten der Mitarbeiter auswerten kann."
   },
   {
     "cat": "wirtschaft",
@@ -4859,7 +4859,7 @@
       "Ein Gesetz des Bundestags"
     ],
     "a": "Eine Vereinbarung zwischen Gewerkschaft und Arbeitgeberverband bzw. Arbeitgeber",
-    "exp": "Er regelt z.B. Löhne, Arbeitszeit und Urlaub. Vereinbarungen zwischen Betriebsrat und Arbeitgeber heißen Betriebsvereinbarungen."
+    "exp": "Er regelt z. B. Löhne, Arbeitszeit und Urlaub. Vereinbarungen zwischen Betriebsrat und Arbeitgeber heißen Betriebsvereinbarungen."
   },
   {
     "cat": "wirtschaft",
@@ -5158,7 +5158,7 @@
       "Ein Projekt muss 80 % Gewinn bringen"
     ],
     "a": "Mit 20 % des Aufwands werden oft 80 % der Ergebnisse erreicht",
-    "exp": "Die 80/20-Regel hilft beim Priorisieren, z.B. welche Fehler zuerst behoben werden."
+    "exp": "Die 80/20-Regel hilft beim Priorisieren, z. B. welche Fehler zuerst behoben werden."
   },
   {
     "cat": "wirtschaft",
@@ -5171,7 +5171,7 @@
       "Kanban-Board"
     ],
     "a": "Ishikawa-Diagramm",
-    "exp": "Das Ursache-Wirkungs-Diagramm sammelt Ursachen z.B. nach Mensch, Maschine, Methode, Material, Milieu, Messung."
+    "exp": "Das Ursache-Wirkungs-Diagramm sammelt Ursachen z. B. nach Mensch, Maschine, Methode, Material, Milieu, Messung."
   },
   {
     "cat": "wirtschaft",
@@ -5184,7 +5184,7 @@
       "Prozess, Daten, Code, Anwendung"
     ],
     "a": "Plan, Do, Check, Act als Kreislauf der kontinuierlichen Verbesserung",
-    "exp": "Der Deming-Kreis ist Grundlage des Qualitätsmanagements, z.B. nach ISO 9001."
+    "exp": "Der Deming-Kreis ist Grundlage des Qualitätsmanagements, z. B. nach ISO 9001."
   },
   {
     "cat": "wirtschaft",
@@ -5210,7 +5210,7 @@
       "Das Löschen eines Benutzerkontos"
     ],
     "a": "Das Weiterleiten eines Vorfalls an eine höhere Support- oder Managementebene",
-    "exp": "Funktionale Eskalation: an Spezialisten. Hierarchische Eskalation: an Vorgesetzte, z.B. wenn ein SLA gefährdet ist."
+    "exp": "Funktionale Eskalation: an Spezialisten. Hierarchische Eskalation: an Vorgesetzte, z. B. wenn ein SLA gefährdet ist."
   },
   {
     "cat": "wirtschaft",
@@ -5230,12 +5230,12 @@
     "thema": "service",
     "q": "Was ist ein Service Request im Unterschied zu einem Incident?",
     "options": [
-      "Eine Standardanfrage, z.B. nach einem neuen Zugang, keine Störung",
+      "Eine Standardanfrage, z. B. nach einem neuen Zugang, keine Störung",
       "Eine schwere Störung",
       "Eine Kundenbeschwerde",
       "Ein Sicherheitsvorfall"
     ],
-    "a": "Eine Standardanfrage, z.B. nach einem neuen Zugang, keine Störung",
+    "a": "Eine Standardanfrage, z. B. nach einem neuen Zugang, keine Störung",
     "exp": "Incidents sind ungeplante Unterbrechungen, Service Requests planbare Standardleistungen."
   },
   {
@@ -6211,7 +6211,7 @@
       "Payload Length"
     ],
     "a": "Next Header",
-    "exp": "Next Header nennt den nächsten Erweiterungsheader oder das Transportprotokoll, z.B. 6 für TCP oder 17 für UDP. Damit werden die Erweiterungsheader wie eine Kette verknüpft."
+    "exp": "Next Header nennt den nächsten Erweiterungsheader oder das Transportprotokoll, z. B. 6 für TCP oder 17 für UDP. Damit werden die Erweiterungsheader wie eine Kette verknüpft."
   },
   {
     "cat": "netzwerk",
@@ -6380,7 +6380,7 @@
       "Routing nur zu Bürozeiten"
     ],
     "a": "Routing nach Regeln wie Quelladresse oder Anwendung statt nur nach Ziel",
-    "exp": "Normales Routing entscheidet nur nach der Zieladresse. Mit Policy-Based Routing kann z.B. Gastverkehr über eine andere Internetleitung geschickt werden als Firmenverkehr."
+    "exp": "Normales Routing entscheidet nur nach der Zieladresse. Mit Policy-Based Routing kann z. B. Gastverkehr über eine andere Internetleitung geschickt werden als Firmenverkehr."
   },
   {
     "cat": "netzwerk",
@@ -6458,7 +6458,7 @@
       "2,4 GHz nutzt breitere Kanäle"
     ],
     "a": "Niedrigere Frequenzen werden von Wänden weniger gedämpft",
-    "exp": "Höhere Frequenzen werden stärker gedämpft. 2,4 GHz kommt weiter und besser durch Wände, hat aber weniger Kanäle und mehr Störungen, z.B. durch Bluetooth oder Mikrowellen."
+    "exp": "Höhere Frequenzen werden stärker gedämpft. 2,4 GHz kommt weiter und besser durch Wände, hat aber weniger Kanäle und mehr Störungen, z. B. durch Bluetooth oder Mikrowellen."
   },
   {
     "cat": "netzwerk",
@@ -6497,7 +6497,7 @@
       "Ein WLAN ohne Verschlüsselung für Admins"
     ],
     "a": "Eine Anmeldeseite, die vor dem Internetzugang erscheint",
-    "exp": "Nach der Verbindung leitet der Access Point alle Webanfragen auf eine Seite um, auf der man z.B. Nutzungsbedingungen bestätigt oder einen Gutscheincode eingibt. Erst dann ist das Internet frei."
+    "exp": "Nach der Verbindung leitet der Access Point alle Webanfragen auf eine Seite um, auf der man z. B. Nutzungsbedingungen bestätigt oder einen Gutscheincode eingibt. Erst dann ist das Internet frei."
   },
   {
     "cat": "netzwerk",
@@ -6523,7 +6523,7 @@
       "Den MX-Eintrag ändern"
     ],
     "a": "Die TTL deutlich verringern",
-    "exp": "Mit kurzer TTL (z.B. 300 Sekunden) verfallen alte Einträge in den Caches schnell, und die neue Adresse wirkt nach dem Umzug fast sofort."
+    "exp": "Mit kurzer TTL (z. B. 300 Sekunden) verfallen alte Einträge in den Caches schnell, und die neue Adresse wirkt nach dem Umzug fast sofort."
   },
   {
     "cat": "netzwerk",
@@ -6653,7 +6653,7 @@
       "Die Lease wurde erfolgreich verlängert"
     ],
     "a": "Der Server lehnt die gewünschte Adresse ab, der Client muss neu anfragen",
-    "exp": "Mit DHCPNAK lehnt der Server einen Request ab, z.B. weil der Client in ein anderes Subnetz gewechselt ist. Der Client startet danach wieder mit DHCPDISCOVER."
+    "exp": "Mit DHCPNAK lehnt der Server einen Request ab, z. B. weil der Client in ein anderes Subnetz gewechselt ist. Der Client startet danach wieder mit DHCPDISCOVER."
   },
   {
     "cat": "netzwerk",
@@ -6673,12 +6673,12 @@
     "thema": "dienste",
     "q": "Clients erhalten plötzlich eine falsche Gateway-Adresse per DHCP. Was ist eine typische Ursache?",
     "options": [
-      "Ein fremder DHCP-Server im Netz, z.B. ein angeschlossener Heimrouter",
+      "Ein fremder DHCP-Server im Netz, z. B. ein angeschlossener Heimrouter",
       "Ein defektes Patchkabel",
       "Ein voller DNS-Cache",
       "Eine zu kurze TTL"
     ],
-    "a": "Ein fremder DHCP-Server im Netz, z.B. ein angeschlossener Heimrouter",
+    "a": "Ein fremder DHCP-Server im Netz, z. B. ein angeschlossener Heimrouter",
     "exp": "Ein zweiter DHCP-Server (Rogue DHCP) antwortet schneller als der richtige. DHCP Snooping am Switch erlaubt Angebote nur von freigegebenen Ports."
   },
   {
@@ -6809,7 +6809,7 @@
       "Die zweite Leitung ist nur für Broadcasts"
     ],
     "a": "Eine Verbindung wird per Hash immer über dieselbe Leitung geschickt",
-    "exp": "Der Switch verteilt Verbindungen anhand eines Hashwerts (z.B. aus MAC- oder IP-Adressen) auf die Leitungen. Viele parallele Verbindungen profitieren, eine einzelne bleibt auf einer Leitung."
+    "exp": "Der Switch verteilt Verbindungen anhand eines Hashwerts (z. B. aus MAC- oder IP-Adressen) auf die Leitungen. Viele parallele Verbindungen profitieren, eine einzelne bleibt auf einer Leitung."
   },
   {
     "cat": "netzwerk",
@@ -6874,7 +6874,7 @@
       "1 Gbit/s auf 300 m"
     ],
     "a": "25 oder 40 Gbit/s auf bis zu 30 m",
-    "exp": "Cat 8 ist für kurze Strecken im Rechenzentrum gedacht, z.B. zwischen Server und Top-of-Rack-Switch. Für 100 m bleibt Cat 6A die Wahl."
+    "exp": "Cat 8 ist für kurze Strecken im Rechenzentrum gedacht, z. B. zwischen Server und Top-of-Rack-Switch. Für 100 m bleibt Cat 6A die Wahl."
   },
   {
     "cat": "netzwerk",
@@ -6900,7 +6900,7 @@
       "Es gibt keinen Unterschied"
     ],
     "a": "SR nutzt Multimode für kurze Strecken, LR Singlemode bis etwa 10 km",
-    "exp": "SR (Short Range) arbeitet mit Multimode-Faser, z.B. bis 300 m auf OM3. LR (Long Range) nutzt Singlemode-Faser und schafft rund 10 km."
+    "exp": "SR (Short Range) arbeitet mit Multimode-Faser, z. B. bis 300 m auf OM3. LR (Long Range) nutzt Singlemode-Faser und schafft rund 10 km."
   },
   {
     "cat": "netzwerk",
@@ -6939,7 +6939,7 @@
       "URG"
     ],
     "a": "FIN",
-    "exp": "FIN beendet eine Richtung geordnet, beide Seiten bestätigen. RST bricht eine Verbindung sofort ab, z.B. wenn ein Port geschlossen ist."
+    "exp": "FIN beendet eine Richtung geordnet, beide Seiten bestätigen. RST bricht eine Verbindung sofort ab, z. B. wenn ein Port geschlossen ist."
   },
   {
     "cat": "netzwerk",
@@ -6965,7 +6965,7 @@
       "Typ 11"
     ],
     "a": "Typ 3",
-    "exp": "Typ 3 (Destination Unreachable) hat verschiedene Codes, z.B. Netz, Host oder Port nicht erreichbar. Typ 0 ist Echo Reply, 8 Echo Request, 11 Time Exceeded."
+    "exp": "Typ 3 (Destination Unreachable) hat verschiedene Codes, z. B. Netz, Host oder Port nicht erreichbar. Typ 0 ist Echo Reply, 8 Echo Request, 11 Time Exceeded."
   },
   {
     "cat": "netzwerk",
@@ -7035,7 +7035,7 @@
   {
     "cat": "netzwerk",
     "thema": "dienste",
-    "q": "Welchen UDP-Port nutzt Multicast-DNS (z.B. Bonjour) im lokalen Netz?",
+    "q": "Welchen UDP-Port nutzt Multicast-DNS (z. B. Bonjour) im lokalen Netz?",
     "options": [
       "5353",
       "53",
@@ -7108,7 +7108,7 @@
       "Die Farben werden vertauscht"
     ],
     "a": "Die Umrisse des Bildes bleiben im Geheimtext erkennbar",
-    "exp": "Gleiche Klartextblöcke (z.B. gleichfarbige Flächen) ergeben im ECB gleiche Geheimtextblöcke. Das Muster bleibt sichtbar, bekannt als \"ECB-Pinguin\"."
+    "exp": "Gleiche Klartextblöcke (z. B. gleichfarbige Flächen) ergeben im ECB gleiche Geheimtextblöcke. Das Muster bleibt sichtbar, bekannt als \"ECB-Pinguin\"."
   },
   {
     "cat": "sicherheit",
@@ -7277,7 +7277,7 @@
       "Die Daten dürfen weiter für Werbung genutzt werden"
     ],
     "a": "Die Rechnungsdaten werden gesperrt und nach Ablauf der Frist gelöscht",
-    "exp": "Gesetzliche Aufbewahrungspflichten gehen dem Löschanspruch vor (Art. 17 Abs. 3 lit. b DSGVO). Die Daten werden in der Verarbeitung eingeschränkt und nach Fristablauf gelöscht. Andere Daten, z.B. für Werbung, sind sofort zu löschen."
+    "exp": "Gesetzliche Aufbewahrungspflichten gehen dem Löschanspruch vor (Art. 17 Abs. 3 lit. b DSGVO). Die Daten werden in der Verarbeitung eingeschränkt und nach Fristablauf gelöscht. Andere Daten, z. B. für Werbung, sind sofort zu löschen."
   },
   {
     "cat": "sicherheit",
@@ -7329,7 +7329,7 @@
       "Nie, Übermittlungen in Drittländer sind verboten"
     ],
     "a": "Mit geeigneter Grundlage wie Angemessenheitsbeschluss oder Standardvertragsklauseln",
-    "exp": "Kapitel V der DSGVO verlangt für Drittlandübermittlungen einen Angemessenheitsbeschluss (z.B. für zertifizierte US-Firmen das EU-US Data Privacy Framework) oder geeignete Garantien wie Standardvertragsklauseln."
+    "exp": "Kapitel V der DSGVO verlangt für Drittlandübermittlungen einen Angemessenheitsbeschluss (z. B. für zertifizierte US-Firmen das EU-US Data Privacy Framework) oder geeignete Garantien wie Standardvertragsklauseln."
   },
   {
     "cat": "sicherheit",
@@ -7368,7 +7368,7 @@
       "Auf eine rechtliche Verpflichtung"
     ],
     "a": "Auf eine Einwilligung des Besuchers",
-    "exp": "Tracking ist technisch nicht unbedingt erforderlich. Nach § 25 TDDDG und DSGVO braucht es eine vorherige, aktive Einwilligung, z.B. über ein Cookie-Banner mit gleichwertiger Ablehnen-Möglichkeit."
+    "exp": "Tracking ist technisch nicht unbedingt erforderlich. Nach § 25 TDDDG und DSGVO braucht es eine vorherige, aktive Einwilligung, z. B. über ein Cookie-Banner mit gleichwertiger Ablehnen-Möglichkeit."
   },
   {
     "cat": "sicherheit",
@@ -7576,7 +7576,7 @@
       "Der Test wird ohne Auftrag durchgeführt"
     ],
     "a": "Die Tester haben vorab keine Informationen über das Ziel",
-    "exp": "Black Box simuliert einen externen Angreifer. Beim White-Box-Test kennen die Tester alles, beim Grey-Box-Test einen Teil, z.B. ein normales Benutzerkonto."
+    "exp": "Black Box simuliert einen externen Angreifer. Beim White-Box-Test kennen die Tester alles, beim Grey-Box-Test einen Teil, z. B. ein normales Benutzerkonto."
   },
   {
     "cat": "sicherheit",
@@ -7628,7 +7628,7 @@
       "Mit der Dateigröße"
     ],
     "a": "Mit einem Hashwert vom Original und von der Kopie",
-    "exp": "Stimmen die Hashwerte (z.B. SHA-256) überein, ist das Abbild bitgenau. Untersucht wird nur die Kopie, das Original wird mit einem Schreibschutz (Write Blocker) gesichert."
+    "exp": "Stimmen die Hashwerte (z. B. SHA-256) überein, ist das Abbild bitgenau. Untersucht wird nur die Kopie, das Original wird mit einem Schreibschutz (Write Blocker) gesichert."
   },
   {
     "cat": "sicherheit",
@@ -8109,7 +8109,7 @@
       "devmgmt.msc"
     ],
     "a": "certlm.msc",
-    "exp": "certlm.msc zeigt den Speicher des Computers (z.B. Serverzertifikate), certmgr.msc den des aktuellen Benutzers."
+    "exp": "certlm.msc zeigt den Speicher des Computers (z. B. Serverzertifikate), certmgr.msc den des aktuellen Benutzers."
   },
   {
     "cat": "systeme",
@@ -8122,7 +8122,7 @@
       "tracert -http www.beispiel.de"
     ],
     "a": "curl -I https://www.beispiel.de",
-    "exp": "curl -I schickt eine HEAD-Anfrage und zeigt Statuscode und Header, z.B. ob eine Weiterleitung auf HTTPS oder HSTS eingerichtet ist."
+    "exp": "curl -I schickt eine HEAD-Anfrage und zeigt Statuscode und Header, z. B. ob eine Weiterleitung auf HTTPS oder HSTS eingerichtet ist."
   },
   {
     "cat": "systeme",
@@ -8135,7 +8135,7 @@
       "nmap --help ziel"
     ],
     "a": "nmap -sV ziel",
-    "exp": "-sV fragt offene Ports nach Dienst und Version ab. Damit erkennt man z.B. veraltete Serverversionen im eigenen Netz."
+    "exp": "-sV fragt offene Ports nach Dienst und Version ab. Damit erkennt man z. B. veraltete Serverversionen im eigenen Netz."
   },
   {
     "cat": "systeme",
@@ -8168,12 +8168,12 @@
     "thema": "linux",
     "q": "Welche Rechte hat die Datei /etc/shadow typischerweise?",
     "options": [
-      "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+      "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z. B. 640 root:shadow oder 000",
       "Alle Benutzer dürfen sie lesen",
       "Alle Benutzer dürfen sie schreiben",
       "Sie ist ausführbar"
     ],
-    "a": "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+    "a": "Nur root (und ggf. die Gruppe shadow) darf sie lesen, z. B. 640 root:shadow oder 000",
     "exp": "Wären die Hashes für alle lesbar, könnte jeder Benutzer Passwörter offline knacken. Deshalb stehen sie nicht in /etc/passwd, sondern in der geschützten /etc/shadow."
   },
   {
@@ -8213,7 +8213,7 @@
       "Der Service gilt 24 Tage, dann 7 Tage Pause"
     ],
     "a": "Der Service gilt rund um die Uhr an allen Tagen",
-    "exp": "24/7 heißt 24 Stunden an 7 Tagen pro Woche. Das ist deutlich teurer als z.B. 5x9 (Mo-Fr, 9 Stunden am Tag)."
+    "exp": "24/7 heißt 24 Stunden an 7 Tagen pro Woche. Das ist deutlich teurer als z. B. 5x9 (Mo-Fr, 9 Stunden am Tag)."
   },
   {
     "cat": "wirtschaft",
@@ -8317,7 +8317,7 @@
       "Innerhalb von 4 Stunden"
     ],
     "a": "Am Montag",
-    "exp": "Next Business Day bedeutet nächster Werktag. Wer Wochenenden abdecken muss, braucht z.B. einen 24/7-Vertrag mit 4 Stunden Reaktionszeit."
+    "exp": "Next Business Day bedeutet nächster Werktag. Wer Wochenenden abdecken muss, braucht z. B. einen 24/7-Vertrag mit 4 Stunden Reaktionszeit."
   },
   {
     "cat": "wirtschaft",
@@ -8369,7 +8369,7 @@
       "1.000 Euro"
     ],
     "a": "250 Euro",
-    "exp": "Bis 250 Euro brutto genügen vereinfachte Angaben. Darüber müssen alle Pflichtangaben nach § 14 UStG enthalten sein, z.B. Rechnungsnummer und Name des Empfängers."
+    "exp": "Bis 250 Euro brutto genügen vereinfachte Angaben. Darüber müssen alle Pflichtangaben nach § 14 UStG enthalten sein, z. B. Rechnungsnummer und Name des Empfängers."
   },
   {
     "cat": "wirtschaft",
@@ -8395,7 +8395,7 @@
       "Nur, wenn die Rechnung unter 250 Euro liegt"
     ],
     "a": "Nein, eine E-Rechnung braucht ein strukturiertes Format wie XRechnung oder ZUGFeRD",
-    "exp": "Ein reines PDF gilt als sonstige Rechnung. Eine E-Rechnung enthält die Daten maschinenlesbar nach EN 16931, z.B. als XML (XRechnung) oder als PDF mit eingebettetem XML (ZUGFeRD)."
+    "exp": "Ein reines PDF gilt als sonstige Rechnung. Eine E-Rechnung enthält die Daten maschinenlesbar nach EN 16931, z. B. als XML (XRechnung) oder als PDF mit eingebettetem XML (ZUGFeRD)."
   },
   {
     "cat": "wirtschaft",
@@ -8530,7 +8530,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /27?",
+    "q": "Wie lautet die Wildcard-Maske (z. B. für ACLs oder OSPF) zum Präfix /27?",
     "options": [
       "0.0.0.31",
       "255.255.255.224",
@@ -8543,7 +8543,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /22?",
+    "q": "Wie lautet die Wildcard-Maske (z. B. für ACLs oder OSPF) zum Präfix /22?",
     "options": [
       "0.0.3.255",
       "255.255.252.0",
@@ -8556,7 +8556,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /19?",
+    "q": "Wie lautet die Wildcard-Maske (z. B. für ACLs oder OSPF) zum Präfix /19?",
     "options": [
       "0.0.31.255",
       "255.255.224.0",
@@ -9136,7 +9136,7 @@
       "Er verbindet Singlemode- direkt mit Multimode-Fasern"
     ],
     "a": "Er sendet und empfängt über eine einzige Faser mit zwei Wellenlängen",
-    "exp": "Ein BiDi-Modul sendet z.B. auf 1310 nm und empfängt auf 1550 nm, die Gegenseite genau umgekehrt. Man setzt sie daher paarweise ein und spart pro Link eine Faser."
+    "exp": "Ein BiDi-Modul sendet z. B. auf 1310 nm und empfängt auf 1550 nm, die Gegenseite genau umgekehrt. Man setzt sie daher paarweise ein und spart pro Link eine Faser."
   },
   {
     "cat": "netzwerk",
@@ -9201,7 +9201,7 @@
       "show ip interface brief"
     ],
     "a": "show mac address-table",
-    "exp": "Die MAC-Adresstabelle listet je Eintrag VLAN, MAC-Adresse und Port. So findet man z.B. heraus, an welcher Dose ein bestimmtes Gerät hängt."
+    "exp": "Die MAC-Adresstabelle listet je Eintrag VLAN, MAC-Adresse und Port. So findet man z. B. heraus, an welcher Dose ein bestimmtes Gerät hängt."
   },
   {
     "cat": "netzwerk",
@@ -9422,7 +9422,7 @@
       "Ein Protokoll zum Abruf von Verzeichnisdaten im Netzwerk"
     ],
     "a": "Ein textbasiertes Datenformat aus Schlüssel-Wert-Paaren und Listen",
-    "exp": "JSON (JavaScript Object Notation) sieht z.B. so aus: {\"name\": \"sw01\", \"ports\": 48}. Es ist gut lesbar und das Standardformat vieler REST-APIs."
+    "exp": "JSON (JavaScript Object Notation) sieht z. B. so aus: {\"name\": \"sw01\", \"ports\": 48}. Es ist gut lesbar und das Standardformat vieler REST-APIs."
   },
   {
     "cat": "netzwerk",
@@ -9448,7 +9448,7 @@
       "Die Temperatur im Serverraum wird laufend gemessen"
     ],
     "a": "Ausgefallene Server werden erkannt und bekommen keine Anfragen mehr",
-    "exp": "Der Loadbalancer prüft die Backends regelmäßig, z.B. per TCP-Verbindung oder HTTP-Abfrage auf /health. Antwortet ein Server nicht korrekt, nimmt er ihn aus dem Pool, bis er wieder gesund ist."
+    "exp": "Der Loadbalancer prüft die Backends regelmäßig, z. B. per TCP-Verbindung oder HTTP-Abfrage auf /health. Antwortet ein Server nicht korrekt, nimmt er ihn aus dem Pool, bis er wieder gesund ist."
   },
   {
     "cat": "netzwerk",
@@ -9539,7 +9539,7 @@
       "Vor Überhitzung des Access Points bei hoher Last"
     ],
     "a": "Vor gefälschten Abmelde-Frames, die Clients vom Netz trennen",
-    "exp": "Ohne PMF kann ein Angreifer gefälschte Deauthentication-Frames senden und Clients rauswerfen, z.B. um den Handshake mitzuschneiden. WPA3 schreibt PMF vor."
+    "exp": "Ohne PMF kann ein Angreifer gefälschte Deauthentication-Frames senden und Clients rauswerfen, z. B. um den Handshake mitzuschneiden. WPA3 schreibt PMF vor."
   },
   {
     "cat": "netzwerk",
@@ -9565,7 +9565,7 @@
       "Den Port, auf dem der Management-Server Traps empfängt"
     ],
     "a": "Die abfragbaren Werte eines Geräts, jeder mit einer eindeutigen OID",
-    "exp": "Die Management Information Base ordnet Werte wie Schnittstellenzähler oder CPU-Last in einem Baum. Jeder Wert hat eine OID, z.B. 1.3.6.1.2.1.1.5 für den Gerätenamen (sysName)."
+    "exp": "Die Management Information Base ordnet Werte wie Schnittstellenzähler oder CPU-Last in einem Baum. Jeder Wert hat eine OID, z. B. 1.3.6.1.2.1.1.5 für den Gerätenamen (sysName)."
   },
   {
     "cat": "sicherheit",
@@ -9604,7 +9604,7 @@
       "Ein Netzwerkdrucker im Flur"
     ],
     "a": "Ein Domänencontroller",
-    "exp": "Tier 0 umfasst alles, was die Identitäten der Domäne steuert, z.B. Domänencontroller, die PKI und die Konten der Domänen-Admins. Dateiserver gehören zu Tier 1, Clients und Drucker zu Tier 2."
+    "exp": "Tier 0 umfasst alles, was die Identitäten der Domäne steuert, z. B. Domänencontroller, die PKI und die Konten der Domänen-Admins. Dateiserver gehören zu Tier 1, Clients und Drucker zu Tier 2."
   },
   {
     "cat": "sicherheit",
@@ -9669,7 +9669,7 @@
       "Weil Windows ohne diese Einstellung keine Anmeldung zulässt"
     ],
     "a": "Weil ein Angreifer mit gestohlenen Zugangsdaten sich erfolgreich anmeldet",
-    "exp": "Fehlschläge zeigen nur Rateversuche. Die eigentliche Übernahme eines Kontos ist eine erfolgreiche Anmeldung, z.B. nachts oder von einem ungewöhnlichen Rechner. Erst beide Ereignisarten zusammen ergeben ein vollständiges Bild."
+    "exp": "Fehlschläge zeigen nur Rateversuche. Die eigentliche Übernahme eines Kontos ist eine erfolgreiche Anmeldung, z. B. nachts oder von einem ungewöhnlichen Rechner. Erst beide Ereignisarten zusammen ergeben ein vollständiges Bild."
   },
   {
     "cat": "sicherheit",
@@ -9708,7 +9708,7 @@
       "Mit der Anweisung ENV im Dockerfile das Root-Passwort löschen"
     ],
     "a": "Mit der Anweisung USER im Dockerfile einen normalen Benutzer festlegen",
-    "exp": "Ohne USER laufen Prozesse im Container standardmäßig als root. Mit z.B. USER app läuft die Anwendung mit eingeschränkten Rechten, was einen Ausbruch deutlich erschwert."
+    "exp": "Ohne USER laufen Prozesse im Container standardmäßig als root. Mit z. B. USER app läuft die Anwendung mit eingeschränkten Rechten, was einen Ausbruch deutlich erschwert."
   },
   {
     "cat": "sicherheit",
@@ -9734,7 +9734,7 @@
       "Sie lassen sich grundsätzlich nicht stehlen"
     ],
     "a": "Gestohlene Zugangsdaten sind nach kurzer Zeit wertlos",
-    "exp": "Ein Secrets-Manager erzeugt z.B. für jede Anwendung ein eigenes Datenbankkonto mit Ablaufzeit. Selbst wenn es abgegriffen wird, bleibt nur ein kleines Zeitfenster für Missbrauch."
+    "exp": "Ein Secrets-Manager erzeugt z. B. für jede Anwendung ein eigenes Datenbankkonto mit Ablaufzeit. Selbst wenn es abgegriffen wird, bleibt nur ein kleines Zeitfenster für Missbrauch."
   },
   {
     "cat": "sicherheit",
@@ -9760,7 +9760,7 @@
       "Das Zurücksetzen aller Kennwörter der Benutzer zum Jahreswechsel"
     ],
     "a": "Die regelmäßige Prüfung durch Verantwortliche, ob vergebene Rechte noch nötig sind",
-    "exp": "Bei Abteilungswechseln sammeln Mitarbeitende oft Rechte an, die sie nicht mehr brauchen. Führungskräfte bestätigen deshalb z.B. halbjährlich die Rechte ihres Teams, überflüssige werden entzogen."
+    "exp": "Bei Abteilungswechseln sammeln Mitarbeitende oft Rechte an, die sie nicht mehr brauchen. Führungskräfte bestätigen deshalb z. B. halbjährlich die Rechte ihres Teams, überflüssige werden entzogen."
   },
   {
     "cat": "sicherheit",
@@ -9830,7 +9830,7 @@
   {
     "cat": "sicherheit",
     "thema": "haertung",
-    "q": "Warum hält man die Versionen von Abhängigkeiten in einer Lockdatei (z.B. package-lock.json) fest?",
+    "q": "Warum hält man die Versionen von Abhängigkeiten in einer Lockdatei (z. B. package-lock.json) fest?",
     "options": [
       "Damit nicht unbemerkt eine neue, womöglich manipulierte Version installiert wird",
       "Damit die Anwendung auch ohne Internetzugang kompiliert werden kann",
@@ -9916,7 +9916,7 @@
       "Wer den Papierkorb am Server leeren darf"
     ],
     "a": "Für welche Datenarten wann und wie gelöscht wird",
-    "exp": "Ein Löschkonzept ordnet jeder Datenart eine Löschfrist und einen Auslöser zu, z.B. Vertragsende plus gesetzliche Aufbewahrungsfrist. Es nennt auch Zuständige und die Art der Löschung."
+    "exp": "Ein Löschkonzept ordnet jeder Datenart eine Löschfrist und einen Auslöser zu, z. B. Vertragsende plus gesetzliche Aufbewahrungsfrist. Es nennt auch Zuständige und die Art der Löschung."
   },
   {
     "cat": "sicherheit",
@@ -10111,19 +10111,19 @@
       "027 (----w-rwx)"
     ],
     "a": "640 (rw-r-----)",
-    "exp": "Dateien starten mit 666. Die umask 027 entzieht der Gruppe Schreibrecht und anderen alle Rechte: 666 - 027 ergibt bitweise 640. Ordner (777) erhalten 750."
+    "exp": "Dateien starten mit 666. Die umask 027 entzieht der Gruppe Schreibrecht und anderen alle Rechte: 666 UND NICHT 027 (bitweise) ergibt 640, die in der umask gesetzten Bits werden also entfernt. Ordner (777) erhalten 750."
   },
   {
     "cat": "systeme",
     "thema": "linux",
     "q": "Woran erkennt man in der Ausgabe von ls -l, dass bei einer Datei das SUID-Bit gesetzt ist?",
     "options": [
-      "An einem s statt x beim Besitzer (z.B. -rwsr-xr-x)",
-      "An einem t am Ende (z.B. -rwxr-xr-t)",
+      "An einem s statt x beim Besitzer (z. B. -rwsr-xr-x)",
+      "An einem t am Ende (z. B. -rwxr-xr-t)",
       "An einem d am Anfang",
       "An einem l am Anfang"
     ],
-    "a": "An einem s statt x beim Besitzer (z.B. -rwsr-xr-x)",
+    "a": "An einem s statt x beim Besitzer (z. B. -rwsr-xr-x)",
     "exp": "s an der Stelle des Ausführungsrechts des Besitzers bedeutet SUID. Ein t am Ende steht für das Sticky Bit, d am Anfang für ein Verzeichnis, l für einen symbolischen Link."
   },
   {
@@ -10163,12 +10163,12 @@
       "LVM verschlüsselt alle Daten"
     ],
     "a": "Volumes lassen sich im laufenden Betrieb vergrößern und über mehrere Platten verteilen",
-    "exp": "Mit lvextend und anschließendem Vergrößern des Dateisystems (z.B. resize2fs, xfs_growfs) wächst ein Volume ohne Neuinstallation. LVM-Snapshots erleichtern zudem Sicherungen."
+    "exp": "Mit lvextend und anschließendem Vergrößern des Dateisystems (z. B. resize2fs, xfs_growfs) wächst ein Volume ohne Neuinstallation. LVM-Snapshots erleichtern zudem Sicherungen."
   },
   {
     "cat": "systeme",
     "thema": "linux",
-    "q": "Welcher Befehl zeigt die Meldungen des Kernels an, z.B. beim Einstecken eines USB-Sticks?",
+    "q": "Welcher Befehl zeigt die Meldungen des Kernels an, z. B. beim Einstecken eines USB-Sticks?",
     "options": [
       "dmesg",
       "lsof",
@@ -10189,7 +10189,7 @@
       "cat /boot/version"
     ],
     "a": "uname -r",
-    "exp": "uname -r gibt z.B. 6.8.0-45-generic aus. uname -a zeigt zusätzlich Rechnername und Architektur."
+    "exp": "uname -r gibt z. B. 6.8.0-45-generic aus. uname -a zeigt zusätzlich Rechnername und Architektur."
   },
   {
     "cat": "systeme",
@@ -10540,7 +10540,7 @@
       "Snapshots speichern nur den Arbeitsspeicher"
     ],
     "a": "Er liegt auf demselben Speicher und hängt von der Originalfestplatte ab",
-    "exp": "Fällt das Speichersystem aus, sind VM und Snapshot weg. Snapshots wachsen zudem mit jeder Änderung und bremsen die VM. Sie eignen sich für kurze Zeit, z.B. vor einem Update."
+    "exp": "Fällt das Speichersystem aus, sind VM und Snapshot weg. Snapshots wachsen zudem mit jeder Änderung und bremsen die VM. Sie eignen sich für kurze Zeit, z. B. vor einem Update."
   },
   {
     "cat": "systeme",
@@ -10579,7 +10579,7 @@
       "mkfs.qcow2"
     ],
     "a": "qemu-img convert",
-    "exp": "qemu-img convert -f vmdk -O qcow2 alt.vmdk neu.qcow2. Danach müssen im Gast ggf. Treiber (z.B. virtio) angepasst werden."
+    "exp": "qemu-img convert -f vmdk -O qcow2 alt.vmdk neu.qcow2. Danach müssen im Gast ggf. Treiber (z. B. virtio) angepasst werden."
   },
   {
     "cat": "systeme",
@@ -10631,7 +10631,7 @@
       "Schlanke Images brauchen keine Updates"
     ],
     "a": "Weniger Software bedeutet weniger Angriffsfläche und schnellere Verteilung",
-    "exp": "Minimal-Images (z.B. Alpine oder distroless) enthalten nur das Nötigste. Sie laden schneller und haben weniger Pakete mit möglichen Schwachstellen."
+    "exp": "Minimal-Images (z. B. Alpine oder distroless) enthalten nur das Nötigste. Sie laden schneller und haben weniger Pakete mit möglichen Schwachstellen."
   },
   {
     "cat": "systeme",
@@ -10709,7 +10709,7 @@
       "Sie sind kostenlos"
     ],
     "a": "Deutlicher Preisnachlass gegen eine feste Laufzeitbindung",
-    "exp": "Wer z.B. für 1 oder 3 Jahre bucht, zahlt deutlich weniger als bei der Abrechnung nach Stunden. Das lohnt sich für dauerhaft laufende Systeme."
+    "exp": "Wer z. B. für 1 oder 3 Jahre bucht, zahlt deutlich weniger als bei der Abrechnung nach Stunden. Das lohnt sich für dauerhaft laufende Systeme."
   },
   {
     "cat": "systeme",
@@ -10766,7 +10766,7 @@
   {
     "cat": "systeme",
     "thema": "storage",
-    "q": "Welches Protokoll nutzt NFS standardmäßig?",
+    "q": "Welchen Port nutzt NFS standardmäßig?",
     "options": [
       "TCP- bzw. UDP-Port 2049",
       "Port 445",
@@ -10774,7 +10774,7 @@
       "Port 3260"
     ],
     "a": "TCP- bzw. UDP-Port 2049",
-    "exp": "NFS (vor allem unter Linux) nutzt 2049. SMB nutzt 445, iSCSI 3260."
+    "exp": "Gefragt ist der Port: NFS nutzt standardmäßig Port 2049 (NFS Version 4 über TCP, Version 3 über TCP oder UDP). SMB nutzt 445, iSCSI 3260."
   },
   {
     "cat": "systeme",
@@ -10813,7 +10813,7 @@
       "480 Mbit/s"
     ],
     "a": "40 Gbit/s",
-    "exp": "Thunderbolt 4 (USB-C-Stecker) überträgt bis 40 Gbit/s und kann Bildschirme, Netzwerk und Laden über ein Kabel bereitstellen, z.B. an einer Docking-Station."
+    "exp": "Thunderbolt 4 (USB-C-Stecker) überträgt bis 40 Gbit/s und kann Bildschirme, Netzwerk und Laden über ein Kabel bereitstellen, z. B. an einer Docking-Station."
   },
   {
     "cat": "systeme",
@@ -10865,7 +10865,7 @@
       "Anwenderanfragen nach neuer Software annehmen und bearbeiten"
     ],
     "a": "Sicherstellen, dass Services die vereinbarte Verfügbarkeit erreichen",
-    "exp": "Das Availability-Management plant und überwacht die Verfügbarkeit, z.B. durch Redundanz und Auswertung von Ausfällen. Es nutzt Kennzahlen wie MTBF und die Wiederherstellungszeit."
+    "exp": "Das Availability-Management plant und überwacht die Verfügbarkeit, z. B. durch Redundanz und Auswertung von Ausfällen. Es nutzt Kennzahlen wie MTBF und die Wiederherstellungszeit."
   },
   {
     "cat": "wirtschaft",
@@ -10891,12 +10891,12 @@
       "Minor Change"
     ],
     "a": "Emergency Change",
-    "exp": "Ein Emergency Change muss so schnell wie möglich umgesetzt werden. Er wird verkürzt, z.B. durch ein Emergency CAB, bewertet und genehmigt und danach dokumentiert."
+    "exp": "Ein Emergency Change muss so schnell wie möglich umgesetzt werden. Er wird verkürzt, z. B. durch ein Emergency CAB, bewertet und genehmigt und danach dokumentiert."
   },
   {
     "cat": "wirtschaft",
     "thema": "service",
-    "q": "Welche Change-Art durchläuft die vollständige Bewertung und Freigabe, z.B. durch das CAB?",
+    "q": "Welche Change-Art durchläuft die vollständige Bewertung und Freigabe, z. B. durch das CAB?",
     "options": [
       "Normal Change",
       "Standard Change",
@@ -11060,7 +11060,7 @@
       "Wann ein laufender Sprint vorzeitig abgebrochen werden darf"
     ],
     "a": "Wann ein Backlog-Eintrag genug geklärt ist, um in einen Sprint zu kommen",
-    "exp": "Ein Eintrag gilt z.B. als bereit, wenn er verständlich beschrieben, geschätzt und mit Akzeptanzkriterien versehen ist. Die DoR ist kein Pflichtteil von Scrum, wird aber oft genutzt."
+    "exp": "Ein Eintrag gilt z. B. als bereit, wenn er verständlich beschrieben, geschätzt und mit Akzeptanzkriterien versehen ist. Die DoR ist kein Pflichtteil von Scrum, wird aber oft genutzt."
   },
   {
     "cat": "wirtschaft",
@@ -12087,7 +12087,7 @@
       "Die Netzwerkkarte des Rechners tauschen"
     ],
     "a": "Top-down, also bei der Anwendung beginnen",
-    "exp": "Da andere Seiten laden, arbeiten die unteren Schichten offenbar. Man beginnt daher oben, z.B. bei Browser, Zertifikat, Proxy oder dem Dienst selbst."
+    "exp": "Da andere Seiten laden, arbeiten die unteren Schichten offenbar. Man beginnt daher oben, z. B. bei Browser, Zertifikat, Proxy oder dem Dienst selbst."
   },
   {
     "cat": "netzwerk",
@@ -12105,7 +12105,7 @@
   {
     "cat": "netzwerk",
     "thema": "verkabelung",
-    "q": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) nicht erkannt?",
+    "q": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) NICHT erkannt?",
     "options": [
       "Split Pair, also Adern aus zwei verschiedenen Paaren vertauscht",
       "Ein offener Stromkreis durch eine gebrochene Ader",
@@ -12126,7 +12126,7 @@
       "Es misst die Datenrate zwischen zwei angeschlossenen Switches"
     ],
     "a": "Es zeigt Dämpfung und Lage von Steckern, Spleißen und Bruchstellen entlang der Faser",
-    "exp": "Das optische Rückstreumessgerät sendet Lichtimpulse und wertet das zurückgestreute Licht über die Zeit aus. So findet man z.B. einen Faserbruch auf den Meter genau."
+    "exp": "Das optische Rückstreumessgerät sendet Lichtimpulse und wertet das zurückgestreute Licht über die Zeit aus. So findet man z. B. einen Faserbruch auf den Meter genau."
   },
   {
     "cat": "netzwerk",
@@ -12139,7 +12139,7 @@
       "Das Gerät wechselt regelmäßig seine MAC-Adresse"
     ],
     "a": "Der Eintrag wurde per ARP gelernt und verfällt nach einiger Zeit",
-    "exp": "Dynamische Einträge entstehen durch ARP-Anfragen und werden nach Ablauf wieder gelöscht. Statische Einträge sind fest gesetzt, z.B. für Broadcast- und Multicast-Adressen."
+    "exp": "Dynamische Einträge entstehen durch ARP-Anfragen und werden nach Ablauf wieder gelöscht. Statische Einträge sind fest gesetzt, z. B. für Broadcast- und Multicast-Adressen."
   },
   {
     "cat": "netzwerk",
@@ -12152,7 +12152,7 @@
       "Der eingestellte DNS-Server wird dauerhaft auf 9.9.9.9 geändert"
     ],
     "a": "Die Anfrage geht gezielt an den DNS-Server 9.9.9.9 statt an den eingestellten",
-    "exp": "So vergleicht man Antworten verschiedener DNS-Server, z.B. intern und extern. Die Einstellungen des Rechners bleiben dabei unverändert."
+    "exp": "So vergleicht man Antworten verschiedener DNS-Server, z. B. intern und extern. Die Einstellungen des Rechners bleiben dabei unverändert."
   },
   {
     "cat": "netzwerk",
@@ -12282,7 +12282,7 @@
       "Die Funkzelle eines Masts wird in mehrere kleinere Zellen geteilt"
     ],
     "a": "Mehrere logische Netze mit eigenen Eigenschaften auf einer Infrastruktur",
-    "exp": "Jede Slice erhält z.B. zugesicherte Latenz oder Bandbreite. So kann eine Fabrik niedrige Latenz für Maschinen bekommen, während andere Slices Datenvolumen priorisieren."
+    "exp": "Jede Slice erhält z. B. zugesicherte Latenz oder Bandbreite. So kann eine Fabrik niedrige Latenz für Maschinen bekommen, während andere Slices Datenvolumen priorisieren."
   },
   {
     "cat": "netzwerk",
@@ -12399,7 +12399,7 @@
       "Die maximale Bandbreite, die eine Priorisierung erhalten darf"
     ],
     "a": "Den Punkt, ab dem das Netz QoS-Markierungen von Endgeräten übernimmt",
-    "exp": "Markierungen von IP-Telefonen übernimmt der Switch z.B., Markierungen von PCs setzt er zurück. Sonst könnte jeder Nutzer seinen Verkehr selbst hoch priorisieren."
+    "exp": "Markierungen von IP-Telefonen übernimmt der Switch z. B., Markierungen von PCs setzt er zurück. Sonst könnte jeder Nutzer seinen Verkehr selbst hoch priorisieren."
   },
   {
     "cat": "netzwerk",
@@ -12412,7 +12412,7 @@
       "Der Port leitet nur noch Frames eines einzigen VLANs weiter"
     ],
     "a": "Der Port geht beim Einstecken sofort in den Weiterleitungszustand",
-    "exp": "Ohne PortFast wartet ein Endgeräteport bei klassischem STP etwa 30 Sekunden, bevor er Daten weiterleitet. Das kann z.B. DHCP beim Start stören. PortFast gehört daher nur an Ports für Endgeräte."
+    "exp": "Ohne PortFast wartet ein Endgeräteport bei klassischem STP etwa 30 Sekunden, bevor er Daten weiterleitet. Das kann z. B. DHCP beim Start stören. PortFast gehört daher nur an Ports für Endgeräte."
   },
   {
     "cat": "netzwerk",
@@ -12451,7 +12451,7 @@
       "Wenn im Netz keine Switches mit Zeitfunktion vorhanden sind"
     ],
     "a": "Wenn Uhren im Sub-Mikrosekundenbereich übereinstimmen müssen",
-    "exp": "NTP erreicht im LAN meist Genauigkeiten im Millisekundenbereich. PTP nutzt Hardware-Zeitstempel in Netzwerkkarten und Switches und wird z.B. in Industrie, Mobilfunk und Rundfunk eingesetzt."
+    "exp": "NTP erreicht im LAN meist Genauigkeiten im Millisekundenbereich. PTP nutzt Hardware-Zeitstempel in Netzwerkkarten und Switches und wird z. B. in Industrie, Mobilfunk und Rundfunk eingesetzt."
   },
   {
     "cat": "sicherheit",
@@ -12516,7 +12516,7 @@
       "Ab 1.000 Beschäftigten oder mehr als 100 Mio. Euro Umsatz"
     ],
     "a": "Ab 50 Beschäftigten oder mehr als 10 Mio. Euro Umsatz und Bilanzsumme",
-    "exp": "NIS2 erfasst mittlere und große Unternehmen in den genannten Sektoren. Ab 250 Beschäftigten oder mehr als 50 Mio. Euro Umsatz und 43 Mio. Euro Bilanzsumme gilt ein Unternehmen als besonders wichtige Einrichtung. Einige Einrichtungen, z.B. DNS-Diensteanbieter, fallen unabhängig von der Größe darunter."
+    "exp": "NIS2 erfasst mittlere und große Unternehmen in den genannten Sektoren. Ab 250 Beschäftigten oder mehr als 50 Mio. Euro Umsatz und 43 Mio. Euro Bilanzsumme gilt ein Unternehmen als besonders wichtige Einrichtung. Einige Einrichtungen, z. B. DNS-Diensteanbieter, fallen unabhängig von der Größe darunter."
   },
   {
     "cat": "sicherheit",
@@ -12659,7 +12659,7 @@
       "Auf eine öffentliche Aufgabe (Art. 6 Abs. 1 lit. e DSGVO)"
     ],
     "a": "Auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)",
-    "exp": "Das Interesse ist z.B. der Schutz vor Diebstahl und Vandalismus. Die Überwachung muss erforderlich sein, die Interessen der Gefilmten dürfen nicht überwiegen, und Aufnahmen werden zeitnah gelöscht."
+    "exp": "Das Interesse ist z. B. der Schutz vor Diebstahl und Vandalismus. Die Überwachung muss erforderlich sein, die Interessen der Gefilmten dürfen nicht überwiegen, und Aufnahmen werden zeitnah gelöscht."
   },
   {
     "cat": "sicherheit",
@@ -12672,7 +12672,7 @@
       "Nur auf ausdrückliche Nachfrage der Person"
     ],
     "a": "Zum Zeitpunkt der Erhebung der Daten",
-    "exp": "Wer z.B. ein Kontaktformular ausfüllt, muss schon dabei erfahren, wer die Daten wozu verarbeitet. Üblich ist ein Link auf die Datenschutzerklärung direkt am Formular."
+    "exp": "Wer z. B. ein Kontaktformular ausfüllt, muss schon dabei erfahren, wer die Daten wozu verarbeitet. Üblich ist ein Link auf die Datenschutzerklärung direkt am Formular."
   },
   {
     "cat": "sicherheit",
@@ -12711,19 +12711,19 @@
       "Der Europäische Gerichtshof"
     ],
     "a": "Die Europäische Kommission",
-    "exp": "Die Standardvertragsklauseln sind Vertragsmuster der EU-Kommission. Sie dürfen inhaltlich nicht verändert werden, man wählt nur das passende Modul, z.B. Verantwortlicher an Auftragsverarbeiter."
+    "exp": "Die Standardvertragsklauseln sind Vertragsmuster der EU-Kommission. Sie dürfen inhaltlich nicht verändert werden, man wählt nur das passende Modul, z. B. Verantwortlicher an Auftragsverarbeiter."
   },
   {
     "cat": "sicherheit",
     "thema": "datenschutz",
     "q": "Was muss ein Unternehmen zusätzlich prüfen, wenn es Daten auf Basis von Standardvertragsklauseln in ein Drittland übermittelt?",
     "options": [
-      "Ob das Recht im Drittland, z.B. Behördenzugriffe, den Schutz aushebelt",
+      "Ob das Recht im Drittland, z. B. Behördenzugriffe, den Schutz aushebelt",
       "Ob das Drittland mehr als 50 Millionen Einwohner hat",
       "Ob der Empfänger ein ISO-9001-Zertifikat besitzt",
       "Ob die Daten dort in einer EU-Sprache gespeichert werden"
     ],
-    "a": "Ob das Recht im Drittland, z.B. Behördenzugriffe, den Schutz aushebelt",
+    "a": "Ob das Recht im Drittland, z. B. Behördenzugriffe, den Schutz aushebelt",
     "exp": "Seit dem Schrems-II-Urteil des EuGH von 2020 reicht der Vertrag allein nicht. Das Unternehmen bewertet in einem Transfer Impact Assessment die Rechtslage im Zielland und ergänzt bei Bedarf Maßnahmen wie Verschlüsselung."
   },
   {
@@ -12776,7 +12776,7 @@
       "Bis zu 1 Mio. Euro oder 1 % des weltweiten Jahresumsatzes"
     ],
     "a": "Bis zu 10 Mio. Euro oder 2 % des weltweiten Jahresumsatzes",
-    "exp": "Verstöße gegen organisatorische Pflichten wie VVT, TOM oder Meldepflichten fallen unter Art. 83 Abs. 4. Der höhere Rahmen gilt z.B. für Verstöße gegen die Grundsätze, Rechtsgrundlagen oder Betroffenenrechte."
+    "exp": "Verstöße gegen organisatorische Pflichten wie VVT, TOM oder Meldepflichten fallen unter Art. 83 Abs. 4. Der höhere Rahmen gilt z. B. für Verstöße gegen die Grundsätze, Rechtsgrundlagen oder Betroffenenrechte."
   },
   {
     "cat": "sicherheit",
@@ -12794,7 +12794,7 @@
   {
     "cat": "sicherheit",
     "thema": "isms",
-    "q": "Wie lange muss ein Unternehmen per E-Mail empfangene Handelsbriefe, z.B. eine Auftragsbestätigung ohne Rechnungsfunktion, aufbewahren?",
+    "q": "Wie lange muss ein Unternehmen per E-Mail empfangene Handelsbriefe, z. B. eine Auftragsbestätigung ohne Rechnungsfunktion, aufbewahren?",
     "options": [
       "6 Jahre",
       "2 Jahre",
@@ -12828,7 +12828,7 @@
       "Ein qualifiziertes elektronisches Siegel"
     ],
     "a": "Eine einfache elektronische Signatur",
-    "exp": "Jede elektronische Angabe, mit der jemand unterzeichnet, ist eine einfache Signatur. Sie hat nur geringe Beweiskraft, reicht aber z.B. für die Textform."
+    "exp": "Jede elektronische Angabe, mit der jemand unterzeichnet, ist eine einfache Signatur. Sie hat nur geringe Beweiskraft, reicht aber z. B. für die Textform."
   },
   {
     "cat": "sicherheit",
@@ -12906,7 +12906,7 @@
       "Für die automatische Erkennung defekter USB-Kabel"
     ],
     "a": "Für das Laden von Geräten mit höherer Leistung über USB-C",
-    "exp": "Gerät und Netzteil handeln Spannung und Leistung aus. So lassen sich Notebooks über USB-C laden, z.B. über ein Netzteil oder eine Dockingstation."
+    "exp": "Gerät und Netzteil handeln Spannung und Leistung aus. So lassen sich Notebooks über USB-C laden, z. B. über ein Netzteil oder eine Dockingstation."
   },
   {
     "cat": "systeme",
@@ -12919,20 +12919,20 @@
       "Windows überspringt beim Start alle Treiber und Dienste"
     ],
     "a": "Der Kernel wird wie beim Ruhezustand gespeichert und beim Start geladen",
-    "exp": "Der Schnellstart ist ein hybrides Herunterfahren. Das beschleunigt den Start, kann aber Probleme machen, z.B. bei Dual-Boot oder wenn ein echter Neustart für Updates nötig ist. Ein Neustart ist immer vollständig."
+    "exp": "Der Schnellstart ist ein hybrides Herunterfahren. Das beschleunigt den Start, kann aber Probleme machen, z. B. bei Dual-Boot oder wenn ein echter Neustart für Updates nötig ist. Ein Neustart ist immer vollständig."
   },
   {
     "cat": "systeme",
     "thema": "windows",
     "q": "Was ermöglicht der betreute Modus (Supervised Mode) bei firmeneigenen iPhones?",
     "options": [
-      "Mehr MDM-Funktionen, z.B. das Sperren des App Store",
+      "Mehr MDM-Funktionen, z. B. das Sperren des App Store",
       "Die Nutzung von zwei Mobilfunknetzen gleichzeitig",
       "Das Telefonieren ohne eingelegte SIM-Karte",
       "Das dauerhafte Abschalten aller iOS-Updates"
     ],
-    "a": "Mehr MDM-Funktionen, z.B. das Sperren des App Store",
-    "exp": "Betreute Geräte sind klar der Organisation zugeordnet. Das MDM kann z.B. App-Installationen stumm durchführen, den App Store sperren oder das Entfernen des MDM-Profils verhindern."
+    "a": "Mehr MDM-Funktionen, z. B. das Sperren des App Store",
+    "exp": "Betreute Geräte sind klar der Organisation zugeordnet. Das MDM kann z. B. App-Installationen stumm durchführen, den App Store sperren oder das Entfernen des MDM-Profils verhindern."
   },
   {
     "cat": "systeme",
@@ -12997,7 +12997,7 @@
       "Das GPO zu einem festen Zeitpunkt zu aktivieren"
     ],
     "a": "Das GPO nur auf Rechnern mit bestimmten Eigenschaften anzuwenden",
-    "exp": "Ein WMI-Filter fragt z.B. Betriebssystemversion oder Gerätetyp ab. Nur wenn die Abfrage zutrifft, wird das GPO angewendet, z.B. nur auf Notebooks oder nur auf Windows 11."
+    "exp": "Ein WMI-Filter fragt z. B. Betriebssystemversion oder Gerätetyp ab. Nur wenn die Abfrage zutrifft, wird das GPO angewendet, z. B. nur auf Notebooks oder nur auf Windows 11."
   },
   {
     "cat": "systeme",
@@ -13036,7 +13036,7 @@
       "Das Funktionsupdate kommt monatlich, das Qualitätsupdate nur einmal pro Jahr"
     ],
     "a": "Funktionsupdate: neue Windows-Version, Qualitätsupdate: Fehler- und Sicherheitskorrekturen",
-    "exp": "Qualitätsupdates erscheinen monatlich, meist am Patchday. Funktionsupdates heben Windows auf eine neue Version, z.B. 24H2, und brauchen mehr Tests und Zeit."
+    "exp": "Qualitätsupdates erscheinen monatlich, meist am Patchday. Funktionsupdates heben Windows auf eine neue Version, z. B. 24H2, und brauchen mehr Tests und Zeit."
   },
   {
     "cat": "systeme",
@@ -13127,7 +13127,7 @@
       "Hauptattribut"
     ],
     "a": "Fremdschlüssel",
-    "exp": "In einer Tabelle bestellungen verweist z.B. kunden_id auf die Tabelle kunden. Die Datenbank kann so prüfen, dass nur existierende Kunden eingetragen werden (referenzielle Integrität)."
+    "exp": "In einer Tabelle bestellungen verweist z. B. kunden_id auf die Tabelle kunden. Die Datenbank kann so prüfen, dass nur existierende Kunden eingetragen werden (referenzielle Integrität)."
   },
   {
     "cat": "datenbanken",
@@ -13179,7 +13179,7 @@
       "Weil Datenbankdateien grundsätzlich zu groß für Backups sind"
     ],
     "a": "Die Kopie kann inkonsistent sein, weil die Datenbank weiter schreibt",
-    "exp": "Man nutzt stattdessen die Sicherungsfunktionen der Datenbank, z.B. einen Dump (mysqldump, pg_dump) oder ein Backup-Programm mit Datenbankunterstützung. Mit Transaktionsprotokollen ist auch eine Wiederherstellung auf einen Zeitpunkt möglich."
+    "exp": "Man nutzt stattdessen die Sicherungsfunktionen der Datenbank, z. B. einen Dump (mysqldump, pg_dump) oder ein Backup-Programm mit Datenbankunterstützung. Mit Transaktionsprotokollen ist auch eine Wiederherstellung auf einen Zeitpunkt möglich."
   },
   {
     "cat": "systeme",
@@ -13314,7 +13314,7 @@
   {
     "cat": "wirtschaft",
     "thema": "recht",
-    "q": "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?",
+    "q": "Bei welchem Onlinekauf hat ein Verbraucher KEIN Widerrufsrecht?",
     "options": [
       "Software in versiegelter Packung, deren Siegel er geöffnet hat",
       "Ein Notebook, das er ausgepackt und kurz getestet hat",
@@ -13413,7 +13413,7 @@
       "Generalvollmacht"
     ],
     "a": "Artvollmacht",
-    "exp": "Die Artvollmacht gilt für eine bestimmte Art wiederkehrender Geschäfte, z.B. Einkauf. Die Einzelvollmacht gilt für ein einzelnes Geschäft. Handlungsvollmachten werden nicht ins Handelsregister eingetragen."
+    "exp": "Die Artvollmacht gilt für eine bestimmte Art wiederkehrender Geschäfte, z. B. Einkauf. Die Einzelvollmacht gilt für ein einzelnes Geschäft. Handlungsvollmachten werden nicht ins Handelsregister eingetragen."
   },
   {
     "cat": "wirtschaft",
@@ -13491,7 +13491,7 @@
       "Die gesetzliche Rentenversicherung"
     ],
     "a": "Die gesetzliche Unfallversicherung",
-    "exp": "Auch Wegeunfälle auf dem direkten Weg zur Arbeit oder zur Berufsschule sind über die Berufsgenossenschaft versichert. Sie zahlt z.B. Heilbehandlung, Reha und Verletztengeld."
+    "exp": "Auch Wegeunfälle auf dem direkten Weg zur Arbeit oder zur Berufsschule sind über die Berufsgenossenschaft versichert. Sie zahlt z. B. Heilbehandlung, Reha und Verletztengeld."
   },
   {
     "cat": "wirtschaft",
@@ -13504,7 +13504,7 @@
       "Die Hauptversammlung"
     ],
     "a": "Die Gesellschafterversammlung",
-    "exp": "Die Gesellschafterversammlung ist das oberste Organ der GmbH. Sie bestellt und entlässt die Geschäftsführer und stellt den Jahresabschluss fest. Einen Aufsichtsrat braucht eine GmbH nur in bestimmten Fällen, z.B. ab mehr als 500 Beschäftigten."
+    "exp": "Die Gesellschafterversammlung ist das oberste Organ der GmbH. Sie bestellt und entlässt die Geschäftsführer und stellt den Jahresabschluss fest. Einen Aufsichtsrat braucht eine GmbH nur in bestimmten Fällen, z. B. ab mehr als 500 Beschäftigten."
   },
   {
     "cat": "wirtschaft",
@@ -13868,7 +13868,7 @@
       "Den Preis gleich zu Beginn des Gesprächs nennen"
     ],
     "a": "Den Preis zwischen zwei Nutzenargumenten nennen",
-    "exp": "Der Preis wird von Nutzen umrahmt, z.B. schnelle Reaktionszeit, Preis, dann geringere Ausfallzeiten. So bleibt der Kunde nicht allein an der Zahl hängen."
+    "exp": "Der Preis wird von Nutzen umrahmt, z. B. schnelle Reaktionszeit, Preis, dann geringere Ausfallzeiten. So bleibt der Kunde nicht allein an der Zahl hängen."
   },
   {
     "cat": "wirtschaft",
@@ -13907,7 +13907,7 @@
       "Parallele Vorgänge gleichen die Verzögerung automatisch aus"
     ],
     "a": "Das Projektende verschiebt sich um zwei Tage",
-    "exp": "Vorgänge auf dem kritischen Pfad haben keinen Puffer. Jede Verzögerung wirkt sich direkt auf den Endtermin aus, wenn man z.B. nicht zusätzliches Personal einsetzt."
+    "exp": "Vorgänge auf dem kritischen Pfad haben keinen Puffer. Jede Verzögerung wirkt sich direkt auf den Endtermin aus, wenn man z. B. nicht zusätzliches Personal einsetzt."
   },
   {
     "cat": "wirtschaft",
@@ -13972,7 +13972,7 @@
       "Sprungfolge: Der Nachfolger endet, wenn der Vorgänger beginnt"
     ],
     "a": "Normalfolge: Der Nachfolger beginnt, wenn der Vorgänger endet",
-    "exp": "Die Normalfolge (Ende-Anfang) ist am häufigsten, z.B. erst Kabel verlegen, dann Switches anschließen. Die übrigen Beziehungen werden nur bei Bedarf verwendet."
+    "exp": "Die Normalfolge (Ende-Anfang) ist am häufigsten, z. B. erst Kabel verlegen, dann Switches anschließen. Die übrigen Beziehungen werden nur bei Bedarf verwendet."
   },
   {
     "cat": "wirtschaft",
@@ -14772,12 +14772,12 @@
     "thema": "fehlersuche",
     "q": "ping auf einen Server in einem anderen Subnetz meldet viermal \"Zeitüberschreitung der Anforderung\". Welche Aussage ist richtig?",
     "options": [
-      "Es kam keine Antwort, z.B. weil eine Firewall ICMP verwirft",
+      "Es kam keine Antwort, z. B. weil eine Firewall ICMP verwirft",
       "Der eigene Rechner fand keine MAC-Adresse des Ziels",
       "Der DNS-Server konnte den Servernamen nicht auflösen",
       "Das Gateway meldete, dass das Zielnetz unbekannt ist"
     ],
-    "a": "Es kam keine Antwort, z.B. weil eine Firewall ICMP verwirft",
+    "a": "Es kam keine Antwort, z. B. weil eine Firewall ICMP verwirft",
     "exp": "Bei einer Zeitüberschreitung wurde die Anfrage gesendet, aber es kam nichts zurück. Ursachen sind ausgeschaltete Ziele, Filter oder fehlende Rückroute. Eine Meldung \"nicht erreichbar\" käme dagegen aktiv von einem Gerät."
   },
   {
@@ -14824,12 +14824,12 @@
     "thema": "fehlersuche",
     "q": "ping 127.0.0.1 und ping auf die eigene IP-Adresse klappen, ping auf das Gateway im selben Subnetz nicht. Wo liegt der Fehler am wahrscheinlichsten?",
     "options": [
-      "Auf dem Weg zum Gateway, z.B. Kabel, Port oder VLAN",
+      "Auf dem Weg zum Gateway, z. B. Kabel, Port oder VLAN",
       "Im TCP/IP-Stack des Betriebssystems auf dem PC",
       "Beim DNS-Server, der die Namen im Netz auflöst",
       "Beim Internetprovider, der das Firmennetz anbindet"
     ],
-    "a": "Auf dem Weg zum Gateway, z.B. Kabel, Port oder VLAN",
+    "a": "Auf dem Weg zum Gateway, z. B. Kabel, Port oder VLAN",
     "exp": "Die ersten beiden Tests zeigen, dass TCP/IP und die eigene Adresse funktionieren. Scheitert erst der Weg zum Gateway, liegt das Problem auf der Strecke dorthin oder am Gateway selbst."
   },
   {
@@ -14837,12 +14837,12 @@
     "thema": "fehlersuche",
     "q": "Ein Anwender meldet \"kein Internet\". ping auf das Gateway klappt, ping auf 8.8.8.8 nicht. Wo liegt der Fehler am wahrscheinlichsten?",
     "options": [
-      "Hinter dem Gateway, z.B. an Firewall oder Provider",
+      "Hinter dem Gateway, z. B. an Firewall oder Provider",
       "Am Netzwerkkabel zwischen PC und Netzwerkdose",
       "Am DNS-Server, der die Namen im Netz auflöst",
       "An der IP-Adresse und Subnetzmaske des PCs"
     ],
-    "a": "Hinter dem Gateway, z.B. an Firewall oder Provider",
+    "a": "Hinter dem Gateway, z. B. an Firewall oder Provider",
     "exp": "Der PC erreicht sein Gateway, also sind Kabel und IP-Konfiguration in Ordnung. Da eine öffentliche IP-Adresse ohne Namensauflösung scheitert, ist auch DNS nicht die Ursache."
   },
   {
@@ -15311,12 +15311,12 @@
       "Gemeinsam Verantwortlicher"
     ],
     "a": "Auftragsverarbeiter",
-    "exp": "Der Dienstleister vernichtet die Daten nur im Auftrag und nach Weisung. Das Unternehmen braucht daher einen Vertrag nach Art. 28 DSGVO, der z.B. die Sicherheitsstufe nach DIN 66399 festlegt."
+    "exp": "Der Dienstleister vernichtet die Daten nur im Auftrag und nach Weisung. Das Unternehmen braucht daher einen Vertrag nach Art. 28 DSGVO, der z. B. die Sicherheitsstufe nach DIN 66399 festlegt."
   },
   {
     "cat": "sicherheit",
     "thema": "datenschutz",
-    "q": "Ein Onlineshop leitet Kunden zum Bezahlen an einen Zahlungsdienstleister weiter. Dieser prüft die Zahlungsdaten auch nach eigenen gesetzlichen Pflichten, z.B. zur Geldwäsche. Welche Rolle hat er?",
+    "q": "Ein Onlineshop leitet Kunden zum Bezahlen an einen Zahlungsdienstleister weiter. Dieser prüft die Zahlungsdaten auch nach eigenen gesetzlichen Pflichten, z. B. zur Geldwäsche. Welche Rolle hat er?",
     "options": [
       "Eigenständiger Verantwortlicher",
       "Auftragsverarbeiter des Shops",
@@ -15422,12 +15422,12 @@
     "thema": "notfall",
     "q": "Die Geschäftsführung verlangt, dass bei einem Ausfall höchstens eine Stunde Buchungsdaten verloren geht. Es gibt nur eine nächtliche Vollsicherung. Wie bewerten Sie das Konzept?",
     "options": [
-      "Es erfüllt die Anforderung nicht, nötig sind z.B. stündliche Sicherungen der Transaktionsprotokolle",
+      "Es erfüllt die Anforderung nicht, nötig sind z. B. stündliche Sicherungen der Transaktionsprotokolle",
       "Es erfüllt die Anforderung, weil jede Nacht vollständig gesichert wird",
       "Es erfüllt die Anforderung, wenn die Sicherung auf Band erfolgt",
       "Es erfüllt die Anforderung, wenn die Wiederherstellung unter einer Stunde dauert"
     ],
-    "a": "Es erfüllt die Anforderung nicht, nötig sind z.B. stündliche Sicherungen der Transaktionsprotokolle",
+    "a": "Es erfüllt die Anforderung nicht, nötig sind z. B. stündliche Sicherungen der Transaktionsprotokolle",
     "exp": "Der maximal tolerierbare Datenverlust (RPO) bestimmt, wie oft gesichert werden muss. Bei nur einer Sicherung pro Nacht können fast 24 Stunden Daten verloren gehen. Die Dauer der Wiederherstellung betrifft dagegen das RTO."
   },
   {
@@ -15961,7 +15961,7 @@
       "Niemand, eine zweite Anfahrt ist immer kostenlos"
     ],
     "a": "Der Kunde, er ist in Annahmeverzug",
-    "exp": "Wer eine ordnungsgemäß angebotene Leistung nicht annimmt, gerät in Annahmeverzug. Nach § 304 BGB kann der Lieferant Ersatz der Mehraufwendungen verlangen, z.B. für die erneute Anfahrt."
+    "exp": "Wer eine ordnungsgemäß angebotene Leistung nicht annimmt, gerät in Annahmeverzug. Nach § 304 BGB kann der Lieferant Ersatz der Mehraufwendungen verlangen, z. B. für die erneute Anfahrt."
   },
   {
     "cat": "wirtschaft",
@@ -16091,7 +16091,7 @@
       "Die Mehrkosten auf andere laufende Projekte der Firma verbuchen"
     ],
     "a": "Den Auftraggeber frühzeitig informieren und Handlungsoptionen vorlegen",
-    "exp": "Abweichungen muss der Projektleiter früh melden, solange noch gegengesteuert werden kann. Optionen sind z.B. Budgeterhöhung, geringerer Umfang oder späterer Termin. Die Entscheidung trifft der Auftraggeber."
+    "exp": "Abweichungen muss der Projektleiter früh melden, solange noch gegengesteuert werden kann. Optionen sind z. B. Budgeterhöhung, geringerer Umfang oder späterer Termin. Die Entscheidung trifft der Auftraggeber."
   },
   {
     "cat": "wirtschaft",
@@ -16104,7 +16104,7 @@
       "Risikoverminderung"
     ],
     "a": "Risikoübertragung",
-    "exp": "Bei der Übertragung trägt ein Dritter die finanziellen Folgen, z.B. eine Versicherung oder ein Dienstleister per Vertrag. Das Risiko selbst bleibt bestehen, nur der Schaden wird abgefedert."
+    "exp": "Bei der Übertragung trägt ein Dritter die finanziellen Folgen, z. B. eine Versicherung oder ein Dienstleister per Vertrag. Das Risiko selbst bleibt bestehen, nur der Schaden wird abgefedert."
   },
   {
     "cat": "wirtschaft",
@@ -16884,7 +16884,7 @@
       "192.168.77.129"
     ],
     "a": "192.168.77.126",
-    "exp": "Maske 255.255.255.224 = /27, Blockgröße 32. Netz 192.168.77.96, Broadcast 192.168.77.127. Nutzbar sind nur 192.168.77.97 bis 192.168.77.126. Netz- und Broadcastadresse sind für Hosts tabu."
+    "exp": "Maske 255.255.255.224 = /27, Blockgröße 32. Netz 192.168.77.96, Broadcast 192.168.77.127. Nutzbar sind nur 192.168.77.97 bis 192.168.77.126. Netz- und Broadcast-Adresse sind für Hosts tabu."
   },
   {
     "cat": "netzwerk",
@@ -16949,7 +16949,7 @@
       "192.168.40.81 bis 192.168.40.94"
     ],
     "a": "192.168.40.97 bis 192.168.40.110",
-    "exp": "/28 = 16 Adressen je Netz. Die 7. Abteilung beginnt bei (7 - 1) * 16 = 96, also 192.168.40.96/28. Nutzbar ohne Netz- und Broadcastadresse: 192.168.40.97 bis 192.168.40.110."
+    "exp": "/28 = 16 Adressen je Netz. Die 7. Abteilung beginnt bei (7 - 1) * 16 = 96, also 192.168.40.96/28. Nutzbar ohne Netz- und Broadcast-Adresse: 192.168.40.97 bis 192.168.40.110."
   },
   {
     "cat": "netzwerk",
@@ -16962,7 +16962,7 @@
       "239"
     ],
     "a": "495",
-    "exp": "/23 = 2^9 = 512 Adressen, minus Netz- und Broadcastadresse = 510 Hosts. Minus Gateway und 14 feste Adressen: 510 - 1 - 14 = 495."
+    "exp": "/23 = 2^9 = 512 Adressen, minus Netz- und Broadcast-Adresse = 510 Hosts. Minus Gateway und 14 feste Adressen: 510 - 1 - 14 = 495."
   },
   {
     "cat": "netzwerk",
@@ -17027,7 +17027,7 @@
       "4.294.967.296"
     ],
     "a": "16.777.216",
-    "exp": "Frei wählbare Bits: 56 - 32 = 24, also 2^24 = 16.777.216 Präfixe. Bei IPv6 werden keine Netz- und Broadcastadressen abgezogen."
+    "exp": "Frei wählbare Bits: 56 - 32 = 24, also 2^24 = 16.777.216 Präfixe. Bei IPv6 werden keine Netz- und Broadcast-Adressen abgezogen."
   },
   {
     "cat": "netzwerk",
@@ -17201,7 +17201,7 @@
   {
     "cat": "systeme",
     "thema": "zahlen",
-    "q": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?",
+    "q": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern (1 TB = 10^12 Byte)?",
     "options": [
       "30 Tage",
       "31 Tage",
@@ -17209,7 +17209,7 @@
       "185 Tage"
     ],
     "a": "30 Tage",
-    "exp": "Je Tag: 6 * 4 Mbit/s / 8 * 86.400 s = 259,2 GB. 8.000 GB / 259,2 GB = 30,86, also 30 volle Tage."
+    "exp": "Gerechnet wird dezimal (1 TB = 10^12 Byte = 1.000 GB). Je Tag: 6 * 4 Mbit/s / 8 * 86.400 s = 259,2 GB. 8.000 GB / 259,2 GB = 30,86, also 30 volle Tage."
   },
   {
     "cat": "systeme",
@@ -17859,7 +17859,7 @@
       "Wie viel hat die Datenbanksoftware beim Kauf gekostet?"
     ],
     "a": "Welcher Schaden entsteht, wenn ein Schutzziel verletzt wird?",
-    "exp": "Der Schutzbedarf richtet sich nach den möglichen Folgen eines Schadens, z.B. Verstöße gegen Gesetze, finanzielle Verluste oder Ansehensverlust. Daraus ergibt sich je Schutzziel die Kategorie normal, hoch oder sehr hoch."
+    "exp": "Der Schutzbedarf richtet sich nach den möglichen Folgen eines Schadens, z. B. Verstöße gegen Gesetze, finanzielle Verluste oder Ansehensverlust. Daraus ergibt sich je Schutzziel die Kategorie normal, hoch oder sehr hoch."
   },
   {
     "cat": "sicherheit",
@@ -17885,7 +17885,7 @@
       "Weil ein gemeinsames Konto mehr Lizenzkosten verursacht"
     ],
     "a": "Nur so ist nachvollziehbar, wer welche Aktion ausgeführt hat",
-    "exp": "Bei einem Sammelkonto lässt sich keine Aktion einer Person zuordnen, z.B. eine gelöschte Kundenakte. Außerdem muss das Kennwort bei jedem Personalwechsel geändert werden. Persönliche Konten mit passenden Rechten lösen beide Probleme."
+    "exp": "Bei einem Sammelkonto lässt sich keine Aktion einer Person zuordnen, z. B. eine gelöschte Kundenakte. Außerdem muss das Kennwort bei jedem Personalwechsel geändert werden. Persönliche Konten mit passenden Rechten lösen beide Probleme."
   },
   {
     "cat": "sicherheit",
@@ -17911,7 +17911,7 @@
       "Die Mail ist höflich formuliert und hat eine Grußformel"
     ],
     "a": "Die Domain ahmt einen bekannten Namen mit einer Ziffer nach",
-    "exp": "Angreifer registrieren Domains, die bekannten Namen zum Verwechseln ähnlich sehen, z.B. mit einer 1 statt einem l. Logos lassen sich beliebig kopieren und sagen nichts über die Echtheit aus."
+    "exp": "Angreifer registrieren Domains, die bekannten Namen zum Verwechseln ähnlich sehen, z. B. mit einer 1 statt einem l. Logos lassen sich beliebig kopieren und sagen nichts über die Echtheit aus."
   },
   {
     "cat": "sicherheit",
@@ -18340,7 +18340,7 @@
       "Lizenzen sind nur für PCs nötig, die ins Internet gehen"
     ],
     "a": "Jeder PC braucht eine eigene gültige Lizenz, das Image ersetzt keine Lizenz",
-    "exp": "Das Image ist nur ein technisches Mittel zur schnellen Installation. Jede Installation muss lizenziert sein, z.B. durch vorinstallierte OEM-Lizenzen oder einen Volumenlizenzvertrag. Die Zuordnung wird im Lizenzmanagement dokumentiert."
+    "exp": "Das Image ist nur ein technisches Mittel zur schnellen Installation. Jede Installation muss lizenziert sein, z. B. durch vorinstallierte OEM-Lizenzen oder einen Volumenlizenzvertrag. Die Zuordnung wird im Lizenzmanagement dokumentiert."
   },
   {
     "cat": "systeme",
@@ -18516,12 +18516,12 @@
     "thema": "programmierung",
     "q": "Ein SVERWEIS zeigt #NV an, obwohl die Artikelnummer in der Liste zu stehen scheint. Was ist eine typische Ursache?",
     "options": [
-      "Die Werte unterscheiden sich, z.B. durch Leerzeichen oder Zahl gegen Text",
+      "Die Werte unterscheiden sich, z. B. durch Leerzeichen oder Zahl gegen Text",
       "Die Tabelle hat zu viele Zeilen für einen SVERWEIS",
       "Die Zelle mit der Formel ist zu schmal für das Ergebnis",
       "Der Spaltenindex ist größer als eins und damit unzulässig"
     ],
-    "a": "Die Werte unterscheiden sich, z.B. durch Leerzeichen oder Zahl gegen Text",
+    "a": "Die Werte unterscheiden sich, z. B. durch Leerzeichen oder Zahl gegen Text",
     "exp": "#NV bedeutet, dass kein passender Wert gefunden wurde. Oft steht die Nummer einmal als Zahl und einmal als Text oder mit einem Leerzeichen am Ende. Mit GLÄTTEN oder einer einheitlichen Formatierung lässt sich das beheben."
   },
   {
@@ -18548,7 +18548,7 @@
       "Die Anforderung wörtlich ins Pflichtenheft übernehmen"
     ],
     "a": "Mit dem Kunden messbar festlegen, was schnell bedeutet",
-    "exp": "Unklare Anforderungen lassen sich bei der Abnahme nicht prüfen. Man klärt mit dem Kunden, was er meint, z.B. welche Programme flüssig laufen sollen, und legt messbare Kriterien fest."
+    "exp": "Unklare Anforderungen lassen sich bei der Abnahme nicht prüfen. Man klärt mit dem Kunden, was er meint, z. B. welche Programme flüssig laufen sollen, und legt messbare Kriterien fest."
   },
   {
     "cat": "wirtschaft",
@@ -18568,12 +18568,12 @@
     "thema": "beschaffung",
     "q": "Lieferant A nennt Bruttopreise mit kostenlosem Versand, Lieferant B Nettopreise zuzüglich Versandkosten. Was tun Sie vor dem Vergleich?",
     "options": [
-      "Beide Angebote auf dieselbe Basis bringen, z.B. netto inklusive Versand",
+      "Beide Angebote auf dieselbe Basis bringen, z. B. netto inklusive Versand",
       "Die Endbeträge direkt vergleichen, wie sie im Angebot stehen",
       "Angebot B verwerfen, weil Nettopreise nicht zulässig sind",
       "Nur die Stückpreise vergleichen und den Versand ignorieren"
     ],
-    "a": "Beide Angebote auf dieselbe Basis bringen, z.B. netto inklusive Versand",
+    "a": "Beide Angebote auf dieselbe Basis bringen, z. B. netto inklusive Versand",
     "exp": "Angebote sind nur auf gleicher Basis vergleichbar. Man rechnet alle Preise auf netto oder brutto um und berücksichtigt Versand, Rabatt und Skonto einheitlich."
   },
   {
@@ -18886,7 +18886,7 @@
       "Das ökologische Ziel ersetzt das ökonomische vollständig"
     ],
     "a": "Sie ergänzen sich, es liegt Zielharmonie vor",
-    "exp": "Wenn die Verfolgung eines Ziels ein anderes fördert, spricht man von Zielharmonie oder komplementären Zielen. Ein Zielkonflikt läge vor, wenn z.B. der Umweltschutz nur mit deutlich höheren Kosten erreichbar wäre."
+    "exp": "Wenn die Verfolgung eines Ziels ein anderes fördert, spricht man von Zielharmonie oder komplementären Zielen. Ein Zielkonflikt läge vor, wenn z. B. der Umweltschutz nur mit deutlich höheren Kosten erreichbar wäre."
   },
   {
     "cat": "wirtschaft",
@@ -18899,7 +18899,7 @@
       "Das Gerät hat eine verlängerte Garantie von drei Jahren"
     ],
     "a": "Der Hersteller erklärt damit, dass das Gerät die EU-Vorschriften erfüllt",
-    "exp": "Mit dem CE-Zeichen bestätigt der Hersteller die Einhaltung der geltenden EU-Anforderungen, z.B. zur Sicherheit und elektromagnetischen Verträglichkeit. Es ist kein Umweltzeichen. Dafür gibt es Siegel wie Blauer Engel oder TCO Certified."
+    "exp": "Mit dem CE-Zeichen bestätigt der Hersteller die Einhaltung der geltenden EU-Anforderungen, z. B. zur Sicherheit und elektromagnetischen Verträglichkeit. Es ist kein Umweltzeichen. Dafür gibt es Siegel wie Blauer Engel oder TCO Certified."
   },
   {
     "cat": "systeme",
@@ -19234,10 +19234,10 @@
       "ca. 28 Minuten 48 Sekunden",
       "ca. 2 Minuten 24 Sekunden",
       "ca. 3 Minuten 36 Sekunden",
-      "ca. 30 Minuten 55 Sekunden"
+      "ca. 4 Stunden 48 Minuten"
     ],
     "a": "ca. 28 Minuten 48 Sekunden",
-    "exp": "Alle Images laufen über den Uplink des Servers: 12 * 18 GB = 216 GB = 1.728.000 Mbit. 1.728.000 Mbit / 1.000 Mbit/s = 1.728 s."
+    "exp": "Alle Images laufen über den Uplink des Servers: 12 * 18 GB = 216 GB = 1.728.000 Mbit (GB hier dezimal, 1 GB = 10^9 Byte). 1.728.000 Mbit / 1.000 Mbit/s = 1.728 s = 28 Minuten 48 Sekunden."
   },
   {
     "cat": "netzwerk",
@@ -19276,7 +19276,7 @@
       "63"
     ],
     "a": "61",
-    "exp": "/26: 2^6 = 64 Adressen. Minus Netz- und Broadcastadresse = 62 Hosts. Minus Gateway = 61 Geräte."
+    "exp": "/26: 2^6 = 64 Adressen. Minus Netz- und Broadcast-Adresse = 62 Hosts. Minus Gateway = 61 Geräte."
   },
   {
     "cat": "netzwerk",
@@ -19302,7 +19302,7 @@
       "252"
     ],
     "a": "248",
-    "exp": "Jedes /26 hat 64 Adressen, davon 62 nutzbar. 4 * 62 = 248. Jedes Teilnetz kostet eigene Netz- und Broadcastadressen, gegenüber dem /24 gehen 6 Adressen verloren."
+    "exp": "Jedes /26 hat 64 Adressen, davon 62 nutzbar. 4 * 62 = 248. Jedes Teilnetz kostet eigene Netz- und Broadcast-Adressen, gegenüber dem /24 gehen 6 Adressen verloren."
   },
   {
     "cat": "netzwerk",
@@ -19320,7 +19320,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse 172.16.9.155/27. Welche Netz- und Broadcastadresse tragen Sie ein?",
+    "q": "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse 172.16.9.155/27. Welche Netz- und Broadcast-Adresse tragen Sie ein?",
     "options": [
       "Netz 172.16.9.128, Broadcast 172.16.9.159",
       "Netz 172.16.9.144, Broadcast 172.16.9.159",
@@ -19333,7 +19333,7 @@
   {
     "cat": "netzwerk",
     "thema": "ipv4",
-    "q": "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool verlangt die Broadcastadresse seines Subnetzes. Welche tragen Sie ein?",
+    "q": "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool verlangt die Broadcast-Adresse seines Subnetzes. Welche tragen Sie ein?",
     "options": [
       "10.44.7.255",
       "10.44.7.192",
@@ -19406,7 +19406,7 @@
       "192.168.150.97"
     ],
     "a": "192.168.150.94",
-    "exp": "/27: Blockgröße 32. 77 liegt im Netz 192.168.150.64 bis 192.168.150.95. Netz- und Broadcastadresse sind tabu, nutzbar ist 192.168.150.65 bis 192.168.150.94."
+    "exp": "/27: Blockgröße 32. 77 liegt im Netz 192.168.150.64 bis 192.168.150.95. Netz- und Broadcast-Adresse sind tabu, nutzbar ist 192.168.150.65 bis 192.168.150.94."
   },
   {
     "cat": "netzwerk",
@@ -19437,7 +19437,7 @@
   {
     "cat": "netzwerk",
     "thema": "wlan",
-    "q": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
+    "q": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s (1 MB = 10^6 Byte) bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
     "options": [
       "32",
       "33",
@@ -19445,7 +19445,7 @@
       "260"
     ],
     "a": "32",
-    "exp": "Netto: 867 * 45 % = 390,15 Mbit/s. Bedarf je Laptop: 1,5 MB/s * 8 = 12 Mbit/s. 390,15 / 12 = 32,51, also 32 Laptops (abrunden)."
+    "exp": "Netto: 867 * 45 % = 390,15 Mbit/s. Bedarf je Laptop: 1,5 MB/s * 8 = 12 Mbit/s (dezimal, 1 MB = 10^6 Byte). 390,15 / 12 = 32,51, also 32 Laptops (abrunden)."
   },
   {
     "cat": "netzwerk",
@@ -20908,12 +20908,12 @@
     "thema": "virtualisierung",
     "q": "In einem Proxmox-Cluster mit drei Knoten soll eine wichtige VM bei Ausfall ihres Hosts automatisch auf einem anderen Knoten starten. Die Platte der VM liegt auf dem lokalen LVM des Hosts. Was fehlt für HA?",
     "options": [
-      "Ein gemeinsamer oder replizierter Speicher, z.B. Ceph, NFS oder ZFS-Replikation",
+      "Ein gemeinsamer oder replizierter Speicher, z. B. Ceph, NFS oder ZFS-Replikation",
       "Ein zweiter Corosync-Ring zwischen allen drei Knoten des Clusters",
       "Ein aktueller Snapshot der VM auf dem lokalen Speicher des Hosts",
       "Eine feste IP-Adresse der VM, die auf allen Knoten eingetragen ist"
     ],
-    "a": "Ein gemeinsamer oder replizierter Speicher, z.B. Ceph, NFS oder ZFS-Replikation",
+    "a": "Ein gemeinsamer oder replizierter Speicher, z. B. Ceph, NFS oder ZFS-Replikation",
     "exp": "Fällt ein Host aus, ist sein lokaler Speicher für die anderen Knoten nicht erreichbar. Proxmox HA kann die VM nur neu starten, wenn ihre Platte auch auf dem Zielknoten verfügbar ist. Bei ZFS-Replikation gehen dabei die Änderungen seit dem letzten Replikationslauf verloren."
   },
   {
@@ -20940,7 +20940,7 @@
       "Ein weiteres ungetestetes Update installieren und neu starten"
     ],
     "a": "Den im Change dokumentierten Rückfallplan ausführen",
-    "exp": "Jeder Change braucht einen Rückfallplan, z.B. das Zurückspielen eines Snapshots oder Backups. Ist der Erfolg im Fenster nicht mehr erreichbar, stellt man den alten Zustand her. Danach wird der Fehlschlag dokumentiert und der Change neu geplant."
+    "exp": "Jeder Change braucht einen Rückfallplan, z. B. das Zurückspielen eines Snapshots oder Backups. Ist der Erfolg im Fenster nicht mehr erreichbar, stellt man den alten Zustand her. Danach wird der Fehlschlag dokumentiert und der Change neu geplant."
   },
   {
     "cat": "systeme",
@@ -21122,7 +21122,7 @@
       "Es wurde ein neues Gerät mit dem Standort Lager angelegt"
     ],
     "a": "Alle Geräte stehen jetzt auf dem Standort Lager",
-    "exp": "Ohne WHERE gilt UPDATE für jede Zeile der Tabelle. Richtig wäre z.B. UPDATE geraete SET standort = 'Lager' WHERE id = 4711;. Vor Änderungen prüft man die Bedingung mit einem SELECT und arbeitet möglichst in einer Transaktion."
+    "exp": "Ohne WHERE gilt UPDATE für jede Zeile der Tabelle. Richtig wäre z. B. UPDATE geraete SET standort = 'Lager' WHERE id = 4711;. Vor Änderungen prüft man die Bedingung mit einem SELECT und arbeitet möglichst in einer Transaktion."
   },
   {
     "cat": "datenbanken",
@@ -21226,7 +21226,7 @@
       "Die Betriebsunterbrechungsversicherung des Systemhauses"
     ],
     "a": "Eine IT-Haftpflicht bzw. Vermögensschaden-Haftpflichtversicherung",
-    "exp": "Eine normale Betriebshaftpflicht deckt vor allem Personen- und Sachschäden. IT-Dienstleister brauchen zusätzlich Schutz für Vermögensschäden, z.B. durch Datenverlust oder Ausfallzeiten beim Kunden. Viele Kunden verlangen den Nachweis im Vertrag."
+    "exp": "Eine normale Betriebshaftpflicht deckt vor allem Personen- und Sachschäden. IT-Dienstleister brauchen zusätzlich Schutz für Vermögensschäden, z. B. durch Datenverlust oder Ausfallzeiten beim Kunden. Viele Kunden verlangen den Nachweis im Vertrag."
   },
   {
     "cat": "wirtschaft",
@@ -21265,7 +21265,7 @@
       "Er führt automatisch zu einer Vertragsstrafe für den Kunden"
     ],
     "a": "Er zählt nicht gegen die zugesagte Verfügbarkeit des Anbieters",
-    "exp": "SLAs enthalten üblicherweise Ausschlüsse, z.B. für Störungen durch den Kunden, vereinbarte Wartung oder höhere Gewalt. Der Anbieter muss nur für Ausfälle in seinem Verantwortungsbereich einstehen. Deshalb sollten solche Ausschlüsse im Vertrag klar formuliert sein."
+    "exp": "SLAs enthalten üblicherweise Ausschlüsse, z. B. für Störungen durch den Kunden, vereinbarte Wartung oder höhere Gewalt. Der Anbieter muss nur für Ausfälle in seinem Verantwortungsbereich einstehen. Deshalb sollten solche Ausschlüsse im Vertrag klar formuliert sein."
   },
   {
     "cat": "wirtschaft",
@@ -21330,7 +21330,7 @@
       "Risikoverminderung"
     ],
     "a": "Risikoakzeptanz",
-    "exp": "Bei der Risikoakzeptanz trägt man ein Risiko bewusst selbst, weil Maßnahmen unwirtschaftlich wären. Wichtig ist, dass das Risiko dokumentiert und beobachtet wird. Vermeidung würde auf die Tätigkeit verzichten, Übertragung das Risiko z.B. an eine Versicherung abgeben."
+    "exp": "Bei der Risikoakzeptanz trägt man ein Risiko bewusst selbst, weil Maßnahmen unwirtschaftlich wären. Wichtig ist, dass das Risiko dokumentiert und beobachtet wird. Vermeidung würde auf die Tätigkeit verzichten, Übertragung das Risiko z. B. an eine Versicherung abgeben."
   },
   {
     "cat": "wirtschaft",
@@ -21408,7 +21408,7 @@
       "Finanzinvestition"
     ],
     "a": "Rationalisierungsinvestition",
-    "exp": "Eine Rationalisierungsinvestition senkt Kosten oder Arbeitszeit bei gleicher Leistung, z.B. durch Automatisierung. Eine Ersatzinvestition tauscht nur Verbrauchtes aus, eine Erweiterungsinvestition steigert die Kapazität."
+    "exp": "Eine Rationalisierungsinvestition senkt Kosten oder Arbeitszeit bei gleicher Leistung, z. B. durch Automatisierung. Eine Ersatzinvestition tauscht nur Verbrauchtes aus, eine Erweiterungsinvestition steigert die Kapazität."
   },
   {
     "cat": "wirtschaft",
@@ -21460,7 +21460,7 @@
       "Eine Abmahnung, um die Leistung schriftlich zu dokumentieren"
     ],
     "a": "Ein Zwischenzeugnis, weil der Wechsel des Vorgesetzten ein berechtigter Anlass ist",
-    "exp": "Ein Zwischenzeugnis kann man bei einem berechtigten Interesse verlangen, z.B. bei Vorgesetztenwechsel, Versetzung oder Umstrukturierung. Es dokumentiert Leistung und Verhalten, solange der bisherige Vorgesetzte sie noch beurteilen kann."
+    "exp": "Ein Zwischenzeugnis kann man bei einem berechtigten Interesse verlangen, z. B. bei Vorgesetztenwechsel, Versetzung oder Umstrukturierung. Es dokumentiert Leistung und Verhalten, solange der bisherige Vorgesetzte sie noch beurteilen kann."
   },
   {
     "cat": "wirtschaft",
@@ -21512,7 +21512,7 @@
       "Eine Zielvereinbarung"
     ],
     "a": "Ein Sozialplan",
-    "exp": "Bei einer Betriebsänderung in Unternehmen mit mehr als 20 Beschäftigten verhandeln Arbeitgeber und Betriebsrat über einen Interessenausgleich, der regelt, ob und wie die Maßnahme erfolgt. Der Sozialplan gleicht die Nachteile aus, z.B. durch Abfindungen, und kann über die Einigungsstelle erzwungen werden."
+    "exp": "Bei einer Betriebsänderung in Unternehmen mit mehr als 20 Beschäftigten verhandeln Arbeitgeber und Betriebsrat über einen Interessenausgleich, der regelt, ob und wie die Maßnahme erfolgt. Der Sozialplan gleicht die Nachteile aus, z. B. durch Abfindungen, und kann über die Einigungsstelle erzwungen werden."
   },
   {
     "cat": "wirtschaft",
@@ -23345,7 +23345,7 @@
       "Beide als Feature, weil sie keinen Netzwerkdienst bieten"
     ],
     "a": "DHCP-Server als Rolle, Windows Server-Sicherung als Feature",
-    "exp": "Rollen sind Dienste, die der Server für andere im Netz erbringt, z.B. DHCP, DNS oder Hyper-V. Features ergänzen den Server selbst um Funktionen wie Sicherung, BitLocker oder Failover-Clustering. Beide werden mit Install-WindowsFeature installiert."
+    "exp": "Rollen sind Dienste, die der Server für andere im Netz erbringt, z. B. DHCP, DNS oder Hyper-V. Features ergänzen den Server selbst um Funktionen wie Sicherung, BitLocker oder Failover-Clustering. Beide werden mit Install-WindowsFeature installiert."
   },
   {
     "cat": "systeme",
@@ -23404,12 +23404,12 @@
     "thema": "windows",
     "q": "Intune verteilt eine Win32-App an 200 Notebooks. Die Software ist auf allen Geräten installiert und läuft, trotzdem meldet Intune bei jedem Gerät Fehler bei der Installation. Was prüfen Sie zuerst?",
     "options": [
-      "Die Erkennungsregel der App, z.B. Pfad oder Versionsnummer",
+      "Die Erkennungsregel der App, z. B. Pfad oder Versionsnummer",
       "Die Lizenz des Intune-Mandanten für Win32-Apps",
       "Die Zuordnung der Geräte zu den Windows-Update-Ringen",
       "Die Zuweisung der App an eine Benutzergruppe statt Gerätegruppe"
     ],
-    "a": "Die Erkennungsregel der App, z.B. Pfad oder Versionsnummer",
+    "a": "Die Erkennungsregel der App, z. B. Pfad oder Versionsnummer",
     "exp": "Intune prüft nach der Installation mit der Erkennungsregel, ob die App vorhanden ist. Zeigt die Regel auf einen falschen Pfad, Registry-Schlüssel oder eine andere Version, gilt die Installation als gescheitert. Oft ist nach einem Update die Versionsnummer in der Regel nicht angepasst worden."
   },
   {
@@ -23423,7 +23423,7 @@
       "Ein Sicherheitsbaseline-Profil mit WSUS"
     ],
     "a": "Eine Compliance-Richtlinie mit bedingtem Zugriff",
-    "exp": "Eine Compliance-Richtlinie legt fest, welche Bedingungen ein Gerät erfüllen muss, z.B. aktive Verschlüsselung. Intune meldet den Status an Entra ID. Eine Richtlinie für bedingten Zugriff sperrt dann den Zugriff auf die Dienste für nicht konforme Geräte."
+    "exp": "Eine Compliance-Richtlinie legt fest, welche Bedingungen ein Gerät erfüllen muss, z. B. aktive Verschlüsselung. Intune meldet den Status an Entra ID. Eine Richtlinie für bedingten Zugriff sperrt dann den Zugriff auf die Dienste für nicht konforme Geräte."
   },
   {
     "cat": "systeme",
@@ -23540,7 +23540,7 @@
       "systeminfo /fo list"
     ],
     "a": "powercfg /requests",
-    "exp": "powercfg /requests listet Anforderungen von Anwendungen, Diensten und Treibern, die den Standby blockieren, z.B. eine laufende Wiedergabe oder eine offene Datei im Netz. powercfg /lastwake zeigt dagegen, was den Rechner zuletzt geweckt hat."
+    "exp": "powercfg /requests listet Anforderungen von Anwendungen, Diensten und Treibern, die den Standby blockieren, z. B. eine laufende Wiedergabe oder eine offene Datei im Netz. powercfg /lastwake zeigt dagegen, was den Rechner zuletzt geweckt hat."
   },
   {
     "cat": "systeme",
@@ -23878,7 +23878,7 @@
       "Rekursive Beziehung"
     ],
     "a": "1:1-Beziehung",
-    "exp": "Auf beiden Seiten gibt es höchstens einen Partner. Da nicht jeder Mitarbeiter einen Wagen hat, spricht man genauer von 1:c. Umgesetzt wird die Beziehung mit einem Fremdschlüssel mit UNIQUE-Bedingung, z.B. mitarbeiter_id in der Tabelle firmenwagen."
+    "exp": "Auf beiden Seiten gibt es höchstens einen Partner. Da nicht jeder Mitarbeiter einen Wagen hat, spricht man genauer von 1:c. Umgesetzt wird die Beziehung mit einem Fremdschlüssel mit UNIQUE-Bedingung, z. B. mitarbeiter_id in der Tabelle firmenwagen."
   },
   {
     "cat": "datenbanken",
@@ -23891,7 +23891,7 @@
       "Für den gemeinsamen Primärschlüssel beider"
     ],
     "a": "Für einen Beziehungstyp zwischen den Entitätstypen",
-    "exp": "In der Chen-Notation stehen Rechtecke für Entitätstypen, Rauten für Beziehungen und Ellipsen für Attribute. An den Linien stehen die Kardinalitäten, z.B. n und m. Unterstrichene Attribute kennzeichnen Schlüssel."
+    "exp": "In der Chen-Notation stehen Rechtecke für Entitätstypen, Rauten für Beziehungen und Ellipsen für Attribute. An den Linien stehen die Kardinalitäten, z. B. n und m. Unterstrichene Attribute kennzeichnen Schlüssel."
   },
   {
     "cat": "datenbanken",
@@ -23956,7 +23956,7 @@
       "Normalisierte Tabellen erlauben keine Summenbildung"
     ],
     "a": "Auswertungen laufen ohne viele JOINs schneller",
-    "exp": "Normalisierung vermeidet Anomalien beim Ändern, erfordert für Auswertungen aber viele JOINs. Ein Data Warehouse wird überwiegend gelesen und nur über gesteuerte Ladeprozesse befüllt. Deshalb nimmt man Redundanz in Kauf, z.B. im Sternschema mit Fakten- und Dimensionstabellen."
+    "exp": "Normalisierung vermeidet Anomalien beim Ändern, erfordert für Auswertungen aber viele JOINs. Ein Data Warehouse wird überwiegend gelesen und nur über gesteuerte Ladeprozesse befüllt. Deshalb nimmt man Redundanz in Kauf, z. B. im Sternschema mit Fakten- und Dimensionstabellen."
   },
   {
     "cat": "datenbanken",
@@ -24021,7 +24021,7 @@
       "Mit einem FOREIGN KEY von anmeldename auf die Spalte id"
     ],
     "a": "Mit einer UNIQUE-Bedingung auf der Spalte anmeldename",
-    "exp": "Eine Tabelle hat genau einen Primärschlüssel, weitere eindeutige Spalten sichert man mit UNIQUE, z.B. ALTER TABLE benutzer ADD CONSTRAINT uq_login UNIQUE (anmeldename);. Die Datenbank lehnt dann doppelte Werte ab, egal welche Anwendung schreibt. Intern legt sie dafür einen Index an."
+    "exp": "Eine Tabelle hat genau einen Primärschlüssel, weitere eindeutige Spalten sichert man mit UNIQUE, z. B. ALTER TABLE benutzer ADD CONSTRAINT uq_login UNIQUE (anmeldename);. Die Datenbank lehnt dann doppelte Werte ab, egal welche Anwendung schreibt. Intern legt sie dafür einen Index an."
   },
   {
     "cat": "datenbanken",
@@ -24047,7 +24047,7 @@
       "DROP INSERT ON kunden FOR praktikant;"
     ],
     "a": "REVOKE INSERT ON kunden FROM praktikant;",
-    "exp": "REVOKE entzieht Rechte, die mit GRANT vergeben wurden. Endet das Praktikum ganz, sperrt oder löscht man das Konto am besten vollständig, z.B. mit DROP USER. Rechte, die über eine Rolle kommen, entzieht man, indem man die Rolle entfernt."
+    "exp": "REVOKE entzieht Rechte, die mit GRANT vergeben wurden. Endet das Praktikum ganz, sperrt oder löscht man das Konto am besten vollständig, z. B. mit DROP USER. Rechte, die über eine Rolle kommen, entzieht man, indem man die Rolle entfernt."
   },
   {
     "cat": "datenbanken",
@@ -24190,7 +24190,7 @@
       "Sie schalten die Protokollierung der Anmeldung in der Datenbank ab"
     ],
     "a": "Sie leiten einen Kommentar ein, die Passwortprüfung entfällt",
-    "exp": "Die Anwendung baut z.B. WHERE name = 'admin'--' AND passwort = '...' zusammen. Das Hochkomma schließt den Text, -- macht den Rest der Zeile zum Kommentar. Übrig bleibt nur WHERE name = 'admin'. Mit Prepared Statements wäre die Eingabe nur ein ungültiger Benutzername."
+    "exp": "Die Anwendung baut z. B. WHERE name = 'admin'--' AND passwort = '...' zusammen. Das Hochkomma schließt den Text, -- macht den Rest der Zeile zum Kommentar. Übrig bleibt nur WHERE name = 'admin'. Mit Prepared Statements wäre die Eingabe nur ein ungültiger Benutzername."
   },
   {
     "cat": "datenbanken",
@@ -24203,19 +24203,19 @@
       "Die Sortierung nur für angemeldete Benutzer freischalten"
     ],
     "a": "Den Wert gegen eine feste Liste erlaubter Spaltennamen prüfen",
-    "exp": "Platzhalter in Prepared Statements gelten nur für Werte, nicht für Tabellen- oder Spaltennamen und Schlüsselwörter wie ASC. Solche Teile setzt man nur aus einer Positivliste (Whitelist) ein, z.B. name, datum oder preis. Alles andere wird abgelehnt oder durch einen Standardwert ersetzt."
+    "exp": "Platzhalter in Prepared Statements gelten nur für Werte, nicht für Tabellen- oder Spaltennamen und Schlüsselwörter wie ASC. Solche Teile setzt man nur aus einer Positivliste (Whitelist) ein, z. B. name, datum oder preis. Alles andere wird abgelehnt oder durch einen Standardwert ersetzt."
   },
   {
     "cat": "datenbanken",
     "thema": "db_betrieb",
     "q": "Ein stark besuchter Webshop verteilt die Last auf mehrere Webserver. Die Sitzungsdaten der Besucher sollen zentral und sehr schnell abrufbar sein. Welche Datenbankart passt am besten?",
     "options": [
-      "Ein Key-Value-Speicher im Arbeitsspeicher, z.B. Redis",
-      "Eine Graphdatenbank für vernetzte Daten, z.B. Neo4j",
+      "Ein Key-Value-Speicher im Arbeitsspeicher, z. B. Redis",
+      "Eine Graphdatenbank für vernetzte Daten, z. B. Neo4j",
       "Eine spaltenorientierte Datenbank für Langzeitarchive",
       "Eine relationale Datenbank mit vielen verknüpften Tabellen"
     ],
-    "a": "Ein Key-Value-Speicher im Arbeitsspeicher, z.B. Redis",
+    "a": "Ein Key-Value-Speicher im Arbeitsspeicher, z. B. Redis",
     "exp": "Sitzungen werden immer über ihre Sitzungs-ID gelesen und geschrieben. Ein Key-Value-Speicher liefert zu einem Schlüssel sehr schnell den Wert und kann Einträge nach Ablauf automatisch löschen. Komplexe Abfragen oder Beziehungen braucht man dafür nicht."
   },
   {
@@ -24281,7 +24281,7 @@
       "11 Bit, 2.048 Hosts"
     ],
     "a": "11 Bit, 2.046 Hosts",
-    "exp": "255.255.248.0 entspricht /21 (8 + 8 + 5 Einsen). Hostanteil: 32 - 21 = 11 Bit. 2^11 - 2 = 2.046 Hosts, weil Netz- und Broadcastadresse wegfallen."
+    "exp": "255.255.248.0 entspricht /21 (8 + 8 + 5 Einsen). Hostanteil: 32 - 21 = 11 Bit. 2^11 - 2 = 2.046 Hosts, weil Netz- und Broadcast-Adresse wegfallen."
   },
   {
     "cat": "netzwerk",
@@ -24437,7 +24437,7 @@
       "erkennt 3, korrigiert 2 Bitfehler"
     ],
     "a": "erkennt 2, korrigiert 1 Bitfehler",
-    "exp": "Die kleinste Hamming-Distanz zwischen zwei Codewörtern ist d = 3 (z.B. 00000 und 01011 unterscheiden sich in 3 Stellen). Erkennbar sind d - 1 = 2, korrigierbar (d - 1) / 2 abgerundet = 1 Fehler."
+    "exp": "Die kleinste Hamming-Distanz zwischen zwei Codewörtern ist d = 3 (z. B. 00000 und 01011 unterscheiden sich in 3 Stellen). Erkennbar sind d - 1 = 2, korrigierbar (d - 1) / 2 abgerundet = 1 Fehler."
   },
   {
     "cat": "netzwerk",
@@ -25131,7 +25131,7 @@
   {
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
-    "q": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget im dritten Jahr in heutigen Preisen noch wert?",
+    "q": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget nach drei Jahren in heutigen Preisen noch wert?",
     "options": [
       "160.019,34 Euro",
       "158.400,00 Euro",
@@ -25139,7 +25139,7 @@
       "202.475,52 Euro"
     ],
     "a": "160.019,34 Euro",
-    "exp": "Die Preissteigerung wirkt mit Zinseszins: 180.000,00 Euro / 1,04^3 = 180.000,00 Euro / 1,124864 = 160.019,34 Euro."
+    "exp": "Gemeint ist der Wert nach drei Jahren, also nach drei Preissteigerungen. Sie wirken mit Zinseszins: 180.000,00 Euro / 1,04^3 = 180.000,00 Euro / 1,124864 = 160.019,34 Euro."
   },
   {
     "cat": "wirtschaft",
@@ -27984,7 +27984,7 @@
     "rahmenplan": [
       "F5a"
     ],
-    "q": "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) nicht geschützt?",
+    "q": "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz (AGG) NICHT geschützt?",
     "options": [
       "Ob jemand raucht",
       "Das Alter",

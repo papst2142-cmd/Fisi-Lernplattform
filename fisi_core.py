@@ -153,6 +153,8 @@ def write_error_log(text, path=None):
     selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...). path nur
     fuer eine Datenbank an anderem Ort (ab 0.62.5: fehler.log daneben)."""
     try:
+        # ab 0.63.2 (B-L-03): Zugangsschluessel wie im Bericht entfernen; spaet eingefuehrt (Kreis)
+        from fisi_diagnose import scrub
         path = path or error_log_path()
         if os.path.exists(path) and os.path.getsize(path) > ERROR_LOG_MAX:
             with open(path, encoding="utf-8", errors="replace") as handle:
@@ -163,7 +165,7 @@ def write_error_log(text, path=None):
         with open(path, "a", encoding="utf-8") as handle:
             handle.write("=== %s | Version %s | %s ===\n%s\n" % (
                 stamp, _error_log_version or "?", sys.platform,
-                anonymize_paths(text.rstrip())))
+                anonymize_paths(scrub(text.rstrip()))))
     except Exception:
         pass
 
@@ -466,7 +468,21 @@ def apply_question_renames(cur):
 def purge_superseded_project_rows(cur):
     """Loescht im Abschlussprojekt alle Zeilen, die eine neuere Fassung
     desselben Feldes haben (ab 0.51). Gleiche Zeit: die groessere uid gilt,
-    damit alle Geraete dieselbe Zeile behalten."""
+    damit alle Geraete dieselbe Zeile behalten.
+
+    Ab 0.63.2 (N16, N-f; F32 umgesetzt als Variante (ii'), Weisung zu
+    Meldung 40 B1): In einem geloeschten Projekt (Feld "_geloescht" = "1")
+    verschwindet zuerst jede NICHT LEERE Fassung, die spaeter liegt als die
+    frueheste Loeschung (vorgehende Uhr, andere Zeitzone, Offline-Bearbeitung
+    eines anderen Geraets). Nur DELETE, nie UPDATE; "_geloescht" selbst und
+    die leeren Fassungen (B-G-09) bleiben, lebende Projekte unberuehrt."""
+    cur.execute(
+        "DELETE FROM abschlussprojekt WHERE feld != '_geloescht' AND wert != ''"
+        " AND EXISTS ("
+        " SELECT 1 FROM abschlussprojekt AS loesch"
+        " WHERE loesch.projekt = abschlussprojekt.projekt"
+        " AND loesch.feld = '_geloescht' AND loesch.wert = '1'"
+        " AND loesch.timestamp < abschlussprojekt.timestamp)")
     cur.execute(
         "DELETE FROM abschlussprojekt WHERE EXISTS ("
         " SELECT 1 FROM abschlussprojekt AS neu"
@@ -604,6 +620,27 @@ def clock_deviation(value, now=None):
                 and abs(seconds + jump) <= CLOCK_TOLERANCE):
             return seconds + jump
     return seconds
+
+
+def clock_jump_unknown(value, now=None):
+    """Ab 0.63.2 (S-1, Weg b, FG-58): True, wenn eine gespeicherte Messung
+    mit einer Abweichung ueber CLOCK_TOLERANCE gilt, ein Sprung der Uhr seit
+    der Messung aber nicht feststellbar ist (_clock_jump liefert None:
+    Messung ohne Laufzeit-Uhr, anderer Systemstart, ohne Kennung des
+    Systemstarts ein anderer Prozess). clock_deviation liefert dann die
+    Messung selbst. Gleiche Lesart wie clock_deviation, liest nur."""
+    try:
+        data = json.loads(value)
+        seconds = float(data["s"])
+        measured = datetime.datetime.fromisoformat(data["gemessen"])
+    except (TypeError, ValueError, KeyError):
+        return False
+    if measured.tzinfo is None:
+        return False
+    age = ((now or device_now()) - measured).total_seconds()
+    if age < 0 or age > CLOCK_VALID:
+        return False
+    return abs(seconds) > CLOCK_TOLERANCE and _clock_jump(data, age) is None
 
 
 # ============================================================================
@@ -959,8 +996,29 @@ class DBManager:
             columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
             if "uid" not in columns:
                 cur.execute("ALTER TABLE %s ADD COLUMN uid TEXT" % table)
-            cur.execute("UPDATE %s SET uid = lower(hex(randomblob(16))) "
-                        "WHERE uid IS NULL" % table)
+            # Ab 0.63.2 (B-G-29): Nur wenn es Eintraege ohne uid gibt (sehr
+            # alte Datenbank, vor v0.24), wird ueberhaupt geschrieben - sonst
+            # bleibt die Datei unberuehrt. Die uid kommt dann aus Tabelle, id
+            # und Inhalt: Zwei Kopien derselben alten Datei bekommen dieselben
+            # uids, der Abgleich zaehlt ihre Eintraege nicht doppelt. Ist die
+            # uid schon vergeben (Kollision), gilt wie bisher eine zufaellige.
+            if cur.execute("SELECT 1 FROM %s WHERE uid IS NULL LIMIT 1"
+                           % table).fetchone() is not None:
+                import hashlib
+                taken = {row[0] for row in cur.execute(
+                    "SELECT uid FROM %s WHERE uid IS NOT NULL" % table)}
+                cur.execute("SELECT rowid, * FROM %s WHERE uid IS NULL" % table)
+                names = [item[0] for item in cur.description][1:]
+                for row in cur.fetchall():
+                    content = json.dumps([table] + [[name, value] for name, value in
+                                                    zip(names, row[1:]) if name != "uid"],
+                                         ensure_ascii=True, default=repr)
+                    uid = hashlib.sha256(content.encode("utf-8")).hexdigest()[:32]
+                    if uid in taken:
+                        uid = uuid.uuid4().hex
+                    taken.add(uid)
+                    cur.execute("UPDATE %s SET uid = ? WHERE rowid = ?" % table,
+                                (uid, row[0]))
             cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s_uid ON %s (uid)"
                         % (table, table))
         for table, extra in OPTIONAL_COLUMNS.items():
@@ -988,10 +1046,20 @@ class DBManager:
         eine Loeschung erfasst auch Eintraege, die mit der falschen Uhr
         entstanden. Die Ortszeit selbst (Statistik, "Heute") bleibt wie bisher.
         Ab 0.62.5 nicht mehr, sobald die Uhr seit der Messung richtig gestellt
-        wurde (clock_deviation, Restrisiko 3)."""
+        wurde (clock_deviation, Restrisiko 3).
+        Ab 0.63.2 (S-1, Weg b): Ist ein Sprung seit der Messung nicht
+        feststellbar (clock_jump_unknown), wird eine Vorlauf-Abweichung (Uhr
+        ging vor) nicht eingerechnet - der Eintrag liegt dann eher spaeter
+        und faellt nicht unter eine Loeschung, die nach ihm kam; eine
+        Nachlauf-Abweichung weiter. Ein so gestempelter Eintrag wird spaeter
+        nicht nachgetragen (fisi_sync._correct_own_entries, unveraendert)."""
         moment = device_now()
         offset = offset_minutes(moment)
-        deviation = clock_deviation(self.get_meta(CLOCK_KEY), moment)
+        value = self.get_meta(CLOCK_KEY)
+        deviation = clock_deviation(value, moment)
+        if (deviation is not None and deviation > CLOCK_TOLERANCE
+                and clock_jump_unknown(value, moment)):
+            deviation = None
         if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
             offset += int(round(deviation / 60.0))
         return moment.strftime("%Y-%m-%d %H:%M:%S"), offset
@@ -1002,12 +1070,19 @@ class DBManager:
         Wich die Uhr beim letzten Abgleich um mehr als CLOCK_TOLERANCE von
         GitHub ab, gilt stattdessen die Uhrzeit von GitHub - ab 0.62.5 nicht
         mehr, sobald die Uhr seit der Messung richtig gestellt wurde
-        (clock_deviation, Restrisiko 3). Liefert (Text, korrigierte Sekunden
+        (clock_deviation, Restrisiko 3). Ab 0.63.2 (S-1, Weg b): Ist ein
+        Sprung seit der Messung nicht feststellbar (clock_jump_unknown), wird
+        eine Nachlauf-Abweichung (Uhr ging nach) nicht eingerechnet - die
+        Marke liegt dann eher frueher und nimmt nichts mit, was nach ihr kam;
+        eine Vorlauf-Abweichung weiter. Liefert (Text, korrigierte Sekunden
         oder 0)."""
         moment = device_now()
         row = cur.execute("SELECT value FROM sync_meta WHERE key = ?",
                           (CLOCK_KEY,)).fetchone()
         deviation = clock_deviation(row[0], moment) if row else None
+        if (deviation is not None and deviation < -CLOCK_TOLERANCE
+                and clock_jump_unknown(row[0], moment)):
+            deviation = None
         if deviation is not None and abs(deviation) > CLOCK_TOLERANCE:
             moment = (moment - datetime.timedelta(seconds=deviation)).astimezone()
             return format_with_zone(moment), deviation
@@ -1339,11 +1414,23 @@ class DBManager:
 
     def log_record(self, run, kind, key, value, data=""):
         """Eine Zeile der Bestenliste (data ist JSON-Text)."""
+        stamp = self._stamp()
+        # Ab 0.63.2 (B-G-17, FG-100): Liegt der Eintrag nicht nach der Marke von
+        # "Bestenliste loeschen" (gelesen wie beim Abgleich: als Text, mit Zone
+        # in UTC), bekommt er die Marke + 1 s in deren Zone. Sonst entfernte der
+        # naechste Abgleich den Eintrag aus derselben Sekunde wieder.
+        import fisi_sync
+        mark = fisi_sync.parse_marker(self.get_meta("bestenliste_reset_at"))
+        local = mark and datetime.datetime.strptime(mark[0][:19], "%Y-%m-%d %H:%M:%S")
+        if mark and (stamp[0] <= mark[0] or mark[1] and datetime.datetime.strptime(
+                stamp[0], "%Y-%m-%d %H:%M:%S") - datetime.timedelta(minutes=stamp[1]) <= mark[1]):
+            stamp = ((local + datetime.timedelta(seconds=1)).strftime("%Y-%m-%d %H:%M:%S"),
+                     stamp[1] if mark[1] is None else round((local - mark[1]).total_seconds() / 60))
         return bool(self._execute(
             "INSERT INTO spiel_bestenliste (timestamp, utc_offset,"
             " durchgang, art, schluessel, wert,"
             " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (*self._stamp(), run or "", kind, key, value, data or "{}", self._uid()),
+            (*stamp, run or "", kind, key, value, data or "{}", self._uid()),
             commit=True, default=False))
 
     def records(self):
@@ -2534,6 +2621,10 @@ def _number_value(text):
                 raise _NumberProblem("keine Zahl")  # 1.00,5 / 1,000.5 / 1.000.5
             whole = whole.replace(".", "")
     elif "." in whole:
+        # Ab 0.63.2 (Restrisiko 12): "01.000" sieht aus wie ein Tausenderpunkt
+        # mit fuehrender 0 und war still 1 -> Meldung ("0.125" bleibt 0,125)
+        if re.fullmatch(r"0[0-9]{1,2}(\.[0-9]{3})+", whole):
+            raise _NumberProblem("keine Zahl")
         if _NUMBER_GROUPS.fullmatch(whole):          # Tausenderpunkt
             whole = whole.replace(".", "")
         elif whole.count(".") == 1:                  # Dezimalpunkt
@@ -2571,6 +2662,21 @@ def read_number(text, caption, ganz=False):
     return value
 
 
+def _thousands_point_lines(*texts):
+    """Ab 0.63.2 (B-D-15, Restrisiko 13): Hinweiszeile fuer das Ende eines
+    Rechner-Ergebnisses, wenn eines der gelesenen Felder einen Punkt als
+    Tausenderpunkt hatte ("1.000", "7.200", "1.234,5"; gleiche Regel wie
+    _number_value). Dezimalpunkt ("0.125") und Leerzeichen ("1 000") nicht.
+    Liefert ["Punkt als Tausender gelesen."] oder []."""
+    for text in texts:
+        whole = str(text if text is not None else "").strip()
+        whole = whole[1:] if whole.startswith("-") else whole
+        whole = whole.partition(",")[0]
+        if "." in whole and _NUMBER_GROUPS.fullmatch(whole):
+            return ["Punkt als Tausender gelesen."]
+    return []
+
+
 RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10"]
 
 # Mindestanzahl Platten und Formel -> (Nettokapazitaet, Ausfalltoleranz)
@@ -2589,6 +2695,20 @@ RAID_INPUT_MIN = {"RAID 0": 2}
 COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
                 ("24", "24 Bit (True Color)"),
                 ("32", "32 Bit (True Color + Alpha)")]
+
+# Ab 0.63.2 (B-N-07 4.2): Karten- und Feldbeschriftungen von RAID und
+# Bildschirm aus einer Quelle fuer PC und Handy (wie UPS_FIELD_CAPTIONS)
+RAID_TITLE = "RAID-Kapazität"
+RAID_SUBTITLE = "Nutzkapazität, Verlust, Effizienz"
+RAID_FIELD_LEVEL = "RAID-Level"
+RAID_FIELD_DISKS = "Anzahl Festplatten"
+RAID_FIELD_SIZE = "Kapazität je Festplatte (GB)"
+SCREEN_TITLE = "Bildschirm-Datenvolumen"
+SCREEN_SUBTITLE = "Pixel, Farbtiefe, Datenrate"
+SCREEN_FIELD_WIDTH = "Breite (Pixel)"
+SCREEN_FIELD_HEIGHT = "Höhe (Pixel)"
+SCREEN_FIELD_FPS = "Bildrate (fps, optional)"
+SCREEN_FIELD_DEPTH = "Farbtiefe"
 
 
 def ipv4_values(network):
@@ -2632,8 +2752,11 @@ def subnet_report(value):
 
     if network.version == 4:
         v = ipv4_values(network)
-        # Ab 0.62.3: /31 hat keine Broadcast-Adresse (Punkt-zu-Punkt, RFC 3021)
-        broadcast = "keine (/31, RFC 3021)" if v["praefix"] == 31 else v["broadcast"]
+        # Ab 0.62.3: /31 hat keine Broadcast-Adresse (Punkt-zu-Punkt, RFC 3021);
+        # ab 0.63.2 (A8) auch /32 nicht (eine einzelne Adresse)
+        broadcast = {31: "keine (/31, RFC 3021)",
+                     32: "keine (/32, einzelne Adresse)"}.get(v["praefix"],
+                                                              v["broadcast"])
         lines = [
             "Netzadresse           : %s" % v["netz"],
             "Subnetzmaske          : %s" % v["maske"],
@@ -2651,7 +2774,9 @@ def subnet_report(value):
             "Präfixlänge           : /%d" % network.prefixlen,
             "Erste Adresse         : %s" % network.network_address,
             "Letzte Adresse        : %s" % network[-1],
-            "Adressen gesamt       : %s" % de_int(network.num_addresses),
+            # ab 0.63.2 (B-N-07 4.15b): Zweierpotenz vor der langen Zahl
+            "Adressen gesamt       : 2^%d = %s" % (128 - network.prefixlen,
+                                                  de_int(network.num_addresses)),
         ]
     return "\n".join(lines)
 
@@ -3065,28 +3190,34 @@ def split_report(result, page=1, schmal=False):
                          "" if entry["status"] == SUBNET_STATE_USED else "*")
                for entry in data["eintraege"]]
     width = max(2, max(len(number) for number in numbers))
+    table = []
     if version == 4:
+        # Ab 0.63.2 (A9, G-10): Spalten mit zwei Leerzeichen getrennt (so
+        # erkennt fit_lines die Tabelle) und die Tabelle nicht auf 75 Zeichen
+        # umbrochen: jede Zeile bleibt eine Zeile, der Kasten schiebt seitlich
         cells = [[subnet_net_text(4, entry["netz"], entry["praefix"]),
                   ipv4_text(entry["erste"]), ipv4_text(entry["letzte"]),
                   ipv4_text(entry["broadcast"]) if entry["broadcast"] is not None
                   else "keine"] for entry in data["eintraege"]]
         heads = ["Netzadresse", "Erster Host", "Letzter Host", "Broadcast"]
         sizes = [max(len(heads[c]), max(len(row[c]) for row in cells)) for c in range(4)]
-        lines.append(" ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
-                                                    for c in range(4)]).rstrip())
+        table.append("  ".join(["Nr".ljust(width)] + [heads[c].ljust(sizes[c])
+                                                     for c in range(4)]).rstrip())
         for number, row in zip(numbers, cells):
-            lines.append(" ".join([number.ljust(width)] + [row[c].ljust(sizes[c])
-                                                         for c in range(4)]).rstrip())
+            table.append("  ".join([number.ljust(width)] + [row[c].ljust(sizes[c])
+                                                          for c in range(4)]).rstrip())
     else:
         lines.append("%s Subnetz und letzte Adresse" % "Nr".ljust(width))
         for number, entry in zip(numbers, data["eintraege"]):
             lines.append("%s %s" % (number.ljust(width),
                                     subnet_net_text(6, entry["netz"], entry["praefix"])))
             lines.append("%s bis %s" % (" " * width, ipv6_text(entry["ende"])))
+    tail = []
     if any(number.endswith("*") for number in numbers):
-        lines.append("* frei, Reserve")
-    lines.append(data["text"])
-    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH))
+        tail.append("* frei, Reserve")
+    tail.append(data["text"])
+    return "\n".join(_fit_lines(lines, CALC_EXPLAIN_PC_WIDTH) + table
+                     + _fit_lines(tail, CALC_EXPLAIN_PC_WIDTH))
 
 
 _HOST_NUMBER_WORD = re.compile(r"-?[0-9.]+")     # Wort, das wie eine Zahl aussieht
@@ -3415,11 +3546,62 @@ def _fit_sentence(line, zeichen):
             words.append(word)
     for word in words:
         if current and len(indent) + len(current) + 1 + len(word) > zeichen:
+            # ab 0.63.2 (A5): "=", "->", "→", "hex" am Zeilenende gehen mit
+            # dem folgenden Wort in die neue Zeile
+            current, word = _fit_unbind(current, word, zeichen - len(indent))
             rows.append(indent + current)
             current = word
         else:
             current = "%s %s" % (current, word) if current else word
     rows.append(indent + current)
+    return rows
+
+
+# Ab 0.63.2 (A5, Nebenbefund 13): Diese Woerter gehoeren zum folgenden Wort.
+# Eine Zeile endet nicht auf ihnen; der Umbruch kommt davor ("... = 128" /
+# "= hex 80" statt "... = 128 = hex" / "80"), wie bei der "RFC"-Regel.
+# Ausnahme: Passen Bindewort und folgendes Wort zusammen nicht in eine Zeile,
+# bleibt es wie bisher.
+_FIT_BIND = ("=", "->", "→", "hex")
+
+
+def _fit_unbind(current, word, room):
+    """Vor einem Zeilenumbruch: Bindewoerter am Ende von current an den
+    Anfang der neuen Zeile (vor word) holen. Gibt (current, word) zurueck."""
+    head, tail = current, []
+    while " " in head and head.rsplit(" ", 1)[1] in _FIT_BIND:
+        head, last = head.rsplit(" ", 1)
+        tail.insert(0, last)
+    if not tail or len(" ".join(tail + [word])) > room:
+        return current, word
+    return head, " ".join(tail + [word])
+
+
+def _fit_prose(line, zeichen):
+    """Ab 0.63.2 (A5, "(Nibble):" / "/44 ..."): Ein Satz mit Doppelpunkt
+    ("An der ... (Nibble): /44 = 4.096 Subnetze. In der") ist keine Zeile
+    "Beschriftung : Wert": vor dem Doppelpunkt stehen mindestens vier Woerter
+    und kein Leerzeichen, die Beschriftung endet auf "(Nibble)", der Wert
+    beginnt mit einer Praefixlaenge ("/44"), und die Zeile hat keine
+    Spalten. Er bricht wie ein Satz um, damit Beschriftung und Wert in einer
+    Zeile bleiben, wenn sie zusammen passen. Nur dieser Fall (Plan 0.63.2,
+    3.6); fuer alle anderen Zeilen gilt Regel F-8 b unveraendert
+    (Gegenpruefung S1a M1, F17 (a)). None, wenn das
+    keine solche Zeile ist oder nicht einmal die Beschriftung mit dem ersten
+    Wort des Wertes passt (dann Regel F-8 b: "Beschriftung:" und darunter
+    der Wert)."""
+    pos = line.find(": ")
+    if pos <= 0 or line[pos - 1] == " " or "  " in line.strip():
+        return None
+    if len(line[:pos].split()) < 4:
+        return None
+    if not line[:pos].endswith("(Nibble)") or not re.match(r"/[0-9]", line[pos + 2:]):
+        return None
+    if " " not in line[pos + 2:].strip():
+        return None
+    rows = _fit_sentence(line, zeichen)
+    if len(rows) < 2 or not rows[0].startswith(line[:pos + 2]):
+        return None
     return rows
 
 
@@ -3493,6 +3675,9 @@ def _fit_value(value, room):
         for number, piece in enumerate(pieces):
             glue = " " if number == 0 and current else ""
             if current and len(current) + len(glue) + len(piece) > room:
+                if glue:
+                    # ab 0.63.2 (A5): Bindewort am Zeilenende in die neue Zeile
+                    current, piece = _fit_unbind(current, piece, room)
                 rows.append(current)
                 current = piece
             else:
@@ -3501,7 +3686,7 @@ def _fit_value(value, room):
     return rows
 
 
-def fit_lines(text, zeichen):
+def fit_lines(text, zeichen, einheitlich=False):
     """Ab 0.63 (B-E-01, F-8 b): Text fuer einen Kasten mit `zeichen` Zeichen
     Breite setzen. Eine Zeile "Beschriftung : Wert", die nicht passt, wird zu
     "Beschriftung:" und darunter "  Wert"; ihre Folgezeilen ("     : Wert",
@@ -3516,10 +3701,43 @@ def fit_lines(text, zeichen):
     Woerter werden nie geteilt (Festlegung Hauptsitzung 0.63). Zeilen mit
     Spalten (zwei Leerzeichen hintereinander, z.B. Tabellen) bleiben, wie
     sie sind. zeichen None/0: Text unveraendert. Reine Textfunktion ohne
-    Flet."""
+    Flet.
+    Ab 0.63.2 (A5-a, nur Handy): einheitlich=True - muss in einem Abschnitt
+    (aufeinanderfolgende Zeilen "Beschriftung : Wert" mit ": " an derselben
+    Stelle) eine Zeile umbrechen, stehen alle Zeilen dieses Abschnitts
+    zweizeilig ("Beschriftung:" / "  Wert"). Standard False: wie bisher (PC)."""
     if not text or not zeichen or zeichen <= 0:
         return text
     lines = text.split("\n")
+    forced = set()
+    if einheitlich:
+        # Abschnitte suchen: Bloecke (Kopfzeile + Folgezeilen) mit ": " an
+        # derselben Stelle; bricht einer davon nach F-8 b um, alle zweizeilig
+        sections, pos_now, index = [], None, 0
+        while index < len(lines):
+            parts = _fit_parts(lines[index])
+            if parts is None or not parts[1]:
+                pos_now = None
+                index += 1
+                continue
+            start, block = index, [lines[index]]
+            index += 1
+            while index < len(lines):
+                follow = _fit_parts(lines[index])
+                if follow is None or follow[1]:
+                    break
+                block.append(lines[index])
+                index += 1
+            pos = lines[start].find(": ")
+            if pos != pos_now:
+                sections.append([])
+                pos_now = pos
+            wraps = (not all(len(item) <= zeichen for item in block)
+                     and not (len(block) == 1 and _fit_prose(lines[start], zeichen)))
+            sections[-1].append((start, wraps))
+        for section in sections:
+            if len(section) > 1 and any(wraps for _start, wraps in section):
+                forced.update(start for start, _wraps in section)
     out = []
     index = 0
     while index < len(lines):
@@ -3535,6 +3753,7 @@ def fit_lines(text, zeichen):
                 out.append(line)
             index += 1
             continue
+        start = index
         block = [(line, parts)]
         index += 1
         while index < len(lines):
@@ -3543,8 +3762,12 @@ def fit_lines(text, zeichen):
                 break
             block.append((lines[index], follow))
             index += 1
-        if all(len(item) <= zeichen for item, _parts in block):
+        if start not in forced and all(len(item) <= zeichen for item, _parts in block):
             out.extend(item for item, _parts in block)
+            continue
+        prose = _fit_prose(line, zeichen) if len(block) == 1 else None
+        if prose:                            # ab 0.63.2 (A5): Satz mit ":"
+            out.extend(prose)
             continue
         indent, label, _value = parts
         out.append("%s%s:" % (indent, label))
@@ -3656,10 +3879,19 @@ def raid_tolerance_lines(level, disks, tolerance):
 def raid_report(level, disks_text, size_text):
     """Berechnet Nutzkapazitaet, Verlust und Effizienz eines RAID."""
     # Ab 0.62.4: gemeinsame Leseregel (read_number), "1.000" = 1000
-    disks = read_number(disks_text, "Anzahl Festplatten", ganz=True)
-    size = read_number(size_text, "Kapazität je Festplatte (GB)")
+    disks = read_number(disks_text, RAID_FIELD_DISKS, ganz=True)
+    size = read_number(size_text, RAID_FIELD_SIZE)
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
+    # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
+    if disks > 1000:
+        raise InputError("Die Anzahl der Festplatten ist zu groß (höchstens 1.000).")
+    if size > 1000000:
+        raise InputError("Die Kapazität je Festplatte ist zu groß "
+                         "(höchstens 1.000.000 GB).")
+    if size < 0.01:
+        raise InputError("Die Kapazität je Festplatte ist zu klein "
+                         "(mindestens 0,01 GB).")
 
     values = raid_input_values(level, disks, size)
     if values is None:
@@ -3681,6 +3913,7 @@ def raid_report(level, disks_text, size_text):
         "Ausfalltoleranz       : %s" % tolerance[0],
     ]
     lines += [" " * 24 + line for line in tolerance[1:]]
+    lines += _thousands_point_lines(disks_text, size_text)     # ab 0.63.2
     return "\n".join(lines)
 
 
@@ -3690,16 +3923,25 @@ SCREEN_FPS_MAX = 1000
 def screen_report(width_text, height_text, depth, fps_text):
     """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
     # Ab 0.62.4: gemeinsame Leseregel (read_number); Bildrate leer = ohne
-    width = read_number(width_text, "Breite (Pixel)", ganz=True)
-    height = read_number(height_text, "Höhe (Pixel)", ganz=True)
+    width = read_number(width_text, SCREEN_FIELD_WIDTH, ganz=True)
+    height = read_number(height_text, SCREEN_FIELD_HEIGHT, ganz=True)
     try:
         depth = int(depth)
     except ValueError:
         raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
                          "Bildrate eingeben.")
     fps = read_number(fps_text, "Bildrate (fps)") if fps_text.strip() else 0.0
+    # Ab 0.63.2 (Restrisiko 16, F6-7): nur beim direkten Kernaufruf moeglich;
+    # nach den Lesefehlern (Teilplan S3, B-D-04: erst Lesefehler)
+    if not 1 <= depth <= 64:
+        raise InputError("Bitte eine Farbtiefe von 1 bis 64 Bit wählen.")
     if width <= 0 or height <= 0:
         raise InputError("Breite und Höhe müssen größer als 0 sein.")
+    # Ab 0.63.2 (B-D-04, Restrisiko 17): Grenzen je Feld (F6-4)
+    if width > 100000:
+        raise InputError("Die Breite ist zu groß (höchstens 100.000 Pixel).")
+    if height > 100000:
+        raise InputError("Die Höhe ist zu groß (höchstens 100.000 Pixel).")
     if fps < 0:
         raise InputError("Die Bildrate darf nicht negativ sein.")
     # Ab 0.62.4: "23.976" liest die Leseregel als 23976 (Tausenderpunkt);
@@ -3733,11 +3975,15 @@ def screen_report(width_text, height_text, depth, fps_text):
         gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
         lines += [
             "",
-            "Bildrate (fps)        : %.0f Bilder/Sekunde" % fps,
+            # ab 0.63.2 (B-K-N3): 29,97 statt 30, 1.000 statt 1000
+            "Bildrate (fps)        : %s Bilder/Sekunde" % _de_short(fps, 3),
             "Datenrate             : %s MiB/s" % de_number(mb_per_sec),
             "                      : %s Mbit/s" % de_number(mbit_per_sec),
             "                      : %s GiB/Minute" % de_number(gb_per_min),
         ]
+    # ab 0.63.2 (B-D-15): die Bildrate zaehlt nur, wenn sie gelesen wurde
+    lines += _thousands_point_lines(width_text, height_text,
+                                    fps_text if fps_text.strip() else "")
     return "\n".join(lines)
 
 
@@ -3793,7 +4039,6 @@ UPS_FIELDS = [
 ]
 UPS_FIELD_CAPTIONS = {key: caption for key, caption, _value in UPS_FIELDS}
 UPS_FIELD_DEFAULTS = {key: value for key, _caption, value in UPS_FIELDS}
-UPS_UNIT_CAPTION = "Einheit der Last"
 
 # Grenzen je Feld: (kleinster Wert, groesster Wert, ganze Zahl, 0 erlaubt)
 UPS_LIMITS = {
@@ -3906,9 +4151,11 @@ def ups_check(watt, va, rated_va, rated_w, minutes_end, minutes):
     """Empfehlung nach UPS_RULE_TEXT. Liefert (passend, Pruefzeilen)."""
     checks = []
     share_va = va / rated_va * 100
+    # ab 0.63.2 (B-N-07, Gegenpruefung L6): VA wie im Rechenweg ungerundet
+    # (666,67 statt 667), damit die Prozentzahl zur angezeigten Zahl passt
     checks.append((share_va <= UPS_LOAD_LIMIT,
                    "Auslastung Scheinleistung: %s VA von %s VA = %s %%"
-                   % (de_number(va, 0), de_number(rated_va, 0),
+                   % (_de_short(va), de_number(rated_va, 0),
                       de_number(share_va, 1))))
     if rated_w:
         share_w = watt / rated_w * 100
@@ -4016,7 +4263,8 @@ def ups_calculate(mode, fields, unit="W"):
             % (series, _de_short(block_v), _de_short(block_ah),
                plural(parallel, "Strang", "Stränge")),
             "Akku-Energie          : %s V x %s Ah x %s = %s Wh"
-            % (_de_short(string_v), _de_short(block_ah), parallel,
+            % (_de_short(string_v), _de_short(block_ah),
+               plural(parallel, "Strang", "Stränge"),       # ab 0.63.2 (B-N-07 5.8)
                de_number(battery_wh)),
             "",
             "Laufzeit (Akku neu)   : %s min" % de_number(runtime["neu"], 1),
@@ -4045,6 +4293,15 @@ def ups_calculate(mode, fields, unit="W"):
                       for ok, text in checks]
             if rated_w is None:
                 lines.append("  Hinweis: ohne Nennleistung in W nur VA geprüft.")
+    # Ab 0.63.2 (Restrisiko 13, B-D-15): Hinweis als letzte Zeile der Tabelle
+    # (vor dem allgemeinen Hinweis, den das Handy getrennt zeigt); es zaehlen
+    # nur die Felder, die die gewaehlte Berechnung gelesen hat
+    used = ["last", "pf", "eta", "minuten", "alterung", "block_v", "reihe"]
+    if mode != "akku":
+        used += ["block_ah", "parallel"]
+    if mode == "empfehlung":
+        used += ["nenn_va", "nenn_w"]
+    lines += _thousands_point_lines(*[fields.get(key) for key in used])
     lines += ["", UPS_SIMPLE_TEXT]
     return {"text": "\n".join(lines), "bild": picture, "passend": passend}
 
@@ -4139,7 +4396,7 @@ def ups_task_solution(index):
         energy = ups_battery_energy(w["v"], w["ah"], w["reihe"], w["par"])
         runtime = ups_runtime(w["w"], w["eta"], energy, w["alt"])
         return ("Akku-Energie = %s x %s V x %s Ah = %s Wh\n"
-                "Laufzeit = %s Wh x %s / %s W x 60 = %s min\n"
+                "Laufzeit = (%s Wh x %s / %s W) x 60 min/h = %s min\n"
                 "Lebensende = %s min x 0,8 = %s min\n"
                 "Antwort: neu etwa %s min, am Lebensende etwa %s min."
                 % (w["reihe"], w["v"], w["ah"], de_number(energy, 0),
@@ -4196,17 +4453,19 @@ def ups_task_text(index, solution=False):
 
 CALC_EXPLAIN_UPS = (
     "RECHENWEG USV-KAPAZITÄT\n"
-    "Am Beispiel 600 W Last, Wirkungsgrad 80 %, 15 Minuten,\n"
-    "Akku 2 x 12 V in Reihe (24 V), Alterungszuschlag 25 %\n\n"
+    "Am Beispiel 600 W Last, Leistungsfaktor 0,9, Wirkungsgrad 80 %,\n"
+    "15 Minuten, Akku 2 x 12 V in Reihe (24 V) mit je 12 Ah,\n"
+    "Alterungszuschlag 25 %, USV 1.500 VA / 900 W\n\n"
     "SCHRITT 1: VA und W\n"
     "   Wirkleistung P (W) = Scheinleistung S (VA) x Leistungsfaktor\n"
-    "   600 W / 0,9 = 667 VA (Leistungsfaktor 0,9 ist eine Annahme,\n"
-    "   der echte Wert steht auf dem Typenschild).\n\n"
+    "   Umgestellt nach S: S (VA) = P (W) / Leistungsfaktor\n"
+    "   600 W / 0,9 = 666,67 VA, gerundet 667 VA (Leistungsfaktor 0,9\n"
+    "   ist eine Annahme, der echte Wert steht auf dem Typenschild).\n\n"
     "SCHRITT 2: Energie für die Last\n"
     "   Energie (Wh) = Last (W) x Zeit (h) = 600 W x 0,25 h = 150 Wh\n\n"
     "SCHRITT 3: Verluste der USV\n"
     "   Der Akku muss mehr liefern, weil die USV Verluste hat:\n"
-    "   150 Wh / 0,8 = 187,5 Wh\n\n"
+    "   150 Wh / 0,8 (Wirkungsgrad) = 187,5 Wh\n\n"
     "SCHRITT 4: Alterungszuschlag\n"
     "   Ein Bleiakku gilt mit 80 % Restkapazität als verbraucht. Damit\n"
     "   er auch dann reicht, plant man 25 % mehr ein (Faktor 1,25):\n"
@@ -4215,13 +4474,19 @@ CALC_EXPLAIN_UPS = (
     "   Ah = Wh / Strangspannung = 234,38 Wh / 24 V = 9,77 Ah\n\n"
     "LAUFZEIT (umgekehrt)\n"
     "   Akku-Energie = 24 V x 12 Ah = 288 Wh\n"
-    "   Laufzeit = 288 Wh x 0,8 / 600 W x 60 = 23,04 min (neu)\n"
-    "   am Lebensende: 23,04 min x 0,8 = 18,43 min\n\n"
+    "   Laufzeit = (Akku-Energie x Wirkungsgrad / Last) x 60 min/h\n"
+    "   Laufzeit = (288 Wh x 0,8 / 600 W) x 60 min/h = 23,04 min,\n"
+    "   gerundet 23,0 min (neu)\n"
+    "   am Lebensende (80 % Restkapazität, siehe Schritt 4):\n"
+    "   23,04 min x 0,8 = 18,43 min, gerundet 18,4 min\n\n"
     "EMPFEHLUNG\n"
     "   Die Last soll höchstens 80 % der USV-Nennleistung betragen\n"
     "   (in VA und in W). Beispiel USV 1.500 VA / 900 W:\n"
-    "   667 / 1.500 = 44 %, 600 / 900 = 67 % -> passend,\n"
-    "   18,43 min am Lebensende >= 15 min -> passend.\n\n"
+    "   666,67 / 1.500 = 44,4 %, 600 / 900 = 66,7 % -> passend,\n"
+    "   18,4 min am Lebensende >= 15 min -> passend.\n"
+    "   Achtung: 80 % bzw. 0,8 steht hier für drei verschiedene Werte:\n"
+    "   Wirkungsgrad (Schritt 3), Restkapazität am Lebensende\n"
+    "   (Schritt 4) und höchste Auslastung (Empfehlung).\n\n"
     "QUELLEN\n"
     "   Leistungsfaktor = P / S: Wikipedia, Leistungsfaktor\n"
     "   Ah-Formel und Wirkungsgrad 0,80: EnerSys, Runtime and\n"
@@ -4235,7 +4500,8 @@ CALC_EXPLAIN_UPS = (
 # Hostbits, Praefixlaenge, UND/ODER, Nutzkapazitaet, Festplatten, KiB/MiB),
 # Spalten gerade, Fehler aus der Pruefung e3 berichtigt. Zu jedem Rechenweg
 # gibt es eine Handy-Fassung (..._HANDY, weiter unten) mit denselben
-# Schritten und Zahlen, aber hoechstens 28 Zeichen je Zeile.
+# Schritten und Zahlen, aber kuerzeren Zeilen (ab 0.63.2, FG-82: feste Texte
+# hoechstens 26 Zeichen, erzeugte Rechenwege 28).
 CALC_EXPLAIN_SUBNET = (
     "RECHENWEG SUBNETTING\n"
     "Am Beispiel 192.168.1.50/24\n\n"
@@ -4255,14 +4521,30 @@ CALC_EXPLAIN_SUBNET = (
     "   UND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
     "   -------------------------------------------------------\n"
     "     Ergebnis        = 11000000.10101000.00000001.00000000\n"
-    "   -> Netzadresse: 192.168.1.0\n\n"
+    "   -> Netzadresse: 192.168.1.0\n"
+    "   Liegt die Präfixgrenze mitten in einem Oktett, zählt dort jedes\n"
+    "   Bit einzeln. Beispiel 192.168.1.50/28, im 4. Oktett:\n"
+    "     Adresse (50):  00110010\n"
+    "     Maske (240):   11110000\n"
+    "     UND-Ergebnis:  00110000 = 48\n"
+    "   -> Netzadresse bei /28: 192.168.1.48\n\n"
     "SCHRITT 3: Broadcast-Adresse berechnen\n"
     "   Wildcard-Maske = invertierte Subnetzmaske (alle Bits\n"
     "   umgedreht): 255.255.255.0 -> 0.0.0.255\n"
     "   Broadcast-Adresse = Netzadresse ODER Wildcard-Maske\n"
     "   (bitweise ODER-Verknüpfung: alle Hostbits\n"
     "   werden auf 1 gesetzt)\n"
-    "   -> Broadcast-Adresse: 192.168.1.255\n\n"
+    "   Im 4. Oktett bitweise (in den Oktetten davor ist die\n"
+    "   Wildcard-Maske 0, dort bleibt die Netzadresse gleich):\n"
+    "     Netzadresse:    00000000\n"
+    "     Wildcard-Maske: 11111111\n"
+    "     ODER-Ergebnis:  11111111 = 255\n"
+    "   -> Broadcast-Adresse: 192.168.1.255\n"
+    "   Beispiel 192.168.1.50/28 von oben, im 4. Oktett:\n"
+    "     Netzadresse:    00110000 (= 48)\n"
+    "     Wildcard-Maske: 00001111 (0.0.0.15)\n"
+    "     ODER-Ergebnis:  00111111 = 63\n"
+    "   -> Broadcast-Adresse bei /28: 192.168.1.63\n\n"
     "SCHRITT 4: Nutzbare Host-Adressen zählen\n"
     "   Anzahl aller Adressen im Netz = 2^(32 - Präfixlänge)\n"
     "   Bei /24: 2^(32 - 24) = 2^8 = 256 Adressen\n"
@@ -4271,12 +4553,15 @@ CALC_EXPLAIN_SUBNET = (
     "   deshalb -2:\n"
     "   Nutzbare Hosts = 2^(32 - Präfixlänge) - 2 = 256 - 2 = 254\n"
     "   -> erste Host-Adresse: 192.168.1.1\n"
-    "   -> letzte Host-Adresse: 192.168.1.254\n\n"
+    "   -> letzte Host-Adresse: 192.168.1.254\n"
+    "   Ausnahmen: Bei /31 sind beide Adressen nutzbar (nur für\n"
+    "   Punkt-zu-Punkt-Verbindungen, RFC 3021). /32 ist eine einzelne\n"
+    "   Adresse, ohne Netz- und Broadcast-Adresse.\n\n"
     "HINWEIS ZU IPv6\n"
     "   IPv6 kennt keine Broadcast-Adresse, daher entfällt dort der\n"
     "   Abzug von 2 Adressen. Gezählt werden alle\n"
     "   2^(128 - Präfixlänge) Adressen (einzelne Adressen sind\n"
-    "   reserviert, z.B. Subnet-Router-Anycast)."
+    "   reserviert, z. B. Subnet-Router-Anycast)."
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
@@ -4329,12 +4614,17 @@ CALC_EXPLAIN_SCREEN = (
     "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
     "   True Color mit rund 16,8 Mio. Farben: je 8 Bit für Rot,\n"
     "   Grün und Blau).\n"
+    "   32 Bit = True Color (24 Bit) + 8 Bit Alpha (Transparenz)\n"
     "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
     "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
     "SCHRITT 3: In Byte, KiB und MiB umrechnen\n"
     "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
     "   jeweils durch 1024 geteilt, um die nächstgrößere Einheit\n"
     "   zu erhalten (Byte -> KiB -> MiB).\n"
+    "   1024 = 2^10, deshalb heißen die Einheiten KiB und MiB\n"
+    "   (Binärpräfixe). Mit Dezimalpräfixen gilt dagegen\n"
+    "   1 kB = 1000 Byte; welche Festlegung gilt, steht in der\n"
+    "   Prüfungsaufgabe.\n"
     "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
     "   KiB  = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KiB\n"
     "   MiB  = KiB / 1024         -> 6.075,00 / 1024 = 5,93 MiB\n"
@@ -4355,24 +4645,27 @@ CALC_EXPLAIN_SCREEN = (
 
 # Ab 0.62.3 (Teil E, F-E1): Handy-Fassungen der vier Rechenwege. Dieselben
 # Schritte, Zahlen und Ergebnisse in derselben Reihenfolge wie am PC, aber
-# hoechstens 28 Zeichen je Zeile (passt am Galaxy S24 auch bei "Sehr gross"),
+# hoechstens 26 Zeichen je Zeile (ab 0.63.2, FG-82: feste Texte hoechstens 26,
+# erzeugte Rechenwege CALC_EXPLAIN_HANDY_WIDTH = 28),
 # Bitreihen Oktett fuer Oktett. Am Handy sind die Zeilen also kuerzer als am
 # PC (dort bis 67 Zeichen). test_rechenweg.py prueft Laenge, Zahlen,
 # Reihenfolge und Schritte gegen die PC-Texte.
 CALC_EXPLAIN_HANDY_WIDTH = 28
 CALC_EXPLAIN_SUBNET_HANDY = (
     "RECHENWEG SUBNETTING\n"
-    "Am Beispiel 192.168.1.50/24\n"
+    "Am Beispiel\n"
+    "192.168.1.50/24\n"
     "\n"
     "SCHRITT 1: Präfixlänge in\n"
     "Subnetzmaske umwandeln\n"
     " Die Präfixlänge (die Zahl\n"
     " nach dem /) gibt an, wie\n"
-    " viele Bits von links auf 1\n"
-    " gesetzt sind. /24 bedeutet:\n"
-    " die ersten 24 Bit der\n"
-    " 32-Bit-Subnetzmaske sind 1,\n"
-    " der Rest ist 0.\n"
+    " viele Bits von links\n"
+    " auf 1 gesetzt sind.\n"
+    " /24 bedeutet: die ersten\n"
+    " 24 Bit der 32-Bit-\n"
+    " Subnetzmaske sind 1, der\n"
+    " Rest ist 0.\n"
     " /24, Oktett für Oktett:\n"
     " 1. Oktett 11111111 = 255\n"
     " 2. Oktett 11111111 = 255\n"
@@ -4385,9 +4678,10 @@ CALC_EXPLAIN_SUBNET_HANDY = (
     "berechnen\n"
     " Netzadresse = IP-Adresse\n"
     " UND Subnetzmaske\n"
-    " (bitweise UND-Verknüpfung:\n"
-    " nur wenn IP-Adresse und\n"
-    " Maske an derselben Stelle\n"
+    " (bitweise UND-\n"
+    " Verknüpfung: nur wenn\n"
+    " IP-Adresse und Maske\n"
+    " an derselben Stelle\n"
     " eine 1 haben, bleibt dort\n"
     " eine 1 stehen)\n"
     " 192.168.1.50 UND\n"
@@ -4411,33 +4705,69 @@ CALC_EXPLAIN_SUBNET_HANDY = (
     "  Ergebnis = 00000000\n"
     " -> Netzadresse:\n"
     "    192.168.1.0\n"
+    " Liegt die Präfixgrenze\n"
+    " mitten in einem Oktett,\n"
+    " zählt dort jedes Bit\n"
+    " einzeln. Beispiel\n"
+    " 192.168.1.50/28, im\n"
+    " 4. Oktett:\n"
+    "   Adresse (50):  00110010\n"
+    "   Maske (240):   11110000\n"
+    "   UND-Ergebnis:  00110000\n"
+    "   = 48\n"
+    " -> Netzadresse bei /28:\n"
+    "    192.168.1.48\n"
     "\n"
-    "SCHRITT 3: Broadcast-Adresse\n"
+    "SCHRITT 3:\n"
+    "Broadcast-Adresse\n"
     "berechnen\n"
     " Wildcard-Maske =\n"
     " invertierte Subnetzmaske\n"
     " (alle Bits umgedreht):\n"
-    " 255.255.255.0 -> 0.0.0.255\n"
+    " 255.255.255.0\n"
+    " -> 0.0.0.255\n"
     " Broadcast-Adresse =\n"
     " Netzadresse ODER\n"
     " Wildcard-Maske\n"
-    " (bitweise ODER-Verknüpfung:\n"
-    " alle Hostbits werden auf 1\n"
-    " gesetzt)\n"
+    " (bitweise ODER-\n"
+    " Verknüpfung: alle\n"
+    " Hostbits werden\n"
+    " auf 1 gesetzt)\n"
+    " Im 4. Oktett bitweise\n"
+    " (in den Oktetten davor\n"
+    " ist die Wildcard-Maske 0,\n"
+    " dort bleibt die\n"
+    " Netzadresse gleich):\n"
+    "  Netzadresse:    00000000\n"
+    "  Wildcard-Maske: 11111111\n"
+    "  ODER-Ergebnis:  11111111\n"
+    "  = 255\n"
     " -> Broadcast-Adresse:\n"
     "    192.168.1.255\n"
+    " Beispiel 192.168.1.50/28\n"
+    " von oben, im 4. Oktett:\n"
+    "  Netzadresse:    00110000\n"
+    "  (= 48)\n"
+    "  Wildcard-Maske: 00001111\n"
+    "  (0.0.0.15)\n"
+    "  ODER-Ergebnis:  00111111\n"
+    "  = 63\n"
+    " -> Broadcast-Adresse bei\n"
+    "    /28: 192.168.1.63\n"
     "\n"
     "SCHRITT 4: Nutzbare\n"
     "Host-Adressen zählen\n"
-    " Anzahl aller Adressen im\n"
-    " Netz = 2^(32 - Präfixlänge)\n"
-    " Bei /24: 2^(32 - 24) = 2^8\n"
-    " = 256 Adressen\n"
-    " Davon sind die Netzadresse\n"
-    " (192.168.1.0) und die\n"
-    " Broadcast-Adresse\n"
+    " Anzahl aller Adressen\n"
+    " im Netz\n"
+    " = 2^(32 - Präfixlänge)\n"
+    " Bei /24: 2^(32 - 24)\n"
+    " = 2^8 = 256 Adressen\n"
+    " Davon sind die\n"
+    " Netzadresse (192.168.1.0)\n"
+    " und die Broadcast-Adresse\n"
     " (192.168.1.255) nicht als\n"
-    " Host vergebbar, deshalb -2:\n"
+    " Host vergebbar,\n"
+    " deshalb -2:\n"
     " Nutzbare Hosts =\n"
     " 2^(32 - Präfixlänge) - 2\n"
     " = 256 - 2 = 254\n"
@@ -4445,15 +4775,24 @@ CALC_EXPLAIN_SUBNET_HANDY = (
     "    192.168.1.1\n"
     " -> letzte Host-Adresse:\n"
     "    192.168.1.254\n"
+    " Ausnahmen: Bei /31 sind\n"
+    " beide Adressen nutzbar\n"
+    " (nur für Punkt-zu-Punkt-\n"
+    " Verbindungen, RFC 3021).\n"
+    " /32 ist eine einzelne\n"
+    " Adresse, ohne Netz- und\n"
+    " Broadcast-Adresse.\n"
     "\n"
     "HINWEIS ZU IPv6\n"
     " IPv6 kennt keine\n"
     " Broadcast-Adresse, daher\n"
-    " entfällt dort der Abzug von\n"
-    " 2 Adressen. Gezählt werden\n"
-    " alle 2^(128 - Präfixlänge)\n"
-    " Adressen (einzelne Adressen\n"
-    " sind reserviert, z.B.\n"
+    " entfällt dort der Abzug\n"
+    " von 2 Adressen. Gezählt\n"
+    " werden alle\n"
+    " 2^(128 - Präfixlänge)\n"
+    " Adressen (einzelne\n"
+    " Adressen sind\n"
+    " reserviert, z. B.\n"
     " Subnet-Router-Anycast)."
 )
 CALC_EXPLAIN_RAID_HANDY = (
@@ -4489,10 +4828,12 @@ CALC_EXPLAIN_RAID_HANDY = (
     " Formel:\n"
     " Nutzkapazität =\n"
     " 1 x Kapazität\n"
-    " Beispiel: 1.000 GB nutzbar\n"
+    " Beispiel:\n"
+    " 1.000 GB nutzbar\n"
     " (bei 4 Festplatten stehen\n"
-    " nur 1.000 GB Nutzkapazität\n"
-    " zur Verfügung, der Rest ist\n"
+    " nur 1.000 GB\n"
+    " Nutzkapazität zur\n"
+    " Verfügung, der Rest ist\n"
     " Spiegelung)\n"
     " Ausfalltoleranz:\n"
     " n-1 Festplatten\n"
@@ -4517,8 +4858,8 @@ CALC_EXPLAIN_RAID_HANDY = (
     "RAID 6 - doppelte Parität\n"
     "(min. 4 Festplatten)\n"
     " Wie RAID 5, aber mit\n"
-    " doppelter Parität für mehr\n"
-    " Sicherheit.\n"
+    " doppelter Parität für\n"
+    " mehr Sicherheit.\n"
     " Formel:\n"
     " Nutzkapazität =\n"
     " (Anzahl - 2) x Kapazität\n"
@@ -4530,13 +4871,15 @@ CALC_EXPLAIN_RAID_HANDY = (
     "\n"
     "RAID 10 - Spiegelung +\n"
     "Striping (min. 4\n"
-    "Festplatten, gerade Anzahl)\n"
-    " Je zwei Festplatten werden\n"
-    " gespiegelt (RAID 1), diese\n"
+    "Festplatten,\n"
+    "gerade Anzahl)\n"
+    " Je zwei Festplatten\n"
+    " werden gespiegelt\n"
+    " (RAID 1), diese\n"
     " Spiegelpaare werden\n"
     " anschließend im\n"
-    " Striping-Verfahren (RAID 0)\n"
-    " zusammengefasst.\n"
+    " Striping-Verfahren\n"
+    " (RAID 0) zusammengefasst.\n"
     " Formel:\n"
     " Nutzkapazität =\n"
     " (Anzahl / 2) x Kapazität\n"
@@ -4544,9 +4887,10 @@ CALC_EXPLAIN_RAID_HANDY = (
     " (4 / 2) x 1.000 GB\n"
     " = 2.000 GB nutzbar\n"
     " Ausfalltoleranz:\n"
-    " 1 Festplatte sicher (bis zu\n"
-    " 2, wenn je Spiegelpaar nur\n"
-    " eine ausfällt)\n"
+    " 1 Festplatte sicher\n"
+    " (bis zu 2, wenn je\n"
+    " Spiegelpaar nur eine\n"
+    " ausfällt)\n"
     "\n"
     "SPEICHEREFFIZIENZ\n"
     " Effizienz =\n"
@@ -4573,20 +4917,24 @@ CALC_EXPLAIN_SCREEN_HANDY = (
     "Bild in Bit berechnen\n"
     " Jedes Pixel benötigt für\n"
     " seine Farbe eine feste\n"
-    " Anzahl Bit, die sogenannte\n"
-    " Farbtiefe (z.B. 8 Bit = 256\n"
-    " Farben, 24 Bit = True Color\n"
-    " mit rund 16,8 Mio. Farben:\n"
-    " je 8 Bit für Rot, Grün und\n"
-    " Blau).\n"
+    " Anzahl Bit, die\n"
+    " sogenannte Farbtiefe\n"
+    " (z.B. 8 Bit = 256 Farben,\n"
+    " 24 Bit = True Color mit\n"
+    " rund 16,8 Mio. Farben:\n"
+    " je 8 Bit für Rot, Grün\n"
+    " und Blau).\n"
+    " 32 Bit = True Color\n"
+    " (24 Bit) + 8 Bit Alpha\n"
+    " (Transparenz)\n"
     " Datenmenge (Bit) =\n"
     " Pixel gesamt x Farbtiefe\n"
     " Beispiel:\n"
     " 2.073.600 x 24 Bit\n"
     " = 49.766.400 Bit\n"
     "\n"
-    "SCHRITT 3: In Byte, KiB und\n"
-    "MiB umrechnen\n"
+    "SCHRITT 3: In Byte, KiB\n"
+    "und MiB umrechnen\n"
     " Da 1 Byte = 8 Bit sind,\n"
     " wird durch 8 geteilt;\n"
     " danach wird jeweils durch\n"
@@ -4594,6 +4942,14 @@ CALC_EXPLAIN_SCREEN_HANDY = (
     " nächstgrößere Einheit zu\n"
     " erhalten\n"
     " (Byte -> KiB -> MiB).\n"
+    " 1024 = 2^10, deshalb\n"
+    " heißen die Einheiten KiB\n"
+    " und MiB (Binärpräfixe).\n"
+    " Mit Dezimalpräfixen gilt\n"
+    " dagegen 1 kB = 1000 Byte;\n"
+    " welche Festlegung gilt,\n"
+    " steht in der\n"
+    " Prüfungsaufgabe.\n"
     " Byte = Bit / 8\n"
     " -> 49.766.400 / 8\n"
     " = 6.220.800 Byte\n"
@@ -4614,11 +4970,11 @@ CALC_EXPLAIN_SCREEN_HANDY = (
     " Bei Videos wird nicht nur\n"
     " ein Bild, sondern mehrere\n"
     " Bilder pro Sekunde\n"
-    " angezeigt (Bildrate, engl.\n"
-    " frames per second, fps).\n"
-    " Die Datenrate gibt an, wie\n"
-    " viele Daten dafür pro\n"
-    " Sekunde anfallen.\n"
+    " angezeigt (Bildrate,\n"
+    " engl. frames per second,\n"
+    " fps). Die Datenrate gibt\n"
+    " an, wie viele Daten dafür\n"
+    " pro Sekunde anfallen.\n"
     " Datenrate =\n"
     " Datenmenge pro Bild\n"
     " x Bildrate (fps)\n"
@@ -4627,27 +4983,35 @@ CALC_EXPLAIN_SCREEN_HANDY = (
     " = 186.624.000 Byte/s\n"
     " -> das sind rund\n"
     " 177,98 MiB/s (das sind\n"
-    " 1.492,99 Mbit/s) bzw. rund\n"
-    " 10,43 GiB/Minute.\n"
+    " 1.492,99 Mbit/s) bzw.\n"
+    " rund 10,43 GiB/Minute.\n"
     " Dieser enorme Wert zeigt,\n"
-    " warum Videos in der Praxis\n"
-    " fast immer komprimiert\n"
-    " (z.B. per H.264/H.265)\n"
+    " warum Videos in der\n"
+    " Praxis fast immer\n"
+    " komprimiert (z.B. per\n"
+    " H.264/H.265)\n"
     " übertragen werden."
 )
 CALC_EXPLAIN_UPS_HANDY = (
     "RECHENWEG USV-KAPAZITÄT\n"
     "Am Beispiel 600 W Last,\n"
+    "Leistungsfaktor 0,9,\n"
     "Wirkungsgrad 80 %,\n"
-    "15 Minuten, Akku 2 x 12 V in\n"
-    "Reihe (24 V),\n"
-    "Alterungszuschlag 25 %\n"
+    "15 Minuten,\n"
+    "Akku 2 x 12 V in Reihe\n"
+    "(24 V) mit je 12 Ah,\n"
+    "Alterungszuschlag 25 %,\n"
+    "USV 1.500 VA / 900 W\n"
     "\n"
     "SCHRITT 1: VA und W\n"
     " Wirkleistung P (W) =\n"
     " Scheinleistung S (VA)\n"
     " x Leistungsfaktor\n"
-    " 600 W / 0,9 = 667 VA\n"
+    " Umgestellt nach S:\n"
+    " S (VA) = P (W)\n"
+    " / Leistungsfaktor\n"
+    " 600 W / 0,9 = 666,67 VA,\n"
+    " gerundet 667 VA\n"
     " (Leistungsfaktor 0,9 ist\n"
     " eine Annahme, der echte\n"
     " Wert steht auf dem\n"
@@ -4659,17 +5023,23 @@ CALC_EXPLAIN_UPS_HANDY = (
     " Last (W) x Zeit (h)\n"
     " = 600 W x 0,25 h = 150 Wh\n"
     "\n"
-    "SCHRITT 3: Verluste der USV\n"
-    " Der Akku muss mehr liefern,\n"
-    " weil die USV Verluste hat:\n"
-    " 150 Wh / 0,8 = 187,5 Wh\n"
+    "SCHRITT 3: Verluste\n"
+    "der USV\n"
+    " Der Akku muss mehr\n"
+    " liefern, weil die USV\n"
+    " Verluste hat:\n"
+    " 150 Wh / 0,8\n"
+    " (Wirkungsgrad)\n"
+    " = 187,5 Wh\n"
     "\n"
-    "SCHRITT 4: Alterungszuschlag\n"
-    " Ein Bleiakku gilt mit 80 %\n"
-    " Restkapazität als\n"
+    "SCHRITT 4:\n"
+    "Alterungszuschlag\n"
+    " Ein Bleiakku gilt mit\n"
+    " 80 % Restkapazität als\n"
     " verbraucht. Damit er auch\n"
-    " dann reicht, plant man 25 %\n"
-    " mehr ein (Faktor 1,25):\n"
+    " dann reicht, plant man\n"
+    " 25 % mehr ein\n"
+    " (Faktor 1,25):\n"
     " 187,5 Wh x 1,25\n"
     " = 234,38 Wh\n"
     "\n"
@@ -4682,36 +5052,56 @@ CALC_EXPLAIN_UPS_HANDY = (
     " Akku-Energie =\n"
     " 24 V x 12 Ah = 288 Wh\n"
     " Laufzeit =\n"
-    " 288 Wh x 0,8 / 600 W x 60\n"
-    " = 23,04 min (neu)\n"
-    " am Lebensende:\n"
+    " (Akku-Energie x\n"
+    " Wirkungsgrad / Last)\n"
+    " x 60 min/h\n"
+    " Laufzeit =\n"
+    " (288 Wh x 0,8 / 600 W)\n"
+    " x 60 min/h\n"
+    " = 23,04 min,\n"
+    " gerundet 23,0 min (neu)\n"
+    " am Lebensende (80 %\n"
+    " Restkapazität, siehe\n"
+    " Schritt 4):\n"
     " 23,04 min x 0,8\n"
-    " = 18,43 min\n"
+    " = 18,43 min,\n"
+    " gerundet 18,4 min\n"
     "\n"
     "EMPFEHLUNG\n"
     " Die Last soll höchstens\n"
-    " 80 % der USV-Nennleistung\n"
-    " betragen (in VA und in W).\n"
+    " 80 % der\n"
+    " USV-Nennleistung betragen\n"
+    " (in VA und in W).\n"
     " Beispiel USV 1.500 VA /\n"
     " 900 W:\n"
-    " 667 / 1.500 = 44 %,\n"
-    " 600 / 900 = 67 %\n"
+    " 666,67 / 1.500 = 44,4 %,\n"
+    " 600 / 900 = 66,7 %\n"
     " -> passend,\n"
-    " 18,43 min am Lebensende\n"
+    " 18,4 min am Lebensende\n"
     " >= 15 min -> passend.\n"
+    " Achtung: 80 % bzw. 0,8\n"
+    " steht hier für drei\n"
+    " verschiedene Werte:\n"
+    " Wirkungsgrad (Schritt 3),\n"
+    " Restkapazität am\n"
+    " Lebensende (Schritt 4)\n"
+    " und höchste Auslastung\n"
+    " (Empfehlung).\n"
     "\n"
     "QUELLEN\n"
     " Leistungsfaktor = P / S:\n"
-    " Wikipedia, Leistungsfaktor\n"
+    " Wikipedia,\n"
+    " Leistungsfaktor\n"
     " Ah-Formel und\n"
-    " Wirkungsgrad 0,80: EnerSys,\n"
-    " Runtime and right-sizing a\n"
-    " UPS\n"
+    " Wirkungsgrad 0,80:\n"
+    " EnerSys, Runtime and\n"
+    " right-sizing a UPS\n"
     " Faktor 1,25 und 80 %:\n"
     " IEEE 485 (Vertiv/Battcon\n"
     " 2000)\n"
-    " 80 % Auslastung: Schneider\n"
-    " Electric, FAQ000268376"
+    " 80 % Auslastung:\n"
+    " Schneider Electric,\n"
+    " FAQ000268376"
 )
 
 
@@ -5311,8 +5701,8 @@ CALC_EXPLAIN_SUBNET_V6_HANDY = (
     " RFC 4291 2.6.1).\n\n"
     "HINWEIS: /64 JE LAN\n"
     " Ein LAN bekommt in der\n"
-    " Regel ein /64. Die hinteren\n"
-    " 64 Bit sind die\n"
+    " Regel ein /64. Die\n"
+    " hinteren 64 Bit sind die\n"
     " Schnittstellenkennung\n"
     " (RFC 4291 2.5.1).\n\n"
     "KURZSCHREIBWEISE\n"

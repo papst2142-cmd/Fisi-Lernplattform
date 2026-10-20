@@ -1,5 +1,5 @@
 ===========================================================================
-  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.63.1
+  FACHINFORMATIKER LERNPLATTFORM  -  Version 0.63.2
   Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
   (Schwerpunkt Systemintegration)
   Frueherer Name bis 0.60.1: "FISI Lernplattform" - Lernstand, Einstellungen
@@ -69,8 +69,10 @@ abgerundete Kacheln, Farbverlaeufe):
   Rechner            Subnetting (IPv4 und IPv6), RAID-Kapazitaet (Netto,
                      Paritaet, Effizienz, Ausfalltoleranz) und
                      Bildschirm-Datenvolumen (Datenmenge und Datenrate),
-                     jeweils mit aufklappbarem Rechenweg, dazu ein
-                     Subnetting-Trainer mit Zufallsaufgaben.
+                     jeweils mit aufklappbarem Rechenweg, dazu
+                     USV-Kapazitaet (Akku oder Laufzeit, mit Empfehlung und
+                     Uebungsaufgaben) und ein Rechen-Trainer mit
+                     Zufallsaufgaben.
 
   Spiel              Lernspiel: Als Mitarbeiter eines IT-Dienstleisters
                      Tickets und Auftraege bearbeiten. Was die Spielfigur
@@ -82,13 +84,15 @@ abgerundete Kacheln, Farbverlaeufe):
                      (Abschnitt, Position, Punkt) oder je Lernfeld, mit
                      "Jetzt ueben" an jedem Punkt.
 
-  Optionen           Updates, Optische Anpassungen (Schriftgroesse,
-                     Farben dunkel oder hell), Tagesziel, Abgleich PC und
-                     Handy, Sicherung des Lernstands als Datei, Lerninhalte
-                     mit Rahmenplan (weitere Fachrichtungen, Gewichtung der
+  Optionen           Updates, Rundgang und Hilfe, Optische Anpassungen
+                     (Schriftgroesse, Farben dunkel oder hell), Tagesziel,
+                     Abgleich PC und Handy, Sicherung des Lernstands als
+                     Datei, Datenbank (nur PC), Lerninhalte mit Rahmenplan
+                     (weitere Fachrichtungen, Gewichtung der
                      Uebungsauswahl, aktuelles Lernfeld, Pruefungstermine),
-                     Zuruecksetzen der Daten, Diagnose und Ueber das
-                     Programm.
+                     Spiel, Loeschen und zuruecksetzen, Diagnose und
+                     Werkzeuge (Problem melden, Leistungsmessung, am PC
+                     Haenger-Diagnose) und Ueber das Programm.
 
 Die fuenf Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
 Datenschutz, Systeme, RAID & Hardware, Wirtschaft & Prozesse sowie
@@ -195,13 +199,19 @@ ABGLEICH PC UND HANDY
 PC und Handy koennen ihren Lernstand automatisch abgleichen: beim Start,
 etwa eine Minute nach dem Lernen und beim Beenden bzw. Verlassen der App.
 Der Lernstand liegt dafuer als eine Datei (lernstand.json.gz) in einem
-PRIVATEN GitHub-Repository - nur du hast Zugriff darauf. Es werden nur
-Lern-Eintraege uebertragen (was wann gelernt wurde), keine anderen Daten.
+PRIVATEN GitHub-Repository - nur du hast Zugriff darauf. Uebertragen
+werden: was wann gelernt wurde, die Ergebnisse von Tests und Pruefungen
+(Punkte und Note, nicht deine Antworten), die Texte deines
+Abschlussprojekts, die Spielstaende und die Bestenliste des Spiels sowie
+Loeschungen. In jeder Aenderung im Repository steht der Name des Geraets
+(am PC "PC" und der Rechnername, am Handy "Handy"). Fruehere Staende
+bleiben im Verlauf des Repositorys bei GitHub erhalten, auch nach "Alle
+Lerndaten loeschen".
 
 Einmalig einrichten:
 
-  1. Privates Repository (ist bereits angelegt):
-       papst2142-cmd/fisi-lernstand
+  1. Auf github.com ein neues, privates Repository anlegen,
+       z.B. mit dem Namen fisi-lernstand.
 
   2. Zugangsschluessel (Token) erzeugen - am besten je Geraet einen, dann
      laesst sich ein verlorenes Handy einzeln sperren:
@@ -221,7 +231,7 @@ Einmalig einrichten:
      uebertragen werden.
 
   3. In der App: Optionen -> "Abgleich PC und Handy"
-       Repository:        papst2142-cmd/fisi-lernstand
+       Repository:        deinname/fisi-lernstand (dein GitHub-Name)
        Zugangsschluessel: den kopierten Token einfuegen
      Dann "Speichern und abgleichen". Auf dem anderen Geraet genauso.
 
@@ -241,7 +251,7 @@ START AUS DEM QUELLCODE (fuer Entwickler)
 Wer am Programm selbst arbeiten moechte, startet es direkt aus den
 .py-Dateien. Dafuer werden benoetigt:
 
-  * Python 3.8 oder neuer mit Tkinter
+  * Python 3.12 oder neuer mit Tkinter (gebaut und getestet wird mit 3.12)
   * CustomTkinter und Pillow (einmalig installieren, siehe unten)
 
 Einmalig im Programmordner ausfuehren:
@@ -310,6 +320,8 @@ Zum Sichern genuegt es, diese eine Datei zu kopieren. Bequemer geht es
 unter Optionen -> Sicherung (PC und Handy): "Sicherung erstellen" schreibt
 den ganzen Lernstand samt Pruefungen, Abschlussprojekt und Spielstaenden
 in eine Datei *.fisisicherung, "Sicherung einspielen" holt ihn zurueck.
+In der Datei steht auch der Name des Geraets (am PC "PC" und der
+Rechnername).
 
 
 DATEIEN IM PAKET
@@ -322,7 +334,7 @@ Programmdateien (PC):
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
   fisi_lernen.py        Wiederholungssystem, Tagesziel, Lernserie und
-                        Subnetting-Trainer
+                        Rechen-Trainer
   fisi_pruefung.py      Klausursimulationen des Pruefungstrainers
   fisi_projekt.py       Arbeitsbereich Abschlussprojekt
   fisi_pdf.py           Einfacher PDF-Export
@@ -339,6 +351,12 @@ Programmdateien (PC):
                         Abdeckung und Gewichtung der Uebungsauswahl
   fisi_rechtliches.py   Lizenz, Hinweistext und Erststart-Hinweis (Texte
                         fuer PC und Handy, ab 0.62)
+  fisi_einzelstart.py   Sperre gegen Mehrfachstart (laeuft.info)
+  fisi_hilfe.py         Rundgang und Hilfe (Texte fuer PC und Handy)
+  fisi_leistung.py      Leistungsmessung (leistungsmessung.csv)
+  fisi_optionen.py      Aufbau der Optionen (PC und Handy gleich)
+  fisi_trennung.py      Umbruch langer Titel (PC und Handy gleich, ab 0.63.2)
+  fisi_verknuepfung.py  Desktop-Verknuepfung unter Linux
 
 Weitere Dateien:
   LICENSE.txt           Lizenz des Programms (Alle Rechte vorbehalten; die
@@ -369,12 +387,10 @@ Weitere Dateien:
   FISI-Lernplattform.iss  Inno-Setup-Skript fuer den Windows-Installer
   .github/workflows/    Baut alle Installer per GitHub Actions (build.yml),
                         release.yml startet das bei einer neuen Version
-  test_spiel.py         Tests fuer Spiel, Inhalte und Hilfsfunktionen
-  test_sicherung.py     Tests fuer Sicherung und Wiederherstellung
-  test_rahmenplan.py    Tests fuer Rahmenplan, Abdeckung und Gewichtung
-  test_texte.py         Prueft Schreibweisen und Fragetexte der Inhalte
-                        gegen pruefung/wortliste.txt
-  test_grosse_datenmengen.py  Belastungstest der PC-Oberflaeche
+  test_*.py             Testsammlung; alle Teile mit
+                        bash pruefung/ci_tests.sh rest|lang|spiel
+                        (test_texte.py prueft Schreibweisen und Fragetexte
+                        der Inhalte gegen pruefung/wortliste.txt)
   pruefung/wortliste.txt  Bekannte Fachbegriffe und verbotene Schreibweisen
   AENDERUNGEN.md        Neuerungen jeder Version (Text der Releases)
   INSTALLER-ANLEITUNG.txt  Anleitung zu den Installern
@@ -452,8 +468,13 @@ nur anhaengen). Schreibweisen und Fragetexte prueft zusaetzlich:
 
 TASTENKUERZEL
 ---------------------------------------------------------------------------
-  Strg + F      Springt in das Suchfeld
-  Enter         Startet die Suche beziehungsweise die Berechnung
+  Strg + F        Springt in das Suchfeld
+  Strg + Eingabe  Prueft im Antwortfeld einer Karteikarte die Antwort
+  Enter           Startet die Suche beziehungsweise die Berechnung
+  Tab             Springt zum naechsten Element (Umschalt + Tab zurueck)
+  Leertaste       Drueckt Knoepfe, schaltet Schalter um, klappt Bereiche
+                  auf und zu
+  Esc             Ueberspringt den Rundgang
 
 
 PROBLEMBEHEBUNG
@@ -554,12 +575,13 @@ Die Oberflaeche wirkt gedraengt
     Bei kleineren Fenstern laesst sich der Inhalt seitlich scrollen
     (Umschalttaste + Mausrad).
 
-Abgleich meldet "Zugangsschluessel ist ungueltig oder abgelaufen"
+Abgleich meldet "Der Zugangsschluessel (Token) ist ungueltig oder abgelaufen."
     Auf github.com einen neuen Token erzeugen (siehe ABGLEICH PC UND HANDY)
     und unter Optionen eintragen.
 
-Abgleich meldet "Repository nicht gefunden"
-    Schreibweise pruefen (Benutzer/Name, z.B. papst2142-cmd/fisi-lernstand)
+Abgleich meldet "Das Repository ... wurde nicht gefunden oder der
+Zugangsschluessel hat keinen Zugriff darauf."
+    Schreibweise pruefen (Benutzer/Name, z.B. deinname/fisi-lernstand)
     und ob der Token Zugriff auf genau dieses Repository hat.
 
 Android meldet beim Update "App nicht installiert"

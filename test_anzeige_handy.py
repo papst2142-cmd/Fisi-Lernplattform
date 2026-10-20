@@ -217,12 +217,15 @@ class FitLinesTest(unittest.TestCase):
         start = neu.index("Last:")
         self.assertEqual(neu[start + 1:start + 3],
                          ["  12.500 W / 13.889 VA", "  (Leistungsfaktor 0,9)"])
-        # eingerueckte Zeilen behalten ihren Einzug, auch die Fortsetzung
+        # eingerueckte Zeilen behalten ihren Einzug, auch die Fortsetzung;
+        # ab 0.63.2 (A5): "=" steht vor dem Wert, nie am Zeilenende
         start = neu.index("  nein  Auslastung Wirkleistung:")
         self.assertEqual(neu[start + 1:start + 3],
-                         ["    12.500 W von 900 W =", "    1.388,9 %"])
-        # Zahl und Einheit bleiben zusammen
-        self.assertIn("  288,00 Wh", neu)
+                         ["    12.500 W von 900 W", "    = 1.388,9 %"])
+        self.assertFalse(any(line.rstrip().endswith((" =", " ->", " hex"))
+                             for line in neu), neu)
+        # Zahl und Einheit bleiben zusammen (ab 0.63.2 mit "=" davor, A5)
+        self.assertIn("  = 288,00 Wh", neu)
         self.assertEqual(neu[-2:], ["    0,9 min, gewünscht", "    45 min"])
         # zu lang bleiben nur Beschriftungen (dann "→ wischen")
         self.assertTrue(all(len(line) <= 28 or line.endswith(":") for line in neu), neu)
@@ -417,7 +420,12 @@ class PillGroupTest(unittest.TestCase):
                          [[sem] for sem in pills.semantics])
         self.assertTrue(all(item.tight for item in pills.row.controls))
         for sem, pill in zip(pills.semantics, pills.pills):
-            self.assertIs(sem.content, pill)
+            # Ab 0.63.2 (B-J-04, Variante unsichtbar): Tippflaeche mindestens
+            # 48 dp um die Pille, nur sie nimmt das Tippen an
+            self.assertIs(sem.content.content, pill)
+            self.assertEqual(sem.content.height, max(48, ui.grow(36)))
+            self.assertIsNotNone(sem.content.on_click)
+            self.assertIsNone(pill.on_click)
             self.assertEqual(pill.height, ui.grow(36))     # Pille selbst wie bisher
         self.assertEqual([item.selected for item in pills.semantics],
                          [False, False, True, False, False])
@@ -436,7 +444,8 @@ class PillGroupTest(unittest.TestCase):
         pills = ui.PillGroup(self.OPTIONEN, initial=2)
         self.assertFalse(pills.row.wrap)
         self.assertEqual(pills.row.scroll, ft.ScrollMode.HIDDEN)
-        self.assertEqual(pills.height, ui.grow(36))
+        self.assertEqual(pills.height, max(48, ui.grow(36)))   # B-J-04 Tippflaeche
+        self.assertTrue(all(pill.height == ui.grow(36) for pill in pills.pills))
         self.assertEqual(pills.controls, [pills.mask, pills.hint])
         self.assertEqual(pills.hint.tooltip, "Weitere Einträge")
 

@@ -66,14 +66,23 @@ FLUSH_SECONDS = 5              # sonst schreibt die Oberflaeche alle 5 s
 
 COLUMNS = ("zeit", "version", "geraet", "system", "ereignis", "von", "nach", "dauer_ms",
            "max_ms", "anzahl", "ereignisse", "speicher_mb", "privat_mb", "elemente",
-           "aufgaben", "customtkinter", "verfuegbar_mb", "vorgang")
+           "aufgaben", "customtkinter", "verfuegbar_mb", "vorgang", "messart")
 # "customtkinter": installierte Version, nur in der Zeile "start" und nur am
 # PC (am Handy leer) - belegt, welche Version die Installation wirklich hat
 # Ab 0.59.2: "verfuegbar_mb" (verfuegbarer Arbeitsspeicher des Geraets, nur
 # in der Zeile "start") und "vorgang" (laufender bzw. letzter Vorgang am PC,
 # z. B. "darstellung" oder "vorladen:settings"; am Handy leer). Eine aeltere
 # Messdatei bekommt beim ersten Schreiben die neue Kopfzeile.
+# Ab 0.63.2 (B-I-05): "messart" kennzeichnet, wie dauer_ms gemessen wurde.
+# Leer (alle Zeilen bis 0.63.1 und alle Ereignisse, deren Messung sich nicht
+# geaendert hat) = MESSART_ALT. Seitenwechsel am PC tragen ab 0.63.2
+# MESSART_GEZEICHNET ein: Dauer bis die Seite fertig gezeichnet ist (vorher
+# nur bis zum ersten Leerlauf, also zu kurz). Werte verschiedener Messart
+# werden nie miteinander verglichen (compare_pages).
 SEPARATOR = ";"
+
+MESSART_ALT = 1
+MESSART_GEZEICHNET = 2
 
 # Ereignisse
 EVENT_START = "start"            # Messung laeuft (beim Start oder beim Einschalten)
@@ -268,7 +277,8 @@ class Recorder:
             self.record(EVENT_START)
 
     def record(self, event, von="", nach="", dauer_ms=None, max_ms=None, anzahl=None,
-               ereignisse=None, elemente=None, aufgaben=None, speicher=True, vorgang=None):
+               ereignisse=None, elemente=None, aufgaben=None, speicher=True, vorgang=None,
+               messart=None):
         if not self.active:
             return
         memory, private = memory_mb() if speicher else (None, None)
@@ -286,7 +296,7 @@ class Recorder:
                   _number(elemente), _number(aufgaben),
                   self.toolkit if event == EVENT_START else "",
                   _number(available_mb(), 0) if event == EVENT_START else "",
-                  vorgang)
+                  vorgang, _number(messart))
         self.buffer.append(SEPARATOR.join(_clean(value) for value in values))
         if len(self.buffer) >= FLUSH_LINES:
             self.flush()
@@ -374,3 +384,61 @@ class Recorder:
         self.flush()
         with open(self.path, "rb") as handle:
             return handle.read()
+
+
+# ============================================================================
+#  AUSWERTUNG (ab 0.63.2, B-I-05)
+# ============================================================================
+
+def read_rows(path=None):
+    """Zeilen einer Messdatei als Woerterbuecher (Spalten aus der eigenen
+    Kopfzeile, auch bei einer Datei einer aelteren Version ohne "messart")."""
+    with open(path or file_path(), encoding="utf-8") as handle:
+        lines = handle.read().splitlines()
+    if not lines:
+        return []
+    header = lines[0].split(SEPARATOR)
+    return [dict(zip(header, line.split(SEPARATOR))) for line in lines[1:] if line]
+
+
+def messart_of(row):
+    """Messart einer Zeile; leer oder fehlend = MESSART_ALT."""
+    value = (row.get("messart") or "").strip()
+    return int(value) if value.isdigit() else MESSART_ALT
+
+
+def _duration(row):
+    try:
+        return float((row.get("dauer_ms") or "").replace(",", "."))
+    except ValueError:
+        return None
+
+
+def page_times(rows, messart):
+    """Dauer der Seitenwechsel (ms) einer Messart: {Seite: [ms, ...]}."""
+    result = {}
+    for row in rows:
+        if row.get("ereignis") != EVENT_PAGE or messart_of(row) != messart:
+            continue
+        value = _duration(row)
+        if value is not None:
+            result.setdefault(row.get("nach", ""), []).append(value)
+    return result
+
+
+def compare_pages(rows_a, rows_b):
+    """Seitenwechsel zweier Messdateien vergleichen, je Messart getrennt:
+    {messart: {Seite: (Median a, Median b)}} - nur Seiten, die es in beiden
+    Dateien mit derselben Messart gibt. Alte und neue Messart werden nie
+    gegeneinander gestellt."""
+    import statistics
+    arts = {messart_of(row) for row in rows_a if row.get("ereignis") == EVENT_PAGE} & \
+        {messart_of(row) for row in rows_b if row.get("ereignis") == EVENT_PAGE}
+    result = {}
+    for art in sorted(arts):
+        a, b = page_times(rows_a, art), page_times(rows_b, art)
+        pages = {page: (statistics.median(a[page]), statistics.median(b[page]))
+                 for page in sorted(set(a) & set(b))}
+        if pages:
+            result[art] = pages
+    return result

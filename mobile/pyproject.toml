@@ -9,12 +9,12 @@
 
 [project]
 name = "fisi-lernplattform"
-version = "0.63.1"
+version = "0.63.2"
 description = "Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker (Schwerpunkt Systemintegration)"
 requires-python = ">=3.10"
 dependencies = [
     "flet==1.0.1",
-    "certifi",
+    "certifi==2026.7.22",
 ]
 
 [tool.flet]
@@ -26,7 +26,7 @@ company = "Nico H"
 # Ab 0.62: Flet 1.0.1 liest das Feld (flet_cli/commands/build_base.py:1560,
 # "tool.flet.copyright"); Android zeigt es nirgends an
 copyright = "Copyright (c) 2026 Nico H"
-build_number = 6301
+build_number = 6302
 icon_background = "#120A24"
 
 [tool.flet.app]
@@ -49,5 +49,8 @@ target_arch = ["arm64-v8a"]
 # Ab 0.48.1: jni_flutter 1.0.4 (veroeffentlicht am 01.10.2026) verlangt jni 1.1,
 # die Flet-Vorlage legt aber jni 1.0 fest - der APK-Bau bricht dann ab.
 # Bis Flet das selbst regelt, bleibt jni_flutter auf der letzten passenden Version.
+# Ab 0.63.2 (FG-123): shared_preferences_android 2.5.0 (veroeffentlicht am
+# 17.10.2026) verlangt ebenfalls jni 1.1 - gleiche Abhilfe, letzte passende 2.4.28.
 [tool.flet.flutter.pubspec.dependency_overrides]
 jni_flutter = "1.0.3"
+shared_preferences_android = "2.4.28"

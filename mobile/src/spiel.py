@@ -10,6 +10,8 @@ angezeigt und bedient - mit denselben Daten und Regeln wie am PC.
 Hinweis wie in ui.py: In Ereignissen (Tippen) nie control.update() aufrufen,
 Flet uebernimmt die Aenderungen danach selbst.
 """
+# Ausnahme ab 0.63.2 (Z7, N-b): Ereignisse, die einen Hinweis zeigen koennen,
+# zeichnen an ihrem Ende die geaenderten Steuerelemente mit _redraw.
 
 import asyncio
 import copy
@@ -24,6 +26,19 @@ from fisi_core import CATEGORY_SHORT, plural
 import fisi_theme
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 import ui
+
+
+def _redraw(*controls):
+    """Geaenderte Steuerelemente sofort zeichnen. Noetig, wenn im selben
+    Ereignis ein Hinweis (toast -> page.show_dialog) kommt: Danach uebernimmt
+    Flet die uebrigen Aenderungen nicht mehr von selbst (ui.PillGroup).
+    Ohne Seite (Tests, Aufbau) passiert nichts."""
+    for control in controls:
+        try:
+            control.update()
+        except (RuntimeError, AssertionError, AttributeError):
+            pass
+
 
 PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"],
                   "kritisch": C["red"]}
@@ -62,7 +77,9 @@ def cat_color(key):
 
 
 def euro(value):
-    return "%s €" % "{:,.0f}".format(value).replace(",", ".")
+    # Ab 0.63.2 (FG-109): geschuetztes Leerzeichen, damit "€" am Handy nicht
+    # allein in die naechste Zeile rutscht
+    return "%s\u00a0€" % "{:,.0f}".format(value).replace(",", ".")
 
 
 def screen_list(controls, spacing=14):
@@ -1295,7 +1312,10 @@ class TerminalBoard(ft.Column):
         self.step_label = ui.label("")
         self.goal_label = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         self.lines = ft.Column(spacing=2, tight=True)
-        self.screen = ft.Container(content=self.lines, bgcolor=TERMINAL_BG, border_radius=12,
+        # Ab 0.63.2 (B-N-04): Zeilen ohne Umbruch, der Bereich ist waagrecht wischbar
+        # (Spalten tabellenartiger Ausgaben bleiben erhalten)
+        self.screen = ft.Container(content=ft.Row([self.lines], scroll=ft.ScrollMode.AUTO),
+                                   bgcolor=TERMINAL_BG, border_radius=12,
                                    border=ft.Border.all(1, C["border"]),
                                    padding=ft.Padding.symmetric(horizontal=12, vertical=10))
         self.choices = ft.Column(spacing=8, tight=True,
@@ -1319,14 +1339,17 @@ class TerminalBoard(ft.Column):
         self._paint()
 
     def _line(self, role, value):
+        # Ab 0.63.2 (B-N-04): jede Zeile einzeilig (no_wrap); Ein- und Ausgabe
+        # wachsen gleich mit der Schriftgroesse (ui.fs bzw. ft.Text-Groesse)
         if role in ("eingabe", "cursor"):
             return ft.Text(spans=[
                 ft.TextSpan(self.task["prompt"] + " ",
                             ft.TextStyle(color=C["green"], font_family=ui.MONO, size=ui.fs(12))),
                 ft.TextSpan(value, ft.TextStyle(
                     color=C["accent"] if role == "cursor" else C["text"],
-                    font_family=ui.MONO, size=ui.fs(12)))])
-        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
+                    font_family=ui.MONO, size=ui.fs(12)))], no_wrap=True)
+        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role],
+                       no_wrap=True)
 
     def _paint(self):
         lines = [self._line(role, value)
@@ -1755,6 +1778,17 @@ def market_box(lines):
         border=ft.Border.all(1, mix(C["accent"], C["card"], 0.45)))
 
 
+def _stack_large(controls, spacing=8, **kwargs):
+    """Ab 0.63.2 (B-J-06): was sonst nebeneinander steht, ab 160 %
+    untereinander in voller Breite (wie main.tile_row)."""
+    for control in controls:
+        if getattr(control, "expand", None):
+            control.expand = None
+    kwargs.pop("vertical_alignment", None)
+    return ft.Column(controls, spacing=spacing, tight=True,
+                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+
 class GameScreen:
     """Seite "Spiel" der Handy-App (gleiche Schnittstelle wie Screen in
     main.py: crumbs, root, on_show)."""
@@ -2059,6 +2093,7 @@ class GameScreen:
         self.draft = {}
         self.app.notify_progress()
         self.render()
+        _redraw(self.root)   # ab 0.63.2 (Z7, N-b)
 
     def _edit_profile(self, _event=None):
         self.draft = {"edit": True}
@@ -2088,7 +2123,7 @@ class GameScreen:
                 "Firma öffnen" if state.firm else "Firma gründen", self.open_firm,
                 kind="ghost" if state.firm else "primary", height=38))
         profile = ui.Card("Spielfigur", [
-            ft.Row([
+            (_stack_large if ui.large() else ft.Row)([
                 avatar(state.profile["aussehen"], 84),
                 ft.Column([
                     ui.text(state.profile["name"], size=22, weight=ft.FontWeight.BOLD),
@@ -2347,6 +2382,7 @@ class GameScreen:
             return
         self.app.notify_progress()
         self.render()
+        _redraw(self.root)   # ab 0.63.2 (Z7, N-b)
 
     # -- Ticket als eigene Seite -------------------------------------------
 
@@ -2381,7 +2417,7 @@ class GameScreen:
                     ft.Row([ui.GradientButton(
                         "Karteikarten zu %s" % fg.TOPIC_SHORT[key],
                         lambda _e: self._open_cards(fg.TOPIC_CAT[key], key), kind="ghost",
-                        height=38)]),
+                        height=38, expand=ui.large() or None)]),
                 ], spacing=8, tight=True),
                 bgcolor=mix(C["card"], C["yellow"], 0.12), border_radius=14, padding=14,
                 border=ft.Border.all(1, mix(C["yellow"], C["card"], 0.35))))
@@ -2422,7 +2458,8 @@ class GameScreen:
         self.btn_defer = ui.GradientButton("Verschieben", self._defer, kind="ghost",
                                            expand=True)
         self.buttons = ft.Column([
-            ft.Row([self.btn_submit, self.btn_help], spacing=10),
+            (_stack_large if ui.large() else ft.Row)([self.btn_submit, self.btn_help],
+                                                     spacing=10),
             ft.Row([self.btn_defer]),
             ui.text("Ohne Hilfe gibt es %d %% Bonus."
                     % round(fg.GAME["balancing"]["bonus_ohne_hilfe"] * 100),
@@ -2500,6 +2537,7 @@ class GameScreen:
         self.buttons.controls = [ft.Row([ui.GradientButton(
             RETURN_LABEL.get(self.from_site, "Zurück zur Übersicht"),
             self._close, expand=True)])]
+        _redraw(self.options, self.result_box, self.buttons)   # ab 0.63.2 (Z7, N-b)
 
     def _order_spare(self, part_id):
         """Austausch: fehlendes Ersatzteil nachbestellen, das Ticket wartet."""
@@ -2569,9 +2607,11 @@ class GameScreen:
             return self.place
         return fg.SITE_OFFICE
 
-    def open_site(self, key, replace=False):
+    def open_site(self, key, replace=False, toast_bis=None):
         """Oeffnet eine Grossansicht. replace: die offene Grossansicht ersetzen
         (z.B. vom Buero direkt nach Hause)."""
+        # ab 0.63.2 (N-a): Nummer am Anfang lesen oder vom Aufrufer uebernehmen
+        mark = self.app.toast_mark() if toast_bis is None else toast_bis
         self.game.reload()
         page = self.app.page
         if replace:
@@ -2584,7 +2624,8 @@ class GameScreen:
         self.office = ft.Column(spacing=12, tight=True,
                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_site()
-        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]))
+        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]),
+                      toast_bis=mark)
 
     def open_office(self, _event=None):
         self.open_site("buero")
@@ -2703,6 +2744,7 @@ class GameScreen:
             self.firm_tab = "mitarbeiter"
             self.open_firm()
         elif action == "feierabend":
+            mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor end_day
             try:
                 payload = self.game.end_day()
             except ValueError as exc:
@@ -2717,7 +2759,7 @@ class GameScreen:
                            fg.day_end_money_text(payload)))
             self.app.notify_progress()
             self.render()
-            self.open_site("zuhause", replace=True)
+            self.open_site("zuhause", replace=True, toast_bis=mark)
         elif action == "buero":
             state = self.game.state
             scene = fg.morning_text(state.day, state=state)
@@ -2737,6 +2779,7 @@ class GameScreen:
     # -- Reise des Spielers (ab 0.39) -----------------------------------------
 
     def open_journey(self, _event=None, tab=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.game.check_knowledge()
         self.journey_page = 0
@@ -2745,7 +2788,8 @@ class GameScreen:
         self.journey_box = ft.Column(spacing=12, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_journey()
-        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]))
+        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]),
+                      toast_bis=mark)
 
     def _fill_journey(self):
         state = self.game.state
@@ -2767,8 +2811,11 @@ class GameScreen:
             ("Verdient", euro(stats["verdient"]), "alle Einnahmen"),
         ]
         grid = []
-        for index in range(0, len(tiles), 2):
-            grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
+        # Ab 0.63.2 (B-J-06): ab 160 % eine Kachel je Zeile (sonst brachen die
+        # Titel mitten im Wort um: "ZWISCHENFÄ/LLE", "KUNDENPRO/JEKTE")
+        per_row = 1 if ui.large() else 2
+        for index in range(0, len(tiles), per_row):
+            grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + per_row]],
                                spacing=8))
         controls = [tabs, ui.Card("Rückblick", grid, accent=C["accent2"],
                             subtitle="%s · Tag %d · %s" % (
@@ -2823,7 +2870,7 @@ class GameScreen:
             diary.append(ui.text("Noch keine Einträge - dein erster Arbeitstag wartet.",
                                  size=14, color=C["text_soft"]))
         if pages > 1:
-            diary.append(ft.Row([
+            diary.append((_stack_large if ui.large() else ft.Row)([
                 ui.GradientButton("Neuere", lambda _e: self._journey_turn(-1), kind="ghost",
                                   height=36),
                 ui.text("Seite %d / %d" % (self.journey_page + 1, pages), size=13,
@@ -2934,12 +2981,14 @@ class GameScreen:
     # -- Firma (ab 0.33) ------------------------------------------------------
 
     def open_firm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.training_for = self.training_cat = None
         self.firm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_firm()
-        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]))
+        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]),
+                      toast_bis=mark)
 
     def _fill_firm(self):
         state = self.game.state
@@ -3001,7 +3050,7 @@ class GameScreen:
         for ticket in tickets:
             rows.append(self._customer_ticket_box(state, ticket, levels))
         return [ui.Card("Kundenanfragen", offers, accent=C["pink"],
-                        subtitle="Handlungskosten %d %%, USt %d %%"
+                        subtitle="Handlungskosten %d\u00a0%%, USt %d\u00a0%%"
                         % (rules["handlungskosten"], rules["ust"])),
                 ui.Card("Kundentickets", rows, accent=C["accent"],
                         subtitle="%d von %d verteilt" % (len(tickets) - free, len(tickets)))]
@@ -3064,7 +3113,7 @@ class GameScreen:
             ft.Row([ui.GradientButton("Angebot abschicken",
                                       lambda _e: self._send_offer(inquiry, project), height=40,
                                       expand=True)]),
-            ft.Row([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
+            (_stack_large if ui.large() else ft.Row)([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
                                       lambda _e: self._toggle_offer_help(), kind="ghost",
                                       height=38, expand=True), cancel], spacing=8)]
         return controls
@@ -3151,6 +3200,7 @@ class GameScreen:
             return
         self.assign_for = None
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     # -- Projekte (ab 0.35) -----------------------------------------------------
 
@@ -3249,11 +3299,16 @@ class GameScreen:
                          weight=ft.FontWeight.BOLD,
                          color=C["green"] if project["team"] else C["orange"])]
         editing = self.team_for == pid
-        parts.append(ft.Row([ui.GradientButton(
-            "Team fertig" if editing else "Team ändern",
-            lambda _e: self._pick_team(None if editing else pid),
-            kind="ghost" if editing else "primary", height=38, expand=True),
-            self._details_button(pid)], spacing=8))
+        # Ab 0.63.2 (B-E-08, FG-85): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+        # Textbreite (wie bei _tender_box; _details_button bleibt unveraendert)
+        team = ui.GradientButton("Team fertig" if editing else "Team ändern",
+                                 lambda _e: self._pick_team(None if editing else pid),
+                                 kind="ghost" if editing else "primary", height=38)
+        details = self._details_button(pid)
+        for item in (team, details):
+            item.expand = None
+            item.alignment = None
+        parts.append(ft.Row([team, details], spacing=8, run_spacing=8, wrap=True))
         if editing:
             parts.append(ui.label("Wer arbeitet mit? (antippen)"))
             for option in fg.project_candidates(state, project, levels):
@@ -3292,10 +3347,15 @@ class GameScreen:
             return self._person_box(parts)
         else:
             button = ui.GradientButton("Angebot kalkulieren",
-                                       lambda _e, i=project["id"]: self._calc(i), height=38,
-                                       expand=True)
+                                       lambda _e, i=project["id"]: self._calc(i), height=38)
             button.set_enabled(not problem)
-            parts.append(ft.Row([button, self._details_button(project["id"])], spacing=8))
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite (vorher "Angebot kalku" neben "Details")
+            details = self._details_button(project["id"])
+            for item in (button, details):
+                item.expand = None
+                item.alignment = None
+            parts.append(ft.Row([button, details], spacing=8, run_spacing=8, wrap=True))
             if problem:
                 parts.append(ui.text(problem, size=11, color=C["muted"]))
         parts += self._project_details(project)
@@ -3319,6 +3379,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_changed(self):
         self.app.notify_progress()
@@ -3422,33 +3483,42 @@ class GameScreen:
         for row in fg.skill_bars(item):
             color = CATEGORY_COLOR[fg.CAT_NAME[row["cat"]]]
             opened = self._cat_open(staff_id, row["cat"])
+            name = ft.Row([
+                ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
+                        size=16, color=color),
+                ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
+                spacing=2, tight=True)
+            bar = [ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
+                   ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
+                                        text_align=ft.TextAlign.RIGHT),
+                                width=ui.large_grow(30))]
+            # Ab 0.63.2 (B-J-06): ab 160 % Name ueber Balken und Wert
+            line = (ft.Column([name, ft.Row(bar, spacing=6,
+                                            vertical_alignment=ft.CrossAxisAlignment.CENTER)],
+                              spacing=2, tight=True) if ui.large() else
+                    ft.Row([ft.Container(name, width=110)] + bar,
+                           spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER))
             rows.append(ui.as_button(ft.Container(
-                content=ft.Row([
-                    ft.Container(ft.Row([
-                        ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
-                                size=16, color=color),
-                        ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
-                        spacing=2, tight=True), width=110),
-                    ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
-                    ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
-                                         text_align=ft.TextAlign.RIGHT), width=30)],
-                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                content=line,
                 padding=ft.Padding.symmetric(vertical=3), ink=True,
                 on_click=lambda _e, key=row["cat"]: self._toggle_cat(staff_id, key))))
             if not opened:
                 continue
             for topic in row["themen"]:
-                rows.append(ft.Container(ft.Row([
-                    ft.Container(ui.text(topic["name"], size=11, color=C["text_dim"]),
-                                 width=92),
-                    ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
-                                            6), expand=True),
-                    ft.Container(ui.text(str(topic["wert"]), size=11,
-                                         color=C["yellow"] if topic["grenze"]
-                                         else C["text_soft"],
-                                         text_align=ft.TextAlign.RIGHT), width=30)],
-                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                    padding=ft.Padding.only(left=18)))
+                label = ui.text(topic["name"], size=11, color=C["text_dim"])
+                bar = [ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
+                                               6), expand=True),
+                       ft.Container(ui.text(str(topic["wert"]), size=11,
+                                            color=C["yellow"] if topic["grenze"]
+                                            else C["text_soft"],
+                                            text_align=ft.TextAlign.RIGHT),
+                                    width=ui.large_grow(30))]
+                line = (ft.Column([label, ft.Row(bar, spacing=6,
+                                                 vertical_alignment=ft.CrossAxisAlignment.CENTER)],
+                                  spacing=2, tight=True) if ui.large() else
+                        ft.Row([ft.Container(label, width=92)] + bar,
+                               spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER))
+                rows.append(ft.Container(line, padding=ft.Padding.only(left=18)))
         return ft.Column(rows, spacing=2, tight=True)
 
     def _person_box(self, controls):
@@ -3485,15 +3555,25 @@ class GameScreen:
                     state.branch["name"] if there else fg.firm_rules()["gebaeude"]["name"]),
                     size=12, color=C["purple"] if there else C["green"]),
                     ft.Row([move])]
-            parts.append(ft.Row([
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite (vorher gleich breit nebeneinander: "Weiterbi", "Entlasse");
+            # ohne alignment richtet sich die Breite nach der Beschriftung
+            buttons = [
                 ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
-                                  kind="ghost", height=36, expand=True),
+                                  kind="ghost", height=36),
                 ui.GradientButton("Themen", lambda _e, i=item["id"]: self._toggle_topics(i),
                                   kind="success" if item["id"] in self.topics_for else "ghost",
-                                  height=36, expand=True),
+                                  height=36),
                 ui.GradientButton("Entlassen", lambda _e, i=item: self._fire(i), kind="ghost",
-                                  height=36, expand=True),
-            ], spacing=8))
+                                  height=36),
+            ]
+            if ui.large():
+                # Ab 0.63.2 (N9, FG-106): ab 160 % untereinander in voller Breite
+                parts.append(_stack_large(buttons))
+            else:
+                for button in buttons:
+                    button.alignment = None
+                parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
             coaching = fg.coaching_offer(state, item["id"])
             if coaching["macke"]:
                 button = ui.GradientButton("Coaching (%s)" % euro(coaching["preis"]),
@@ -3592,6 +3672,7 @@ class GameScreen:
             return
         self.training_for = self.training_cat = None
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _decide(self, decision_id, choice):
         try:
@@ -3600,6 +3681,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _coach(self, item):
         offer = fg.coaching_offer(self.game.state, item["id"])
@@ -3629,8 +3711,8 @@ class GameScreen:
                 return
             self._firm_changed()
 
-        self.app.confirm("Entlassen", "%s wirklich entlassen? Die Person bewirbt sich danach "
-                         "nicht erneut." % item["name"], confirmed)
+        self.app.confirm("Entlassen", self.game.fire_question(item["id"], item["name"]),
+                         confirmed)
 
     def _firm_bewerbungen(self, state):
         found = fg.applicants(state)
@@ -3660,6 +3742,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_gebaeude(self, state):
         stage = state.firm_stage()
@@ -3805,6 +3888,7 @@ class GameScreen:
         for key in (fg.SITE_OFFICE, fg.SITE_BRANCH):
             self.positions.pop(key, None)
         self._firm_changed()
+        _redraw(self.root, self.firm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _firm_rooms(self, state):
         """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""
@@ -3958,10 +4042,12 @@ class GameScreen:
                     offer = item["angebote"][mode]
                     button = ui.GradientButton(label, lambda _e, o=offer: self._book_ad(o),
                                                kind="primary" if mode == fg.AD_RUNNING
-                                               else "ghost", height=38, expand=True)
+                                               else "ghost", height=38)
                     button.set_enabled(not offer["problem"])
+                    # Vorschlag 0.63.2 (B-E-08/B-D-10): Textbreite, Zeilenumbruch
+                    button.alignment = None
                     buttons.append(button)
-                parts.append(ft.Row(buttons, spacing=8))
+                parts.append(ft.Row(buttons, spacing=8, run_spacing=8, wrap=True))
                 problem = item["angebote"][fg.AD_ONCE]["problem"] or \
                     item["angebote"][fg.AD_RUNNING]["problem"]
                 if problem:
@@ -4120,14 +4206,18 @@ class GameScreen:
         button = ui.GradientButton("Aufnehmen", lambda _e: self._take_loan(offer),
                                    expand=True)
         button.set_enabled(not offer["problem"])
+        # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+        # Textbreite (vorher "-5.00(" und "+1.00(" abgeschnitten)
+        steps = [ui.GradientButton(label, lambda _e, d=delta: self._loan_step(d),
+                                   kind="ghost", height=38)
+                 for label, delta in (("−5.000", -5 * step), ("−1.000", -step),
+                                      ("+1.000", step), ("+5.000", 5 * step))]
+        for item in steps:
+            item.alignment = None
         free = [ui.text("Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen.",
                         size=12, color=C["text_dim"]),
                 ui.text(euro(amount), size=22, weight=ft.FontWeight.BOLD),
-                ft.Row([ui.GradientButton(label, lambda _e, d=delta: self._loan_step(d),
-                                          kind="ghost", height=38, expand=True)
-                        for label, delta in (("−5.000", -5 * step), ("−1.000", -step),
-                                             ("+1.000", step), ("+5.000", 5 * step))],
-                       spacing=6),
+                ft.Row(steps, spacing=6, run_spacing=6, wrap=True),
                 ui.label("Laufzeit"),
                 ui.PillGroup(terms, initial=keys.index(str(self.loan_term))
                              if str(self.loan_term) in keys else 0,
@@ -4167,12 +4257,18 @@ class GameScreen:
             if opened:
                 parts.append(self._loan_plan(item))
             repay = ui.GradientButton("Ablösen", lambda _e, i=item: self._repay_loan(i),
-                                      kind="ghost", height=38, expand=True)
+                                      kind="ghost", height=38)
             repay.set_enabled(state.money >= item["abloesen"]["gesamt"])
-            parts.append(ft.Row([
-                ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
-                                  lambda _e, i=item["id"]: self._toggle_plan(i), kind="ghost",
-                                  height=38, expand=True), repay], spacing=8))
+            # Ab 0.63.2 (B-E-08): Reihe mit Zeilenumbruch, jeder Knopf in seiner
+            # Textbreite; ab 160 % (N9, FG-111) untereinander in voller Breite
+            plan = ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
+                                     lambda _e, i=item["id"]: self._toggle_plan(i),
+                                     kind="ghost", height=38)
+            if ui.large():
+                parts.append(_stack_large([plan, repay]))
+            else:
+                plan.alignment = repay.alignment = None
+                parts.append(ft.Row([plan, repay], spacing=8, run_spacing=8, wrap=True))
             box = self._person_box(parts)
             if item["ausfaelle"]:
                 box.border = ft.Border.all(1, C["red"])
@@ -4181,22 +4277,41 @@ class GameScreen:
 
     def _loan_plan(self, item):
         rows, skipped = fg.loan_plan_rows(item)
+        # Ab 0.63.2 (B-E-08): Spalten statt gleich breiter Zellen. Jede Spalte ist
+        # so breit wie ihr breitester Betrag (Texte ohne Umbruch, nichts wird
+        # abgeschnitten); passt die Tabelle nicht, ist sie waagrecht wischbar.
+        # Vor und nach der Zeile "… weitere Raten …" steht je ein Block; eine
+        # unsichtbare Zeile der Hoehe 0 mit allen Werten der Spalte haelt die
+        # Spalten beider Bloecke gleich breit.
+        head = ("Tag", "Rate", "Zinsen", "Tilgung", "Rest")
+        values = [["%d" % row[0]] + [euro(value) for value in row[1:]] for row in rows]
+        blocks = [[head] + values[:-1], values[-1:]] if skipped else [[head] + values]
 
-        def line(values, color, weight=None):
-            return ft.Row([ui.text(value, size=11, color=color, weight=weight, expand=True,
-                                   text_align=ft.TextAlign.RIGHT) for value in values],
-                          spacing=4)
+        def cell(value, color, weight=None):
+            return ui.text(value, size=11, color=color, weight=weight, no_wrap=True)
 
-        lines = [line(("Tag", "Rate", "Zinsen", "Tilgung", "Rest"), C["muted"],
-                      ft.FontWeight.BOLD)]
-        for number, row in enumerate(rows):
-            if skipped and number == len(rows) - 1:
-                lines.append(ui.text("… %d weitere Raten …" % skipped, size=11,
-                                     color=C["muted"]))
-            lines.append(line(["%d" % row[0]] + [euro(value) for value in row[1:]],
-                              C["text_soft"]))
-        lines.append(ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
-                             % euro(item["zinsen_noch"]), size=12, color=C["text_dim"]))
+        def block(lines):
+            columns = []
+            for index in range(len(head)):
+                column = [cell(line[index], C["muted"] if line is head else C["text_soft"],
+                               ft.FontWeight.BOLD if line is head else None)
+                          for line in lines]
+                column.append(ft.Container(height=0, clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                                           content=ft.Column(
+                    [cell(line[index], C["text_soft"], ft.FontWeight.BOLD)
+                     for other in blocks for line in other], spacing=0, tight=True)))
+                columns.append(ft.Column(column, spacing=3, tight=True,
+                                         horizontal_alignment=ft.CrossAxisAlignment.END))
+            return ft.Row(columns, spacing=12, tight=True,
+                          vertical_alignment=ft.CrossAxisAlignment.START)
+
+        table = [block(blocks[0])]
+        if skipped:
+            table += [ui.text("… %d weitere Raten …" % skipped, size=11, color=C["muted"]),
+                      block(blocks[1])]
+        lines = [ft.Row([ft.Column(table, spacing=3, tight=True)], scroll=ft.ScrollMode.AUTO),
+                 ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
+                         % euro(item["zinsen_noch"]), size=12, color=C["text_dim"])]
         return ft.Column(lines, spacing=3, tight=True)
 
     def _toggle_plan(self, loan_id):
@@ -4296,6 +4411,7 @@ class GameScreen:
             self._layout_change(lambda: self.game.place_furniture_at(self.selected, x, y,
                                                                      self.turn))
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
         return True
 
     def _select_piece(self, piece):
@@ -4313,11 +4429,13 @@ class GameScreen:
                 self.turn = self.game.rotate_furniture(self.selected)
             self._layout_change(turn)
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _nudge(self, dx, dy):
         """Schiebe-Pfeile: um ein Rasterfeld (dx, dy im Grundriss)."""
         self._layout_change(lambda: self.game.nudge_furniture(self.selected, dx, dy))
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _undo(self, _event=None):
         state = self.game.state
@@ -4330,12 +4448,14 @@ class GameScreen:
             self.selected = None
         self.problem = ""
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _box(self, _event=None):
         self._layout_change(lambda: self.game.box_furniture(self.selected))
         self.selected = None
         self.problem = ""
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _sell(self, _event=None):
         item = fg.furniture_item(self.game.state.furniture.get(self.selected))
@@ -4362,6 +4482,7 @@ class GameScreen:
             return
         self.app.notify_progress()
         self._select_piece(piece)
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _floor(self, room_id, kind=None, color=None):
         state = self.game.state
@@ -4371,6 +4492,7 @@ class GameScreen:
         old_kind, old_color = current or [base.get("boden", "parkett"), None]
         self.game.set_floor(room_id, kind or old_kind, color or old_color)
         self._fill_site()
+        _redraw(self.office)   # ab 0.63.2 (Z7, N-b)
 
     def _move(self, home):
         rent = fg.rent_mode()
@@ -4490,11 +4612,13 @@ class GameScreen:
     # -- Grossauftrag Serverfarm (ab 0.52) ------------------------------------
 
     def open_farm(self, _event=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a)
         self.game.reload()
         self.farm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_farm()
-        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]))
+        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]),
+                      toast_bis=mark)
 
     def _fill_farm(self):
         state = self.game.state
@@ -4663,6 +4787,7 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self._farm_changed()
+        _redraw(self.farm_box)   # ab 0.63.2 (Z7, N-b)
 
     def _farm_phases(self, info, start):
         colors = {"fertig": C["green"], "jetzt": C["accent"], "spaeter": C["muted"]}
@@ -4750,7 +4875,7 @@ class GameScreen:
                                 [self.farm_board, self.help_box, self.result_box],
                                 accent=C["accent"]))
         self.btn_help = ui.GradientButton("Hilfe", self._show_help, kind="ghost")
-        self.buttons = ft.Column([ft.Row([
+        self.buttons = ft.Column([(_stack_large if ui.large() else ft.Row)([
             ui.GradientButton("Lösung einreichen", self._farm_submit, expand=True),
             self.btn_help], spacing=10)], spacing=10, tight=True)
         controls.append(self.buttons)
@@ -4870,6 +4995,7 @@ class GameScreen:
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
             "Zurück zur Serverfarm", self._farm_close, expand=True)])]
+        _redraw(self.options, self.result_box, self.buttons)   # ab 0.63.2 (Z7, N-b)
 
     def _farm_close(self, _event=None):
         page = self.app.page
@@ -4880,8 +5006,9 @@ class GameScreen:
         page.update()
 
     def _open_cards(self, category, topic=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         self.app.screens["cards"].set_category(category, topic)
-        self.app.open("cards")
+        self.app.open("cards", toast_bis=mark)
 
     def _open_learn(self, kind, title):
         self.app.open_search_hit(kind, title)

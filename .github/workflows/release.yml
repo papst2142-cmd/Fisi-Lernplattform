@@ -6,7 +6,14 @@
 #  Merge), legt dieser Ablauf den Tag v0.xy an und startet "Installer bauen"
 #  mit Release. So braucht es fuer ein Release keinen PC mehr.
 #
-#  Gibt es den Tag schon (z.B. von Hand gepusht), passiert nichts.
+#  Gibt es den Tag und das Release schon, passiert nichts.
+#  Ab 0.63.2 (B-M-09): Gibt es den Tag, aber kein Release (ein Bau ist nach
+#  dem Anlegen des Tags gescheitert), wird der Bau fuer den vorhandenen Tag
+#  nachgeholt - ohne neuen Tag. Von Hand geht das weiter mit "Installer
+#  bauen" -> "Run workflow" -> "Use workflow from" = Tag (siehe build.yml).
+#  Release zurueckziehen heisst: Release und Tag loeschen, oder vor dem
+#  naechsten Hochladen auf den Hauptzweig die Versionsnummer erhoehen.
+#  Waehrend eines Nachholens von Hand nichts auf den Hauptzweig hochladen.
 #  Hinweis: Tags, die ein Ablauf mit GITHUB_TOKEN anlegt, starten keine
 #  weiteren Ablaeufe - deshalb wird build.yml hier direkt aufgerufen.
 # ============================================================================
@@ -26,6 +33,8 @@ jobs:
   tag:
     name: Version pruefen und Tag anlegen
     runs-on: ubuntu-24.04
+    # Ab 0.63.2 (B-M-03): Zeitgrenze (der Job braucht unter 1 min)
+    timeout-minutes: 10
     permissions:
       contents: write
     outputs:
@@ -39,22 +48,60 @@ jobs:
 
       - name: Neue Version?
         id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(python -c "import build; print(build.app_version())")
           TAG="v$VERSION"
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
-            echo "Tag $TAG gibt es schon - nichts zu tun."
-            exit 0
+          NEU=ja
+          # Ab 0.63.2 (B-M-02): Netzfehler bis zu 3 Versuche im Schritt.
+          # git ls-remote: 0 = Tag da, 2 = Tag fehlt, alles andere = Fehler.
+          for VERSUCH in 1 2 3; do
+            RC=0
+            git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null || RC=$?
+            if [ "$RC" = 0 ] || [ "$RC" = 2 ]; then break; fi
+            if [ "$VERSUCH" = 3 ]; then
+              echo "Tag $TAG laesst sich nicht pruefen (git ls-remote, Fehler $RC)"
+              exit 1
+            fi
+            echo "Wiederholung wegen Netzfehler (git ls-remote, Fehler $RC)"
+            sleep 5
+          done
+          if [ "$RC" = 0 ]; then
+            # Ab 0.63.2 (B-M-09): Tag gibt es - gibt es auch das Release?
+            for VERSUCH in 1 2 3; do
+              if ANTWORT=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .tag_name 2>&1); then
+                echo "Tag und Release $TAG gibt es schon - nichts zu tun."
+                exit 0
+              fi
+              # Nur "nicht gefunden" heisst: Release fehlt. Jeder andere Fehler
+              # (Netz, Rechte) bricht nach 3 Versuchen ab, statt blind noch
+              # einmal zu bauen.
+              case "$ANTWORT" in
+                *"HTTP 404"*) break ;;
+              esac
+              if [ "$VERSUCH" = 3 ]; then
+                echo "Release $TAG laesst sich nicht pruefen: $ANTWORT"
+                exit 1
+              fi
+              echo "Wiederholung wegen Netzfehler (gh api): $ANTWORT"
+              sleep 5
+            done
+            NEU=nein
+            echo "Tag $TAG gibt es, das Release fehlt - der Bau wird fuer den vorhandenen Tag nachgeholt."
           fi
           # Alle Stellen muessen dieselbe Version tragen (PC, Handy, Installer)
           python -c "import build; build.check_versions('$VERSION')"
           # Ohne Abschnitt in AENDERUNGEN.md kein Release
           python build.py --versionshinweise > /dev/null
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "Neue Version $VERSION - Tag $TAG wird angelegt."
+          echo "neu=$NEU" >> "$GITHUB_OUTPUT"
+          if [ "$NEU" = ja ]; then
+            echo "Neue Version $VERSION - Tag $TAG wird angelegt."
+          fi
 
       - name: Tag anlegen
-        if: steps.check.outputs.tag != ''
+        if: steps.check.outputs.tag != '' && steps.check.outputs.neu == 'ja'
         env:
           TAG: ${{ steps.check.outputs.tag }}
         run: |
@@ -72,4 +119,8 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       tag: ${{ needs.tag.outputs.tag }}
-    secrets: inherit
+    # Ab 0.63.2 (B-M-07): nur die zwei Secrets, die build.yml braucht
+    # (Android-Signatur), statt "secrets: inherit"
+    secrets:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}

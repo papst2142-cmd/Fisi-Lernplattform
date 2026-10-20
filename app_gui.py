@@ -8,8 +8,8 @@ Lernprogramm fuer die Pruefungsvorbereitung zum Fachinformatiker
 (Schwerpunkt Systemintegration).
 
 Start:      python3 app_gui.py
-Benoetigt:  Python 3.8 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
-            (pip install -r requirements.txt)
+Benoetigt:  Python 3.12 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
+            (pip install -r requirements.txt; gebaut und getestet wird mit 3.12)
 
 Die Oberflaeche besteht aus einer festen Seitenleiste, einer Kopfzeile mit
 Suche und einem Inhaltsbereich, in dem die einzelnen Ansichten umgeschaltet
@@ -29,8 +29,10 @@ import time
 import traceback
 import webbrowser
 import tkinter as tk
+import tkinter.font as tkfont   # ab 0.63.2 (N8): Titelbreiten messen
 import _tkinter
 from tkinter import ttk, messagebox
+import tkinter.font as tkfont   # ab 0.63.2 (Z3)
 
 import customtkinter as ctk
 from PIL import Image
@@ -66,6 +68,11 @@ from fisi_core import (  # noqa: E402
 import fisi_core  # noqa: E402  (ab 0.63: neuere Kern-Teile ueber getattr)
 # ab 0.63.1 (Plan 0.63.1 Teil 1.3): Umbruch der Subnetting-Kaesten wie am Handy
 from fisi_core import fit_lines  # noqa: E402
+# ab 0.63.2 (B-N-07 4.2): Beschriftungen RAID/Bildschirm, PC = Handy
+from fisi_core import (RAID_FIELD_DISKS, RAID_FIELD_LEVEL, RAID_FIELD_SIZE,  # noqa: E402
+                       RAID_SUBTITLE, RAID_TITLE, SCREEN_FIELD_DEPTH,
+                       SCREEN_FIELD_FPS, SCREEN_FIELD_HEIGHT, SCREEN_FIELD_WIDTH,
+                       SCREEN_SUBTITLE, SCREEN_TITLE)
 from fisi_core import APP_DISPLAY_NAME, APP_LOGO_TEXT, DB_READ_ONLY_LINES  # noqa: E402
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -86,8 +93,9 @@ from fisi_lernen import (  # noqa: E402
     split_summary,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME,
-    TRAINER_KINDS, TRAINER_LEVEL_NAME,
-    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
+    TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewIndex, ReviewPlan, daily_series,
+    daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
     practice_next_text, reminder_due, reminder_text, save_learning_settings,
     topic_practice_parts, trainer_round,
@@ -107,6 +115,7 @@ from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
+import fisi_trennung  # noqa: E402  (ab 0.63.2, N8 B-D-06: Umbruch der Listentitel)
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
@@ -120,8 +129,11 @@ from fisi_widgets import (  # noqa: E402
     ScrollArea, ShareBars, ThemeTimeline, UpsDiagram, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo, _text_height,
+    _display_line_count,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
+    lesbare_schrift, tabellen_auswahl,
 )
+from fisi_widgets import FlowRow  # noqa: E402  (ab 0.63.2, D2)
 
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und Handy)
 # Versionsschema bis zur Vollversion 1.0:
@@ -130,7 +142,7 @@ APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (eine Quelle fuer PC und 
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.63.1"
+APP_VERSION = "0.63.2"
 
 
 def _resource_path(filename):
@@ -140,6 +152,14 @@ def _resource_path(filename):
     liegen."""
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, filename)
+
+# Ab 0.63.2 (N8, B-J-N3): Namen der Symbolknoepfe (Tooltip und Beschriftung
+# beim Tab-Fokus) - wie am Handy (main.PAGE_PREV/PAGE_NEXT, ui.py Kalender,
+# Zahlenfeld "Weniger"/"Mehr") - und Text der vier Startknoepfe der Pruefung
+# (Weisung 38/40 N8-F4: "<Kurzname> starten", PC = Handy)
+PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+STEP_LESS, STEP_MORE = "Weniger", "Mehr"
+EXAM_START_TEXT = "%s starten"
 
 NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
@@ -257,13 +277,13 @@ class NumberStepper(ctk.CTkFrame):
         self.step = step
 
         IconButton(self, "minus", lambda: self._change(-self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_LESS).pack(side="left")
         self.label = ctk.CTkLabel(self, text=str(value), fg_color=C["card_alt"],
                                   corner_radius=10, text_color=C["text"],
                                   font=F["body_bold"], width=58, height=34)
         self.label.pack(side="left", padx=6)
         IconButton(self, "plus", lambda: self._change(self.step),
-                   parent_bg=bg or C["card"]).pack(side="left")
+                   parent_bg=bg or C["card"], name=STEP_MORE).pack(side="left")
 
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
@@ -392,10 +412,32 @@ def bind_click(widgets, callback):
         make_focusable(widgets[0], lambda: callback(None))
 
 
+class FramedOptionMenu(ctk.CTkOptionMenu):
+    """Ab 0.63.2 (B-D-11): Aufklappliste mit 1 px Rahmen in C["field_border"].
+    CTkOptionMenu kennt keinen Rahmen; die Zeichenhilfe von CustomTkinter
+    kann ihn aber (border_parts), wie bei CTkButton. Im hellen Modus hob sich
+    die Liste vorher kaum von der Karte ab (card_alt/card 1,1:1)."""
+
+    def _draw(self, no_color_updates=False):
+        super()._draw(no_color_updates)
+        try:
+            self._draw_engine.draw_rounded_rect_with_border_vertical_split(
+                self._apply_widget_scaling(self._current_width),
+                self._apply_widget_scaling(self._current_height),
+                self._apply_widget_scaling(self._corner_radius),
+                self._apply_widget_scaling(1),
+                self._apply_widget_scaling(self._current_width - self._current_height))
+            self._canvas.itemconfig("border_parts", outline=C["field_border"],
+                                    fill=C["field_border"])
+            self._canvas.tag_lower("border_parts")
+        except (tk.TclError, AttributeError):
+            pass    # ohne Rahmen wie bis 0.63.1
+
+
 def option_menu(parent, values, command=None, width=None):
     """Aufklappliste im Stil der Filter (z.B. Thema)."""
     options = {} if width is None else {"width": width}
-    menu = ctk.CTkOptionMenu(
+    menu = FramedOptionMenu(
         parent, values=values, command=command,
         height=32, corner_radius=10, dynamic_resizing=False,
         fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -435,8 +477,11 @@ class TopicMenu:
 
 
 def count_text(counts):
-    return "Offen %d  ·  Zu üben %d  ·  Abgeschlossen %d" % (
-        counts[Q_OPEN], counts[Q_PRACTICE], counts[Q_DONE])
+    # Ab 0.63.2 (B-D-07): Tausenderpunkt, geschuetztes Leerzeichen vor der
+    # Zahl (die Zeile bricht nie zwischen "Offen" und der Zahl)
+    return "Offen\u00a0%s  ·  Zu üben\u00a0%s  ·  Abgeschlossen\u00a0%s" % (
+        fisi_core.de_int(counts[Q_OPEN]), fisi_core.de_int(counts[Q_PRACTICE]),
+        fisi_core.de_int(counts[Q_DONE]))
 
 
 def rate_box(parent, command):
@@ -464,8 +509,10 @@ class PagedList:
     """
 
     def __init__(self, parent, items, on_select, subtitle, status_source,
-                 category_filter=False, group_field=None, group_label="Thema"):
+                 category_filter=False, group_field=None, group_label="Thema",
+                 count_noun="Aufgaben"):
         self.items = items
+        self.count_noun = count_noun   # ab 0.63.2: Testprojekt "Kundenaufträgen"
         self.on_select = on_select
         self.subtitle = subtitle
         self.status_source = status_source
@@ -494,7 +541,7 @@ class PagedList:
         for key, label, values in filters:
             make_label(parent, label, font=F["label"], fg=C["muted"]).pack(
                 anchor="w", pady=(10, 4))
-            menu = ctk.CTkOptionMenu(
+            menu = FramedOptionMenu(   # ab 0.63.2 (B-D-11) mit Rahmen
                 parent, values=values, command=lambda _v: self.refresh(),
                 height=32, corner_radius=10, dynamic_resizing=False,
                 fg_color=C["card_alt"], button_color=C["card_alt"],
@@ -514,28 +561,108 @@ class PagedList:
         self.lbl_empty = make_label(self.rows_box, "Keine Treffer für diese Auswahl.",
                                     font=F["small"], fg=C["muted"])
         self.rows = [self._make_row(slot) for slot in range(LIST_PAGE_SIZE)]
+        # Ab 0.63.2 (N8, B-D-06): Breite der Zeilen geaendert -> Titel neu
+        # umbrechen (nur bei geaenderter Breite, nicht bei neuer Hoehe)
+        for row in self.rows:
+            row["title_box"].bind("<Configure>", self._rewrap_titles, add="+")
 
         pager = transparent_frame(parent)
         pager.pack(fill="x", pady=(10, 0))
-        IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                   parent_bg=C["card"]).pack(side="left")
+        # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
+        self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                                   parent_bg=C["card"], name=PAGE_PREV)
+        self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
-        IconButton(pager, "arrow_right", lambda: self.turn(1),
-                   parent_bg=C["card"]).pack(side="right")
+        self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
+                                   parent_bg=C["card"], name=PAGE_NEXT)
+        self.btn_next.pack(side="right")
+
+    # Ab 0.63.2 (N8, B-D-06): bisherige feste Umbruchbreite der Titel; sie
+    # bleibt die Breite, die der Titel fuer die Anordnung der Ansicht
+    # verlangt (Spaltenbreiten wie bisher). Umbrochen wird an der wirklichen
+    # Breite der Zeile (fisi_trennung, PC und Handy eine Regel).
+    TITLE_WRAP = 190
 
     def _make_row(self, slot):
         row, marker, inner = clickable_row(self.rows_box, C["purple"])
-        title = ctk.CTkLabel(inner, text="", text_color=C["text_dim"],
+        # Ab 0.63.2 (N8, B-D-06): Titel in einem Rahmen mit fester verlangter
+        # Breite (TITLE_WRAP) - der Titel selbst liegt per place darin und
+        # nutzt die ganze Zeilenbreite, ohne die Spalte breiter zu machen
+        # (sonst wuerde die Anordnung der Ansicht vom Titel abhaengen)
+        title_box = transparent_frame(inner, width=self.TITLE_WRAP, height=1,
+                                      cursor="hand2")
+        title_box.pack(fill="x")
+        title = ctk.CTkLabel(title_box, text="", text_color=C["text_dim"],
                              font=F["small_bold"], height=0, anchor="w",
-                             justify="left", wraplength=190, cursor="hand2")
-        title.pack(anchor="w")
+                             justify="left", wraplength=self.TITLE_WRAP, cursor="hand2")
+        title.place(x=0, y=0, relwidth=1)
+        # Die Hoehe des Rahmens folgt der wirklichen Hoehe des Titels (CTk
+        # meldet die neue Hoehe erst spaeter - sonst blieb die zweite Zeile
+        # abgeschnitten)
+        tk.Misc.bind(title, "<Configure>",
+                     lambda event, box=title_box: self._fit_title_box(box, event.height), "+")
         sub = ctk.CTkLabel(inner, text="", text_color=C["muted"], font=F["tiny"],
                            anchor="w", height=0, cursor="hand2")
         sub.pack(anchor="w")
-        bind_click((row, inner, title, sub, marker), lambda _e, s=slot: self._clicked(s))
+        bind_click((row, inner, title, sub, marker, title_box),
+                   lambda _e, s=slot: self._clicked(s))
         return {"frame": row, "marker": marker, "title": title, "sub": sub,
-                "position": None}
+                "title_box": title_box, "raw": "", "position": None}
+
+    def _title_width(self, row):
+        """Breite, in der der Titel umbricht (echte Pixel): die Breite der
+        Zeile; vor dem ersten Zeichnen die bisherige feste Breite."""
+        width = row["title_box"].winfo_width()
+        if width <= 1:
+            width = px(self.TITLE_WRAP)
+        return width
+
+    def _set_title(self, row, text):
+        """Ab 0.63.2 (N8, B-D-06): Titel umbrechen - Umbruchbreite folgt der
+        Zeile, ein zu langes Wort wird nach der Regel aus fisi_trennung
+        geteilt, die Nummer bleibt beim Titel. Passt der Titel mit dem
+        gewoehnlichen Umbruch, bleibt der Text unveraendert."""
+        row["raw"] = text
+        width = self._title_width(row)
+        font = tkfont.Font(font=tk_font(F["small_bold"]))
+        shown = fisi_trennung.anzeige_text(text, width, font.measure)
+        title = row["title"]
+        scale = px(1000) / 1000.0 or 1.0
+        wrap = width / scale
+        if title.cget("text") != shown or abs((title.cget("wraplength") or 0) - wrap) > 0.5:
+            title.configure(text=shown, wraplength=wrap)
+        height = title.winfo_reqheight()
+        if abs(row["title_box"].winfo_reqheight() - height) > 0:
+            row["title_box"].configure(height=height / scale)
+
+    @staticmethod
+    def _fit_title_box(box, height):
+        try:
+            if height > 1 and box.winfo_height() != height:
+                scale = px(1000) / 1000.0 or 1.0
+                box.configure(height=height / scale)
+        except tk.TclError:
+            pass
+
+    def _rewrap_titles(self, event=None):
+        if event is not None:
+            if event.width == event.widget.__dict__.get("_fisi_title_width"):
+                return
+            event.widget._fisi_title_width = event.width
+        if getattr(self, "_rewrap_pending", False):
+            return
+        self._rewrap_pending = True
+
+        def run():
+            self._rewrap_pending = False
+            try:
+                for row in self.rows:
+                    if row["position"] is not None:
+                        self._set_title(row, row["raw"])
+            except tk.TclError:
+                pass
+        self.rows_box.after_idle(run)
 
     def _clicked(self, slot):
         position = self.rows[slot]["position"]
@@ -572,8 +699,8 @@ class PagedList:
             status, level = self.statuses.get(position, (Q_OPEN, ""))
             mark = " ✓" if status == Q_DONE else ""
             row["position"] = position
-            row["title"].configure(text="%d. %s%s" % (position + 1, item["title"], mark),
-                                   text_color=C["text"] if active else C["text_dim"])
+            row["title"].configure(text_color=C["text"] if active else C["text_dim"])
+            self._set_title(row, "%d. %s%s" % (position + 1, item["title"], mark))
             sub = self.subtitle(item)
             if status != Q_OPEN:
                 sub += "  ·  " + Q_STATUS_NAME[status]
@@ -584,9 +711,12 @@ class PagedList:
             row["frame"].pack(fill="x", pady=4)
         for row in self.rows[len(visible):]:
             row["position"] = None
-        self.lbl_count.configure(text="%d von %d Aufgaben" % (len(self.filtered),
-                                                               len(self.items)))
+        self.lbl_count.configure(text="%s von %s %s" % (
+            fisi_core.de_int(len(self.filtered)), fisi_core.de_int(len(self.items)),
+            self.count_noun))
         self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+        self.btn_prev.set_enabled(self.page > 0)
+        self.btn_next.set_enabled(self.page < pages - 1)
 
     def turn(self, delta):
         self.page += delta
@@ -742,6 +872,7 @@ class Sidebar(ctk.CTkFrame):
         self.sub_frames = {}
         self.expanded = set()
         self.parents = {}         # Unteransicht -> Menuepunkt (buero -> game)
+        self.sub_rows = {}        # Unteransicht -> ihre Zeile (ab 0.63.2, B-D-09)
 
         logo = transparent_frame(self)
         logo.pack(fill="x", pady=(22, 20), padx=20)
@@ -795,6 +926,7 @@ class Sidebar(ctk.CTkFrame):
                                          command=lambda k=sub_key: self.app.show_view(k),
                                          sub=True, symbol=NAV_SYMBOLS.get(sub_key))
                         self.parents[sub_key] = key
+                        self.sub_rows[sub_key] = sub_row
                     else:
                         sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
                                          CATEGORY_SHORT.get(item, item),
@@ -830,16 +962,23 @@ class Sidebar(ctk.CTkFrame):
             self.rows[key].set_expanded(True)
 
     def set_active(self, key):
+        shown = self.sub_rows.get(key)
         if key in self.parents:
             if self.parents[key] not in self.expanded:
                 self._toggle(self.parents[key])
             key = self.parents[key]
         for name, row in self.rows.items():
             row.set_active(name == key)
+        # Ab 0.63.2 (B-D-09, Z2): Das Menue rollt den aktiven Eintrag ganz ins
+        # Bild (bei kleinem Fenster und grosser Schrift lag z.B. "Rechner"
+        # unter dem sichtbaren Teil, ueber dem Lernstatus-Kasten)
+        shown = shown or self.rows.get(key)
+        if shown is not None:
+            self.after_idle(lambda: self.menu_area.see(shown))
 
     def update_status(self, learned, total):
         self.status_bar.set(learned / max(1, total) * 100,
-                            "%d / %d" % (learned, total))
+                            "%s / %s" % (fisi_core.de_int(learned), fisi_core.de_int(total)))
 
     def update_db_hint(self):
         """Ab 0.62.5 (B-G-03): bleibende rote Zeile, solange die Datenbank
@@ -864,6 +1003,7 @@ class Header(ctk.CTkFrame):
 
         left = transparent_frame(self)
         left.pack(side="left", padx=(28, 0), pady=20)
+        self._left = left
         self.crumb_main = make_label(left, "DASHBOARD", font=F["label"],
                                      fg=C["text"])
         self.crumb_main.pack(side="left")
@@ -874,8 +1014,10 @@ class Header(ctk.CTkFrame):
         self.slot_box = transparent_frame(left)
         self.slot_label = make_label(self.slot_box, "", font=F["small"], fg=C["muted"])
         self.slot_label.pack(side="left", padx=(16, 8))
+        # Ab 0.63.2 (B-D-10): Abstand zum Suchfeld (stiess bei "Sehr gross" an)
         NeoButton(self.slot_box, "Platz wechseln", lambda: self.app.open_slot_picker(),
-                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
+                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left",
+                                                                     padx=(0, 12))
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
                                        border_width=1, border_color=C["field_border"])
@@ -886,10 +1028,17 @@ class Header(ctk.CTkFrame):
         self.search_entry = ctk.CTkEntry(self.search_box, width=250, height=36,
                                          border_width=0, fg_color=C["card"],
                                          text_color=C["text"],
-                                         placeholder_text="Suchen ...  (Strg+F)",
+                                         placeholder_text="Suchen …  (Strg+F)",   # ab 0.63.2 (N-c): …
                                          placeholder_text_color=C["muted"],
                                          font=F["small"])
-        self.search_entry.pack(side="left", padx=(6, 12), pady=2)
+        # Ab 0.63.2 (N8, B-D-08): Abstand oben/unten aus der Skalierung - bei
+        # Gross/Sehr gross lag das Feld (36 hoch, Abstand 2) nach dem Runden
+        # auf dem 1 px breiten Rahmen und unterbrach ihn unten. Abstand in
+        # echten Pixeln = Rahmenbreite (aufgerundet) + 1, bei Normal wie
+        # bisher 2 px; Hoehe des Felds unveraendert.
+        scale = px(1000) / 1000.0 or 1.0
+        rand = int(-(-1 * scale // 1))
+        self.search_entry.pack(side="left", padx=(6, 12), pady=(rand + 1) / scale)
         self.search_entry._entry.configure(insertbackground=C["accent"],
                                            insertofftime=0)
         self.search_entry.bind("<Return>", lambda _e: self._search())
@@ -897,6 +1046,47 @@ class Header(ctk.CTkFrame):
             "<FocusIn>", lambda _e: self.search_box.configure(border_color=C["purple"]))
         self.search_entry.bind(
             "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["field_border"]))
+        # Ab 0.63.2 (B-J-06): Passen Brotkrumen und Suchfeld bei den Stufen
+        # 160/200 % nicht nebeneinander (kleines Fenster), steht das Suchfeld in
+        # einer zweiten Zeile darunter. Sonst drueckte es die Brotkrumen weg
+        # oder verschwand selbst (z. B. Firma mit "Platz wechseln"). Bei den
+        # Stufen bis "Sehr gross" und wo beides passt, bleibt alles wie bisher.
+        self.stacked = False
+        self.bind("<Configure>", self._arrange, "+")
+
+    # Abstand zwischen Brotkrumen und Suchfeld, wenn beide in einer Zeile stehen
+    ROW_GAP = 16
+    # Ab dieser Schriftstufe darf das Suchfeld in die zweite Zeile (160 %)
+    STACK_FACTOR = 1.6
+
+    def header_needs(self):
+        """Breite (echte Pixel), die Brotkrumen und Suchfeld in einer Zeile
+        brauchen: beide Teile plus Raender (28 links, 28 rechts) und Abstand."""
+        scale = ctk.ScalingTracker.get_widget_scaling(self) or 1.0
+        return (self._left.winfo_reqwidth() + self.search_box.winfo_reqwidth()
+                + (28 + 28 + self.ROW_GAP) * scale)
+
+    def _arrange(self, _event=None):
+        try:
+            width = self.winfo_width()
+            if width <= 1:
+                return
+            stacked = (fisi_theme.font_factor() >= self.STACK_FACTOR
+                       and self.header_needs() > width)
+        except tk.TclError:     # Kopfzeile schon abgebaut (Farb-/Schriftwechsel)
+            return
+        if stacked == self.stacked:
+            return
+        self.stacked = stacked
+        # pack() (nicht pack_configure) rechnet die Abstaende mit der Skalierung
+        # um; die Reihenfolge bleibt (erst Brotkrumen, dann Suchfeld)
+        self.search_box.pack_forget()
+        if stacked:
+            self._left.pack(side="top", anchor="w", padx=(28, 0), pady=(20, 8))
+            self.search_box.pack(side="top", anchor="w", padx=(28, 28), pady=(0, 14))
+        else:
+            self._left.pack(side="left", anchor="center", padx=(28, 0), pady=20)
+            self.search_box.pack(side="right", padx=(0, 28), pady=14)
 
     def _search(self):
         query = self.search_entry.get().strip()
@@ -906,6 +1096,7 @@ class Header(ctk.CTkFrame):
     def set_crumbs(self, main, sub):
         self.crumb_main.configure(text=main)
         self.crumb_sub.configure(text=sub)
+        self.after_idle(self._arrange)
 
     def set_slot(self, text):
         """Platzanzeige (ab 0.48): leer = ausblenden."""
@@ -914,6 +1105,7 @@ class Header(ctk.CTkFrame):
             self.slot_box.pack(side="left")
         else:
             self.slot_box.pack_forget()
+        self.after_idle(self._arrange)
 
 
 # ============================================================================
@@ -961,11 +1153,28 @@ class View(ScrollArea):
         """Den naechsten Teil bauen."""
         if self._parts:
             self._parts.pop(0)()
+            self._parts_built()
 
     def complete(self):
         """Alle fehlenden Teile jetzt bauen."""
+        had_parts = bool(self._parts)
         while self._parts:
             self._parts.pop(0)()
+        if had_parts:
+            self._parts_built()
+
+    # Ab 0.63.2 (N6, B-I-04): nach dem letzten Teil die Umbruchbreiten einmal
+    # ganz neu anpassen (ScrollArea._fit_wraplengths). Am Stueck gebaut gibt
+    # es beim ersten Anpassen schon alle Texte; in Teilen kamen spaetere
+    # Texte erst nach dem ersten Anpassen dazu und behielten sonst ihre
+    # urspruengliche Umbruchbreite.
+    REWRAP_AFTER_PARTS = False
+
+    def _parts_built(self):
+        if self._parts or not (self._in_parts and self.REWRAP_AFTER_PARTS):
+            return
+        self._wrap_width = None
+        self._schedule_wrap()
 
     def on_show(self):
         pass
@@ -984,6 +1193,227 @@ class View(ScrollArea):
 
 
 # ============================================================================
+#  AB 0.63.2 (D2): ANSICHTEN PASSEN IN DIE SICHTBARE BREITE
+# ============================================================================
+
+# Formularzeilen (Bezeichnung + Feld/Betrag): umbrochene Teile einer Zeile
+# stehen enger beieinander als an der naechsten Zeile (logische px)
+FORM_FLOW = dict(line_gap=2, wrapped_pad=8)
+
+
+class FitWidthMixin:
+    """Ab 0.63.2 (D2, B-D-01/B-D-02): AP1-/AP2-Szenarien, Testprojekt und
+    Abschlussprojekt passen bei 1120 px und grosser Schrift ohne seitlichen
+    Schieberegler ins Fenster (Muster wie Dashboard 0.58 und Rechner).
+    Reicht die sichtbare Breite nicht, werden nur Anordnung, Umbruch und
+    Breiten angepasst: Knopfzeilen und Formularzeilen brechen um (FlowRow),
+    Unterschriften ruecken unter die Ueberschrift, zwei Spalten stehen
+    untereinander. Bei breitem Fenster bleibt alles wie bisher. Entschieden
+    wird nur aus der sichtbaren Breite und den gewuenschten Breiten der
+    Teile (nie aus der Lage, die sich dadurch aendert: keine Schleife)."""
+
+    CONTENT_PAD = 28   # Seitenrand der Ansicht (View.__init__, logische px)
+    COLUMN_GAP = 16    # Abstand der beiden Spalten (padx 8 + 8, logische px)
+    STACK_GAP = 14     # Abstand untereinander (wie zwischen den Karten)
+    MIN_TEXT = 220     # schmalste Umbruchbreite (ScrollArea._fit_wraplengths)
+    MIN_COLUMN = 440   # rechte Spalte nebeneinander mindestens so breit (logische px)
+
+    def _init_fit(self):
+        self._fit_pending = False
+        self.column_mode = None
+        self.canvas.bind("<Configure>", self._schedule_fit, "+")
+        self.content.bind("<Configure>", self._schedule_fit, "+")
+
+    def _schedule_fit(self, _event=None):
+        if not self._fit_pending:
+            self._fit_pending = True
+            self.after_idle(self._fit)
+
+    def available_width(self):
+        """Sichtbare Breite fuer den Inhalt (echte Pixel, ohne Seitenrand)."""
+        return self.canvas.winfo_width() - 2 * px(self.CONTENT_PAD)
+
+    def _fit(self):
+        self._fit_pending = False
+        try:
+            if self.canvas.winfo_width() <= 1:
+                return
+            changed = self._fit_width(self.available_width())
+        except tk.TclError:
+            return
+        if changed:
+            # neue Mindestbreite an die Bildlaufflaeche melden
+            self.after_idle(self._schedule_fit)
+        elif self._in_parts:
+            # Ab 0.63.2 (N6): in Teilen vorgeladen hat die Ansicht ihre Groesse
+            # schon; wird der Inhalt durch die Anpassung schmaler, meldet Tk
+            # das der Bildlaufflaeche nicht (kein <Configure>) - selbst nachziehen,
+            # nach dem Leerlauf-Durchgang, der die neuen Groessen berechnet
+            self.after_idle(self._refit_width)
+
+    def _fit_width(self, avail):
+        raise NotImplementedError
+
+    # -- Bausteine ----------------------------------------------------------
+
+    @staticmethod
+    def _head_min(card):
+        """Kopfzeile einer Kachel mit Unterschrift darunter (echte Pixel)."""
+        if card.head is None:
+            return 0
+        title = card.head_width() - card.subtitle_width()
+        return max(title, card.subtitle_width() + card.frame_width())
+
+    @staticmethod
+    def _fit_cards(cards, room):
+        changed = False
+        for card in cards:
+            if card.head is not None:
+                changed |= card.stack_subtitle(card.head_width() > room)
+        return changed
+
+    def _fit_flows(self, flows, room):
+        """flows: [(Rahmen, Einzug)] - Einzug = Innenabstand der Kachel."""
+        changed = False
+        for frame, inset in flows:
+            if frame.winfo_exists():
+                self._watch_flow(frame)
+                changed |= FlowRow.of(frame).fit(room - inset)
+        return changed
+
+    def _watch_flow(self, frame):
+        """Ab 0.63.2 (CI Welle 3b): Aendert ein Teil der Zeile seine Groesse
+        (neuer Knopftext, z. B. "Musterloesung ausblenden"), neu anpassen.
+        Vorher kam die Anpassung nur bei Groessenaenderung von Fenster oder
+        Inhalt; neben einer laengeren Liste aendert sich die Hoehe aber
+        nicht, und der breitere Knopf schob die Seite ueber den Rand (mit
+        breiterer Schrift, z. B. DejaVu Sans auf GitHub). Entschieden wird
+        weiter nur aus Breiten (FlowRow.fit), es entsteht keine Schleife."""
+        for widget in frame.winfo_children():
+            if "_fisi_fit_watch" not in widget.__dict__:
+                widget._fisi_fit_watch = True
+                tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
+
+    def _fit_columns(self, avail, layout, left, right, flows, cards, uniform):
+        """Liste links, Inhalt rechts (Gewichte 2 : 5 wie bisher). Drei Stufen:
+        "breit" wie bisher (gleich breite Raster-Einheiten), "frei" (beide
+        Spalten nebeneinander, die rechte mindestens MIN_COLUMN breit; ihre
+        Knopfzeilen brechen bei Bedarf um) und "gestapelt" (Liste oben,
+        Inhalt darunter, wie die Spalten des Rechners).
+
+        Ab 0.63.2 (CI Welle 3b): "breit" gilt, sobald die Raster-Anordnung
+        mit Kopfzeilen in einer Zeile passt; eine Knopfzeile, die mit einer
+        breiteren Schrift (DejaVu Sans auf GitHub) nicht in die Spalte
+        passt, bricht dort um. Mit der abgenommenen Schrift (Inter) passen
+        die Knopfzeilen in "breit" immer, dort aendert sich nichts."""
+        gap = px(self.COLUMN_GAP)
+        left_width = left.winfo_reqwidth()
+        flow_rows = [(FlowRow.of(frame), inset) for frame, inset in flows]
+        # schmalster Text in einer Kachel (Umbruchbreite + Innenabstand)
+        text = px(self.MIN_TEXT + 2 * 18) + 2
+        narrow = max([row.min_width() + inset for row, inset in flow_rows]
+                     + [self._head_min(card) for card in cards] + [text])
+        # Raster wie bisher: Knopfzeilen duerfen umbrechen, Kopfzeilen nicht
+        wide = max([row.min_width() + inset for row, inset in flow_rows]
+                   + [card.head_width() for card in cards] + [text])
+        if 7 * max(left_width / 2.0, wide / 5.0) + gap <= avail:
+            column = avail * 5 // 7 - px(self.COLUMN_GAP // 2)
+            mode, room = "breit", column
+        elif avail - left_width - gap >= max(narrow, px(self.MIN_COLUMN)):
+            mode, room = "frei", avail - left_width - gap
+            column = room
+        else:
+            mode, room = "gestapelt", avail
+            column = avail
+        # Spaltenbreite aus der sichtbaren Breite berechnet, nicht gemessen:
+        # die gemessene Breite enthaelt den Text selbst (sonst Schleife)
+        self._fit_texts(mode, column)
+        changed = self._fit_flows(flows, room)
+        changed |= self._fit_cards(cards, room)
+        if mode != self.column_mode:
+            self.column_mode = mode
+            stacked = mode == "gestapelt"
+            group = uniform if mode == "breit" else ""
+            layout.columnconfigure(0, weight=1 if stacked else 2, uniform=group)
+            layout.columnconfigure(1, weight=0 if stacked else 5, uniform=group)
+            left.grid(row=0, column=0, sticky="nsew", padx=(0, 0 if stacked else 8))
+            if stacked:
+                right.grid(row=1, column=0, sticky="nsew", padx=0,
+                           pady=(self.STACK_GAP, 0))
+            else:
+                right.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=0)
+            changed = True
+        return changed
+
+    @staticmethod
+    def own_wrap(label, cap=None):
+        """Umbruchbreite dieses Textes regelt die Ansicht (_fit_texts),
+        nicht ScrollArea._fit_wraplengths. cap: hoechstens so breit
+        (logische px), None = nur durch die Spalte begrenzt."""
+        label._fisi_wrap_own = True
+        label._fisi_wrap_cap = cap
+        return label
+
+    def _fit_text_labels(self):
+        """[(Label, Innenabstand links+rechts in echten px, immer)].
+        immer=True: Umbruchbreite stets an die Spalte gekoppelt (Texte, die
+        es vor 0.63.2 ohne Umbruch gab); sonst nur untereinander."""
+        return []
+
+    def _fit_texts(self, mode, column):
+        """Textbreiten an die Spalte koppeln (Plan D2: "Textbreiten
+        koppeln"). Untereinander ist die Spalte so breit wie die Ansicht;
+        ohne Kopplung braechen Ueberschrift, Meta-Zeile und Hinweis weiter
+        so schmal um wie neben der Liste (bis mitten im Wort). Sonst bleibt
+        die Ueberschrift bei ScrollArea._fit_wraplengths (wie bisher)."""
+        scale = px(1000) / 1000.0
+        release = False
+        for label, inset, always in self._fit_text_labels():
+            if not (always or mode == "gestapelt"):
+                if label.__dict__.get("_fisi_wrap_own"):
+                    label._fisi_wrap_own = False
+                    base = label.__dict__.get("_fisi_wrap")
+                    if base:
+                        label.configure(wraplength=base)
+                    release = True
+                continue
+            if not label.__dict__.get("_fisi_wrap_own"):
+                base = label.__dict__.get("_fisi_wrap")
+                if base is None:
+                    base = label._fisi_wrap = label.cget("wraplength") or 0
+                self.own_wrap(label, base or None)
+            wrap = max(self.MIN_TEXT, int((column - inset) / scale) - 4)
+            cap = label.__dict__.get("_fisi_wrap_cap")
+            if cap:
+                wrap = min(cap, wrap)
+            if wrap != label.cget("wraplength"):
+                label.configure(wraplength=wrap)
+        if release:
+            # zurueck an ScrollArea._fit_wraplengths (wie bisher)
+            self._wrap_width = None
+            self._schedule_wrap()
+
+    def _show_detail(self, detail):
+        """Untereinander (gestapelt): nach der Wahl eines Eintrags (Liste,
+        "Naechstes ...") zum Inhalt unter der Liste rollen."""
+        if self.column_mode != "gestapelt":
+            return
+
+        def scroll():
+            try:
+                top = detail.winfo_rooty() - self.inner.winfo_rooty()
+                self.canvas.yview_moveto(max(0, top - px(8)) / max(1, self.inner.winfo_height()))
+                # Tk rollt in Schritten (yscrollincrement): ragt der Anfang
+                # danach oben heraus, einen Schritt zurueck
+                self.update_idletasks()
+                if detail.winfo_rooty() < self.canvas.winfo_rooty():
+                    self.canvas.yview_scroll(-1, "units")
+            except tk.TclError:
+                pass
+        self.after_idle(scroll)
+
+
+# ============================================================================
 #  DASHBOARD
 # ============================================================================
 
@@ -993,6 +1423,12 @@ class DashboardView(View):
     def build(self):
         self.totals = content_totals()
         self.total_content = sum(self.totals.values())
+        # Ab 0.63.2 (N7, B-I-03): Zwischenspeicher je Abfrage, Zaehler
+        self._dash_cache = {}
+        self._painted = {}
+        self.query_counts = {}
+        self.refresh_count = 0
+        self._refresh_job = None
 
         # --- Banner --------------------------------------------------------
         self.hero = GradientPanel(self.content, height=118)
@@ -1104,6 +1540,10 @@ class DashboardView(View):
                 widget.configure(cursor="hand2")
                 widget.bind("<Button-1>",
                             lambda _e, cat=category: self._toggle_zoom(cat))
+            # Ab 0.63.2 (N8, B-J-05): Kachel per Tab erreichbar, Eingabe-,
+            # Ziffernblock-Eingabe- und Leertaste wie ein Klick; den
+            # Fokusrahmen zeichnet wie bei den uebrigen Elementen focus_ring
+            make_focusable(column, lambda cat=category: self._toggle_zoom(cat))
             self.fach_rings[category] = (ring, detail, name)
 
         # --- Reinzoom: Themen eines Fachbereichs (ab 0.37) ----------------
@@ -1127,7 +1567,8 @@ class DashboardView(View):
         cal_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         self.calendar = CalendarPanel(cal_card.body, bg=C["card"])
         self.calendar.pack(fill="both", expand=True)
-        self.calendar.set_provider(self.db.month_activity)
+        # Ab 0.63.2 (N7, B-I-03): ueber den Zwischenspeicher (_month_activity)
+        self.calendar.set_provider(self._month_activity)
 
         # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
         row5 = self.row5 = transparent_frame(self.content)
@@ -1294,15 +1735,124 @@ class DashboardView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or self._dash_renames_pending():
             return None
         return (stamp, datetime.date.today(), self.zoom_category,
                 tuple(sorted(learning_settings().items())))
 
-    def _refresh_today(self):
+    # -- Ab 0.63.2 (N7, B-I-03): nur die betroffenen Teile neu abfragen ------
+    #
+    # Bei sehr grossem Lernstand dauerte jede Neuberechnung fast eine Sekunde,
+    # auch wenn sich nur eine Tabelle geaendert hatte. Jede Abfrage des
+    # Dashboards merkt sich ihr Ergebnis zusammen mit dem Stempel (Anzahl und
+    # hoechste Nummer, DBManager.change_stamp) der Tabellen, die sie liest,
+    # und - wenn ihr Ergebnis vom Datum abhaengt - dem heutigen Tag. Nur wenn
+    # sich davon etwas geaendert hat, wird sie neu ausgefuehrt. Die Tabellen
+    # zaehlen ihre Nummern weiter (AUTOINCREMENT), auch nach "Alles
+    # ersetzen" (fisi_sicherung.replace_all) - jede neue oder geloeschte Zeile
+    # aendert den Stempel. Zuordnung Aenderungsart -> Abfragen: Bericht N7
+    # (K11), geprueft in test_leistung_suche_0632.py.
+    DASH_DAY_TABLES = ("card_events", "quiz_answers", "scenario_events",
+                       "project_events", "ap1_events", "trainer_aufgaben")
+    DASH_ACTIVITY_TABLES = ("card_events", "quiz_answers", "scenario_events",
+                            "project_events", "ap1_events", "test_results")
+    # Name -> (gelesene Tabellen, haengt vom Datum ab)
+    DASH_QUERIES = {
+        "karten": (("card_events",), False),         # distinct_cards_learned
+        "quiz": (("quiz_answers",), False),          # distinct_quiz_questions
+        "quote": (("quiz_answers",), False),         # quiz_success_rate
+        "ap1": (("ap1_events",), False),             # distinct_ap1
+        "ap2": (("scenario_events",), False),        # distinct_scenarios
+        "tagesziel": (DASH_DAY_TABLES, True),        # DailyGoal (activity_days)
+        "faellig": (("card_events", "quiz_answers", "ap1_events", "scenario_events",
+                     "project_events"), True),       # ReviewPlan (question_results)
+        "serie": (DASH_DAY_TABLES, True),            # streak (activity_days)
+        "verlauf": (DASH_DAY_TABLES, True),          # daily_counts
+        "abdeckung": (("quiz_answers", "card_events"), False),   # category_coverage
+        "fachbereiche": (("quiz_answers", "card_events"), False),  # category_stats
+        "aktivitaeten": (DASH_ACTIVITY_TABLES, False),   # recent_activities
+        "kalender": (DASH_ACTIVITY_TABLES, False),   # month_activity (je Monat)
+        "themen_ap2": (("scenario_events",), False),  # theme_progress
+        "themen_ap1": (("ap1_events",), False),      # theme_progress AP1
+        "reinzoom": (("card_events", "quiz_answers"), True),  # topic_*, topic_knowledge
+    }
+
+    def _dash_stamps(self):
+        """{tabelle: (Anzahl, hoechste Nummer)} in einer Abfrage, None ohne
+        Stempel (dann wird alles neu abgefragt, wie bis 0.63.1)."""
+        if not hasattr(self.db, "change_stamp") or self._dash_renames_pending():
+            return None
+        tables = sorted({table for tables, _dated in self.DASH_QUERIES.values()
+                         for table in tables})
+        stamp = self.db.change_stamp(tables)
+        if stamp is None or len(stamp) != 2 * len(tables):
+            return None
+        return {table: tuple(stamp[2 * i:2 * i + 2]) for i, table in enumerate(tables)}
+
+    def _dash_renames_pending(self):
+        """Ab 0.63.2 (FG-115): Haelt der "faellig"-Index alte Fragetexte
+        (FG-110, always_full), kann apply_question_renames sie an Ort und
+        Stelle umschreiben (zweites Programm, Abgleich), ohne dass sich der
+        Stempel aendert. Dann Zwischenspeicher leeren und alles neu abfragen
+        (wie bis 0.63.1), bis der Index wieder ohne alte Texte ist."""
+        index = getattr(self, "_review_index", None)
+        if index is None or not index.always_full:
+            return False
+        self._dash_cache = {}
+        return True
+
+    def _dash_query(self, name, func, *args, stamps=None):
+        """Ergebnis von func(*args), aus dem Zwischenspeicher, solange sich die
+        Tabellen von name (und ggf. das Datum) nicht geaendert haben."""
+        if not hasattr(self, "_dash_cache"):
+            self._dash_cache, self.query_counts = {}, {}
+        key = None
+        if stamps is not None:
+            tables, dated = self.DASH_QUERIES[name]
+            key = (tuple(stamps[table] for table in tables),
+                   datetime.date.today() if dated else None, args)
+            cached = self._dash_cache.get(name)
+            if cached is not None and cached[0] == key:
+                return cached[1]
+        self.query_counts[name] = self.query_counts.get(name, 0) + 1
+        value = func(*args)
+        if key is not None:
+            self._dash_cache[name] = (key, value)
+        return value
+
+    def _review_plan(self):
+        """Ab 0.63.2 (FG-107): "faellig" schrittweise (fisi_lernen.ReviewIndex),
+        Ergebnis gleich ReviewPlan.from_db(self.db)."""
+        index = getattr(self, "_review_index", None)
+        if index is None or index.db is not self.db:
+            index = self._review_index = ReviewIndex(self.db)
+        return index.plan()
+
+    def _month_activity(self, year, month):
+        """Kalender (provider): Lerntage eines Monats ueber den Zwischenspeicher."""
+        return self._dash_query("kalender", self.db.month_activity, year, month,
+                                stamps=self._dash_stamps())
+
+    def schedule_refresh(self):
+        """Ab 0.63.2 (N7, B-I-03): Neuberechnung gebuendelt - mehrere
+        Aenderungsmeldungen in derselben Ereignisrunde (notify_progress)
+        rechnen das Dashboard nur einmal neu, sobald Tk Zeit hat."""
+        if getattr(self, "_refresh_job", None) is None:
+            self._refresh_job = self.after_idle(self._scheduled_refresh)
+
+    def _scheduled_refresh(self):
+        self._refresh_job = None
+        try:
+            if self.winfo_exists():
+                self.refresh()
+        except tk.TclError:
+            pass    # Ansicht wurde inzwischen abgebaut (Farb-/Schriftwechsel)
+
+    def _refresh_today(self, stamps=None):
         """Kachel "Heute" (ab 0.51)."""
         settings = learning_settings()
-        goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
+        goal = self._dash_query("tagesziel", DailyGoal.from_db, self.db,
+                                settings["ziel_anzahl"], stamps=stamps)
         show_goal = settings["ziel_an"]
         self.goal_visible = show_goal
         self._place_today()
@@ -1315,62 +1865,78 @@ class DashboardView(View):
         else:
             self.goal_ring.pack_forget()
             self.lbl_goal.pack_forget()
-        plan = ReviewPlan.from_db(self.db)
+        plan = self._dash_query("faellig", self._review_plan, stamps=stamps)
         self.lbl_due.configure(text=due_text(plan))
         self.btn_review.set_enabled(plan.count() > 0)
 
     def refresh(self):
+        # Ab 0.63.2 (N7, B-I-03): eine noch geplante gebuendelte
+        # Neuberechnung ist damit erledigt
+        job = getattr(self, "_refresh_job", None)
+        if job is not None:
+            self._refresh_job = None
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
+        self.refresh_count = getattr(self, "refresh_count", 0) + 1
+        stamps = self._dash_stamps()
+        query = self._dash_query
         total_cards = len(KARTEIKARTEN)
         total_quiz = len(QUIZ_QUESTIONS)
         total_ap1 = len(AP1_SZENARIEN)
         total_scen = len(SZENARIEN)
 
-        learned_cards = self.db.distinct_cards_learned()
-        quiz_distinct = self.db.distinct_quiz_questions()
-        ap1_done = self.db.distinct_ap1()
-        scen_done = self.db.distinct_scenarios()
+        learned_cards = query("karten", self.db.distinct_cards_learned, stamps=stamps)
+        quiz_distinct = query("quiz", self.db.distinct_quiz_questions, stamps=stamps)
+        ap1_done = query("ap1", self.db.distinct_ap1, stamps=stamps)
+        scen_done = query("ap2", self.db.distinct_scenarios, stamps=stamps)
 
-        rate, correct, answered = self.db.quiz_success_rate()
+        rate, correct, answered = query("quote", self.db.quiz_success_rate, stamps=stamps)
         learned = learned_cards + quiz_distinct
-        self._refresh_today()
-        streak = ("Lernserie: %s   ·   " % plural(self.db.streak(), "Tag", "Tage")
+        self._refresh_today(stamps)
+        streak = ("Lernserie: %s   ·   " % plural(query("serie", self.db.streak,
+                                                         stamps=stamps), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             ("%s" + DASH_LEARNED + "   ·   " + DASH_RATE)
-            % (streak, learned, self.total_content, round(rate)),
+            % (streak, fisi_core.de_int(learned), fisi_core.de_int(self.total_content),
+               round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             DASH_TOTAL)
 
         # Ab 0.60 (K-B): die grosse Zahl im Ring "Pruefungstrainer" zaehlt
         # verschiedene Fragen wie der Ring selbst (vorher alle Antworten)
+        # Ab 0.63.2 (B-D-07): alle Zahlen mit Tausenderpunkt
+        de_int = fisi_core.de_int
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"],
-                            C["purple"], str(learned_cards),
-                            DASH_CARDS_SUB % total_cards)
+                            C["purple"], de_int(learned_cards),
+                            DASH_CARDS_SUB % de_int(total_cards))
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"],
-                           C["accent2"], str(quiz_distinct),
-                           DASH_QUIZ_SUB % total_quiz)
+                           C["accent2"], de_int(quiz_distinct),
+                           DASH_QUIZ_SUB % de_int(total_quiz))
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"],
-                          C["accent"], str(ap1_done),
-                          DASH_SCEN_SUB % total_ap1)
+                          C["accent"], de_int(ap1_done),
+                          DASH_SCEN_SUB % de_int(total_ap1))
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"],
-                           C["orange"], str(scen_done),
-                           DASH_SCEN_SUB % total_scen)
+                           C["orange"], de_int(scen_done),
+                           DASH_SCEN_SUB % de_int(total_scen))
 
         self.lbl_quote.configure(text="%d %%" % round(rate))
         self.lbl_quote_sub.configure(text=dash_quote_text(correct, answered))
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
-                           "%d / %d" % (learned_cards, total_cards))
+                           "%s / %s" % (de_int(learned_cards), de_int(total_cards)))
         self.bar_quiz.set(quiz_distinct / max(1, total_quiz) * 100,
-                          "%d / %d" % (quiz_distinct, total_quiz))
+                          "%s / %s" % (de_int(quiz_distinct), de_int(total_quiz)))
         self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100,
-                         "%d / %d" % (ap1_done, total_ap1))
+                         "%s / %s" % (de_int(ap1_done), de_int(total_ap1)))
         self.bar_scen.set(scen_done / max(1, total_scen) * 100,
-                          "%d / %d" % (scen_done, total_scen))
+                          "%s / %s" % (de_int(scen_done), de_int(total_scen)))
 
         # Lernverlauf
-        daily = self.db.daily_counts(self.DAYS)
+        daily = query("verlauf", self.db.daily_counts, self.DAYS, stamps=stamps)
         labels = [day.strftime("%d.%m") for day, _count in daily]
         values = [count for _day, count in daily]
         self.chart.set_data(labels, [
@@ -1378,8 +1944,8 @@ class DashboardView(View):
         ])
 
         # Fachbereiche
-        coverage = self.db.category_coverage(self.totals)
-        stats = self.db.category_stats()
+        coverage = query("abdeckung", self.db.category_coverage, self.totals, stamps=stamps)
+        stats = query("fachbereiche", self.db.category_stats, stamps=stamps)
         for category in CATEGORIES:
             ring, detail, name = self.fach_rings[category]
             name.configure(text_color=CATEGORY_COLOR[category]
@@ -1394,10 +1960,31 @@ class DashboardView(View):
             else:
                 detail.configure(text="noch nicht\nbearbeitet")
 
-        # Aktivitaeten
+        # Aktivitaeten (ab 0.63.2, N7: Zeilen nur neu bauen, wenn sich die
+        # Liste geaendert hat - Abbau und Aufbau kosteten die meiste Zeit)
+        activities = query("aktivitaeten", self.db.recent_activities, 7, stamps=stamps)
+        if self._painted.get("aktivitaeten") != activities:
+            self._painted["aktivitaeten"] = activities
+            self._paint_activities(activities)
+
+        self.calendar.refresh()
+        self._refresh_zoom(stamps)
+
+        progress = query("themen_ap2", self.db.theme_progress, theme_totals(), stamps=stamps)
+        self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
+                                for name in AP2_THEMES])
+
+        progress_ap1 = query("themen_ap1", self._theme_progress_ap1, stamps=stamps)
+        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
+                                     THEME_COLOR[name]) for name in AP1_THEMES])
+
+    def _theme_progress_ap1(self):
+        return self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
+                                      table="ap1_events")
+
+    def _paint_activities(self, activities):
         for child in self.activity_box.winfo_children():
             child.destroy()
-        activities = self.db.recent_activities(7)
         if not activities:
             make_label(self.activity_box,
                        # ab 0.58 dreizeilig, damit es bei 1360 px auch bei
@@ -1408,18 +1995,6 @@ class DashboardView(View):
         else:
             for timestamp, kind, detail, extra in activities:
                 self._activity_row(timestamp, kind, detail, extra)
-
-        self.calendar.refresh()
-        self._refresh_zoom()
-
-        progress = self.db.theme_progress(theme_totals())
-        self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
-                                for name in AP2_THEMES])
-
-        progress_ap1 = self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
-                                              table="ap1_events")
-        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
-                                     THEME_COLOR[name]) for name in AP1_THEMES])
 
     # -- Reinzoom in die Themen eines Fachbereichs ---------------------------
 
@@ -1469,16 +2044,15 @@ class DashboardView(View):
             bar.pack(fill="x", pady=(4, 0))
             self.zoom_bars[topic] = bar
 
-    def _refresh_zoom(self):
+    def _refresh_zoom(self, stamps=None):
         category = self.zoom_category
         if not category or self.zoom_card is None:
             return
         color = CATEGORY_COLOR[category]
-        matrix = self.db.topic_daily(category, self.DAYS)
+        matrix, levels, stats = self._dash_query("reinzoom", self._zoom_data, category,
+                                                 stamps=stamps)
         self.zoom_heatmap.set_data([(TOPIC_SHORT[topic], color, matrix[topic])
                                     for topic in TOPICS[category]], self.DAYS)
-        levels = fisi_game.topic_knowledge(self.db)
-        stats = self.db.topic_stats()
         for topic, bar in self.zoom_bars.items():
             answered = stats[topic]["answered"]
             if answered:
@@ -1487,6 +2061,12 @@ class DashboardView(View):
             else:
                 note = "noch nicht bearbeitet"
             bar.set(levels[topic], note)
+
+    def _zoom_data(self, category):
+        """Abfragen des Reinzooms (ab 0.63.2 gebuendelt fuer den
+        Zwischenspeicher, Reihenfolge wie bis 0.63.1)."""
+        return (self.db.topic_daily(category, self.DAYS), fisi_game.topic_knowledge(self.db),
+                self.db.topic_stats())
 
     def _activity_row(self, timestamp, kind, detail, extra):
         row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
@@ -1509,12 +2089,579 @@ class DashboardView(View):
 
 
 # ============================================================================
+#  AB 0.63.2 (Z3): WEITERE ANSICHTEN BEI GROSSER SCHRIFT
+# ============================================================================
+
+class FitRowsMixin(FitWidthMixin):
+    """Ab 0.63.2 (Z3): Notizblock, Fortschritt, Karteikarten, Pruefungstrainer
+    und Optionen passen bei Gross und Sehr gross ohne seitlichen
+    Schieberegler ins Fenster. Wie bei D2 (FitWidthMixin) werden nur
+    Anordnung, Umbruch und Breiten angepasst, keine Elemente kommen dazu:
+    * Zeilen aus nebeneinander gepackten Teilen (Pillen, Knoepfe, Filter)
+      brechen um (FlowRow), wenn sie nicht in die sichtbare Breite passen;
+    * Unterschriften ruecken unter die Ueberschrift der Kachel;
+    * Kacheln in einer Rasterzeile (Notizblock "Lernstand je Bereich")
+      verteilen sich auf mehrere Zeilen;
+    * Tabellenspalten (Fortschritt) werden schmaler, nie schmaler als ihr
+      breitester Text;
+    * lange Texte (auch an Haken und Schaltern) brechen um, Umbruchbreiten
+      folgen dem Platz;
+    * Eingabefelder, die ueber den Rand ragen, werden schmaler.
+    Die Teile werden bei jedem Anpassen neu gesucht (auch Inhalte, die erst
+    spaeter entstehen, z. B. die Pruefung). Jeder Teil bekommt die Breite,
+    die er in einer eigenen Zeile haette - so haengt keine Entscheidung von
+    der Lage ab, die sie selbst veraendert (keine Schleife).
+    Bei Normal bleibt alles genau wie bisher (Z3 gilt fuer Gross/Sehr gross),
+    ausser im Teil aus _z3_normal_part (ab 0.63.2 B-4b: Bewertung der
+    Pruefung im Pruefungstrainer; Notizblock, Fortschritt und Optionen,
+    sobald sie bei Normal breiter sind als sichtbar, Z3_NORMAL)."""
+
+    Z3_GAP = 6          # Abstand der Kacheln im Raster (wie bisher, logische px)
+    Z3_CELL_PAD = 16    # Innenabstand einer Tabellenzelle links + rechts (logische px)
+    # Methoden, nach denen neu angepasst wird, weil sich Inhalt ohne
+    # Groessenaenderung aendert (z. B. neue Tabellenzeilen)
+    Z3_REFIT = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._init_fit()
+        for name in self.Z3_REFIT:
+            method = getattr(self, name)
+
+            def refit(*a, _method=method, **k):
+                result = _method(*a, **k)
+                self._schedule_fit()
+                return result
+            setattr(self, name, refit)
+
+    def _fit_width(self, avail):
+        inside = None
+        if fisi_theme.current_font_size == fisi_theme.FONT_NORMAL:
+            # ab 0.63.2 (B-4b): bei Normal nur der Teil aus _z3_normal_part
+            inside = self._z3_normal_part()
+            if inside is None:
+                return False
+        found = {"rows": [], "cards": [], "tiles": [], "trees": [], "checks": [],
+                 "labels": [], "texts": [], "entries": []}
+        self._z3_scan(self.content, avail, 0, found)
+        if inside is not None:
+            prefix = str(inside) + "."
+            found = {kind: [item for item in items if str(item[0]).startswith(prefix)]
+                     for kind, items in found.items()}
+        changed = False
+        for label, room, frame, row in found["labels"]:
+            changed |= self._z3_label(label, room, frame, row)
+        for label, room in found["texts"]:
+            changed |= self._z3_text(label, room)
+        for entry, room in found["entries"]:
+            changed |= self._z3_entry(entry, room)
+        for frame, room, _depth in sorted(found["rows"], key=lambda item: -item[2]):
+            changed |= FlowRow.of(frame).fit(room)
+        for card, room in found["cards"]:
+            changed |= card.stack_subtitle(self._z3_head_width(card) > room)
+        for frame, room in found["tiles"]:
+            changed |= self._z3_tiles(frame, room)
+        for tree, room in found["trees"]:
+            changed |= self._z3_tree(tree, room)
+        for check, room in found["checks"]:
+            changed |= self._z3_check(check, room)
+        if inside is not None:
+            # ab 0.63.2 (S1c2-Nachbesserung): bei Normal wird die Seite oft erst
+            # nach dem Aufbau schmaler - Tk meldet das der Bildlaufflaeche nicht
+            # immer (der seitliche Balken blieb stehen, obwohl alles passt);
+            # nach jedem Anpassen die Breite nachziehen (aendert nichts, wenn
+            # sie stimmt)
+            self.after(40, self._refit_width)
+        return changed
+
+    # Ab 0.63.2 (B-4b Rest, S1c2-Nachbesserung): Notizblock, Fortschritt und
+    # Optionen passen auch bei Normal (1120, mit breiterer Schrift auch 1360)
+    # ohne seitliches Rollen - aber erst, wenn die Seite bei Normal wirklich
+    # breiter ist als sichtbar. Solange sie passt, bleibt alles genau wie
+    # bisher (z. B. Normal 1360 mit Inter).
+    Z3_NORMAL = False
+    # so lange (ms) muss die Seite zu breit bleiben: waehrend des Aufbaus ist
+    # sie kurz breiter, bis die Umbruchbreiten der Texte angepasst sind
+    # (ScrollArea._fit_wraplengths) - das allein zaehlt nicht
+    Z3_NORMAL_WAIT = 300
+
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Teil der Ansicht, der auch bei Normal nach den
+        gleichen Regeln angepasst wird (None: bei Normal bleibt alles wie
+        bisher). Mit Z3_NORMAL die ganze Ansicht, sobald sie bei Normal
+        laenger als Z3_NORMAL_WAIT breiter ist als sichtbar (danach bleibt die
+        Anpassung an: was wieder passt, stellt sie selbst zurueck)."""
+        if not self.Z3_NORMAL:
+            return None
+        if not self.__dict__.get("_z3_normal_on"):
+            if self.inner.winfo_reqwidth() <= self.canvas.winfo_width():
+                self._z3_normal_since = None
+                return None
+            now = time.monotonic()
+            since = self.__dict__.get("_z3_normal_since")
+            if since is None:
+                self._z3_normal_since = now
+            if since is None or now - since < self.Z3_NORMAL_WAIT / 1000.0:
+                # spaeter noch einmal nachsehen
+                self.after(self.Z3_NORMAL_WAIT + 20, self._schedule_fit)
+                return None
+            self._z3_normal_on = True
+        return self.content
+
+    # -- Teile finden ---------------------------------------------------------
+
+    @staticmethod
+    def _z3_is_row(frame):
+        """Zeile: mindestens zwei nebeneinander gepackte Teile, keiner fuellt
+        die Hoehe (Listenzeilen mit Farbstrich bleiben, wie sie sind)."""
+        if "_fisi_flow" in frame.__dict__:
+            return True
+        slaves = frame.pack_slaves()
+        if len(slaves) < 2:
+            return False
+        for widget in slaves:
+            info = widget.pack_info()
+            if info.get("side") not in ("left", "right") or info.get("fill") in ("y", "both"):
+                return False
+        return True
+
+    @staticmethod
+    def _z3_is_marked(frame):
+        """Listenzeile mit Farbstrich (ein Teil fuellt die Hoehe): bleibt
+        gepackt; nur ihre Texte brechen bei Bedarf um."""
+        slaves = frame.pack_slaves()
+        return (len(slaves) >= 2 and "_fisi_flow" not in frame.__dict__
+                and all(w.pack_info().get("side") in ("left", "right") for w in slaves)
+                and any(w.pack_info().get("fill") in ("y", "both") for w in slaves))
+
+    @staticmethod
+    def _z3_is_tiles(frame):
+        """Kacheln im Raster: mindestens drei gleichartige Teile, zeilenweise
+        der Reihe nach angeordnet (Notizblock "Lernstand je Bereich",
+        Farbkacheln der Optionen)."""
+        if "_fisi_z3_tiles" in frame.__dict__:
+            return True
+        slaves = frame.grid_slaves()
+        if len(slaves) < 3 or len({type(w) for w in slaves}) != 1:
+            return False
+        places = sorted((int(w.grid_info()["row"]), int(w.grid_info()["column"]))
+                        for w in slaves)
+        columns = max(column for _row, column in places) + 1
+        return places == [divmod(index, columns) for index in range(len(places))]
+
+    def _z3_scan(self, widget, room, depth, found):
+        if isinstance(widget, Card) and widget.head is not None:
+            found["cards"].append((widget, room))
+        row = widget is not self.content and self._z3_is_row(widget)
+        marked = not row and widget is not self.content and self._z3_is_marked(widget)
+        if row:
+            found["rows"].append((widget, room, depth))
+        for child in widget.winfo_children():
+            try:
+                manager = child.winfo_manager()
+                if not manager or (manager == "pack" and not child.winfo_ismapped()):
+                    continue
+                if isinstance(child, ttk.Treeview):
+                    found["trees"].append((child, room - child.winfo_x()))
+                    continue
+                if (isinstance(child, ctk.CTkLabel) and not isinstance(child, NeoButton)
+                        and (marked or row)):
+                    found["labels"].append((child, room, widget, row))
+                    continue
+                if (isinstance(child, ctk.CTkLabel) and not isinstance(child, NeoButton)
+                        and not row and not marked and manager == "pack"):
+                    found["texts"].append((child, room - 2 * child.winfo_x()))
+                    continue
+                if isinstance(child, ctk.CTkEntry) and not row:
+                    info = child.grid_info() if manager == "grid" else child.pack_info()
+                    found["entries"].append((child, room - child.winfo_x()
+                                             - FlowRow._pad(info)[1]))
+                    continue
+                if isinstance(child, (ctk.CTkCheckBox, ctk.CTkSwitch)):
+                    found["checks"].append((child, room - (0 if row else child.winfo_x())))
+                    continue
+                if not isinstance(child, tk.Frame) or isinstance(
+                        child, (NumberStepper, OptionList, ctk.CTkOptionMenu, ctk.CTkEntry,
+                                ctk.CTkTextbox, ctk.CTkProgressBar, ctk.CTkScrollbar)):
+                    continue
+                if isinstance(widget, Card) and child is widget.head:
+                    continue
+                if row:
+                    # in einer Zeile, die umbricht: so viel wie in einer eigenen Zeile
+                    child_room = room
+                elif marked:
+                    # Listenzeile: neben den anderen Teilen (Farbstrich, Knopf)
+                    child_room = room - sum(
+                        (0 if other is child else other.winfo_reqwidth())
+                        + sum(FlowRow._pad(other.pack_info()))
+                        for other in widget.pack_slaves())
+                elif manager == "pack":
+                    child_room = room - 2 * child.winfo_x()
+                else:
+                    child_room = room - child.winfo_x()
+                if self._z3_is_tiles(child):
+                    found["tiles"].append((child, child_room))
+                self._z3_scan(child, child_room, depth + 1, found)
+            except tk.TclError:
+                continue
+
+    # -- Anpassen -------------------------------------------------------------
+
+    def _z3_tiles(self, frame, room):
+        """Kacheln auf so viele Spalten verteilen, wie nebeneinander passen
+        (gleich viele je Zeile, so weit es geht). Abstaende wie bisher; kommt
+        eine Zeile dazu, die bisher keinen Abstand nach oben hatte, bekommt
+        sie den waagerechten Abstand. Passt alles: genau wie bisher."""
+        tiles = sorted(frame.grid_slaves(), key=lambda w: (int(w.grid_info()["row"]),
+                                                           int(w.grid_info()["column"])))
+        if not tiles:
+            return False
+        if "_fisi_z3_tiles" not in frame.__dict__ or frame._fisi_z3_tiles[0] != len(tiles):
+            # Ausgangslage merken (auch nach dem Neuaufbau der Kacheln)
+            if frame.__dict__.get("_fisi_z3_umgestellt"):
+                columns = frame._fisi_z3_tiles[1]
+            else:
+                columns = max(int(w.grid_info()["column"]) for w in tiles) + 1
+            first = tiles[0].grid_info()
+            padx = [tiles[min(c, len(tiles) - 1)].grid_info()["padx"] for c in range(columns)]
+            conf = [(int(frame.grid_columnconfigure(c)["weight"]),
+                     str(frame.grid_columnconfigure(c)["uniform"] or ""))
+                    for c in range(columns)]
+            frame._fisi_z3_tiles = (len(tiles), columns, padx, first["pady"], conf)
+        count, base, padx, pady, conf = frame._fisi_z3_tiles
+
+        def pair(value):
+            if isinstance(value, (tuple, list)):
+                return int(value[0]), int(value[-1])
+            return int(value), int(value)
+        gaps = [sum(pair(value)) for value in padx]
+        need = max(tile.winfo_reqwidth() for tile in tiles) + max(gaps)
+        columns = base
+        if base * need > room:
+            columns = max(1, room // need)
+            rows = -(-count // columns)
+            columns = -(-count // rows)
+        top, bottom = pair(pady)
+        gap_y = max(gaps) if top == bottom == 0 else 0
+        changed = False
+        for index, tile in enumerate(tiles):
+            line, column = divmod(index, columns)
+            want = dict(row=line, column=column, padx=pair(padx[column]),
+                        pady=(top + (gap_y if line else 0), bottom))
+            info = tile.grid_info()
+            if (int(info["row"]), int(info["column"]), pair(info["padx"]),
+                    pair(info["pady"])) != (line, column, want["padx"], want["pady"]):
+                # tk.Grid direkt: die Abstaende sind schon Bildschirmpixel
+                tk.Grid.grid_configure(tile, **want)
+                changed = True
+        for column in range(base):
+            wanted = conf[column] if column < columns else (0, "")
+            now = frame.grid_columnconfigure(column)
+            if (int(now["weight"]), str(now["uniform"] or "")) != wanted:
+                frame.grid_columnconfigure(column, weight=wanted[0], uniform=wanted[1])
+                changed = True
+        frame._fisi_z3_umgestellt = columns != base
+        return changed
+
+    def _z3_tree(self, tree, room):
+        """Tabellenspalten schmaler, wenn die Tabelle nicht passt: anteilig,
+        aber keine Spalte schmaler als ihre Ueberschrift oder ihr laengster
+        Eintrag (nichts abgeschnitten). Passt sie: Breiten wie bisher.
+        Ab Gegenpruefung S1c2 (M1): Zellen mit Kurzform (tree._fisi_z3_kurz,
+        {Zeile: {Spalte: (lang, kurz)}}) zeigen die Kurzform, solange die
+        Tabelle mit den langen Texten nicht passt.
+        Ab S1c2-Nachbesserung (Nico, Antwort Meldung 39 Frage 1a, Variante B):
+        Spalten in tree._fisi_z3_weglassen fallen bei "Sehr gross" weg,
+        solange die Tabelle mit ihnen nicht passt (sonst bleiben sie)."""
+        if "_fisi_z3_columns" not in tree.__dict__:
+            tree._fisi_z3_columns = {key: int(tree.column(key, "width"))
+                                     for key in tree["columns"]}
+            tree._fisi_z3_stretch = {key: tree.column(key, "stretch")
+                                     for key in tree["columns"]}
+        base = tree._fisi_z3_columns
+        # nur was neben der Tabelle steht (Rollbalken), nicht darunter
+        others = sum(w.winfo_reqwidth() for w in tree.master.pack_slaves()
+                     if w is not tree and w.pack_info().get("side") in ("left", "right"))
+        room -= others + (px(6) if others else 0)
+        style = tree.cget("style") or "Treeview"
+        lookup = ttk.Style().lookup
+        head_font = tkfont.Font(font=lookup(style + ".Heading", "font") or "TkHeadingFont")
+        body_font = tkfont.Font(font=lookup(style, "font") or "TkDefaultFont")
+        pad = px(self.Z3_CELL_PAD)
+        items = tree.get_children()
+        kurz = {item: cells for item, cells in tree.__dict__.get("_fisi_z3_kurz", {}).items()
+                if item in items}
+
+        def least_for(short):
+            least = {}
+            for key in base:
+                texts = []
+                for item in items:
+                    pair = kurz.get(item, {}).get(key)
+                    texts.append(pair[1 if short else 0] if pair else tree.set(item, key))
+                least[key] = max([head_font.measure(tree.heading(key, "text"))]
+                                 + [body_font.measure(text) for text in texts]) + pad
+            return least
+
+        least = least_for(False)
+        short = bool(kurz) and sum(least.values()) > room
+        if short:
+            least = least_for(True)
+        drop = ()
+        if (fisi_theme.current_font_size == "sehr_gross"
+                and sum(least.values()) > room):
+            drop = tuple(key for key in tree.__dict__.get("_fisi_z3_weglassen", ())
+                         if key in base)
+        all_base = base
+        base = {key: width for key, width in base.items() if key not in drop}
+        least = {key: least[key] for key in base}
+        widths = dict(base)
+        if sum(base.values()) > room or any(least[k] > base[k] for k in base):
+            # anteilig verkleinern; Spalten an ihrer Untergrenze bleiben dort
+            fixed = {}
+            while True:
+                rest = room - sum(fixed.values())
+                free = {k: v for k, v in base.items() if k not in fixed}
+                total = sum(free.values()) or 1
+                widths = dict(fixed)
+                widths.update({k: max(least[k], int(v * rest / total)) for k, v in free.items()})
+                low = {k for k in free if widths[k] == least[k] and int(free[k] * rest / total) < least[k]}
+                if not low:
+                    break
+                fixed.update({k: least[k] for k in low})
+            # nie breiter als bisher, aber nie schmaler als der Text
+            widths = {k: max(least[k], min(base[k], widths[k])) for k in base}
+        # verglichen mit dem zuletzt gesetzten Stand: Tk dehnt Spalten mit
+        # stretch selbst, die gelesene Breite taugt nicht zum Vergleich
+        state = (widths, short, tuple(items), drop)
+        if state == tree.__dict__.get("_fisi_z3_state", (all_base, False, tuple(items), ())):
+            return False
+        if drop != tree.__dict__.get("_fisi_z3_drop", ()):
+            tree.configure(displaycolumns=list(base) if drop else "#all")
+            tree._fisi_z3_drop = drop
+        for item, cells in kurz.items():
+            for key, pair in cells.items():
+                tree.set(item, key, pair[1 if short else 0])
+        for key, width in widths.items():
+            # gedehnte Spalten hielten die Tabelle so breit wie bisher
+            # (Tk verlangt die gedehnte Breite weiter): beim Verkleinern
+            # deshalb ohne Dehnen, sonst wie bisher
+            stretch = tree._fisi_z3_stretch[key] if widths == base else False
+            tree.column(key, width=width, stretch=stretch)
+        # Tk rechnet die verlangte Breite erst beim Konfigurieren neu
+        tree.configure(height=tree.cget("height"))
+        tree._fisi_z3_state = state
+        tree._fisi_z3_umgestellt = widths != base or short or bool(drop)
+        return True
+
+    @staticmethod
+    def _z3_label(label, room, frame, row):
+        """Text in einer Zeile. Mit Umbruchbreite (z. B. "... Fragen
+        verfuegbar" neben "Session starten"): Umbruchbreite = Platz neben den
+        anderen Teilen der Zeile, mindestens 220, hoechstens wie vorgesehen.
+        Ohne Umbruchbreite: bricht nur um, wenn er nicht passt - in einer
+        Zeile, die umbricht (row), in einer eigenen Zeile, in einer
+        Listenzeile mit Farbstrich neben den anderen Teilen. Die allgemeine
+        Anpassung (ScrollArea._fit_wraplengths) rechnet mit der Lage des
+        Textes und wuerde sich mit dem Umbrechen der Zeile abwechseln -
+        deshalb uebernimmt das hier."""
+        if "_fisi_z3_wrap" not in label.__dict__:
+            label._fisi_z3_wrap = (label.__dict__.get("_fisi_wrap") or label.cget("wraplength"),
+                                   label.cget("justify"))
+            label._fisi_wrap = 0     # ScrollArea._fit_wraplengths laesst ihn aus
+        base, justify = label._fisi_z3_wrap
+        if row:
+            infos = dict(FlowRow.of(frame)._capture())
+        else:
+            infos = {widget: widget.pack_info() for widget in frame.pack_slaves()}
+        others = sum(widget.winfo_reqwidth() + sum(FlowRow._pad(info))
+                     for widget, info in infos.items() if widget is not label)
+        own = sum(FlowRow._pad(infos[label])) if label in infos else 0
+        scale = px(1000) / 1000.0
+        free = (room - own - (0 if row and not base else others)
+                - (label.winfo_reqwidth() - label._label.winfo_reqwidth()))
+        text_room = (free - FitRowsMixin._z3_pad(label._label)) / scale
+        if not base:
+            whole = FitRowsMixin._z3_whole(label._label)
+            wrap = 0 if whole <= free else int(max(120, text_room))
+            label._fisi_z3_umgestellt = bool(wrap)
+        else:
+            wrap = int(min(base, max(220, text_room)))
+        if int(label.cget("wraplength")) == wrap:
+            return False
+        label.configure(wraplength=wrap, justify="left" if wrap and not base else justify)
+        return True
+
+    @staticmethod
+    def _z3_whole(tk_label):
+        """Breite eines tk.Label ohne Umbruch (echte Pixel, mit Innenrand).
+        Kurz ohne Umbruchbreite messen und gleich zuruecksetzen: Tk rechnet
+        die verlangte Groesse beim Konfigurieren, gezeichnet wird erst
+        spaeter (die Messung per Schriftart weicht von Tk ab)."""
+        wrap = tk_label.cget("wraplength")
+        if not int(float(str(wrap) or 0)):
+            return tk_label.winfo_reqwidth()
+        tk_label.configure(wraplength=0)
+        whole = tk_label.winfo_reqwidth()
+        tk_label.configure(wraplength=wrap)
+        return whole
+
+    @staticmethod
+    def _z3_pad(tk_label):
+        """Innenrand eines tk.Label links + rechts (echte Pixel)."""
+        return 2 * sum(int(float(tk_label.cget(name)))
+                       for name in ("padx", "borderwidth", "highlightthickness"))
+
+    @staticmethod
+    def _z3_head_width(card):
+        """Breite der Kopfzeile mit der Unterschrift daneben (echte Pixel),
+        samt aller Abstaende (Card.head_width zaehlt die Abstaende der
+        Klappkoepfe der Optionen nicht mit)."""
+        width = 0
+        for widget in card.head.pack_slaves():
+            if widget is card.subtitle_label:
+                continue
+            width += widget.winfo_reqwidth() + sum(FlowRow._pad(widget.pack_info()))
+        sub = FitRowsMixin._z3_sub_width(card)
+        if sub:
+            width += sub + px(12)
+        return max(width, card.head_width() - card.subtitle_width()
+                   - card.frame_width() + sub) + card.frame_width()
+
+    @staticmethod
+    def _z3_sub_width(card):
+        """Breite der Unterschrift neben der Ueberschrift (echte Pixel), auch
+        wenn sie gerade darunter steht. Nacharbeit Gegenpruefung S1c2: die
+        Breite der frisch gestapelten Unterschrift meldet Tk erst spaeter
+        (vorher 1) - ohne den gemerkten Wert sprang der Kopf hin und her
+        (Endlosschleife bei langer Pruefungsueberschrift, Sehr gross 1120)."""
+        if card.subtitle_label is None:
+            return 0
+        text = card._sub_text[0]
+        if not text:
+            return 0
+        known = card.__dict__.get("_fisi_z3_subw")
+        if not card._sub_stacked and card.subtitle_label.winfo_reqwidth() > 1:
+            card._fisi_z3_subw = (text, card.subtitle_label.winfo_reqwidth())
+            return card._fisi_z3_subw[1]
+        if known and known[0] == text:
+            return known[1]
+        font = tkfont.Font(font=card.subtitle_label._label.cget("font"))
+        return font.measure(text) + px(6)
+
+    @staticmethod
+    def _z3_text(label, room):
+        """Text untereinander (nicht in einer Zeile). Ohne Umbruchbreite
+        (z. B. "Nichts zu ueben ...", Ergebniszeilen der Pruefung): bricht
+        um, wenn er nicht passt; passt er, wie bisher. Mit Umbruchbreite
+        (z. B. 800): hoechstens so breit, sonst so breit wie der Platz,
+        mindestens 220 - wie ScrollArea._fit_wraplengths, aber mit dem
+        genauen Platz (dort wird der Rand links auch rechts angenommen;
+        in den verschachtelten Klappbereichen der Optionen fehlten so 2 px)."""
+        if "_fisi_z3_text" not in label.__dict__:
+            label._fisi_z3_text = (label.__dict__.get("_fisi_wrap") or label.cget("wraplength"),
+                                   label.cget("justify"))
+            label._fisi_wrap = 0     # ScrollArea._fit_wraplengths laesst ihn aus
+        base, justify = label._fisi_z3_text
+        scale = px(1000) / 1000.0
+        room -= label.winfo_reqwidth() - label._label.winfo_reqwidth()
+        text_room = (room - FitRowsMixin._z3_pad(label._label)) / scale
+        if base:
+            wrap = int(min(base, max(220, text_room)))
+            label._fisi_z3_umgestellt = False    # Umbruchbreite gab es schon
+        else:
+            whole = FitRowsMixin._z3_whole(label._label)
+            wrap = 0 if whole <= room else int(max(120, text_room))
+            label._fisi_z3_umgestellt = bool(wrap)
+        if int(label.cget("wraplength")) == wrap:
+            return False
+        label.configure(wraplength=wrap, justify="left" if wrap and not base else justify)
+        return True
+
+    @staticmethod
+    def _z3_entry(entry, room):
+        """Eingabefeld, das ueber den Rand ragt: schmaler (der Text laesst
+        sich darin wie bisher verschieben), hoechstens bis 160 logische px.
+        Passt es: Breite wie bisher."""
+        if "_fisi_z3_width" not in entry.__dict__:
+            entry._fisi_z3_width = entry.cget("width")
+        base = entry._fisi_z3_width
+        scale = px(1000) / 1000.0
+        width = base if base * scale <= room else int(max(160, room / scale - 2))
+        if int(entry.cget("width")) == width:
+            return False
+        entry.configure(width=width)
+        entry._fisi_z3_umgestellt = width != base
+        return True
+
+    @staticmethod
+    def _z3_check(check, room):
+        """Langer Text an einem Haken/Schalter bricht um, statt die Seite
+        breiter zu machen. Passt er: wie bisher (eine Zeile)."""
+        label = getattr(check, "_text_label", None)
+        if label is None:
+            return False
+        if "_fisi_z3_justify" not in check.__dict__:
+            check._fisi_z3_justify = label.cget("justify")
+        rest = check.winfo_reqwidth() - label.winfo_reqwidth()
+        whole = FitRowsMixin._z3_whole(label) + rest
+        wrap = 0 if whole <= room else max(px(120), room - rest - FitRowsMixin._z3_pad(label))
+        if int(label.cget("wraplength") or 0) == wrap:
+            return False
+        if wrap:
+            label.configure(wraplength=wrap, justify="left")
+        else:
+            label.configure(wraplength=0, justify=check._fisi_z3_justify)
+        # ab 0.63.2 (Nico, Nachtrag Meldung 39 F2 b, FG-112): bei jedem
+        # Haken und Schalter, nicht nur bei den Bewertungskriterien
+        FitRowsMixin._z3_check_top(check, label, bool(wrap))
+        check._fisi_z3_umgestellt = bool(wrap)
+        return True
+
+    @staticmethod
+    def _z3_check_top(check, label, wrapped):
+        """Ab 0.63.2 (Nico, Meldung 39 Frage 2c; ab FG-112 jeder Haken und
+        Schalter): Bei umbrochenem Text steht das Kaestchen oben, mittig zur
+        ersten Zeile (nicht mittig zum ganzen Text). Einzeilig wie bisher
+        (Lage aus customtkinter: Haken "e", Schalter mittig)."""
+        box = getattr(check, "_canvas", None)
+        if box is None:
+            return
+        if "_fisi_z3_box_sticky" not in check.__dict__:
+            if not wrapped:
+                return          # nie umgestellt: nichts anfassen
+            check._fisi_z3_box_sticky = box.grid_info().get("sticky", "")
+        if not wrapped:
+            box.grid_configure(sticky=check._fisi_z3_box_sticky, pady=0)
+            label.grid_configure(pady=0)
+            return
+        # Zeilenhoehe so, wie das Label sie zeichnet (die Schriftmetrik
+        # weicht mit Ersatzschriften davon ab): eine Probezeile messen
+        probe = tk.Label(check, font=label.cget("font"), text="Ag",
+                         pady=0, bd=0, highlightthickness=0)
+        line = probe.winfo_reqheight()
+        probe.destroy()
+        inset = int(label.cget("pady")) + int(label.cget("bd")) + int(label.cget("highlightthickness"))
+        height = box.winfo_reqheight()
+        first = inset + line / 2.0       # Mitte der ersten Zeile im Text
+        if height / 2.0 >= first:
+            box.grid_configure(sticky="ne", pady=0)
+            label.grid_configure(pady=(int(round(height / 2.0 - first)), 0))
+        else:
+            box.grid_configure(sticky="ne", pady=(int(round(first - height / 2.0)), 0))
+            label.grid_configure(pady=0)
+
+
+# ============================================================================
 #  KARTEIKARTEN
 # ============================================================================
 
-class CardsView(View):
+class CardsView(FitRowsMixin, View):
     MODES = [("freitext", "Freitext"), ("mc", "Multiple Choice"),
              ("reveal", "Aufdecken")]
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.cards = list(KARTEIKARTEN)
@@ -1537,7 +2684,12 @@ class CardsView(View):
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
         self.cat_pills = PillGroup(bar, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
+        self._top_bar = bar
+        self.add_parts([self._build_filters, self._build_modes, self._build_question,
+                        self._build_answer, self._build_controls, self.apply_filter])
 
+    def _build_filters(self):
+        bar = self._top_bar
         filters = transparent_frame(bar)
         filters.pack(fill="x", pady=(0, 14))
         status_box = transparent_frame(filters)
@@ -1555,10 +2707,13 @@ class CardsView(View):
         self.lbl_counts = make_label(bar, "", font=F["tiny"], fg=C["muted"])
         self.lbl_counts.pack(anchor="w", pady=(0, 12))
 
+    def _build_modes(self):
+        bar = self._top_bar
         make_label(bar, "LERNMODUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
         self.mode_pills = PillGroup(bar, self.MODES, on_change=self._on_mode)
         self.mode_pills.pack(anchor="w", pady=(8, 0))
 
+    def _build_question(self):
         # Frage
         self.question_card = Card(self.content, title="Frage", accent=C["accent"],
                                   subtitle="")
@@ -1571,6 +2726,7 @@ class CardsView(View):
                                        wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=6)
 
+    def _build_answer(self):
         # Antwortbereich
         self.answer_card = Card(self.content, title="Deine Antwort",
                                 accent=C["purple"])
@@ -1610,6 +2766,7 @@ class CardsView(View):
         # Selbsteinschaetzung im Modus "Aufdecken" (ab 0.39)
         self.rate_box = rate_box(self.answer_card.body, self.rate)
 
+    def _build_controls(self):
         # Steuerung
         controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
@@ -1625,8 +2782,6 @@ class CardsView(View):
         self.lbl_counter = make_label(controls, "", font=F["body_bold"],
                                       fg=C["text_dim"])
         self.lbl_counter.pack(side="right", pady=8)
-
-        self.apply_filter()
 
     # -- Steuerung ----------------------------------------------------------
 
@@ -1679,6 +2834,14 @@ class CardsView(View):
         self.index = 0
         self._counts([card["q"] for card in base])
         self.update_ui()
+
+    def part_waits(self):
+        """Ab 0.63.2 (N6, B-I-04): Der letzte Teil (apply_filter) braucht die
+        Zuordnung zum Rahmenplan. Rechnet frp.warm_up (ab 0.55) sie gerade
+        noch im Hintergrund, wartet das Vorladen darauf, statt sie im Teil
+        am Stueck selbst zu rechnen (ViewPreloader._part_waits)."""
+        return bool(self._parts) and self._parts[0] == self.apply_filter \
+            and not frp._ITEM_POINTS and fresh_order(SRC_CARD) is not None
 
     def _counts(self, keys):
         self.count_keys = keys
@@ -1750,8 +2913,9 @@ class CardsView(View):
         card = self.filtered[self.index]
         self.lbl_question.configure(text=card["q"])
         self._show_status()
-        self.lbl_counter.configure(text="Karte %d / %d"
-                                        % (self.index + 1, len(self.filtered)))
+        self.lbl_counter.configure(text="Karte %s / %s"   # ab 0.63.2 mit Punkt
+                                        % (fisi_core.de_int(self.index + 1),
+                                           fisi_core.de_int(len(self.filtered))))
         self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
                                                      TOPIC_SHORT[card["thema"]]),
                                         CATEGORY_COLOR[card["cat"]])
@@ -1852,7 +3016,7 @@ class CardsView(View):
 #  PRUEFUNGSTRAINER
 # ============================================================================
 
-class QuizView(View):
+class QuizView(FitRowsMixin, View):
     def build(self):
         # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
         outer = self.content
@@ -1864,6 +3028,14 @@ class QuizView(View):
         self.content = self.practice_box
         self._build_practice()
         self.content = outer
+
+    def _z3_normal_part(self):
+        """Ab 0.63.2 (B-4b): Bewertung der Pruefung - lange Kriterien brechen
+        auch bei Normal um, statt die Seite breiter zu machen (1120 und 1360)."""
+        exam = self.exam
+        if exam.grading and exam.winfo_ismapped():
+            return exam.body
+        return None
 
     def _on_mode(self, mode):
         if mode == "pruefung":
@@ -1893,7 +3065,8 @@ class QuizView(View):
 
         # Setup
         self.setup_card = Card(self.content, title="Test-Session",
-                               subtitle="%d Aufgaben im Katalog" % len(self.questions))
+                               subtitle="%s Aufgaben im Katalog"
+                                        % fisi_core.de_int(len(self.questions)))
         self.setup_card.pack(fill="x")
         body = self.setup_card.body
 
@@ -2159,10 +3332,11 @@ class QuizView(View):
                 if saved else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
         self.lbl_question.configure(
             text="Session beendet\n\n"
-                 "Ergebnis: %d von %d richtig (%.1f %%)\n"
+                 "Ergebnis: %d von %d richtig (%s %%)\n"
                  "%s: %s\n"
                  "Dauer: %02d:%02d Minuten\n\n%s"
-                 % (self.score, total, percentage, fr.NOTE_LANG, note,
+                 % (self.score, total, fisi_core.de_number(percentage, 1),
+                    fr.NOTE_LANG, note,
                     elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
         follow_up, self.follow_up = self.follow_up, None
@@ -2216,13 +3390,17 @@ class ExamPanel(ctk.CTkFrame):
         self.timer_job = None
         self.save_job = None
         self.result = None
+        self.grading = False   # ab 0.63.2 (B-4b): Bewertung wird gezeigt
+        self._start_rows = []   # ab 0.63.2 (N8, K33): Startzeilen der Auswahl
         self.body = transparent_frame(self)
         self.body.pack(fill="both", expand=True)
 
     # -- Allgemein ----------------------------------------------------------
 
     def _clear(self):
+        self.grading = False
         self._stop_timer()
+        self._start_rows = []
         for child in self.body.winfo_children():
             child.destroy()
 
@@ -2278,15 +3456,76 @@ class ExamPanel(ctk.CTkFrame):
             row.pack(fill="x", pady=(10, 0))
             text = transparent_frame(row)
             text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
-            make_label(text, exam["name"], font=F["body_bold"], fg=C["text"]).pack(anchor="w")
+            name = make_label(text, exam["name"], font=F["body_bold"], fg=C["text"],
+                              justify="left")
+            name.pack(anchor="w")
             detail = ("%d Minuten · %d Auswahlfragen · 100 Punkte" % (exam["minuten"],
                                                                       fp.WISO_COUNT)
                       if exam["art"] == fp.WISO else
                       "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
-            make_label(text, detail, font=F["small"], fg=C["muted"]).pack(anchor="w")
-            NeoButton(row, "Starten", lambda a=exam["art"]: self.start(a),
-                      kind="primary").pack(side="right", padx=14)
+            detail = make_label(text, detail, font=F["small"], fg=C["muted"], justify="left")
+            detail.pack(anchor="w")
+            # Ab 0.63.2 (N8, B-J-N3): "<Kurzname> starten" statt viermal "Starten"
+            # (Wortlaut Weisung 38/40 N8-F4, am Handy gleich)
+            button = NeoButton(row, EXAM_START_TEXT % exam["kurz"],
+                               lambda a=exam["art"]: self.start(a), kind="primary")
+            button.pack(side="right", padx=14)
+            self._start_rows.append((row, (name, detail), button))
         self._results_cards(self.body)
+        self._schedule_fit_start()
+
+    # -- Ab 0.63.2 (N8, B-J-N3 K33): Startzeilen passen in die Seite --------
+    # Der laengere Knopftext "<Kurzname> starten" machte die Zeilen bei Sehr
+    # gross und schmalem Fenster breiter als den sichtbaren Bereich. Passen
+    # Name und Angaben nicht links neben den Knopf, brechen sie um (nur
+    # dann; sonst bleibt alles wie bisher, ohne Umbruchbreite).
+
+    def _schedule_fit_start(self):
+        if not getattr(self, "_start_pending", False):
+            self._start_pending = True
+            self.after_idle(self._fit_start_rows)
+
+    def _fit_start_rows(self):
+        self._start_pending = False
+        try:
+            rows = [entry for entry in self._start_rows if entry[0].winfo_exists()]
+            if not rows:
+                return
+            canvas = self.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is None:
+                return
+            if getattr(self, "_start_canvas", None) is not canvas:
+                self._start_canvas = canvas
+                canvas.bind("<Configure>", lambda _e: self._schedule_fit_start(), add="+")
+            self.update_idletasks()
+            inner = canvas.winfo_children()[0]
+            scale = px(1000) / 1000.0 or 1.0
+            changed = False
+            for row, labels, button in rows:
+                # rechter Rand der Zeile im sichtbaren Bereich (der Abstand
+                # der Zeile zum rechten Rand des Inhalts bleibt fest)
+                pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
+                          - (row.winfo_rootx() + row.winfo_width()))
+                right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+                # Polster: Textbereich und Knopf je 14 links und rechts
+                room = (right - row.winfo_rootx() - button.winfo_reqwidth()
+                        - 4 * px(14) - 2 * max(1, px(1)))
+                for label in labels:
+                    font = tkfont.Font(font=tk_font(label.cget("font")))
+                    need = font.measure(str(label.cget("text")))
+                    wrap = 0 if need <= room else max(px(120), room) / scale
+                    if abs(float(label.cget("wraplength") or 0) - wrap) > 0.5:
+                        label.configure(wraplength=wrap)
+                        changed = True
+            if changed:
+                self.update_idletasks()
+                area = canvas.master
+                if hasattr(area, "_refit_width"):
+                    area.after(40, area._refit_width)
+        except tk.TclError:
+            pass
 
     def _results_cards(self, parent):
         history = self.db.exams()
@@ -2311,12 +3550,22 @@ class ExamPanel(ctk.CTkFrame):
         overall_card(parent, self.db)
 
     def start(self, art):
+        # Ab 0.63.2 (N8, B-D-14, F23 a): Laeuft schon eine Pruefung (gespeichert,
+        # auch "bewerten"), wird sie gezeigt und nie ueberschrieben - vor und
+        # nach der Rueckfrage (sie kann waehrenddessen entstanden sein).
+        # Keine neue Meldung (F23 a: durch Absicherung geschlossen).
+        if fp.load_running() is not None:
+            self.show()
+            return
         exam = fp.EXAM[art]
         if not messagebox.askyesno(
                 "Prüfung starten",
                 "%s\n\nDie Zeit (%d Minuten) läuft sofort und lässt sich nicht anhalten - "
                 "auch nicht, wenn du das Programm schließt. Jetzt starten?"
                 % (exam["name"], exam["minuten"])):
+            return
+        if fp.load_running() is not None:
+            self.show()
             return
         self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
         fp.save_running(self.state)
@@ -2495,6 +3744,11 @@ class ExamPanel(ctk.CTkFrame):
         fp.submit(self.state)
         if self.state["art"] == fp.WISO:
             self._finish()
+            if auto:
+                # Ab 0.63.2 (B-G-23): auch bei WiSo melden, nach dem Auswerten
+                # (gleicher Text wie am Handy)
+                messagebox.showinfo("Zeit abgelaufen", "Die Zeit ist um, die Prüfung wurde "
+                                                       "abgegeben und ausgewertet.")
             return
         fp.save_running(self.state)
         if auto:
@@ -2507,6 +3761,7 @@ class ExamPanel(ctk.CTkFrame):
 
     def show_grading(self):
         self._clear()
+        self.grading = True
         state = self.state
         exam = fp.EXAM[state["art"]]
         head = Card(self.body, title="Bewertung", accent=C["green"], subtitle=exam["name"])
@@ -2577,11 +3832,12 @@ class ExamPanel(ctk.CTkFrame):
 
             for index, criterion in enumerate(part["kriterien"]):
                 var = tk.BooleanVar(value=marks[index] if index < len(marks) else False)
-                ctk.CTkCheckBox(card.body, text=criterion, variable=var,
-                                command=lambda i=index, v=var, t=toggled: t(i, v),
-                                font=F["small"], text_color=C["text_soft"],
-                                fg_color=C["green"], border_color=C["border_hi"],
-                                hover_color=C["card_hi"]).pack(anchor="w", pady=2)
+                check = ctk.CTkCheckBox(card.body, text=criterion, variable=var,
+                                        command=lambda i=index, v=var, t=toggled: t(i, v),
+                                        font=F["small"], text_color=C["text_soft"],
+                                        fg_color=C["green"], border_color=C["border_hi"],
+                                        hover_color=C["card_hi"])
+                check.pack(anchor="w", pady=2)
             row = transparent_frame(card.body)
             row.pack(anchor="w", pady=(8, 0))
             make_label(row, "Punkte", font=F["small"], fg=C["text_dim"]).pack(
@@ -2840,7 +4096,10 @@ class CoverageCard(Card):
 
 
 def _points(value):
-    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis, ohne Gleitkommafehler.
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def _note_color(points):
@@ -2892,7 +4151,7 @@ def overall_card(parent, db):
 #  AP2-SZENARIEN
 # ============================================================================
 
-class ScenarioViewBase(View):
+class ScenarioViewBase(FitWidthMixin, View):
     """Gemeinsame Basis fuer AP1- und AP2-Szenarien: Liste links, rechts die
     Aufgabenstellung, ein frei wachsendes Feld fuer die eigene schriftliche
     Loesung und darunter die Musterloesung zum Aufdecken.
@@ -2906,6 +4165,9 @@ class ScenarioViewBase(View):
     LIST_TITLE = "Szenarien"
     TABLE = "scenario_events"
     SOURCE = SRC_AP2
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.index = 0
@@ -2925,15 +4187,27 @@ class ScenarioViewBase(View):
         list_card = Card(layout, title=self.LIST_TITLE,
                          subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self._fit_parts = (layout, list_card)
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_own, self._build_solution, self._build_end])
+
+    def _build_list(self):
+        list_card = self._fit_parts[1]
         self.paged = PagedList(
             list_card.body, self.DATA, self.load_scenario,
             subtitle=lambda item: item["theme"],
             status_source=lambda: position_statuses(StatusBook(self.db), self.SOURCE),
             group_field="theme", group_label="Thema")
+
+    def _fill_list(self):
         self.paged.refresh()
 
+    def _build_task(self):
+        layout, list_card = self._fit_parts
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        self._fit_parts = (layout, list_card, detail)
 
         self.task_card = Card(detail, title="Aufgabenstellung", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
@@ -2947,18 +4221,26 @@ class ScenarioViewBase(View):
         self.txt_task = make_text(self.task_card.body, height=11, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
 
+    def _build_own(self):
+        detail = self._fit_parts[2]
         self.own_card = Card(detail, title="Deine Lösung", accent=C["purple"],
                              subtitle="wächst automatisch mit dem Text")
         self.own_card.pack(fill="x", pady=(14, 0))
-        make_label(self.own_card.body,
-                   "Löse die Aufgabe hier schriftlich, bevor du die "
-                   "Musterlösung aufdeckst.",
-                   font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=(0, 6))
+        # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
+        self.lbl_own_hint = self.own_wrap(make_label(
+            self.own_card.body,
+            "Löse die Aufgabe hier schriftlich, bevor du die "
+            "Musterlösung aufdeckst.",
+            font=F["small"], fg=C["text_dim"], wraplength=760,
+            justify="left", anchor="w"))
+        self.lbl_own_hint.pack(anchor="w", pady=(0, 6))
         self.txt_own = make_autogrow_text(self.own_card.body, min_height=4,
                                           max_height=18)
         self.txt_own.pack(fill="x")
         self.txt_own.bind("<KeyRelease>", self._on_own_change, add="+")
 
+    def _build_solution(self):
+        layout, list_card, detail = self._fit_parts
         self.sol_card = Card(detail, title="Musterlösung", accent=C["green"])
         self.sol_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_solution = make_text(self.sol_card.body, height=11, readonly=True)
@@ -2972,8 +4254,25 @@ class ScenarioViewBase(View):
         self.btn_toggle.pack(side="left")
         NeoButton(controls, "Nächstes Szenario", self.next_scenario,
                   kind="ghost", icon="arrow_right").pack(side="left", padx=10)
+        self._fit_parts = (layout, list_card, detail, controls)
 
+    def _build_end(self):
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
+        self._init_fit()
         self.load_scenario(0)
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        if self._in_parts:
+            self._schedule_fit()
+
+    def _fit_width(self, avail):
+        layout, list_card, detail, controls = self._fit_parts
+        cards = (self.task_card, self.own_card, self.sol_card)
+        flows = ((controls, 0), (self.rate_box, self.sol_card.frame_width()))
+        return self._fit_columns(avail, layout, list_card, detail, flows, cards, "scen")
+
+    def _fit_text_labels(self):
+        return [(self.lbl_title, self.task_card.frame_width(), False),
+                (self.lbl_own_hint, self.own_card.frame_width(), True)]
 
     def _on_own_change(self, _event=None):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
@@ -3022,6 +4321,8 @@ class ScenarioViewBase(View):
         self.paged.refresh(keep_page=True)
         self.paged.show(position)
         self._show_status()
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_solution(self):
         scenario = self.DATA[self.index]
@@ -3071,10 +4372,14 @@ class Ap1ScenarioView(ScenarioViewBase):
 #  TESTPROJEKT
 # ============================================================================
 
-class ProjectView(View):
+class ProjectView(FitWidthMixin, View):
     """Uebt die komplette Projektarbeit an einem realistischen Kundenauftrag:
     Ausgangssituation, Auftrag, Rahmenbedingungen und Arbeitsauftraege zum
     selbststaendigen Bearbeiten, dazu Loesungsansaetze zum Vergleich."""
+
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
 
     def build(self):
         self.index = 0
@@ -3087,24 +4392,42 @@ class ProjectView(View):
         layout.columnconfigure(1, weight=5, uniform="proj")
 
         list_card = Card(layout, title="Testprojekte",
-                         subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))
+                         subtitle="%s Kundenaufträge" % fisi_core.de_int(len(PROJEKTARBEITEN)))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self._fit_parts = (layout, list_card)
+        # Liste anlegen und fuellen sind getrennte Teile (je ~ halbe Zeit)
+        self.add_parts([self._build_list, self._fill_list, self._build_task,
+                        self._build_hints, self._build_end])
+
+    def _build_list(self):
+        list_card = self._fit_parts[1]
         self.paged = PagedList(
             list_card.body, PROJEKTARBEITEN, self.load_project,
             subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
                                                CATEGORY_SHORT[item["cat"]]),
             status_source=lambda: position_statuses(StatusBook(self.db), SRC_PROJECT),
             category_filter=True,
-            group_field="schwierigkeit", group_label="Schwierigkeit")
+            group_field="schwierigkeit", group_label="Schwierigkeit",
+            count_noun="Kundenaufträgen")
+
+    def _fill_list(self):
         self.paged.refresh()
 
+    def _build_task(self):
+        layout, list_card = self._fit_parts
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        self._fit_parts = (layout, list_card, detail)
 
         self.header_label = make_label(detail, "", font=F["h2"], fg=C["text"],
                                        wraplength=760, justify="left", anchor="w")
         self.header_label.pack(anchor="w")
-        self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
+        # ab 0.63.2 (D2): bricht bei grosser Schrift um (wraplength)
+        # Umbruchbreite = Spaltenbreite (_fit_texts): bei breitem Fenster
+        # eine Zeile wie bisher
+        self.meta_label = self.own_wrap(make_label(
+            detail, "", font=F["small"], fg=C["muted"], wraplength=760,
+            justify="left", anchor="w"))
         self.meta_label.pack(anchor="w", pady=(2, 0))
         self.lbl_status = make_label(detail, "", font=F["small_bold"], fg=C["muted"],
                                      anchor="w")
@@ -3115,6 +4438,8 @@ class ProjectView(View):
         self.txt_task = make_text(self.task_card.body, height=14, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
 
+    def _build_hints(self):
+        layout, list_card, detail = self._fit_parts
         self.hint_card = Card(detail, title="Lösungsansätze", accent=C["green"])
         self.hint_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_hints = make_text(self.hint_card.body, height=14, readonly=True)
@@ -3131,8 +4456,24 @@ class ProjectView(View):
         # Ab 0.51: als Vorlage fuers eigene Abschlussprojekt
         NeoButton(controls, "Als Vorlage fürs Abschlussprojekt", self.use_as_template,
                   kind="ghost").pack(side="right")
+        self._fit_parts = (layout, list_card, detail, controls)
 
+    def _build_end(self):
+        # Ab 0.63.2 (D2): Breite an das Fenster anpassen (FitWidthMixin)
+        self._init_fit()
         self.load_project(0)
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        if self._in_parts:
+            self._schedule_fit()
+
+    def _fit_width(self, avail):
+        layout, list_card, detail, controls = self._fit_parts
+        cards = (self.task_card, self.hint_card)
+        flows = ((controls, 0), (self.rate_box, self.hint_card.frame_width()))
+        return self._fit_columns(avail, layout, list_card, detail, flows, cards, "proj")
+
+    def _fit_text_labels(self):
+        return [(self.header_label, 0, False), (self.meta_label, 0, True)]
 
     def on_show(self):
         self._highlight()
@@ -3209,6 +4550,8 @@ class ProjectView(View):
         self.btn_toggle.set_text("Lösungsansätze anzeigen")
         self._highlight()
         self.paged.show(position)
+        if hasattr(self, "_fit_parts"):
+            self._show_detail(self._fit_parts[2])   # ab 0.63.2 (D2)
 
     def toggle_hints(self):
         project = PROJEKTARBEITEN[self.index]
@@ -3240,7 +4583,7 @@ PROJECT_SAVE_DELAY = 800      # ms nach dem letzten Tastendruck
 NO_CATEGORY = "Kein Fachbereich"
 
 
-class FinalProjectView(View):
+class FinalProjectView(FitWidthMixin, View):
     """Arbeitsbereich fuers eigene IHK-Abschlussprojekt: Uebersicht, Antrag,
     Zeitplan, Kosten, Dokumentation und Fachgespraech. Jede Eingabe wird
     kurz nach dem Tippen gespeichert (Tabelle abschlussprojekt) und mit dem
@@ -3263,6 +4606,7 @@ class FinalProjectView(View):
 
         top = transparent_frame(self.content)
         top.pack(fill="x")
+        self.top_row = top        # ab 0.63.2 (D2): bricht bei Bedarf um (_fit_width)
         make_label(top, "Projekt", font=F["small"], fg=C["text_dim"]).pack(
             side="left", padx=(0, 10))
         self.menu_project = option_menu(top, ["-"], command=self._choose_project, width=320)
@@ -3271,16 +4615,44 @@ class FinalProjectView(View):
                   font=F["small_bold"]).pack(side="left", padx=(10, 0))
         NeoButton(top, "Löschen", self._delete_project, kind="ghost", height=34,
                   font=F["small_bold"]).pack(side="left", padx=(8, 0))
-        NeoButton(top, "Als Text", lambda: self._export("txt"), kind="ghost", height=34,
-                  font=F["small_bold"]).pack(side="right")
-        NeoButton(top, "Als PDF", lambda: self._export("pdf"), kind="primary", height=34,
-                  font=F["small_bold"]).pack(side="right", padx=(0, 8))
+        # Ab 0.63.2 (B-J-N1): "Als PDF" zuerst anlegen, damit Tab links -> rechts
+        # laeuft; gepackt wird wie bisher (Anordnung unveraendert)
+        btn_pdf = NeoButton(top, "Als PDF", lambda: self._export("pdf"), kind="primary",
+                            height=34, font=F["small_bold"])
+        btn_text = NeoButton(top, "Als Text", lambda: self._export("txt"), kind="ghost",
+                             height=34, font=F["small_bold"])
+        btn_text.pack(side="right")
+        btn_pdf.pack(side="right", padx=(0, 8))
 
         self.tab_pills = PillGroup(self.content, fpj.TABS, on_change=self._on_tab)
         self.tab_pills.pack(anchor="w", pady=(14, 14))
         self.tab_area = transparent_frame(self.content)
         self.tab_area.pack(fill="both", expand=True)
         self._load_project()
+        self._init_fit()
+
+    def _fit_width(self, avail):
+        """Ab 0.63.2 (D2): Kopfzeile und die Zeilen der Reiter (FlowRow)
+        brechen um, Unterschriften ruecken unter die Ueberschrift."""
+        # Reiter (PillGroup, nebeneinander gepackt) brechen wie die Kopfzeile um
+        flows = [(self.top_row, 0), (self.tab_pills, 0)]
+        cards = []
+        for frame in self.tab_frames.values():
+            for card in frame.winfo_children():
+                if not isinstance(card, Card):
+                    continue
+                cards.append(card)
+                stack = [card.body]
+                while stack:
+                    for child in stack.pop().winfo_children():
+                        if isinstance(child, ctk.CTkFrame) and not isinstance(child, Card):
+                            if "_fisi_flow" in child.__dict__:
+                                flows.append((child, card.frame_width()))
+                            else:
+                                stack.append(child)
+        changed = self._fit_flows(flows, avail)
+        changed |= self._fit_cards(cards, avail)
+        return changed
 
     # -- Projekte -----------------------------------------------------------
 
@@ -3474,6 +4846,7 @@ class FinalProjectView(View):
     def _form_row(parent, label):
         row = transparent_frame(parent)
         row.pack(fill="x", pady=4)
+        FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): Feld bei Bedarf unter der Beschriftung
         make_label(row, label, font=F["small"], fg=C["text_dim"], width=340,
                    anchor="w").pack(side="left")
         return row
@@ -3536,6 +4909,7 @@ class FinalProjectView(View):
                                   "Bereits ausgefüllte Felder bleiben unverändert.")
         row = transparent_frame(template.body)
         row.pack(fill="x")
+        FlowRow(row)              # ab 0.63.2 (D2): bricht bei Bedarf um
         titles = [p["title"] for p in PROJEKTARBEITEN]
         category_menu = option_menu(row, list(CATEGORIES), width=230)
         category_menu.pack(side="left")
@@ -3590,6 +4964,7 @@ class FinalProjectView(View):
         for key, name, default in fpj.PHASES:
             row = transparent_frame(card.body)
             row.pack(fill="x", pady=4)
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             if key.startswith("frei"):
                 self._entry(row, "phase_name_" + key, width=40).pack(side="left")
                 make_label(row, "  (weitere Phase, frei benennbar)", font=F["small"],
@@ -3625,6 +5000,7 @@ class FinalProjectView(View):
         material.pack(fill="x", pady=(14, 0))
         head = transparent_frame(material.body)
         head.pack(fill="x")
+        FlowRow(head, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
         make_label(head, "BEZEICHNUNG", font=F["label"], fg=C["muted"], width=388,
                    anchor="w").pack(side="left")
         make_label(head, "BETRAG", font=F["label"], fg=C["muted"]).pack(side="left",
@@ -3632,6 +5008,7 @@ class FinalProjectView(View):
         for number in range(fpj.MATERIAL_ROWS):
             row = transparent_frame(material.body)
             row.pack(fill="x", pady=3)
+            FlowRow(row, **FORM_FLOW)  # ab 0.63.2 (D2): bricht bei Bedarf um
             self._entry(row, "material_name_%d" % number, width=40).pack(side="left")
             self._entry(row, "material_betrag_%d" % number, width=10).pack(
                 side="left", padx=(8, 0))
@@ -3752,10 +5129,22 @@ SOURCE_COLOR_KEY = {SRC_CARD: "accent", SRC_QUIZ: "purple", SRC_AP1: "blue",
 NOTEBOOK_PAGE = 12
 
 
-class NotebookView(View):
+def _holds_old_texts(book):
+    """Ab 0.63.2 (FG-117): Haelt der Lernstand book alte Fragetexte (wie
+    FG-110), kann apply_question_renames sie an Ort und Stelle umschreiben
+    (zweites Programm, Abgleich), ohne dass sich der Stempel aendert. Dann
+    gelten Merkschluessel und Zwischenspeicher nicht (wie bis 0.63.1)."""
+    results = getattr(book, "results", None) or {}
+    return any((source, old) in results for source, table in ReviewIndex.TABLES
+               for old in fisi_core.QUESTION_RENAMES.get(table, {}))
+
+
+class NotebookView(FitRowsMixin, View):
     """Zentrale Uebersicht aller Fragen, die noch geuebt werden muessen (rot:
     zuletzt falsch, gelb: danach erst einmal richtig) - ueber Karteikarten,
     Pruefungstrainer, AP1, AP2 und Testprojekte hinweg."""
+
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
 
     def build(self):
         self.page = 0
@@ -3832,12 +5221,15 @@ class NotebookView(View):
         self.rows_box.pack(fill="x")
         pager = transparent_frame(self.list_card.body)
         pager.pack(fill="x", pady=(10, 0))
-        IconButton(pager, "arrow_left", lambda: self.turn(-1),
-                   parent_bg=C["card"]).pack(side="left")
+        # Ab 0.63.2 (Z6): Pfeile gemerkt, auf der ersten/letzten Seite gesperrt
+        self.btn_prev = IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                                   parent_bg=C["card"], name=PAGE_PREV)
+        self.btn_prev.pack(side="left")
         self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
         self.lbl_page.pack(side="left", expand=True)
-        IconButton(pager, "arrow_right", lambda: self.turn(1),
-                   parent_bg=C["card"]).pack(side="right")
+        self.btn_next = IconButton(pager, "arrow_right", lambda: self.turn(1),
+                                   parent_bg=C["card"], name=PAGE_NEXT)
+        self.btn_next.pack(side="right")
         self.refresh()
         # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
         # on_show direkt nach dem Aufbau alles ein zweites Mal
@@ -3854,7 +5246,7 @@ class NotebookView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or _holds_old_texts(getattr(self, "book", None)):
             return None
         return (stamp, self.cat_pills.get(), self.topic_menu.get(), self.source_pills.get(),
                 self.status_pills.get(), self.answer_pills.get(), self.page, self.query)
@@ -3883,15 +5275,47 @@ class NotebookView(View):
             self.query = query
             return
         self.query = query
-        self.entries = notebook_search(self.all_entries, query)
+        self.entries = self._search_prepared(query)   # ab 0.63.2 (N7)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         self.page = 0
         self._paint_practice()
         self._paint()
 
+    # -- Ab 0.63.2 (N7, B-I-03): vorbereiteter Suchtext, Lernstand gemerkt ----
+    # Die Stichwortsuche lief je Tastendruck ueber alle Eintraege (Suchtext je
+    # Eintrag nachschlagen, fisi_core.notebook_search). Jetzt wird die Liste
+    # (Eintrag, Suchtext) einmal je refresh gebildet; die Suche prueft nur
+    # noch, ob das Stichwort darin vorkommt - gleiche Regel (search_key),
+    # gleiche Reihenfolge, ein Test vergleicht mit notebook_search. Der
+    # Lernstand (StatusBook) wird nur neu berechnet, wenn sich die Antwort-
+    # Tabellen geaendert haben (change_stamp), nicht bei jedem Filterwechsel.
+
+    def _prepare_search(self):
+        self.search_prepared = getattr(self, "search_prepared", 0) + 1
+        text_of = fisi_core._entry_search_text
+        self._search_texts = [(entry, text_of(entry)) for entry in self.all_entries]
+
+    def _search_prepared(self, query):
+        needle = fisi_core.search_key(query)
+        if not needle:
+            return list(self.all_entries)
+        return [entry for entry, text in self._search_texts if needle in text]
+
+    def _status_book(self):
+        stamp = (self.db.change_stamp(fisi_core.DBManager.ANSWER_TABLES)
+                 if hasattr(self.db, "change_stamp") else None)
+        cached = getattr(self, "_book_stamp", None)
+        if stamp is not None and cached is not None and cached[0] == stamp:
+            return cached[1]
+        self.book_builds = getattr(self, "book_builds", 0) + 1
+        book = StatusBook(self.db)
+        self._book_stamp = (stamp, book) if stamp is not None \
+            and not _holds_old_texts(book) else None
+        return book
+
     def refresh(self, keep_page=False):
-        self.book = StatusBook(self.db)
+        self.book = self._status_book()
         category = self.cat_pills.get()
         topic = self.topic_menu.get()
         source = self.source_pills.get()
@@ -3899,7 +5323,8 @@ class NotebookView(View):
         self.all_entries = notebook_entries(
             self.book, status=status, category=category, topic=topic,
             sources=None if source == FILTER_ALL else [source])
-        self.entries = notebook_search(self.all_entries, self.query)
+        self._prepare_search()
+        self.entries = self._search_prepared(self.query)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         if not keep_page:
@@ -3920,16 +5345,17 @@ class NotebookView(View):
             tile.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 6, 0))
             make_label(tile, SOURCE_PLURAL[source], font=F["small_bold"],
                        fg=C[SOURCE_COLOR_KEY[source]]).pack(anchor="w", padx=12, pady=(10, 2))
-            make_label(tile, "%d zu üben" % counts[Q_PRACTICE], font=F["h2"],
+            make_label(tile, "%s zu üben" % fisi_core.de_int(counts[Q_PRACTICE]), font=F["h2"],
                        fg=C["red"] if counts[Q_PRACTICE] else C["text_dim"]).pack(
                 anchor="w", padx=12)
-            make_label(tile, "Abgeschlossen %d von %d" % (counts[Q_DONE], total),
+            make_label(tile, "Abgeschlossen %s von %s" % (fisi_core.de_int(counts[Q_DONE]),
+                                                         fisi_core.de_int(total)),
                        font=F["tiny"], fg=C["text_dim"]).pack(anchor="w", padx=12, pady=(4, 0))
             bar = ctk.CTkProgressBar(tile, height=6, width=40, corner_radius=3,
                                      fg_color=C["card_hi"], progress_color=C["green"])
             bar.pack(fill="x", padx=12, pady=(4, 0))
             bar.set(counts[Q_DONE] / float(total))
-            make_label(tile, "Offen %d" % counts[Q_OPEN], font=F["tiny"],
+            make_label(tile, "Offen %s" % fisi_core.de_int(counts[Q_OPEN]), font=F["tiny"],
                        fg=C["muted"]).pack(anchor="w", padx=12, pady=(4, 10))
 
     def _practice_keys(self, source):
@@ -3992,7 +5418,7 @@ class NotebookView(View):
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         self.list_card.set_subtitle(plural(len(self.entries), "Frage", "Fragen"))
         if not visible:
-            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+            text = ("Nichts zu üben – sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
                     "Keine Fragen in dieser Auswahl.")
             if self.query.strip() and self.all_entries:
@@ -4002,6 +5428,8 @@ class NotebookView(View):
         for entry in visible:
             self._row(entry)
         self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+        self.btn_prev.set_enabled(self.page > 0)
+        self.btn_next.set_enabled(self.page < pages - 1)
 
     def _row(self, entry):
         source, item = entry["source"], entry["item"]
@@ -4060,7 +5488,7 @@ class NotebookView(View):
 # ============================================================================
 
 class TrainerPanel(ctk.CTkFrame):
-    """Subnetting-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
+    """Rechen-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
     Eingabefeldern, automatischer Pruefung und Rechenweg."""
 
     def __init__(self, parent, app):
@@ -4072,7 +5500,7 @@ class TrainerPanel(ctk.CTkFrame):
         self.results = []
         self.checked = False
 
-        setup = Card(self, title="Subnetting-Trainer", accent=C["accent"],
+        setup = Card(self, title=TRAINER_TITLE, accent=C["accent"],
                      subtitle="Zufallsaufgaben mit Selbstkontrolle")
         setup.pack(fill="x")
         make_label(setup.body, "AUFGABENART", font=F["label"], fg=C["muted"]).pack(anchor="w")
@@ -4099,6 +5527,8 @@ class TrainerPanel(ctk.CTkFrame):
         self.lbl_task.pack(anchor="w", pady=(4, 12))
         self.fields_box = transparent_frame(self.task_card.body)
         self.fields_box.pack(fill="x")
+        self._marks_pending = False
+        self.fields_box.bind("<Configure>", lambda _e: self._schedule_fit_marks(), add="+")
         self.lbl_feedback = make_label(self.task_card.body, "", font=F["body_bold"],
                                        fg=C["text"], anchor="w")
         self.lbl_feedback.pack(anchor="w", pady=(12, 0))
@@ -4114,6 +5544,8 @@ class TrainerPanel(ctk.CTkFrame):
         self.lbl_counter.pack(side="left", padx=16)
         self.entries = {}
         self.marks = {}
+        self.field_labels = []      # ab 0.63.2 (N-e): Beschriftungen der Felder
+        self.fields_stacked = False   # ab 0.63.2 (N-e): Beschriftung ueber dem Feld
         self.show_stats()
 
     def show_stats(self):
@@ -4140,14 +5572,26 @@ class TrainerPanel(ctk.CTkFrame):
         for child in self.fields_box.winfo_children():
             child.destroy()
         self.entries, self.marks = {}, {}
+        self.field_labels = []
+        self.fields_stacked = False
         for row, (key, label) in enumerate(task.fields):
-            make_label(self.fields_box, label, font=F["small"],
-                       fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+            # Ab 0.63.2 (A1): je Feld eine Zeile; die Zeile darunter bleibt
+            # leer (Hoehe 0), ausser "richtig wäre" passt nicht neben das Feld.
+            # Ab 0.63.2 (N8, N-e): drei Zeilen je Feld (3r, 3r+1, 3r+2) - die
+            # Zeile darueber nimmt die Beschriftung auf, wenn Beschriftung und
+            # Feld nebeneinander nicht in die Karte passen (_fit_fields);
+            # sonst bleibt sie leer (Hoehe 0), Anordnung wie bisher
+            caption = make_label(self.fields_box, label, font=F["small"], fg=C["text_dim"])
+            caption.grid(row=3 * row + 1, column=0, sticky="w", pady=4)
+            caption.fit_row = 3 * row + 1
+            self.field_labels.append(caption)
             entry = EntryBox(self.fields_box, width=26)
-            entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+            entry.grid(row=3 * row + 1, column=1, sticky="w", padx=12, pady=4)
             entry.bind("<Return>", lambda _e: self.check())
-            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"])
-            mark.grid(row=row, column=2, sticky="w")
+            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"],
+                              justify="left")
+            mark.grid(row=3 * row + 1, column=2, sticky="w")
+            mark.fit_raw, mark.fit_row, mark.fit_entry = "", 3 * row + 1, entry
             self.entries[key], self.marks[key] = entry, mark
         if task.fields:
             self.entries[task.fields[0][0]].focus_set()
@@ -4156,6 +5600,9 @@ class TrainerPanel(ctk.CTkFrame):
         self.btn_check.set_text("Prüfen")
         self.btn_check.set_enabled(True)
         self.lbl_counter.configure(text="Aufgabe %d / %d" % (self.index + 1, len(self.tasks)))
+        # Ab 0.63.2 (N-e): Anordnung der Felder auch dann pruefen, wenn sich
+        # die Groesse des Feldbereichs nicht aendert (gleich viele Felder)
+        self._schedule_fit_marks()
 
     def check(self):
         if not self.tasks:
@@ -4167,9 +5614,11 @@ class TrainerPanel(ctk.CTkFrame):
         answers = {key: entry.get() for key, entry in self.entries.items()}
         result = task.check(answers)
         for key, ok in result.items():
-            self.marks[key].configure(
-                text="richtig" if ok else "richtig wäre: %s" % task.solution[key],
-                text_color=C["green"] if ok else C["red"])
+            self.marks[key].fit_raw = ("richtig" if ok else
+                                       "richtig wäre: %s" % task.solution[key])
+            self.marks[key].configure(text=self.marks[key].fit_raw,
+                                      text_color=C["green"] if ok else C["red"])
+        self._fit_marks()
         correct = all(result.values())
         self.results.append(correct)
         self.db.log_trainer(task.kind, task.level, correct)
@@ -4183,6 +5632,112 @@ class TrainerPanel(ctk.CTkFrame):
         last = self.index >= len(self.tasks) - 1
         self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
 
+    # -- Ab 0.63.2 (A1, Nebenbefund 0.63.1): "richtig wäre: <Wert>" umbrechen --
+    # Passt die Rueckmeldung neben dem Feld nicht bis zum sichtbaren Rand der
+    # Seite, wird sie mit derselben Regel wie die Rechnerkaesten (fit_lines)
+    # umbrochen: "richtig wäre:" und darunter eingerueckt der Wert, eine
+    # IPv6-Adresse bei Bedarf nach einem Doppelpunkt. Wortlaut unveraendert.
+
+    def _schedule_fit_marks(self):
+        if not self._marks_pending:
+            self._marks_pending = True
+            self.after_idle(self._fit_marks)
+
+    def _fit_marks(self):
+        self._marks_pending = False
+        try:
+            canvas = self.fields_box.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is None:
+                return
+            if getattr(self, "_marks_canvas", None) is not canvas:
+                # Ab 0.63.2 (A1): auch wenn sich nur der sichtbare Bereich
+                # aendert (Rollbalken, Seite breiter als das Fenster), neu setzen
+                self._marks_canvas = canvas
+                canvas.bind("<Configure>", lambda _e: self._schedule_fit_marks(), add="+")
+            self.update_idletasks()
+            # Abstand vom Feldbereich bis zum rechten Rand der Seite bleibt fest
+            inner = canvas.winfo_children()[0]
+            pad = max(0, (inner.winfo_rootx() + inner.winfo_width())
+                      - (self.fields_box.winfo_rootx() + self.fields_box.winfo_width()))
+            right = canvas.winfo_rootx() + canvas.winfo_width() - pad
+            if self._fit_fields(right - self.fields_box.winfo_rootx()):
+                self.update_idletasks()
+            for mark in self.marks.values():
+                raw = getattr(mark, "fit_raw", "")
+                if not raw:
+                    continue
+                # Schrift der Marke ueber die bekannte Angabe messen (wie
+                # fisi_widgets.text_width), nicht ueber das private CTk-Label
+                font = tk_font(F["small_bold"])
+
+                def breite(text, font=font):
+                    return max(int(self.tk.call("font", "measure", font, line))
+                               for line in text.split("\n"))
+                rand = mark.winfo_reqwidth() - breite(mark.cget("text"))
+                entry = mark.fit_entry
+                # neben dem Feld (Spalte 2) oder, wenn dort nicht einmal
+                # "richtig wäre:" passt (Schrift Sehr gross), unter dem Feld
+                # Ab 0.63.2 (FG-121): Spalte 2 beginnt hinter der breitesten
+                # Zelle der Spalte 1 - stehen die Beschriftungen ueber den
+                # Feldern (N-e), ist das die Beschriftung, nicht das Feld
+                neben = max(entry.winfo_rootx() + entry.winfo_width() + 12,
+                            self.fields_box.winfo_rootx()
+                            + self.fields_box.grid_bbox(2, mark.fit_row)[0])
+                unter = entry.winfo_rootx()
+                # (ab 0.63.2: unter das Feld auch dann, wenn die Marke neben
+                # dem Feld selbst umbrochen nicht passt)
+                def setzen(room):
+                    text = raw
+                    for chars in range(len(raw), 9, -1):
+                        text = fit_lines(raw, chars)
+                        if breite(text) <= room:
+                            return text, True
+                    return text, False
+                passt = False
+                if right - neben - rand >= breite("richtig wäre:"):
+                    text, passt = setzen(right - neben - rand)
+                if passt:
+                    ort = (mark.fit_row, 2, 1, 0)
+                else:
+                    text, _passt = setzen(right - unter - rand)
+                    ort = (mark.fit_row + 1, 1, 2, 12)
+                info = mark.grid_info()
+                if (int(info.get("row", -1)), int(info.get("column", -1))) != ort[:2]:
+                    mark.grid(row=ort[0], column=ort[1], columnspan=ort[2],
+                              padx=ort[3], sticky="w")
+                if mark.cget("text") != text:
+                    mark.configure(text=text)
+        except (tk.TclError, IndexError, KeyError, AttributeError):
+            # Messung fehlgeschlagen: altes Verhalten (Marke neben dem Feld)
+            pass
+
+    def _fit_fields(self, room):
+        """Ab 0.63.2 (N8, N-e): Passen Beschriftung und Feld nebeneinander
+        nicht in die sichtbare Breite (Sehr gross, 1120 px, lange
+        Beschriftungen wie "Broadcast-Adresse des 1. vergebenen Subnetzes"),
+        steht jede Beschriftung direkt ueber ihrem Feld (Spalte des Felds);
+        sonst wie bisher links daneben. Entschieden wird nur aus den
+        benoetigten Breiten (nicht aus der aktuellen Anordnung), es entsteht
+        keine Schleife. Liefert True, wenn sich die Anordnung geaendert hat."""
+        if not self.field_labels or room <= 1:
+            return False
+        gap = px(12)
+        entry_width = max(entry.winfo_reqwidth() for entry in self.entries.values())
+        caption_width = max(label.winfo_reqwidth() for label in self.field_labels)
+        stacked = caption_width + 2 * gap + entry_width > room
+        if stacked == self.fields_stacked:
+            return False
+        self.fields_stacked = stacked
+        for label in self.field_labels:
+            if stacked:
+                label.grid(row=label.fit_row - 1, column=1, sticky="w", padx=12,
+                           pady=(4, 0))
+            else:
+                label.grid(row=label.fit_row, column=0, sticky="w", padx=0, pady=4)
+        return True
+
     def advance(self):
         if self.index < len(self.tasks) - 1:
             self.index += 1
@@ -4192,6 +5747,7 @@ class TrainerPanel(ctk.CTkFrame):
         self.tasks = []
         for child in self.fields_box.winfo_children():
             child.destroy()
+        self.field_labels = []   # ab 0.63.2 (N-e)
         self.txt_steps.pack_forget()
         self.lbl_task.configure(text="Runde beendet: %s." % summary)
         self.lbl_feedback.configure(text="Starte eine neue Runde oder wähle eine andere "
@@ -4336,15 +5892,13 @@ class SubnetCalc:
                   kind="accent").pack(anchor="w")
         # Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Die Kaesten brechen selbst um
         # (fit_lines, _fit_box); wrap="none", damit Tabellen Tabellen bleiben
-        if key == "netzdaten" and mode == "ipv4":
-            box = make_text(frame, height=9, readonly=True, font=F["mono_small"],
-                            wrap="none")
-        else:
-            # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
-            # um; der Kasten waechst mit, statt Zeilen zu verstecken
-            box = make_autogrow_text(frame, min_height=9, max_height=40,
-                                     font=F["mono_small"], wrap="none")
-            box.configure(state="disabled")
+        # IPv6-Netzdaten: zwei Zeilen mehr (F-63-4), lange Adressen brechen
+        # um; der Kasten waechst mit, statt Zeilen zu verstecken. Ab 0.63.2
+        # (A7) auch die IPv4-Netzdaten: 9 feste Zeilen zeigten die letzte
+        # Zeile ("Präfixlänge") nur teilweise bzw. erst nach Rollen
+        box = make_autogrow_text(frame, min_height=9, max_height=40,
+                                 font=F["mono_small"], wrap="none")
+        box.configure(state="disabled")
         box.pack(fill="both", expand=True, pady=(14, 0))
         self._fit_box(box)
         view["box"] = box
@@ -4598,6 +6152,11 @@ CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 
 class CalcView(View):
+    # Ab 0.63.2 (N6, B-I-04): beim Vorladen in Teilen gebaut (je Karte ein
+    # Teil, View.add_parts); beim direkten Oeffnen wie bisher am Stueck
+    PARTS = True
+    REWRAP_AFTER_PARTS = True
+
     def build(self):
         self.info_visible = {"raid": False, "screen": False, "ups": False}
         self.info_frames = {}
@@ -4612,7 +6171,12 @@ class CalcView(View):
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
+        self.add_parts([self._build_subnet, self._build_raid, self._build_screen,
+                        lambda: self._build_ups(layout), self._build_ups_rest,
+                        self._build_end])
 
+    def _build_subnet(self):
+        layout = self.calc_layout
         # --- Subnetting (ab 0.63 mit Schalter IPv4/IPv6, Plan 0.63 Abschnitt 4) --
         subnet = Card(layout, title=SUBNET_TITLE, accent=C["accent"],
                       subtitle=SUBNET_SUBTITLE["ipv4"])
@@ -4622,70 +6186,78 @@ class CalcView(View):
         subnet.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.subnet = SubnetCalc(subnet)
 
+    def _build_raid(self):
+        layout = self.calc_layout
         # --- RAID ---------------------------------------------------------
-        raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
-                    subtitle="Nutzkapazität, Verlust, Effizienz")
+        raid = Card(layout, title=RAID_TITLE, accent=C["purple"],
+                    subtitle=RAID_SUBTITLE)
         raid.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
-        make_label(raid.body, "RAID-Level", font=F["small"],
+        make_label(raid.body, RAID_FIELD_LEVEL, font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
+        # Ab 0.63.2 (CI Welle 3b): bei Bedarf zweizeilig wie die Farbtiefe -
+        # mit breiterer Schrift (DejaVu Sans) war die Reihe bei Sehr gross
+        # und 1120 px breiter als die Karte
         self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
-                                    initial=2)
-        self.raid_pills.pack(anchor="w", pady=(8, 12))
+                                    initial=2, umbrechen=True)
+        self.raid_pills.pack(anchor="w", fill="x", pady=(8, 12))
 
         grid = transparent_frame(raid.body)
         grid.pack(anchor="w", fill="x")
-        make_label(grid, "Anzahl Festplatten", font=F["small"],
+        make_label(grid, RAID_FIELD_DISKS, font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_disks = EntryBox(grid, width=8, value="4")
         self.entry_disks.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(grid, "Kapazität je Festplatte (GB)", font=F["small"],
+        make_label(grid, RAID_FIELD_SIZE, font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_size = EntryBox(grid, width=8, value="1000")
         self.entry_size.grid(row=1, column=1, sticky="w", padx=12, pady=4)
 
         NeoButton(raid.body, "Berechnen", self.calc_raid,
                   kind="primary").pack(anchor="w", pady=(12, 0))
-        self.txt_raid = make_text(raid.body, height=10, readonly=True,
+        self.txt_raid = make_text(raid.body, height=11, readonly=True,
                                   font=F["mono_small"])
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
 
+    def _build_screen(self):
+        layout = self.calc_layout
         # --- Bildschirm-Datenvolumen ---------------------------------------
-        screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
-                      subtitle="Pixel, Farbtiefe, Datenrate")
+        screen = Card(layout, title=SCREEN_TITLE, accent=C["green"],
+                      subtitle=SCREEN_SUBTITLE)
         screen.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
 
         screen_grid = transparent_frame(screen.body)
         screen_grid.pack(anchor="w", fill="x")
-        make_label(screen_grid, "Breite (Pixel)", font=F["small"],
+        make_label(screen_grid, SCREEN_FIELD_WIDTH, font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
         self.entry_width = EntryBox(screen_grid, width=8, value="1920")
         self.entry_width.grid(row=0, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Höhe (Pixel)", font=F["small"],
+        make_label(screen_grid, SCREEN_FIELD_HEIGHT, font=F["small"],
                    fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
         self.entry_height = EntryBox(screen_grid, width=8, value="1080")
         self.entry_height.grid(row=1, column=1, sticky="w", padx=12, pady=4)
-        make_label(screen_grid, "Bildrate (fps, optional)",
+        make_label(screen_grid, SCREEN_FIELD_FPS,
                    font=F["small"], fg=C["text_dim"]).grid(
                        row=0, column=2, sticky="w", padx=(24, 0), pady=4)
         self.entry_fps = EntryBox(screen_grid, width=8, value="30")
         self.entry_fps.grid(row=0, column=3, sticky="w", padx=12, pady=4)
         self.entry_fps.entry.bind("<Return>", lambda _e: self.calc_screen())
 
-        make_label(screen.body, "Farbtiefe", font=F["small"],
+        make_label(screen.body, SCREEN_FIELD_DEPTH, font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w", pady=(14, 0))
-        self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2)
-        self.depth_pills.pack(anchor="w", pady=(8, 12))
+        # Ab 0.63.2 (A6): bei Bedarf zweizeilig, damit die Seite nicht
+        # breiter wird als das Fenster (wie die Aufgabenart im Trainer)
+        self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2, umbrechen=True)
+        self.depth_pills.pack(anchor="w", fill="x", pady=(8, 12))
 
         NeoButton(screen.body, "Berechnen", self.calc_screen,
                   kind="accent").pack(anchor="w")
-        self.txt_screen = make_text(screen.body, height=13, readonly=True,
+        self.txt_screen = make_text(screen.body, height=14, readonly=True,
                                     font=F["mono_small"])
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)
 
-        self._build_ups(layout)
-
+    def _build_end(self):
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
 
@@ -4695,6 +6267,42 @@ class CalcView(View):
         self.subnet_gap = 0
         self.canvas.bind("<Configure>", self._schedule_fit, "+")
         self.content.bind("<Configure>", self._schedule_fit, "+")
+        # Ab 0.63.2 (CI Welle 3b): neuer Knopftext ("Lösung ausblenden")
+        # aendert nur die Breite, nicht die Hoehe - Knopfzeilen neu anpassen
+        for row in self.ups_button_rows:
+            for widget in row.winfo_children():
+                tk.Misc.bind(widget, "<Configure>", self._schedule_fit, "+")
+        # Ab 0.63.2 (N6): in Teilen gebaut hat die Ansicht ihre Groesse schon
+        # (LazyViews), ein <Configure> kommt evtl. nicht mehr
+        if self._in_parts:
+            self._schedule_fit()
+            # ... und die uebrigen Subnetting-Ansichten (sonst prepare, siehe
+            # unten) entstehen ebenfalls je eine in einem eigenen Teil
+            self.add_parts([self._build_rest_part] * self._rest_count())
+
+    def _rest_count(self):
+        """Ab 0.63.2 (N6): Wie viele Teile der Subnetting-Karte fehlen noch
+        (je Modus die Pillenzeile mit "netzdaten", je weitere Ansicht eine)?"""
+        subnet = self.subnet
+        count = 0
+        for mode, _name in SUBNET_MODES:
+            if not subnet.built(mode):
+                count += 1
+            count += sum(1 for key, _name in SUBNET_VIEWS[mode]
+                         if key != "netzdaten" and (mode, key) not in subnet.views)
+        return count
+
+    def _build_rest_part(self):
+        """Ab 0.63.2 (N6, B-I-04): einen fehlenden Teil der Subnetting-Karte
+        bauen (verdeckt, wie build_rest - nur einen statt aller)."""
+        subnet = self.subnet
+        for mode, _name in SUBNET_MODES:
+            if subnet.build_mode(mode):
+                return
+            for key, _name in SUBNET_VIEWS[mode]:
+                if (mode, key) not in subnet.views:
+                    subnet._build_view(mode, key)
+                    return
 
     # -- Ab 0.63.1 (Plan 0.63.1 Teil 1.3): Breite der Subnetting-Karte -------
     #
@@ -4730,8 +6338,54 @@ class CalcView(View):
                 self.subnet_gap = gap
                 card.grid_configure(padx=(0, gap))
             card.stack_subtitle(card.head_width() > avail)
+            self._fit_ups(avail)
+            # Ab 0.63.2 (CI Welle 3b): Knopfzeilen der USV-Karte brechen um,
+            # wenn sie nicht in die Karte passen (FlowRow; mit Inter passen
+            # sie immer, mit DejaVu Sans bei Sehr gross und 1120 px nicht)
+            room = avail - self.ups_card.frame_width()
+            changed = False
+            for row in self.ups_button_rows:
+                changed |= FlowRow.of(row).fit(room)
         except tk.TclError:
             return
+        if changed:
+            # neue Breite der Karte: Abstand der Subnetting-Karte neu rechnen
+            self.after_idle(self._schedule_fit)
+        if self._in_parts:
+            # Ab 0.63.2 (N6): wie FitWidthMixin._fit - Breite der
+            # Bildlaufflaeche nachziehen, wenn die Seite schmaler wurde
+            self.after_idle(self._refit_width)
+
+    def _fit_ups(self, avail):
+        """Ab 0.63.2 (A6): Die USV-Spalten "Last" und "Akku" stehen
+        untereinander, wenn sie nebeneinander breiter waeren als der
+        sichtbare Bereich. Entschieden wird nur aus der Breite beider Spalten
+        nebeneinander (haengt nicht von der Anordnung ab) und der sichtbaren
+        Breite - so entsteht keine Schleife."""
+        load, battery = self.ups_boxes
+        card = self.ups_card
+        # Ab Gegenpruefung S1a (L3): untereinander beginnen die Felder beider
+        # Spalten an derselben Stelle (Beschriftungsspalte gleich breit). Die
+        # Entscheidung rechnet diese Angleichung heraus (Breite der Spalten
+        # ohne Angleichung), haengt also weiter nicht von der Anordnung ab.
+        labels = [max((child.winfo_reqwidth() for child in box.grid_slaves(column=0)
+                       if int(child.grid_info()["row"]) > 0), default=0)
+                  for box in self.ups_boxes]
+        side = (load.winfo_reqwidth() + battery.winfo_reqwidth()
+                - sum(max(0, self.ups_label_min - width) for width in labels)
+                + card._apply_widget_scaling(32 + 2 * card.pad))
+        stacked = side > avail
+        if stacked != self.ups_stacked:
+            self.ups_stacked = stacked
+            if stacked:
+                battery.grid_configure(row=1, column=0, pady=(14, 0))
+            else:
+                battery.grid_configure(row=0, column=1, pady=0)
+        minimum = max(labels) if stacked else 0
+        if minimum != self.ups_label_min:
+            self.ups_label_min = minimum
+            for box in self.ups_boxes:
+                box.grid_columnconfigure(0, minsize=minimum)
 
     def _build_ups(self, layout):
         """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
@@ -4740,6 +6394,8 @@ class CalcView(View):
         ups.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
         columns = transparent_frame(ups.body)
         columns.pack(anchor="w", fill="x")
+        self.ups_card, self.ups_boxes, self.ups_stacked = ups, [], False
+        self.ups_label_min = 0
         self.ups_entries = {}
         groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
                   (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
@@ -4747,6 +6403,7 @@ class CalcView(View):
         for column, (caption, keys) in enumerate(groups):
             box = transparent_frame(columns)
             box.grid(row=0, column=column, sticky="nw", padx=(0, 32) if column == 0 else 0)
+            self.ups_boxes.append(box)
             make_label(box, caption, font=F["label"], fg=C["muted"]).grid(
                 row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
             for row, key in enumerate(keys, start=1):
@@ -4759,8 +6416,14 @@ class CalcView(View):
                 if key == "last":
                     self.ups_unit = PillGroup(box, UPS_UNITS, initial=0)
                     self.ups_unit.grid(row=row, column=2, sticky="w")
+
+    def _build_ups_rest(self):
+        """Ab 0.63.2 (N6, B-I-04): zweiter Teil der USV-Karte (Knoepfe, Bild,
+        Ergebnis, Rechenweg, Uebungsaufgaben) - beim Vorladen ein eigener Teil."""
+        ups = self.ups_card
         buttons = transparent_frame(ups.body)
         buttons.pack(anchor="w", pady=(14, 0))
+        self.ups_button_rows = [buttons]   # ab 0.63.2: brechen bei Bedarf um (_fit)
         for mode, caption in UPS_MODES:
             NeoButton(buttons, caption, lambda m=mode: self.calc_ups(m),
                       kind="accent" if mode == "empfehlung" else "primary").pack(
@@ -4781,6 +6444,7 @@ class CalcView(View):
             anchor="w", pady=(18, 0))
         task_buttons = transparent_frame(ups.body)
         task_buttons.pack(anchor="w", pady=(8, 0))
+        self.ups_button_rows.append(task_buttons)
         NeoButton(task_buttons, UPS_TASK_NEXT, self.next_ups_task, kind="ghost").pack(
             side="left", padx=(0, 10))
         self.btn_ups_solution = NeoButton(task_buttons, UPS_SOLUTION_SHOW,
@@ -4901,7 +6565,10 @@ class CalcView(View):
 #  LERNFORTSCHRITT
 # ============================================================================
 
-class ProgressView(View):
+class ProgressView(FitRowsMixin, View):
+    Z3_REFIT = ("refresh",)   # ab 0.63.2 (Z3): neue Tabellenzeilen
+    Z3_NORMAL = True          # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def build(self):
         row = transparent_frame(self.content)
         row.pack(fill="x")
@@ -4951,6 +6618,9 @@ class ProgressView(View):
         columns = ("datum", "score", "prozent", "note", "dauer")
         self.tree = ttk.Treeview(table_card.body, columns=columns, show="headings",
                                  height=9, style="Dash.Treeview")
+        # ab 0.63.2 (Nico, Meldung 39 Frage 1a): bei "Sehr gross" im schmalen
+        # Fenster faellt "Erfolgsquote" weg (Z3, _z3_tree)
+        self.tree._fisi_z3_weglassen = ("prozent",)
         headings = [("datum", "Datum & Uhrzeit", 170), ("score", "Ergebnis", 110),
                     ("prozent", "Erfolgsquote", 110), ("note", fr.NOTE_KURZ, 150),
                     ("dauer", "Dauer", 90)]
@@ -5010,7 +6680,7 @@ class ProgressView(View):
 
     def _refresh_key(self):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
-        if stamp is None:
+        if stamp is None or getattr(self, "_coverage_old", False):
             return None
         goal = learning_settings()
         plan = frp.load_rp_settings()
@@ -5023,12 +6693,13 @@ class ProgressView(View):
 
         self.stat_tests[0].configure(text=str(count))
         self.stat_tests[1].configure(text="abgeschlossene Sessions")
-        self.stat_avg[0].configure(text="%.1f %%" % average)
+        # Ab 0.63.2 (B-D-05): Dezimalkomma
+        self.stat_avg[0].configure(text="%s %%" % fisi_core.de_number(average, 1))
         self.stat_avg[1].configure(text="über alle Sessions")
 
         if results:
             best = max(row[3] for row in results)
-            self.stat_best[0].configure(text="%.1f %%" % best)
+            self.stat_best[0].configure(text="%s %%" % fisi_core.de_number(best, 1))
             self.stat_best[1].configure(text=ihk_note(best))
         else:
             self.stat_best[0].configure(text="-")
@@ -5055,19 +6726,25 @@ class ProgressView(View):
             self.tree.insert("", "end", values=(
                 timestamp,
                 "%d / %d" % (score, total),
-                "%.1f %%" % percentage,
+                "%s %%" % fisi_core.de_number(percentage, 1),
                 note,
                 "%02d:%02d min" % (duration // 60, duration % 60),
             ))
         for item in self.exam_tree.get_children():
             self.exam_tree.delete(item)
         exams = self.db.exams()
+        # ab 0.63.2 (Z3, Gegenpruefung M1): Kurzname wie in der Pruefungs-
+        # Historie des Pruefungstrainers, falls die Tabelle bei grosser
+        # Schrift mit den langen Namen nicht passt (FitRowsMixin._z3_tree)
+        self.exam_tree._fisi_z3_kurz = {}
         for entry in exams:
             exam = fp.EXAM.get(entry["art"])
-            self.exam_tree.insert("", "end", values=(
+            item = self.exam_tree.insert("", "end", values=(
                 entry["timestamp"], exam["name"] if exam else entry["art"],
                 _points(entry["punkte"]), entry["note"],
                 "%02d:%02d min" % (entry["dauer"] // 60, entry["dauer"] % 60)))
+            if exam:
+                self.exam_tree._fisi_z3_kurz[item] = {"pruefung": (exam["name"], exam["kurz"])}
         for child in self.weak_box.winfo_children():
             child.destroy()
         title, weak = fp.latest_weak(exams)
@@ -5081,7 +6758,8 @@ class ProgressView(View):
         # Wechsel zum Fortschritt so schnell bleibt wie in 0.54
         plan = frp.load_rp_settings()
         key = frp.coverage_key(self.db, plan)
-        if key is None or key != getattr(self, "_coverage_key", None):
+        if key is None or key != getattr(self, "_coverage_key", None) \
+                or getattr(self, "_coverage_old", False):     # FG-117
             self._coverage_key = key
             self.after(50, lambda: self._fill_coverage(plan))
 
@@ -5090,7 +6768,9 @@ class ProgressView(View):
             if self.coverage_card is None:
                 self.coverage_card = CoverageCard(self.coverage_slot, self.app)
                 self.coverage_card.pack(fill="x")
-            self.coverage_card.set_coverage(frp.Coverage(StatusBook(self.db), plan))
+            book = StatusBook(self.db)
+            self._coverage_old = _holds_old_texts(book)      # FG-117
+            self.coverage_card.set_coverage(frp.Coverage(book, plan))
         except tk.TclError:   # Fenster inzwischen geschlossen
             pass
 
@@ -5432,7 +7112,32 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
                        anchor="w", fill=map_colors["schrift"], font=tk_font(F["small_bold"]))
 
 
-class SettingsView(View):
+# Ab 0.63.2 (FG-77): Schreibsperre (read_only_reason) waehrend "Sicherung
+# einspielen" -> "Zusammenfuehren". SyncError kommt nur aus merge_into_local,
+# vor dessen Schreibblock: nichts uebernommen, die normale Sicherungs-Meldung.
+# Entsteht die Sperre erst waehrend des Vorgangs und kommt BackupError, kann
+# das Zusammenfuehren schon geschrieben sein (Pruefung vor dem Wiederherstellen
+# geloeschter Spielstaende): ehrlicher Satz. PC und Handy gleich (Test).
+MSG_MERGE_INTERRUPTED = ("Das Zusammenführen wurde unterbrochen. Ein Teil der Sicherung "
+                         "kann schon übernommen sein; es geht nichts verloren. %s Ist das "
+                         "behoben, spiele die Sicherung noch einmal mit „Zusammenführen“ ein.")
+
+
+def merge_error_text(db, error, locked_before):
+    """Meldung zu einem Fehler beim Zusammenfuehren (ab 0.63.2, FG-77);
+    locked_before: read_only_reason vor dem Aufruf."""
+    reason = getattr(db, "read_only_reason", None)
+    line = DB_READ_ONLY_LINES.get(reason, "") if reason else ""
+    if isinstance(error, fisi_sync.SyncError):
+        return (fsi.MSG_READ_ONLY % line).strip()
+    if reason and not locked_before:
+        return " ".join((MSG_MERGE_INTERRUPTED % line).split())
+    return fsi.restore_error_text(error)
+
+
+class SettingsView(FitRowsMixin, View):
+    Z3_NORMAL = True   # ab 0.63.2 (B-4b): auch bei Normal, wenn zu breit
+
     def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
         fisi_optionen). Offen ohne Klappkopf nur Updates (E1; bis 0.59.1 auch
@@ -5491,7 +7196,7 @@ class SettingsView(View):
         ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
                       variable=self.var_auto, command=self._toggle_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         # Ab 0.59 (8b): Desktop-Verknuepfung, nur unter Linux
@@ -5664,7 +7369,7 @@ class SettingsView(View):
             ctk.CTkSwitch(goal.body, text=text, variable=var,
                           command=lambda k=key: self._save_goal(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         row = transparent_frame(goal.body)
@@ -5707,7 +7412,7 @@ class SettingsView(View):
             ctk.CTkSwitch(plan.body, text=text, variable=var,
                           command=lambda k=key: self._save_rp(k),
                           font=F["small"], text_color=C["text_dim"],
-                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          fg_color=C["field_border"], progress_color=C["violet"],
                           button_color=C["text"], button_hover_color="#FFFFFF"
                           ).pack(anchor="w", pady=(0, 10))
         make_label(plan.body, frp.WEIGHT_OPTION_HINT, font=F["tiny"], fg=C["muted"],
@@ -5758,12 +7463,17 @@ class SettingsView(View):
         self.lbl_sync = make_label(row, "", font=F["small"], fg=C["text_dim"],
                                    justify="left", anchor="w", wraplength=520)
         self.lbl_sync.pack(side="left", padx=(16, 0))
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, gezeigt nur mit Text
+        # (show_sync_status), dann direkt unter der Zeile mit dem Knopf
+        self._sync_row = row
+        self.lbl_sync_mixed = make_label(sync.body, "", font=F["small"], fg=C["text_dim"],
+                                         justify="left", anchor="w", wraplength=800)
         self.var_sync_auto = tk.BooleanVar(value=settings["sync_auto"])
         ctk.CTkSwitch(sync.body, text="Automatisch abgleichen (beim Start, nach dem "
                                       "Lernen und beim Beenden)",
                       variable=self.var_sync_auto, command=self._toggle_sync_auto,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
         make_label(sync.body,
@@ -5798,16 +7508,17 @@ class SettingsView(View):
 
     def _build_lerninhalte(self, content):
         totals = content_totals()
-        lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
-                 "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
-                 "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
+        de_int = fisi_core.de_int   # ab 0.63.2 (B-D-07): Tausenderpunkt
+        lines = ["Karteikarten gesamt: %s" % de_int(len(KARTEIKARTEN)),
+                 "Prüfungsfragen gesamt: %s" % de_int(len(QUIZ_QUESTIONS)),
+                 "AP1-Szenarien gesamt: %s" % de_int(len(AP1_SZENARIEN)),
+                 "AP2-Szenarien gesamt: %s" % de_int(len(SZENARIEN)),
                  # ab 0.62.2 wie am Handy (F4)
-                 "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN),
+                 "Testprojekte gesamt: %s" % de_int(len(PROJEKTARBEITEN)),
                  ""]
         for category in CATEGORIES:
-            lines.append("%s: %d Inhalte" % (CATEGORY_SHORT[category],
-                                             totals.get(category, 0)))
+            lines.append("%s: %s Inhalte" % (CATEGORY_SHORT[category],
+                                             de_int(totals.get(category, 0))))
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
@@ -5828,11 +7539,8 @@ class SettingsView(View):
 
     def _build_loeschen(self, danger):
         make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        make_label(danger.body,
-                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                   "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete "
-                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
-                   "Dieser Schritt lässt sich nicht rückgängig machen.",
+        # Ab 0.63.2 (B-G-16): ein Text fuer PC und Handy (fisi_optionen)
+        make_label(danger.body, fo.RESET_ALL_TEXT,
                    font=F["small"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
@@ -5863,7 +7571,7 @@ class SettingsView(View):
         make_label(about.body,
                    fr.about_text(APP_TITLE, APP_VERSION,
                                  "Umgesetzt mit Python und CustomTkinter. Die Installer für "
-                                 "Windows, Linux und macOS bringen alles Nötige mit - es muss "
+                                 "Windows, Linux und macOS bringen alles Nötige mit – es muss "
                                  "nichts zusätzlich installiert werden. Die Handy-App für "
                                  "Android nutzt dieselben Lerninhalte."),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
@@ -5924,7 +7632,7 @@ class SettingsView(View):
         ctk.CTkSwitch(body, text=fle.SWITCH, variable=self.var_perf,
                       command=self._toggle_perf,
                       font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      fg_color=C["field_border"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(12, 0))
         self.lbl_perf = make_label(body, "", font=F["small"], fg=C["muted"],
@@ -6101,7 +7809,7 @@ class SettingsView(View):
                                          "eintragen.", text_color=C["yellow"])
             return
         self.btn_sync.set_enabled(False)
-        self.lbl_sync.configure(text="Gleiche ab ...", text_color=C["text_dim"])
+        self.lbl_sync.configure(text="Gleiche ab …", text_color=C["text_dim"])
         self.app.sync.run()
 
     def show_sync_status(self, result, error):
@@ -6111,6 +7819,7 @@ class SettingsView(View):
             self._sync_status = (result, error)
             return
         self.btn_sync.set_enabled(True)
+        self._show_sync_mixed()
         if error:
             self.lbl_sync.configure(text=error, text_color=C["red"])
             return
@@ -6125,9 +7834,19 @@ class SettingsView(View):
             text, color = "Noch nicht abgeglichen.", C["muted"]
         self.lbl_sync.configure(text=text, text_color=color)
 
+    def _show_sync_mixed(self):
+        """Ab 0.63.2 (C-4): Mischbetrieb-Zeile (Text wie am Handy aus
+        fisi_optionen); ohne Text nicht gezeigt."""
+        text = fo.sync_mixed_text(self.app.db)
+        self.lbl_sync_mixed.configure(text=text)
+        if text:
+            self.lbl_sync_mixed.pack(after=self._sync_row, anchor="w", pady=(8, 0))
+        else:
+            self.lbl_sync_mixed.pack_forget()
+
     def check_updates(self):
         self.btn_update.set_enabled(False)
-        self.lbl_update.configure(text="Suche nach Updates ...", text_color=C["text_dim"])
+        self.lbl_update.configure(text="Suche nach Updates …", text_color=C["text_dim"])
         self.app.updater.check(manual=True, on_done=self._update_checked)
 
     def _update_checked(self, info, error):
@@ -6222,7 +7941,12 @@ class SettingsView(View):
         if not self.built(fo.DIAGNOSE_ID):
             return
         log_key = []
-        for path in (error_log_path(), fisi_update.update_log_path()):
+        # Ab 0.63.2 (B-L-06): auch haenger.log und laeuft.info, die stehen
+        # ebenfalls im Bericht (fisi_diagnose.build_report)
+        folder = os.path.dirname(error_log_path())
+        for path in (error_log_path(), fisi_update.update_log_path(),
+                     os.path.join(folder, fdg.HANG_LOG_NAME),
+                     os.path.join(folder, fdg.INFO_NAME)):
             try:
                 log = os.stat(path)
                 log_key.append((log.st_size, log.st_mtime))
@@ -6323,13 +8047,22 @@ class SettingsView(View):
             filetypes=[(fsi.FILE_TYPE, "*" + fsi.BACKUP_EXT)])
         if not path:
             return
+        # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht; vor jeder
+        # Meldung wieder weg
+        overlay = show_wait(self.app, WAIT_BACKUP_TEXT)
         try:
             data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
             # Ab 0.62.5 (B-G-02): ueber eine Hilfsdatei - bei voller Platte
             # bleibt eine vorhandene alte Sicherung heil
             fsi.save_file(path, data)
         except OSError as error:
-            messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
+            failure = str(error)
+        else:
+            failure = None
+        finally:
+            hide_wait(self.app, overlay)
+        if failure is not None:
+            messagebox.showerror(fsi.SAVE_ERROR_TITLE, failure)
             return
         show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
 
@@ -6353,30 +8086,42 @@ class SettingsView(View):
         runs = fsi.deleted_runs(self.db, backup)
         if runs and not messagebox.askyesno(fsi.DELETED_TITLE, fsi.deleted_question(runs)):
             runs = []
+        locked = getattr(self.db, "read_only_reason", None)
         try:
             count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
                                      SyncController.device())
-        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+        except fsi.RESTORE_ERRORS + (fisi_sync.SyncError,) as error:  # ab 0.63.2 (FG-77)
+            messagebox.showerror(fsi.ERROR_TITLE, merge_error_text(self.db, error, locked))
             return
         self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE,
                             fsi.merge_message(count, [item["name"] for item in runs]))
 
     def _replace_backup(self, backup):
-        if not messagebox.askyesno(fsi.REPLACE_TITLE, fsi.replace_question(backup),
-                                   icon="warning"):
+        # Ab 0.63.2: eigener Dialog mit Bildlauf - im Tk-Dialog war der lange
+        # Warntext abgeschnitten (kleine Bildschirme, "Sehr gross")
+        if not ask_long_question(self.app, fsi.REPLACE_TITLE, fsi.replace_question(backup)):
             return
         if not messagebox.askyesno(fsi.REPLACE_CONFIRM_TITLE, fsi.REPLACE_CONFIRM,
                                    icon="warning", default="no"):
             return
+        # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird; vor
+        # jeder Meldung wieder weg
+        overlay = show_wait(self.app, WAIT_REPLACE_TEXT)
+        failure = None
         try:
-            path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
-                                   APP_VERSION, SyncController.device())
-        except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-            messagebox.showerror(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+            try:
+                path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
+                                       APP_VERSION, SyncController.device())
+            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
+                failure = fsi.restore_error_text(error)
+            if failure is None:
+                self._after_restore()
+        finally:
+            hide_wait(self.app, overlay)
+        if failure is not None:
+            messagebox.showerror(fsi.ERROR_TITLE, failure)
             return
-        self._after_restore()
         messagebox.showinfo(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
 
     def _after_restore(self):
@@ -6405,10 +8150,9 @@ class SettingsView(View):
                                "Wirklich alle gespeicherten Testergebnisse und "
                                "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
                                "Dashboard bleiben erhalten."):
-            if self.db.clear_history():
-                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
-                if hint:
-                    messagebox.showinfo("Historie löschen", hint)
+            # Ab 0.63.2 (B-D-12): Bestaetigung bzw. genau ein Fehlerfenster
+            if self._delete_checked("Historie löschen", lambda: self.db.clear_history()):
+                messagebox.showinfo("Gelöscht", self._with_clock_fix(fo.DELETE_HISTORY_DONE))
                 self.app.notify_progress()
 
     def reset_all(self):
@@ -6416,15 +8160,102 @@ class SettingsView(View):
                                    "Wirklich ALLE Lerndaten unwiderruflich "
                                    "löschen?"):
             return
-        if self.db.reset_all():
+        if self._delete_checked("Alles zurücksetzen", lambda: self.db.reset_all()):
             messagebox.showinfo("Zurückgesetzt", self._with_clock_fix(
                 "Alle Lerndaten wurden gelöscht."))
             self.app.notify_progress()
+
+    def _delete_checked(self, title, action):
+        """Ab 0.63.2 (B-D-12): Loescht ueber action(). Ein Datenbankfehler
+        waehrenddessen wird gesammelt und als genau ein Fenster gezeigt
+        ("Es wurde nichts gelöscht." und der Text der Datenbank) - statt
+        des allgemeinen Datenbankfehler-Fensters. Liefert True bei Erfolg."""
+        db = self.db
+        collected = []
+        handler = db.error_handler
+        db.error_handler = collected.append
+        try:
+            done = action()
+        finally:
+            db.error_handler = handler
+        if done:
+            return True
+        message = "\n\n".join([fo.DELETE_NOTHING] + collected)
+        sidebar = getattr(self.app, "sidebar", None)
+        if sidebar is not None:
+            sidebar.update_db_hint()
+        messagebox.showerror(title, message)
+        return False
 
 
 # ============================================================================
 #  SUCHE
 # ============================================================================
+
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
+def show_wait(app, text):
+    """Bitte-warten-Hinweis ueber dem Fenster (FISIApp._show_busy, nur diese
+    eine Zeile). None, wenn app keine Abdeckung kennt (z.B. Test-Attrappe)."""
+    show = getattr(app, "_show_busy", None)
+    return show(text, single=True) if show is not None else None
+
+
+def hide_wait(app, overlay):
+    if overlay is not None:
+        app._hide_busy(overlay)
+
+
+# Ab 0.63.2 (N7, B-I-02): Suchtext der Inhalte einmal je Programmlauf.
+# Die Lerninhalte aendern sich zur Laufzeit nicht; bis 0.63.1 bildete jede
+# Suche fuer alle Karten, Fragen und Szenarien den Text in Kleinbuchstaben
+# neu (fisi_core.search_content). Gleiche Felder, gleiche Art (lower), gleiche
+# Reihenfolge wie dort - ein Test vergleicht beide fuer eine feste Liste von
+# Suchbegriffen. fisi_core bleibt unveraendert (Handy nutzt es weiter).
+_CONTENT_INDEX = []
+CONTENT_INDEX_BUILDS = [0]     # Zaehler fuer den Test (einmal je Lauf)
+
+
+def content_search_index():
+    """[(treffer, (suchtexte ...))] in der Reihenfolge von search_content."""
+    if not CONTENT_INDEX_BUILDS[0]:
+        index = []
+        for card in KARTEIKARTEN:
+            index.append((("Karteikarte", card["cat"], card["q"], card["a_full"]),
+                          (card["q"].lower(), card["a_full"].lower())))
+        for question in QUIZ_QUESTIONS:
+            index.append(((KIND_QUIZ, question["cat"], question["q"], question["exp"]),
+                          (question["q"].lower(), question["exp"].lower())))
+        for kind, scenarios in (("AP2-Szenario", SZENARIEN), ("AP1-Szenario", AP1_SZENARIEN)):
+            for scenario in scenarios:
+                haystack = scenario["title"] + scenario["text"] + scenario["solution"]
+                index.append(((kind, scenario["cat"], scenario["title"],
+                               scenario["text"].split("\n")[0]), (haystack.lower(),)))
+        _CONTENT_INDEX[:] = index
+        CONTENT_INDEX_BUILDS[0] += 1
+    return _CONTENT_INDEX
+
+
+def search_content_prepared(query):
+    """Wie fisi_core.search_content(query), auf dem vorbereiteten Suchtext."""
+    needle = query.lower()
+    return [hit for hit, texts in content_search_index()
+            if any(needle in text for text in texts)]
+
+
+# Ab 0.63.2 (N7, B-I-02): Trefferzeilen in Schritten. Die ersten sofort, der
+# Rest ueber Zeitgeber (dazwischen kommen Klicks und Tasten dran). Eine neue
+# Suche bricht die noch geplanten Schritte der alten ab. Hoechstens 60
+# Zeilen wie bisher.
+SEARCH_MAX_ROWS = 60
+SEARCH_FIRST_ROWS = 12
+SEARCH_STEP_ROWS = 12
+SEARCH_STEP_MS = 15
+
 
 class SearchView(View):
     def build(self):
@@ -6437,10 +8268,30 @@ class SearchView(View):
 
         self.results_box = transparent_frame(self.content)
         self.results_box.pack(fill="both", expand=True, pady=(14, 0))
+        self._pending = None      # ab 0.63.2 (N7): geplanter naechster Schritt
+        self._rest = []
+        self._more = 0
+
+    def _cancel_rows(self):
+        """Noch geplante Trefferzeilen einer frueheren Suche verwerfen."""
+        job, self._pending = getattr(self, "_pending", None), None
+        self._rest = []
+        if job is not None:
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
 
     def search(self, query):
-        for child in self.results_box.winfo_children():
-            child.destroy()
+        self._cancel_rows()
+        # Ab 0.63.2 (N7): die alten Zeilen sofort ausblenden und erst danach
+        # in kleinen Schritten abbauen (der Abbau von 60 Zeilen kostete fast
+        # so viel Zeit wie ihr Aufbau)
+        old = self.results_box
+        self.results_box = transparent_frame(self.content)
+        self.results_box.pack(fill="both", expand=True, pady=(14, 0))
+        old.pack_forget()
+        self.after(SEARCH_STEP_MS, lambda: self._discard(old))
 
         # Ab 0.56 zuerst die passenden Hilfe-Abschnitte
         hits = [(fh.SEARCH_KIND, None, title, text)
@@ -6448,7 +8299,7 @@ class SearchView(View):
         # Ab 0.59 (E5): Bereiche der Optionen
         hits += [(fo.SEARCH_KIND, None, title, text)
                  for _id, title, text, _templates in fo.search_options(query, pc=True)]
-        hits += search_content(query)
+        hits += search_content_prepared(query)   # ab 0.63.2 (N7): vorbereitet
         self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
@@ -6456,12 +8307,49 @@ class SearchView(View):
                        font=F["body"], fg=C["muted"]).pack(anchor="w")
             return
 
-        for kind, category, title, detail in hits[:60]:
-            self._result_row(kind, category, title, detail)
-        if len(hits) > 60:
+        shown = hits[:SEARCH_MAX_ROWS]
+        self._more = len(hits) - len(shown)
+        self._rest = shown[SEARCH_FIRST_ROWS:]
+        for hit in shown[:SEARCH_FIRST_ROWS]:
+            self._result_row(*hit)
+        self._next_rows()
+
+    def _discard(self, box):
+        """Baut einen ausgeblendeten Trefferbereich schrittweise ab."""
+        try:
+            children = box.winfo_children()
+            for child in children[:SEARCH_STEP_ROWS]:
+                child.destroy()
+            if len(children) > SEARCH_STEP_ROWS:
+                self.after(SEARCH_STEP_MS, lambda: self._discard(box))
+            else:
+                box.destroy()
+        except tk.TclError:
+            pass     # Ansicht oder Fenster schon abgebaut
+
+    def _next_rows(self):
+        """Plant den naechsten Schritt oder setzt den Abschluss (Hinweis auf
+        weitere Treffer) unter die letzte Zeile."""
+        if self._rest:
+            self._pending = self.after(SEARCH_STEP_MS, self._add_rows)
+            return
+        self._pending = None
+        if self._more > 0:
             make_label(self.results_box,
-                       "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60),
+                       "… weitere %d Treffer nicht angezeigt." % self._more,   # ab 0.63.2 (N-c)
                        font=F["small"], fg=C["muted"]).pack(anchor="w", pady=8)
+
+    def _add_rows(self):
+        self._pending = None
+        try:
+            if not self.winfo_exists():
+                return
+            batch, self._rest = self._rest[:SEARCH_STEP_ROWS], self._rest[SEARCH_STEP_ROWS:]
+            for hit in batch:
+                self._result_row(*hit)
+            self._next_rows()
+        except tk.TclError:
+            self._rest = []      # Fenster geschlossen oder Ansicht abgebaut
 
     def _result_row(self, kind, category, title, detail):
         row, marker, inner = clickable_row(
@@ -6599,6 +8487,10 @@ class PerfMonitor:
         self._bound = False
         self._resize = None
         self._size = None
+        # Ab 0.63.2 (N6, B-I-01, FG-46): Darstellungswechsel bis bedienbar
+        # (Abdeckung weg) in ms - steht in der Zeile "darstellung" in max_ms;
+        # dauer_ms misst wie bisher bis alles fertig ist
+        self.theme_ready_ms = None
         if self.rec.active:
             self._start()
             self.rec.record(fle.EVENT_START, elemente=self.elements(),
@@ -6668,11 +8560,26 @@ class PerfMonitor:
         if not self.rec.active or old == new:
             return
 
+        # Ab 0.63.2 (B-I-05): Messende erst, wenn die Seite fertig gezeichnet
+        # ist. Bis 0.63.1 endete die Messung beim ersten Leerlauf, also bevor
+        # Tk die Geometrie fertig berechnet und die dadurch ausgeloesten
+        # Groessen-Ereignisse (Neuzeichnen der Bedienelemente) abgearbeitet
+        # hatte. Jetzt: im ersten Leerlauf das Ausstehende erledigen, dann im
+        # naechsten Leerlauf (nach den Fenster-Ereignissen) noch einmal und
+        # erst dann messen. Die Zeile traegt messart 2 (fisi_leistung), damit
+        # sie nie mit alten Werten verglichen wird. Das Zaehlen der Elemente
+        # liegt wie bisher nach dem Messende.
+        def drawn():
+            self.root.update_idletasks()
+            self.root.after_idle(done)
+
         def done():
+            self.root.update_idletasks()
             elapsed = (time.perf_counter() - started) * 1000
             self.rec.record(fle.EVENT_PAGE, von=old or "", nach=new, dauer_ms=elapsed,
-                            elemente=self.elements(), aufgaben=self.tasks())
-        self.root.after_idle(done)
+                            elemente=self.elements(), aufgaben=self.tasks(),
+                            messart=fle.MESSART_GEZEICHNET)
+        self.root.after_idle(drawn)
 
     def blocked(self, seconds):
         """Ab 0.59.2: Der Herzschlag kam seconds zu spaet (Hauptfaden
@@ -6704,7 +8611,9 @@ class PerfMonitor:
             return
         elapsed = (time.perf_counter() - started) * 1000
         self.rec.record(fle.EVENT_THEME, von=old, nach=new, dauer_ms=elapsed,
+                        max_ms=self.theme_ready_ms,
                         elemente=self.elements(), aufgaben=self.tasks())
+        self.theme_ready_ms = None
         self.rec.flush()
 
     # -- Fenstergroesse -----------------------------------------------------
@@ -7032,7 +8941,10 @@ class LegalDialog(ctk.CTkToplevel):
             self.listbox = tk.Listbox(
                 side, width=list_chars, activestyle="none", exportselection=False,
                 font=tk_font(F["small"]), bg=C["card_alt"], fg=C["text_soft"],
-                selectbackground=C["purple"], selectforeground="#FFFFFF",
+                # Ab 0.63.2 (B-J-01): Schrift C["card"] auf Lila (>= 4,5:1),
+                # mit eigenen Farben ohne Rueckschritt (lesbare_schrift)
+                selectbackground=C["purple"],
+                selectforeground=lesbare_schrift(C["card"], "#FFFFFF", C["purple"]),
                 highlightthickness=1, highlightbackground=C["field_border"],
                 highlightcolor=C["purple"], relief="flat", borderwidth=0)
             for name in self.choices:
@@ -7215,8 +9127,16 @@ class TourOverlay(tk.Frame):
             back = NeoButton(buttons, fh.TOUR_BACK, self.back_page, kind="ghost",
                              parent_bg=C["card"])
             back.pack(side="right", padx=(0, 10))
-        for button in ([main, back, skip] if back else [main, skip]):
-            self._focusable_button(button)
+        # Ab 0.63.2 (B-J-N2): Tab laeuft wie die Knoepfe stehen, links -> rechts
+        # (ringfoermig ab "Weiter": Weiter -> Ueberspringen -> Zurueck); auf der
+        # letzten Seite nach den Eingaben Ueberspringen -> Zurueck -> Speichern
+        if last:
+            order = [skip, back, main]
+        else:
+            order = [main, skip, back]
+        for button in order:
+            if button is not None:
+                self._focusable_button(button)
         make_label(body, fh.TOUR_KEYS, font=F["tiny"], fg=C["muted"]).pack(
             anchor="w", pady=(px(12), 0))
         self._bind_tab()
@@ -7245,7 +9165,7 @@ class TourOverlay(tk.Frame):
                 value=self.draft["abschnitte"][section])
             switch = ctk.CTkSwitch(form, text=frp.SECTION_OPTION_TEXT[section], variable=var,
                                    font=F["small"], text_color=C["text_dim"],
-                                   fg_color=C["card_alt"], progress_color=C["violet"],
+                                   fg_color=C["field_border"], progress_color=C["violet"],
                                    button_color=C["text"], button_hover_color="#FFFFFF")
             switch.pack(anchor="w", pady=(6, 0))
             switches.append(switch)
@@ -7571,7 +9491,7 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_main.set_enabled(False)
         self.btn_later.set_enabled(False)
         self.progress.pack(fill="x", pady=(12, 0), side="bottom", after=self.lbl_status)
-        self.lbl_status.configure(text="Update wird heruntergeladen ...",
+        self.lbl_status.configure(text="Update wird heruntergeladen …",
                                   text_color=C["text_dim"])
         state = {"loaded": 0, "total": self.info.asset_size or 1}
         self._downloading = True
@@ -7583,9 +9503,10 @@ class UpdateDialog(ctk.CTkToplevel):
         def refresh():
             if self._downloading and self.winfo_exists():
                 self.progress.set(state["loaded"] / state["total"])
-                self.lbl_status.configure(
-                    text="Update wird heruntergeladen ... %.1f von %.1f MB"
-                         % (state["loaded"] / 1048576, state["total"] / 1048576))
+                self.lbl_status.configure(   # ab 0.63.2 (B-D-05): Dezimalkomma
+                    text="Update wird heruntergeladen … %s von %s MB"   # ab 0.63.2 (N-c)
+                         % (fisi_core.de_number(state["loaded"] / 1048576, 1),
+                            fisi_core.de_number(state["total"] / 1048576, 1)))
                 self.after(200, refresh)
 
         self.app.updater.run_in_background(
@@ -7598,7 +9519,7 @@ class UpdateDialog(ctk.CTkToplevel):
             self._failed(error)
             return
         self.progress.set(1)
-        self.lbl_status.configure(text="Update wird installiert ...")
+        self.lbl_status.configure(text="Update wird installiert …")
         self.app.updater.run_in_background(
             lambda: fisi_update.install(path, version=self.info.version), self._installed)
 
@@ -7623,6 +9544,130 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_main.set_text("Erneut versuchen")
         self.btn_main.set_enabled(True)
         self.btn_later.set_enabled(True)
+
+
+class LongQuestionDialog(ctk.CTkToplevel):
+    """Ab 0.63.2 (Warntext "Alles ersetzen"): Rueckfrage Ja/Nein mit langem
+    Text. Der Tk-Dialog (messagebox.askyesno) wird bei langem Text hoeher als
+    der Bildschirm, Tk staucht ihn dann und schneidet den Text ab - ohne
+    Bildlauf; "Sehr gross" wirkt dort nicht. Hier steht der Text wie die
+    Neuerungen im Update-Fenster in einem Textfeld mit Bildlaufleiste, die
+    Knoepfe stehen unten und bleiben immer ganz sichtbar; das Fenster ist nie
+    groesser als der Bildschirm (Raender wie beim Update-Fenster).
+    Antwort in self.answer: True nur nach "Ja"; Esc, "Nein" und Schliessen
+    des Fensters ergeben False (wie bisher). default: Knopf mit dem Fokus
+    (Eingabetaste)."""
+
+    _scales = UpdateDialog._scales
+    _keep_on_screen = UpdateDialog._keep_on_screen
+
+    def __init__(self, root, title, message, default="no"):
+        super().__init__(root, fg_color=C["bg"])
+        self.answer = False
+        self.title(title)
+        self.resizable(True, True)
+        self.transient(root)
+        self.after(250, lambda: _apply_window_icon(self))
+        card = Card(self, title=title, accent=C["red"])
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        self.card = card
+        # Knoepfe zuerst und von unten: reicht der Platz nicht, schrumpft das
+        # Textfeld (es hat eine Bildlaufleiste), nie die Knopfzeile
+        self.buttons = transparent_frame(card.body)
+        self.buttons.pack(fill="x", pady=(12, 0), side="bottom")
+        self.btn_yes = NeoButton(self.buttons, "Ja", lambda: self._close(True),
+                                 kind="danger")
+        self.btn_yes.pack(side="left")
+        self.btn_no = NeoButton(self.buttons, "Nein", lambda: self._close(False),
+                                kind="ghost")
+        self.btn_no.pack(side="left", padx=10)
+        self.text = make_text(card.body, height=6, font=F["body"])
+        self.text.pack(fill="both", expand=True, side="top")
+        set_text(self.text, message)
+        self.text.configure(state="disabled")
+        # Testplan Dialog D5: per Tab erreichbar (schreibgeschuetzte Felder
+        # ueberspringt Tk sonst), dann rollen Pfeile/Bild/Strg+Ende den Text
+        self.text._textbox.configure(takefocus=1)
+        self.text.yview_moveto(0)
+        self._default = self.btn_yes if default == "yes" else self.btn_no
+        self.protocol("WM_DELETE_WINDOW", lambda: self._close(False))
+        self.bind("<Escape>", lambda _e: self._close(False))
+        self._fit_to_screen()
+        self.after(100, self._focus)
+        self.after(300, self._keep_on_screen)
+
+    def _fit_to_screen(self):
+        """Breite wie das Update-Fenster (560 mal Schriftfaktor), Hoehe nach
+        dem Text, beides nie groesser als der Bildschirm abzueglich der
+        Raender (UPDATE_SCREEN_MARGIN_X/_Y). Das Fenster steht mittig."""
+        window, widget = self._scales()
+        screen_w = self.winfo_screenwidth() / window
+        screen_h = self.winfo_screenheight() / window
+        width = min(int(round(UPDATE_WINDOW_BASE[0] * fisi_theme.font_factor())),
+                    max(1, int(screen_w) - 2 * UPDATE_SCREEN_MARGIN_X))
+        self.geometry("%dx%d" % (width, UPDATE_WINDOW_BASE[1]))
+        self.update_idletasks()
+        lines = _display_line_count(self.text)
+        text_now = self.text.winfo_reqheight() / window
+        text_need = _text_height(F["body"], lines) * widget / window
+        outer = 2 * 18 * widget / window              # Abstand der Card
+        need = self.card.winfo_reqheight() / window + outer - text_now + text_need
+        height = int(round(min(need, max(1, int(screen_h) - UPDATE_SCREEN_MARGIN_Y))))
+        rest = need - text_need + _text_height(F["body"], 2) * widget / window
+        self.minsize(min(width, UPDATE_MIN_WIDTH), min(height, int(round(rest))))
+        x = max(0, int((screen_w - width) / 2))
+        y = max(0, int((screen_h - height - UPDATE_SCREEN_MARGIN_Y / 2) / 2))
+        self.geometry("%dx%d+%d+%d" % (width, height, x, y))
+        self._planned_size = (width, height)
+
+    def _focus(self):
+        try:
+            self.lift()
+            self.focus_force()
+            # Fokus auf den Knopf selbst (dort liegen Eingabe/Leertaste)
+            focus_widget(self._default, keyboard=False)
+        except tk.TclError:
+            pass
+
+    def _close(self, answer):
+        self.answer = bool(answer)
+        try:
+            self.grab_release()
+        except tk.TclError:
+            pass
+        if self.winfo_exists():
+            self.destroy()
+
+
+def ask_long_question(app, title, message, default="no"):
+    """Ab 0.63.2: Rueckfrage Ja/Nein mit langem Text (LongQuestionDialog),
+    wartet auf die Antwort wie messagebox.askyesno. Ohne Hauptfenster
+    (app.root fehlt, z. B. Attrappe in Tests) wie bisher der Tk-Dialog."""
+    root = getattr(app, "root", None)
+    if root is None:
+        return messagebox.askyesno(title, message, icon="warning")
+    dialog = LongQuestionDialog(root, title, message, default)
+
+    def grab(tries=20):
+        # Erst wenn das Fenster sichtbar ist, nimmt es alle Klicks an sich
+        # (Hauptfenster gesperrt wie beim Tk-Dialog)
+        try:
+            if dialog.winfo_exists():
+                dialog.grab_set()
+        except tk.TclError as error:
+            if tries:
+                dialog.after(50, lambda: grab(tries - 1))
+            else:
+                # Ab 0.63.2 (Testplan Dialog V7): nicht still - der Dialog
+                # bleibt offen und antwortet wie sonst, nur das Hauptfenster
+                # ist dann nicht gesperrt; das steht in fehler.log
+                write_error_log("Rueckfrage \"%s\": Fenster liess sich nicht sperren "
+                                "(grab_set: %s), Hauptfenster bleibt bedienbar."
+                                % (title, error))
+
+    dialog.after(50, grab)
+    root.wait_window(dialog)
+    return dialog.answer
 
 
 def _orphaned_timers(root):
@@ -7803,6 +9848,7 @@ PRELOAD_START_MS = 800    # nach dem ersten Zeichnen des Dashboards (bis 0.60: 1
 PRELOAD_START_MS_060 = 1500
 PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
 PRELOAD_PART_GAP_MS = 20  # ab 0.60.1: Pause zwischen zwei Teilen derselben Ansicht
+PRELOAD_PART_WAIT_MS = 5000  # ab 0.63.2 (N6): so lange wartet ein Teil hoechstens (part_waits)
 PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste/Mausrad, bevor der naechste Schritt laeuft
 PRELOAD_WAIT_TASK = "vorladen:start"   # ab 0.59.3: Vorgang bis zum ersten Schritt
 # Ab 0.60.1: Notschalter (nur Umgebungsvariable, im LIESMICH beschrieben):
@@ -7880,6 +9926,7 @@ class ViewPreloader:
         self.steps_done = 0
         self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
         self.block_ms = {}          # ab 0.60.1: Schritt -> Dauer bis gezeichnet (laengster)
+        self._wait_since = None     # ab 0.63.2 (N6): seit wann ein Teil wartet (_part_waits)
         self.started_at = None      # ab 0.60.1: Beginn dieser Runde (perf_counter)
         self.finished_ms = None     # ab 0.60.1: Runde fertig nach ... ms
         self.last_input = 0.0
@@ -7939,9 +9986,15 @@ class ViewPreloader:
         if app._closing:
             return
         quiet = time.monotonic() - self.last_input
-        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0:
+        # Ab 0.63.2 (N6, B-I-01): auch solange nach einem Darstellungswechsel
+        # die alte Oberflaeche abgebaut wird (danach beginnt start() neu)
+        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0 \
+                or getattr(app, "recolor_pending", False):
             self._schedule(max(PRELOAD_GAP_MS,
                                int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
+            return
+        if self.queue and self._part_waits(self.queue[0]):
+            self._schedule(PRELOAD_GAP_MS)
             return
         task = None
         while self.queue:
@@ -7957,6 +10010,23 @@ class ViewPreloader:
             self.finished_ms = round((time.perf_counter() - self.started_at) * 1000) \
                 if self.started_at is not None else None
             app.perf.preload_done(self.finished_ms)
+
+    def _part_waits(self, task):
+        """Ab 0.63.2 (N6, B-I-04): Wartet der naechste Teil einer Ansicht auf
+        eine Rechnung im Hintergrund (view.part_waits)? Hoechstens
+        PRELOAD_PART_WAIT_MS lang, danach laeuft er trotzdem."""
+        view = self.app.views.built(task[1]) if task[0] == "part" else None
+        waits = getattr(view, "part_waits", None)
+        if waits is None or not waits():
+            self._wait_since = None
+            return False
+        now = time.monotonic()
+        if self._wait_since is None:
+            self._wait_since = now
+        if (now - self._wait_since) * 1000 < PRELOAD_PART_WAIT_MS:
+            return True
+        self._wait_since = None
+        return False
 
     def _release_task(self, label, before, task=None, started=None):
         """Ab 0.59.3 (K3, nur Diagnose): Tk berechnet Groessen und zeichnet
@@ -8027,14 +10097,20 @@ class ViewPreloader:
                         # ab 0.60.1: nur der erste Teil, der Rest als ("part", ...)
                         view = views.build_in_parts(key)
                         if view.parts_pending:
-                            self.queue.insert(0, ("part", key))
+                            # Ab 0.63.2 (N6, B-I-04): prepare und Reiter erst,
+                            # wenn alle Teile stehen - derselbe Schritt kommt
+                            # nach den Teilen noch einmal (baut dann nichts neu)
+                            self.queue[0:0] = [("part", key), task]
+                            view = None
                     else:
                         view = views[key]   # baut auf und legt nach unten (LazyViews)
                     worked = True
+                elif getattr(view, "parts_pending", False):
+                    view = None   # ab 0.63.2 (N6): Teile stehen noch aus
                 prepare = getattr(view, "prepare", None)
                 if prepare is not None and prepare():
                     worked = True
-                if worked:
+                if worked and view is not None:
                     # Reiter erst nach der Ansicht (sie kennt ihre Reiter)
                     tabs = getattr(view, "preload_tabs", None)
                     if tabs is not None:
@@ -8158,6 +10234,16 @@ class FISIApp:
         fsi.remove_stale_temp()
         self.container = None
         self._recoloring = False
+        # Ab 0.63.2 (N6, B-I-01): Nach einem Darstellungs- oder Schriftwechsel
+        # laufen einige Schritte erst, wenn die neue Oberflaeche schon
+        # bedienbar ist (siehe _continue_recolor): den offenen Bereich
+        # "Optische Anpassungen" fertig bauen, dann die verdeckte alte
+        # Oberflaeche in Teilen abbauen, zuletzt das Vorladen neu starten.
+        self._recolor_job = None
+        self._fill_folds = []        # Klappbereiche, deren Inhalt noch folgt
+        self._teardown = []          # alte Oberflaeche(n), Stueck fuer Stueck
+        self._recolor_origin = None  # Beginn des letzten Neuaufbaus (Vorladen)
+        self._theme_rows = []        # Messzeilen, die nach dem Abbau kommen
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._closing = False      # on_close laeuft schon (ab 0.55.1)
         self.update_exit = False   # Beenden fuer ein Update (ab 0.55.1)
@@ -8176,6 +10262,8 @@ class FISIApp:
         self.preloader.start(origin=self._started)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
+        # Ab 0.63.2 (B-K-07): Strg+F auch mit Feststelltaste (Tk liefert dann "F")
+        root.bind("<Control-F>", lambda _e: self.header.search_entry.focus_set())
         # Ab 0.59.2: Herzschlag fuer die Haenger-Diagnose (fisi_haenger),
         # laeuft immer; on_close bricht ihn wie alle Zeitgeber ab
         root.after(fhg.BEAT_MS, self._heartbeat)
@@ -8292,7 +10380,11 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
             fhg.vorgang(task)
-        self.perf.theme("schrift " + str(before), "schrift " + str(size_id), measured)
+        # Ab 0.63.2 (N6, B-I-01): ab hier bedienbar; die Messzeile kommt,
+        # wenn auch die alte Oberflaeche abgebaut ist (_finish_recolor)
+        self._theme_rows.append(("schrift " + str(before), "schrift " + str(size_id),
+                                 measured, time.perf_counter()))
+        self._continue_recolor()
 
     def change_color(self, preset_id=None, background_id=None, mode=None, custom=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
@@ -8316,12 +10408,16 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
             fhg.vorgang(task)
-        self.perf.theme(before, _theme_name(), measured)
+        # Ab 0.63.2 (N6, B-I-01): wie bei der Schriftgroesse
+        self._theme_rows.append((before, _theme_name(), measured, time.perf_counter()))
+        self._continue_recolor()
 
-    def _show_busy(self, title=None, text=None):
+    def _show_busy(self, title=None, text=None, single=False):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
         deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
-        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
+        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt.
+        single (ab 0.63.2, N7): nur die eine Zeile title (Bitte-warten-Hinweis
+        bei Sicherung und "Alles ersetzen"), ohne zweiten Text."""
         overlay = tk.Frame(self.root, bg=C["bg"], cursor="watch")
         overlay.place(x=0, y=0, relwidth=1, relheight=1)
         card = ctk.CTkFrame(overlay, fg_color=C["card"], corner_radius=px(18),
@@ -8333,12 +10429,17 @@ class FISIApp:
                                           C["accent"], C["ring_bg"]), px(56), px(56))
         ring.create_image(px(28), px(28), image=ring._photo)
         ring.pack(pady=(px(26), px(10)))
-        make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
-                   bg=C["card"]).pack(padx=px(40))
-        make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"],
-                   bg=C["card"],
-                   wraplength=px(440), justify="center").pack(padx=px(40),
-                                                               pady=(px(6), px(26)))
+        if single:
+            make_label(card, title, font=F["h2"], fg=C["text"], bg=C["card"],
+                       wraplength=px(440), justify="center").pack(padx=px(40),
+                                                                  pady=(0, px(26)))
+        else:
+            make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+                       bg=C["card"]).pack(padx=px(40))
+            make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"],
+                       fg=C["text_dim"], bg=C["card"],
+                       wraplength=px(440), justify="center").pack(padx=px(40),
+                                                                   pady=(px(6), px(26)))
         overlay.lift()
         try:
             overlay.grab_set()
@@ -8381,6 +10482,15 @@ class FISIApp:
         fisi_game_gui.refresh_theme_tables()
         current = self.current or "settings"
         old = self.container
+        old_views = self.views   # ab 0.63.2 (N6): fuer den Abbau in Teilen
+        # Ab 0.63.2 (N6, B-I-01): Ein offener Bereich "Optische Anpassungen"
+        # bleibt offen, sein Inhalt kommt aber erst im naechsten Schritt
+        # (nach dem Aufdecken, _open_later) - die Optionen sind so frueher da
+        self._fill_folds = []
+        optik_key = fo.state_key(fo.OPTIK_ID)
+        optik_later = current == "settings" and FoldCard._open_state.get(optik_key, False)
+        if optik_later:
+            FoldCard._open_state[optik_key] = False
         # Die neue Oberflaeche wird unsichtbar aufgebaut und dann unter der
         # alten gezeichnet; die alte bleibt bis zuletzt stehen. Sonst sieht
         # man einige Sekunden lang jede Ansicht einzeln aufblitzen (Flackern).
@@ -8401,6 +10511,8 @@ class FISIApp:
             self.show_view(current)
         finally:
             self._rebuilding = False
+            if optik_later:
+                self._open_later(optik_key)
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
         old.lift()
         if overlay is not None:
@@ -8412,12 +10524,123 @@ class FISIApp:
         old.pack_forget()
         old.place_forget()
         self.root.update()
-        old.destroy()
-        self._cancel_orphaned_timers()
-        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        # Ab 0.63.2 (N6, B-I-01): nicht mehr hier am Stueck abbauen (das
+        # dauerte unter der Abdeckung fast eine Sekunde), sondern nach dem
+        # Aufdecken in Teilen, je Ansicht ein Schritt (_continue_recolor).
+        # Das Vorladen beginnt erst danach (_finish_recolor).
+        self._teardown.extend(self._teardown_pieces(old, old_views))
+        self._recolor_origin = recolor_started
         preloader = getattr(self, "preloader", None)
         if preloader is not None:
-            preloader.start(origin=recolor_started)
+            preloader.done = False   # wie bisher: das Vorladen beginnt von vorn
+
+    # -- Ab 0.63.2 (N6, B-I-01): Schritte nach dem Aufdecken ----------------
+
+    def _open_later(self, key):
+        """Den Bereich "Optische Anpassungen" der neuen Optionen offen
+        zeigen, seinen Inhalt aber erst im naechsten Schritt bauen
+        (_fill_folds). Waehrend _building baut FoldCard nichts
+        (ensure_built wartet), Kopf und leerer Inhalt stehen schon offen."""
+        FoldCard._open_state[key] = True
+        settings = self.views.built("settings")
+        fold = getattr(settings, "folds", {}).get(fo.OPTIK_ID) if settings is not None \
+            else None
+        if fold is None or fold.opened or fold.built:
+            return
+        fold._building = True
+        try:
+            fold.set_opened(True)
+        finally:
+            fold._building = False
+        self._fill_folds = [fold]
+
+    @staticmethod
+    def _teardown_pieces(old, views):
+        """Stuecke der alten Oberflaeche in Abbau-Reihenfolge: jede
+        aufgebaute Ansicht einzeln, dann die Teile von Seitenleiste und Kopf
+        einzeln, zuletzt der leere Rahmen."""
+        pieces = [views.built(key) for key in views.keys()]
+        pieces = [view for view in pieces if view is not None]
+        for child in old.winfo_children():          # Seitenleiste, Hauptbereich
+            pieces += [part for part in child.winfo_children() if part not in pieces]
+            pieces.append(child)
+        return pieces + [old]
+
+    def _continue_recolor(self):
+        """Naechsten Schritt nach dem Neuaufbau einplanen. Erst wenn Tk
+        alles Wartende erledigt hat (after_idle, dazu gehoert das Zeichnen)
+        und dann als Zeitgeber: dazwischen kommen Klicks und Tasten dran,
+        und ein update_idletasks irgendwo im Programm fuehrt den Schritt
+        nicht nebenbei aus."""
+        if self._recolor_job is not None or self._closing:
+            return
+
+        def arm():
+            try:
+                self._recolor_job = self.root.after(0, self._recolor_step)
+            except tk.TclError:
+                self._recolor_job = None
+        try:
+            self._recolor_job = self.root.after_idle(arm)
+        except tk.TclError:
+            self._recolor_job = None
+
+    @property
+    def recolor_pending(self):
+        """Stehen nach einem Neuaufbau noch Schritte aus?"""
+        return bool(self._fill_folds or self._teardown or self._theme_rows
+                    or self._recolor_origin is not None)
+
+    def _recolor_step(self):
+        """Ein Schritt: ein Teil des offenen Bereichs bzw. ein Stueck der
+        alten Oberflaeche. Waehrend eines neuen Wechsels ruht der Ablauf
+        (der Wechsel plant ihn danach selbst wieder ein)."""
+        self._recolor_job = None
+        if self._closing or self._recoloring:
+            return
+        task = fhg.vorgang("darstellung:abbau")
+        try:
+            if self._fill_folds:
+                fold = self._fill_folds[0]
+                try:
+                    if fold.winfo_exists() and not fold.built:
+                        fold.build_part()
+                    done = not fold.winfo_exists() or fold.built
+                except tk.TclError:
+                    done = True
+                if done:
+                    self._fill_folds.pop(0)
+            elif self._teardown:
+                piece = self._teardown.pop(0)
+                try:
+                    piece.destroy()
+                except tk.TclError:
+                    pass
+                # Zeitgeber der eben abgebauten Elemente sofort abbrechen
+                # (sonst liefen sie vor dem naechsten Schritt ins Leere)
+                self._cancel_orphaned_timers()
+            if not self._fill_folds and not self._teardown:
+                self._finish_recolor()
+                return
+        finally:
+            fhg.vorgang(task)
+        self._continue_recolor()
+
+    def _finish_recolor(self):
+        """Alte Oberflaeche ganz weg: verwaiste Zeitgeber abbrechen, die
+        Messzeilen schreiben und das Vorladen neu beginnen."""
+        self._cancel_orphaned_timers()
+        rows, self._theme_rows = self._theme_rows, []
+        for before, after, measured, ready in rows:
+            # Spalte max_ms: bis bedienbar (Abdeckung weg); dauer_ms wie
+            # bisher bis alles fertig ist (hier: alte Oberflaeche abgebaut)
+            self.perf.theme_ready_ms = (ready - measured) * 1000
+            self.perf.theme(before, after, measured)
+        origin, self._recolor_origin = self._recolor_origin, None
+        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        preloader = getattr(self, "preloader", None)
+        if preloader is not None and origin is not None:
+            preloader.start(origin=origin)
 
     def _cancel_orphaned_timers(self):
         """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
@@ -8472,9 +10695,12 @@ class FISIApp:
         style.map("Dash.Treeview.Heading",
                   background=[("active", C["violet"])],
                   foreground=[("active", "#FFFFFF")])
+        # Ab 0.63.2 (B-J-02): Auswahlschrift C["text"] (>= 4,5:1 hell und dunkel),
+        # mit eigenen Farben ohne Rueckschritt (tabellen_auswahl)
+        selected_bg, selected_fg = tabellen_auswahl()
         style.map("Dash.Treeview",
-                  background=[("selected", mix(C["card_alt"], C["purple"], 0.45))],
-                  foreground=[("selected", "#FFFFFF")])
+                  background=[("selected", selected_bg)],
+                  foreground=[("selected", selected_fg)])
 
     # -- Navigation ---------------------------------------------------------
 
@@ -8533,6 +10759,10 @@ class FISIApp:
                 hold_size(built, self.view_area)
         fill_area(view)
         view.tkraise()
+        if getattr(view, "_in_parts", False):
+            # Ab 0.63.2 (N6): in Teilen vorgeladen - die Bildlaufflaeche bekam
+            # evtl. kein <Configure> mehr (Groesse schon vorher fest)
+            view.after_idle(view._refit_width)
         # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
         # (sie springen nur beim Neuzeichnen nach oben)
         if not getattr(view, "keeps_scroll", False):
@@ -8779,7 +11009,9 @@ class FISIApp:
             if hasattr(self, "sync"):
                 self.sync.schedule()
             if self.current == "dashboard":
-                self.views["dashboard"].refresh()
+                # Ab 0.63.2 (N7, B-I-03): gebuendelt - mehrere Meldungen in
+                # derselben Ereignisrunde rechnen das Dashboard einmal neu
+                self.views["dashboard"].schedule_refresh()
         # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
         self.root.after(400, self.show_unlocks)
 

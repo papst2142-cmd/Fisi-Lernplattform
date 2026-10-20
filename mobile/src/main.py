@@ -44,6 +44,7 @@ import fisi_rechtliches as fr  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
+import fisi_trennung  # noqa: E402  (ab 0.63.2, N8 B-D-06; mobile/vorbereiten.py)
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID_HANDY,
@@ -79,7 +80,7 @@ from fisi_lernen import (  # noqa: E402
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
-    TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME, TRAINER_TITLE,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
     practice_next_text, reminder_due, reminder_text, save_learning_settings,
@@ -95,7 +96,7 @@ import ui  # noqa: E402
 APP_TITLE = APP_DISPLAY_NAME   # ab 0.61 aus fisi_core (wie PC)
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.63.1"
+APP_VERSION = "0.63.2"
 
 # Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
 VERSION_LINE = "Version %s"
@@ -129,6 +130,24 @@ def screen_list(controls, spacing=14):
                        padding=ft.Padding.only(left=16, right=16, top=4, bottom=24))
 
 
+# Ab 0.63.2 (B-E-05 d): Kacheln nebeneinander gleich hoch (bricht ein Titel bei
+# Sehr gross in zwei Zeilen um, wuchs sonst nur diese Kachel)
+SAME_HEIGHT = {"intrinsic_height": True,
+               "vertical_alignment": ft.CrossAxisAlignment.STRETCH}
+
+
+def tile_row(controls, spacing=12, **kwargs):
+    """Ab 0.63.2 (B-J-06): Kacheln nebeneinander (ft.Row wie bisher); ab 160 %
+    untereinander in voller Breite - nebeneinander brachen die Titel sonst
+    mitten im Wort um ("KARTEIKARTE/N", "DURCHSCHNI/TT")."""
+    if not ui.large():
+        return ft.Row(controls, spacing=spacing, **kwargs)
+    for control in controls:
+        control.expand = None     # expand gilt nur nebeneinander
+    return ft.Column(controls, spacing=spacing, tight=True,
+                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+
 def safe_content(content):
     """Ab 0.62.1: Inhalt einer Ansicht mit Abstand zu den Systemleisten von
     Android (Bedienleiste unten, im Querformat auch seitlich). Die App zeichnet
@@ -153,8 +172,9 @@ def status_color(key):
 
 
 def count_text(counts):
-    return "Offen %d · Zu üben %d · Abgeschlossen %d" % (
-        counts[Q_OPEN], counts[Q_PRACTICE], counts[Q_DONE])
+    # Ab 0.63.2 (B-D-07, wie am PC): Tausenderpunkt, geschuetztes Leerzeichen
+    return "Offen\u00a0%s · Zu üben\u00a0%s · Abgeschlossen\u00a0%s" % (
+        fc.de_int(counts[Q_OPEN]), fc.de_int(counts[Q_PRACTICE]), fc.de_int(counts[Q_DONE]))
 
 
 class TopicPills:
@@ -197,6 +217,9 @@ def rate_row(command):
 
 # Ab 0.56: Beschriftungen fuer Symbol-Knoepfe (TalkBack liest sie vor)
 PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+# Ab 0.63.2 (N8, B-J-N3): Startknoepfe der Pruefung "<Kurzname> starten"
+# statt viermal "Starten" (Weisung 38/40 N8-F4, wie am PC app_gui.EXAM_START_TEXT)
+EXAM_START_TEXT = "%s starten"
 SEARCH_TEXT = "Suchen"
 
 
@@ -229,6 +252,61 @@ class DashboardScreen(Screen):
     crumbs = ("DASHBOARD", "HOME")
     DAYS = 14
     ACTIVITIES = 7
+    # Ab 0.63.2 (B-E-05 a): Innenbreite einer Ringkarte ohne Rand bei 384 dp
+    # ((384 - 2 x 16 Seitenrand - 12 Abstand) / 2 - 2 x 1 Rahmen); gilt nur,
+    # solange die echte Breite (Seite bzw. Karte) noch nicht bekannt ist
+    RING_CARD_INNER = 168
+    RING_ROW_EXTRA = 2 * 16 + 12     # Seitenrand links/rechts + Abstand der Karten
+    RING_SIDE, RING_SIDE_MIN = 14, 6   # Rand seitlich: Normal 14, hoechstens so eng
+
+    @classmethod
+    def ring_fit(cls, inner, wanted):
+        """Ab 0.63.2 (B-E-05 a, Nacharbeit M1): Ringgroesse und Rand seitlich
+        fuer eine Ringkarte mit dieser Innenbreite (ohne Rahmen). Der Ring
+        waechst mit der Schrift (wanted), aber nie ueber die Karte hinaus -
+        auf schmaleren Handys (z.B. 360 dp) wird er etwas kleiner. Bei 384 dp
+        bleibt alles wie gebaut (Sehr gross 146/11, Gross 129/14, Normal 112/14)."""
+        inner = int(inner)
+        size = max(40, min(wanted, inner - 2 * cls.RING_SIDE_MIN))
+        side = min(cls.RING_SIDE, max(cls.RING_SIDE_MIN, (inner - size) // 2))
+        return size, side
+
+    def _ring_inner_guess(self):
+        """Innenbreite einer Ringkarte aus der Seitenbreite (vor dem ersten
+        Zeichnen); ohne bekannte Breite wie bei 384 dp."""
+        width = getattr(getattr(self.app, "page", None), "width", None)
+        if ui.large():
+            # Ab 0.63.2 (B-J-06): ab 160 % eine Ringkarte je Zeile
+            if isinstance(width, (int, float)) and width > self.RING_ROW_EXTRA:
+                return int(width - 2 * 16) - 2
+            return 2 * self.RING_CARD_INNER + 12
+        if isinstance(width, (int, float)) and width > self.RING_ROW_EXTRA:
+            return int((width - self.RING_ROW_EXTRA) // 2) - 2
+        return self.RING_CARD_INNER
+
+    def _ring_card_sized(self, event, card, ring):
+        """Ab 0.63.2 (Nacharbeit M1): echte Kartenbreite nach dem Zeichnen -
+        Ring und Rand passen sich an (z.B. Querformat, schmales Handy)."""
+        # Flet frischt nach jedem Ereignis sonst die ganze Seite auf - das
+        # Ereignis kommt oft gleich nach dem Start, waehrend schon eine andere
+        # Seite aufgebaut wird; im Behelf blieb dann einige Male die
+        # Startseite stehen. Daher nur die Karte selbst und nur bei Aenderung.
+        ft.context.disable_auto_update()
+        width = getattr(event, "width", 0) or 0
+        if width <= 2:
+            return
+        size, side = self.ring_fit(width - 2, ring.wanted)
+        if size == ring.size and card.padding.left == side:
+            return
+        ring.resize(size)
+        card.padding = ft.Padding.symmetric(horizontal=side, vertical=14)
+        body = getattr(self.app, "body", None)
+        if body is not None and body.content is not self.root:
+            return   # Startseite nicht sichtbar: geht mit dem naechsten Anzeigen mit
+        try:
+            card.update()
+        except RuntimeError:
+            pass   # noch nicht auf der Seite (Tests)
 
     # -- Reinzoom in die Themen eines Fachbereichs --------------------------
 
@@ -290,9 +368,21 @@ class DashboardScreen(Screen):
         self.ring_ap1 = ui.Ring(size=112)
         self.ring_scen = ui.Ring(size=112)
 
+        # Ab 0.63.2 (B-E-05 a): Die Ringe wachsen mit der Schrift (ui.Ring); damit
+        # zwei Karten nebeneinander passen, wird der Rand seitlich enger (Normal
+        # und Gross bei 384 dp unveraendert 14). Nacharbeit M1: Ring und Rand
+        # richten sich nach der echten Breite (vorher fest fuer 384 dp gerechnet,
+        # bei 360 dp ragte der Ring ueber die Karte)
+        size, side = self.ring_fit(self._ring_inner_guess(), self.ring_cards.wanted)
+
         def ring_card(title, ring):
-            return ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
-                           expand=True, padding=14)
+            ring.resize(size)
+            card = ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
+                           expand=True,
+                           padding=ft.Padding.symmetric(horizontal=side, vertical=14))
+            card.on_size_change = lambda event: self._ring_card_sized(event, card, ring)
+            card.size_change_interval = 100
+            return card
 
         self.lbl_quote = ui.text("0 %", size=34, color=C["accent"], weight=ft.FontWeight.BOLD)
         self.lbl_quote_sub = ui.text(DASH_QUOTE_EMPTY, size=13, color=C["muted"])
@@ -374,10 +464,11 @@ class DashboardScreen(Screen):
             self.notice_holder,
             self.hero,
             self.today_card,
-            ft.Row([ring_card(DASH_RING_CARDS, self.ring_cards),
-                    ring_card(DASH_RING_QUIZ, self.ring_quiz)], spacing=12),
-            ft.Row([ring_card(DASH_RING_AP1, self.ring_ap1),
-                    ring_card(DASH_RING_AP2, self.ring_scen)], spacing=12),
+            # Ab 0.63.2 (B-J-06): tile_row - ab 160 % untereinander
+            tile_row([ring_card(DASH_RING_CARDS, self.ring_cards),
+                      ring_card(DASH_RING_QUIZ, self.ring_quiz)], **SAME_HEIGHT),
+            tile_row([ring_card(DASH_RING_AP1, self.ring_ap1),
+                      ring_card(DASH_RING_AP2, self.ring_scen)], **SAME_HEIGHT),
             ui.Card(DASH_QUOTE_TITLE, [self.lbl_quote, self.lbl_quote_sub],
                     accent=C["accent2"], subtitle=DASH_QUOTE_SUBTITLE),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
@@ -407,7 +498,7 @@ class DashboardScreen(Screen):
         self.goal_row.visible = settings["ziel_an"]
         self.goal_ring.visible = self.lbl_goal.visible = settings["ziel_an"]
         self.goal_ring.set(goal.fraction, C["green"] if goal.reached else C["accent"],
-                           big="%d%%" % round(goal.fraction * 100))
+                           big="%d\u00a0%%" % round(goal.fraction * 100))   # ab 0.63.2
         self.lbl_goal.value = goal.text()
         plan = ReviewPlan.from_db(self.db)
         self.lbl_due.value = due_text(plan)
@@ -429,29 +520,32 @@ class DashboardScreen(Screen):
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             ("%s" + DASH_LEARNED + "  ·  " + DASH_RATE)
-            % (streak, learned, self.total_content, round(rate)),
+            % (streak, fc.de_int(learned), fc.de_int(self.total_content), round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             DASH_TOTAL)
         # Ab 0.60 (K-B): grosse Zahl "Pruefungstrainer" = verschiedene Fragen (wie am PC)
+        # Ab 0.63.2 (B-D-07): alle Zahlen mit Tausenderpunkt (wie am PC)
+        de_int = fc.de_int
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"], C["purple"],
-                            str(learned_cards), DASH_CARDS_SUB % total_cards)
+                            de_int(learned_cards), DASH_CARDS_SUB % de_int(total_cards))
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"], C["accent2"],
-                           str(quiz_distinct), DASH_QUIZ_SUB % total_quiz)
+                           de_int(quiz_distinct), DASH_QUIZ_SUB % de_int(total_quiz))
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"], C["accent"],
-                          str(ap1_done), DASH_SCEN_SUB % total_ap1)
+                          de_int(ap1_done), DASH_SCEN_SUB % de_int(total_ap1))
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"], C["orange"],
-                           str(scen_done), DASH_SCEN_SUB % total_scen)
+                           de_int(scen_done), DASH_SCEN_SUB % de_int(total_scen))
 
         self.lbl_quote.value = "%d %%" % round(rate)
         self.lbl_quote_sub.value = dash_quote_text(correct, answered)
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
-                           "%d / %d" % (learned_cards, total_cards))
+                           "%s / %s" % (de_int(learned_cards), de_int(total_cards)))
         self.bar_quiz.set(quiz_distinct / max(1, total_quiz) * 100,
-                          "%d / %d" % (quiz_distinct, total_quiz))
-        self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100, "%d / %d" % (ap1_done, total_ap1))
+                          "%s / %s" % (de_int(quiz_distinct), de_int(total_quiz)))
+        self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100,
+                         "%s / %s" % (de_int(ap1_done), de_int(total_ap1)))
         self.bar_scen.set(scen_done / max(1, total_scen) * 100,
-                          "%d / %d" % (scen_done, total_scen))
+                          "%s / %s" % (de_int(scen_done), de_int(total_scen)))
 
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
@@ -467,7 +561,8 @@ class DashboardScreen(Screen):
             name.color = (CATEGORY_COLOR[category] if category == self.zoom_category
                           else C["text"])
             share = coverage.get(category, 0.0)
-            ring.set(share / 100.0, CATEGORY_COLOR[category], None, "%d%%" % round(share))
+            ring.set(share / 100.0, CATEGORY_COLOR[category], None,
+                     "%d\u00a0%%" % round(share))   # ab 0.63.2 (B-D-07)
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
                 detail.value = "%s\n%d %% richtig" % (
@@ -505,10 +600,11 @@ class LearnScreen(Screen):
 
     ENTRIES = [
         ("cards", ft.Icons.STYLE_ROUNDED, "Karteikarten",
-         "%d Karten in %s Fachbereichen" % (len(KARTEIKARTEN), count_word(len(CATEGORIES))),
+         "%s Karten in %s Fachbereichen" % (fc.de_int(len(KARTEIKARTEN)),
+                                            count_word(len(CATEGORIES))),
          "accent"),
         ("quiz", ft.Icons.TRACK_CHANGES_ROUNDED, "Prüfungstrainer",
-         "%d Aufgaben, mit %s" % (len(QUIZ_QUESTIONS), fr.NOTE_KURZ), "primary"),
+         "%s Aufgaben, mit %s" % (fc.de_int(len(QUIZ_QUESTIONS)), fr.NOTE_KURZ), "primary"),
         ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1-Szenarien",
          "%d Aufgaben der Grundlagenprüfung" % len(AP1_SZENARIEN), ("#2563EB", "#22D3EE")),
         ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2-Szenarien",
@@ -715,12 +811,14 @@ class CardsScreen(Screen):
             self.lbl_status.value = ""
             self.lbl_counter.value = "0 / 0"
             self.btn_check.set_enabled(False)
+            _redraw(getattr(self, "root", None))   # ab 0.63.2 (Z7), siehe unten
             return
         self.btn_check.set_enabled(True)
         card = self.filtered[self.index]
         self.lbl_question.value = card["q"]
         self._show_status()
-        self.lbl_counter.value = "Karte %d / %d" % (self.index + 1, len(self.filtered))
+        self.lbl_counter.value = "Karte %s / %s" % (fc.de_int(self.index + 1),   # ab 0.63.2
+                                                    fc.de_int(len(self.filtered)))
         self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
                                                      TOPIC_SHORT[card["thema"]]),
                                         CATEGORY_COLOR[card["cat"]])
@@ -737,6 +835,11 @@ class CardsScreen(Screen):
         else:
             self.reveal_hint.visible = True
             self.btn_check.set_text("Lösung aufdecken")
+        # Ab 0.63.2 (Z7): update_ui steht am Ende jedes Ereignisses (Blaettern,
+        # Filter, Lernmodus); _flush oben kann bei einem Datenbankfehler einen
+        # Hinweis zeigen, danach zeichnet Flet die neue Karte nicht von selbst
+        # (beim Aufbau gibt es root noch nicht)
+        _redraw(getattr(self, "root", None))
 
     def check_answer(self, _event=None):
         if not self.filtered:
@@ -795,6 +898,7 @@ class CardsScreen(Screen):
         self._show_status()
         self._counts(self.count_keys)
         self.app.notify_progress()
+        _redraw(self.root)   # ab 0.63.2 (Z7): Ende von check_answer und rate
 
     def step(self, delta):
         if self.filtered:
@@ -835,7 +939,7 @@ class QuizScreen(Screen):
             ft.Row([ui.text("Fragenanzahl", size=13, color=C["text_dim"], expand=True),
                     self.stepper]),
             self.lbl_pool, ft.Row([self.btn_start]),
-        ], subtitle="%d Aufgaben im Katalog" % len(self.questions))
+        ], subtitle="%s Aufgaben im Katalog" % fc.de_int(len(self.questions)))
 
         self.lbl_progress = ui.text("Frage 0 / 0", size=14, color=C["text_dim"],
                                     weight=ft.FontWeight.BOLD)
@@ -863,8 +967,8 @@ class QuizScreen(Screen):
         self._on_category("Alle")
         # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
         self.practice_box = ft.Column([self.setup_card, status, question,
-                                       ft.Row([self.btn_submit, self.btn_cancel],
-                                              spacing=10)], spacing=14, tight=True)
+                                       tile_row([self.btn_submit, self.btn_cancel],
+                                                spacing=10)], spacing=14, tight=True)
         self.exam = ExamPanel(self.app)
         self.exam.visible = False
         self.mode_pills = ui.PillGroup(QUIZ_MODES, on_change=self._on_mode)
@@ -879,12 +983,32 @@ class QuizScreen(Screen):
             self.exam.hide()
         self.exam.visible = mode == "pruefung"
         self.practice_box.visible = not self.exam.visible
+        # Ab 0.63.2 (A12): kam im Ereignis ein Hinweis (abgelaufene Pruefung,
+        # Datenbankfehler), zeichnet Flet den Wechsel sonst nicht
+        _redraw(self.root)
 
     def _on_category(self, category):
         self.topic_pills.set_category(category)
         self._update_pool()
 
     def on_show(self):
+        # Ab 0.63.2 (B-G-23, Nacharbeit M1): on_show laeuft beim Oeffnen vor
+        # app.push, und push schliesst offene Hinweise. "Zeit abgelaufen" wird
+        # darum hier nur vorgemerkt und erst in after_open gezeigt.
+        self.exam.defer_notice = True
+        try:
+            self._show()
+        finally:
+            self.exam.defer_notice = False
+
+    def after_open(self):
+        """Nach app.push (ab 0.63.2, Nacharbeit M1): vorgemerkten Hinweis zeigen."""
+        notice, self.exam.notice = self.exam.notice, None
+        if notice:
+            self.toast(notice)
+            self.app.page.update()
+
+    def _show(self):
         # Ab 0.51: eine laufende Pruefung geht vor
         if fp.load_running() is not None and self.mode_pills.get() != "pruefung":
             self.mode_pills.select_value("pruefung")
@@ -947,6 +1071,7 @@ class QuizScreen(Screen):
         else:
             self.session = random.sample(self.pool, count)
         self._begin()
+        _redraw(self.root)   # ab 0.63.2 (A12): auch nach einem Datenbank-Hinweis
 
     def _begin(self):
         self.index = 0
@@ -991,6 +1116,7 @@ class QuizScreen(Screen):
             else:
                 self.index += 1
                 self.load_question()
+                _redraw(self.root)   # ab 0.63.2 (A12)
             return
         choice = self.options.get()
         if not choice:
@@ -1011,6 +1137,9 @@ class QuizScreen(Screen):
         self.app.notify_progress()
         last = self.index >= len(self.session) - 1
         self.btn_submit.set_text("Auswertung anzeigen" if last else "Nächste Frage")
+        # Ab 0.63.2 (A12): ein Schreibfehler zeigt einen Hinweis, danach
+        # zeichnet Flet Markierung, Erklaerung und Punktzahl nicht von selbst
+        _redraw(self.root)
 
     def cancel_quiz(self, _event=None):
         if not self.running:
@@ -1042,11 +1171,14 @@ class QuizScreen(Screen):
         hint = ("Das Ergebnis wurde gespeichert." if saved
                 else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
         self.lbl_question.value = (
-            "Session beendet\n\nErgebnis: %d von %d richtig (%.1f %%)\n%s: %s\n"
+            "Session beendet\n\nErgebnis: %d von %d richtig (%s %%)\n%s: %s\n"
             "Dauer: %02d:%02d Minuten\n\n%s"
-            % (self.score, total, percentage, fr.NOTE_LANG, note, elapsed // 60,
+            % (self.score, total, fc.de_number(percentage, 1), fr.NOTE_LANG, note,
+               elapsed // 60,
                elapsed % 60, hint))
         self.app.notify_progress()
+        # Ab 0.63.2 (Z7): vor einem Hinweis oder der Rueckfrage zeichnen
+        _redraw(self.root)
         follow_up, self.follow_up = self.follow_up, None
         if follow_up is not None:
             follow_up()
@@ -1085,7 +1217,10 @@ WISO_PAGE = 5
 
 
 def points_text(value):
-    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+    # Ab 0.63.2 (Z1): abgerundet wie das Gesamtergebnis (gleiche Hilfe wie am PC).
+    # Einfuhr in der Funktion: test_inhalte_0631.py prueft sie einzeln (AST)
+    from fisi_pruefung import punkte_text
+    return punkte_text(value)
 
 
 def note_color(points):
@@ -1298,6 +1433,7 @@ class ExamPanel(ft.Column):
         self.result = None
         self.timer_token = 0
         self.dirty = False
+        self.defer_notice, self.notice = False, None   # ab 0.63.2 (Nacharbeit M1)
 
     # -- Allgemein ----------------------------------------------------------
 
@@ -1340,7 +1476,7 @@ class ExamPanel(ft.Column):
                 content=ft.Column([
                     ui.text(exam["name"], size=15, weight=ft.FontWeight.BOLD),
                     ui.text(detail, size=12, color=C["muted"]),
-                    ft.Row([ui.GradientButton("Starten",
+                    ft.Row([ui.GradientButton(EXAM_START_TEXT % exam["kurz"],
                                               lambda _e, a=exam["art"]: self.start(a),
                                               height=40)]),
                 ], spacing=6, tight=True),
@@ -1383,9 +1519,18 @@ class ExamPanel(ft.Column):
         ]
 
     def start(self, art):
+        # Ab 0.63.2 (N8, B-D-14, F23 a): Laeuft schon eine Pruefung (gespeichert,
+        # auch "bewerten"), wird sie gezeigt und nie ueberschrieben - vor und
+        # nach der Rueckfrage. Keine neue Meldung (wie am PC).
+        if fp.load_running() is not None:
+            self.show()
+            return
         exam = fp.EXAM[art]
 
         def go():
+            if fp.load_running() is not None:
+                self.show()
+                return
             self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
             fp.save_running(self.state)
             self.task_no = 0
@@ -1409,9 +1554,9 @@ class ExamPanel(ft.Column):
                    vertical_alignment=ft.CrossAxisAlignment.END),
             self.lbl_progress,
             ui.text(exam["name"], size=12, color=C["muted"]),
-            ft.Row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
-                    ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
-                                      expand=True)], spacing=10),
+            tile_row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
+                      ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
+                                        expand=True)], spacing=10),
         ], accent=C["accent"])
         self.task_box = ft.Column(spacing=14, tight=True)
         controls = [head]
@@ -1553,13 +1698,28 @@ class ExamPanel(ft.Column):
         fp.submit(self.state)
         if self.state["art"] == fp.WISO:
             self._finish_now()
+            if auto:
+                # Ab 0.63.2 (B-G-23): auch bei WiSo melden, nach dem Auswerten
+                # (gleicher Text wie am PC)
+                self._time_up("Die Zeit ist um, die Prüfung wurde abgegeben und "
+                              "ausgewertet.")
             return
         fp.save_running(self.state)
-        if auto:
-            self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
-                           "Bewertung.")
         self.task_no = 0
         self.show_grading()
+        # Ab 0.63.2 (A12): erst die Bewertung zeichnen, dann der Hinweis
+        _redraw(self)
+        if auto:
+            self._time_up("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
+                          "Bewertung.")
+
+    def _time_up(self, text):
+        """Hinweis "Zeit abgelaufen" (ab 0.63.2, Nacharbeit M1): beim Oeffnen
+        des Pruefungstrainers vormerken (QuizScreen.after_open), sonst sofort."""
+        if self.defer_notice:
+            self.notice = text
+        else:
+            self.app.toast(text)
 
     # -- Bewertung ----------------------------------------------------------
 
@@ -1652,6 +1812,7 @@ class ExamPanel(ft.Column):
         self.state = None
         self.app.notify_progress()
         self.show_result(art)
+        _redraw(self)   # ab 0.63.2 (Z7/A12): auch nach einem Datenbank-Hinweis
 
     # -- Ergebnis -----------------------------------------------------------
 
@@ -1697,6 +1858,45 @@ class ExamPanel(ft.Column):
 #  SZENARIEN UND TESTPROJEKTE (Liste -> Detailseite)
 # ============================================================================
 
+# Ab 0.63.2 (Nico, Meldung 39 Frage 14b): In diesen Grundfarben liegen im
+# Hellen die gedaempfte Farbe C["muted"] und die Akzentfarbe fast gleich hell
+# und im Farbton nah (Abstand nur ~17, auf dem Foto kaum zu unterscheiden).
+# Gesperrte Blaetterpfeile nehmen dort C["muted"], zu LOCKED_SOFT_MIX zur
+# Kartenflaeche hin aufgehellt (gleicher Farbton, blasser). Nico "Ja bitte
+# einheitlich": ebenso jede helle Farbwelt, in der C["muted"] und C["accent"]
+# weniger als LOCKED_MIN_DISTANCE (fisi_theme.color_distance) auseinander
+# liegen. Alle anderen Farbwelten, eigene Farben und der PC bleiben unveraendert.
+LOCKED_SOFT_PRESETS = ("lila_magenta", "blau_tuerkis")
+LOCKED_SOFT_MIX = 0.4
+LOCKED_MIN_DISTANCE = 29.0
+
+
+def _locked_arrow_color():
+    """Farbe eines gesperrten Blaetterpfeils (Handy-Listen und Blaettern im
+    Rechner): C["muted"], ausser im Hellen (ohne eigene Farben) in
+    LOCKED_SOFT_PRESETS oder bei zu kleinem Abstand zur Akzentfarbe, siehe oben."""
+    mode = fisi_theme.current_mode
+    values = fisi_theme.custom_colors.get(mode)
+    custom = bool(values) and values != fisi_theme.custom_start(mode)
+    if fisi_theme.light and not custom and (
+            fisi_theme.current_preset in LOCKED_SOFT_PRESETS
+            or fisi_theme.color_distance(C["muted"], C["accent"]) < LOCKED_MIN_DISTANCE):
+        return mix(C["muted"], C["card"], LOCKED_SOFT_MIX)
+    return C["muted"]
+
+
+def _paint_page_buttons(prev, forward, page, pages):
+    """Ab 0.63.2 (B-E-03): Blaetterpfeile auf Seite 1 bzw. der letzten Seite
+    sperren (page zaehlt ab 0, pages ist mindestens 1). Nacharbeit: Die
+    Fotoprobe zeigte, dass Flet gesperrte Knoepfe mit icon_color weiter in der
+    Akzentfarbe zeichnet; gesperrt darum in der gedaempften Farbe
+    (_locked_arrow_color, meist C["muted"])."""
+    locked_color = _locked_arrow_color()
+    for button, locked in ((prev, page <= 0), (forward, page >= pages - 1)):
+        button.disabled = locked
+        button.icon_color = locked_color if locked else C["accent"]
+
+
 class PagedListBox:
     """Liste mit Suchfeld, Filter-Pillen und Seiten (gleiche Logik wie am PC,
     siehe fisi_core.filter_positions). Es werden nie mehr als LIST_PAGE_SIZE
@@ -1704,8 +1904,9 @@ class PagedListBox:
     on_select erhaelt die Position in der Gesamtliste."""
 
     def __init__(self, items, on_select, subtitle, status_source,
-                 category_filter=False, group_field=None):
+                 category_filter=False, group_field=None, count_noun="Aufgaben"):
         self.items = items
+        self.count_noun = count_noun   # ab 0.63.2: Testprojekt "Kundenaufträgen"
         self.on_select = on_select
         self.subtitle = subtitle
         self.status_source = status_source
@@ -1732,15 +1933,19 @@ class PagedListBox:
         self.lbl_count = ui.text("", size=12, color=C["muted"])
         self.rows = ft.Column(spacing=8, tight=True)
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
-        pager = ft.Row([
-            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
-            self.lbl_page,
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
+        # Seite gesperrt und gedaempft (siehe _paint_page_buttons)
+        self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
+        self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1))
+        pager = ft.Row([self.btn_prev, self.lbl_page, self.btn_next],
+                       alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-05 f): STRETCH - das Suchfeld endete sonst etwa 40 px
+        # vor dem Kartenrand
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
-                              spacing=10, tight=True)
+                              spacing=10, tight=True,
+                              horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
 
     def _search(self, event):
         self.query = event.control.value or ""
@@ -1767,16 +1972,20 @@ class PagedListBox:
             sub = self.subtitle(self.items[pos])
             if status != Q_OPEN:
                 sub += "  ·  " + Q_STATUS_NAME[status]
+            # Ab 0.63.2 (N8, B-D-06): geschuetztes Leerzeichen nach der
+            # Nummer - "4." bricht nie allein in eine Zeile (wie am PC)
             rows.append(ui.list_row(
-                "%d. %s%s" % (pos + 1, self.items[pos]["title"],
-                              " ✓" if status == Q_DONE else ""),
+                fisi_trennung.nummer_titel(pos + 1, self.items[pos]["title"],
+                                           " ✓" if status == Q_DONE else ""),
                 sub, CATEGORY_COLOR[self.items[pos]["cat"]],
                 lambda _e, p=pos: self.on_select(p),
                 sub_color=status_color(level or status) if status != Q_OPEN else None))
         self.rows.controls = rows or [ui.text("Keine Treffer für diese Auswahl.",
                                               size=13, color=C["muted"])]
-        self.lbl_count.value = "%d von %d Aufgaben" % (len(self.filtered), len(self.items))
+        self.lbl_count.value = "%s von %s %s" % (fc.de_int(len(self.filtered)),
+                                                 fc.de_int(len(self.items)), self.count_noun)
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
+        _paint_page_buttons(self.btn_prev, self.btn_next, self.page, pages)
 
     def turn(self, delta):
         self.page += delta
@@ -1823,6 +2032,7 @@ class ScenarioScreen(Screen):
         self.paged.refresh(keep_page=True)
 
     def open_detail(self, position):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor dem Schreiben (_flush)
         self._flush()
         self.index = position
         self.solution_visible = False
@@ -1832,7 +2042,7 @@ class ScenarioScreen(Screen):
         self.rate_box = rate_row(self.rate)
         self.task_box = ui.read_box()
         self.txt_own = ui.entry(multiline=True, min_lines=4, max_lines=18,
-                                hint="Deine Lösung ...", on_change=self._own_changed)
+                                hint="Deine Lösung …", on_change=self._own_changed)   # ab 0.63.2 (N-c)
         self.solution_box = ui.read_box()
         self.btn_toggle = ui.GradientButton("Musterlösung anzeigen", self.toggle_solution,
                                             expand=True)
@@ -1849,8 +2059,9 @@ class ScenarioScreen(Screen):
             ft.Row([ui.GradientButton("Nächstes Szenario", self.next_item, kind="ghost",
                                       icon=ft.Icons.ARROW_FORWARD_ROUNDED, expand=True)]),
         ])
+        self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
-        self.app.push(self.crumbs, content)
+        self.app.push(self.crumbs, content, toast_bis=mark)
 
     def _load(self):
         item = self.DATA[self.index]
@@ -1888,6 +2099,7 @@ class ScenarioScreen(Screen):
         self.app.notify_progress()
         self.paged.refresh(keep_page=True)
         self._show_status()
+        _redraw(self.detail, self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def _own_changed(self, event):
         self.own_answers[self.index] = event.control.value
@@ -1914,6 +2126,7 @@ class ScenarioScreen(Screen):
         self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
+        _redraw(self.detail)   # ab 0.63.2 (Z7): _flush kann einen Hinweis zeigen
 
 
 class Ap1ScenarioScreen(ScenarioScreen):
@@ -1938,10 +2151,11 @@ class ProjectScreen(Screen):
             subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
                                                CATEGORY_SHORT[item["cat"]]),
             status_source=lambda: position_statuses(StatusBook(self.db), SRC_PROJECT),
-            category_filter=True, group_field="schwierigkeit")
+            category_filter=True, group_field="schwierigkeit", count_noun="Kundenaufträgen")
         self.paged.refresh()
         return screen_list([ui.Card("Testprojekte", [self.paged.root],
-                                    subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))])
+                                    subtitle="%s Kundenaufträge"
+                                             % fc.de_int(len(PROJEKTARBEITEN)))])
 
     def on_show(self):
         self.paged.refresh(keep_page=True)
@@ -1966,6 +2180,7 @@ class ProjectScreen(Screen):
         return "\n".join(lines).rstrip()
 
     def open_detail(self, position):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a): vor dem Schreiben (_flush)
         self._flush()
         self.index = position
         self.lbl_title = ui.text("", size=18, weight=ft.FontWeight.BOLD)
@@ -1988,8 +2203,9 @@ class ProjectScreen(Screen):
             ft.Row([ui.GradientButton("Als Vorlage fürs Abschlussprojekt",
                                       self.use_as_template, kind="ghost", expand=True)]),
         ])
+        self.detail = content   # ab 0.63.2 (Z7): zum Zeichnen nach einem Hinweis
         self._load()
-        self.app.push(self.crumbs, content)
+        self.app.push(self.crumbs, content, toast_bis=mark)
 
     def _load(self):
         project = PROJEKTARBEITEN[self.index]
@@ -2030,6 +2246,7 @@ class ProjectScreen(Screen):
         self.app.notify_progress()
         self.on_show()
         self._show_status()
+        _redraw(self.detail, self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def toggle_hints(self, _event=None):
         project = PROJEKTARBEITEN[self.index]
@@ -2050,6 +2267,7 @@ class ProjectScreen(Screen):
         self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
+        _redraw(self.detail)   # ab 0.63.2 (Z7): _flush kann einen Hinweis zeigen
 
     def use_as_template(self, _event=None):
         # Ab 0.53 wie am PC erst die Seite oeffnen, dann uebernehmen - sonst
@@ -2170,6 +2388,7 @@ class FinalProjectScreen(Screen):
             data, mime = fpj.export_text(self.fields).encode("utf-8"), "text/plain"
         self.app.page.run_task(self.app.save_file, fpj.export_name(self.fields, extension),
                                data, mime)
+        _redraw(self.root)   # ab 0.63.2 (Z7): flush kann einen Hinweis zeigen
 
     def use_template(self, position):
         self.flush()
@@ -2219,6 +2438,12 @@ class FinalProjectScreen(Screen):
             self._refresh_derived()
             self.app.sync.schedule()
 
+    def _blurred(self, _event=None):
+        """Feld verlassen: speichern (ab 0.63.2, Z7: danach zeichnen, falls
+        ein Datenbank-Hinweis kam)."""
+        self.flush()
+        _redraw(self.root)
+
     def _set(self, field, value):
         if self.fields.get(field, "") != value:
             self.db.save_project_field(self.project, field, value)
@@ -2247,16 +2472,20 @@ class FinalProjectScreen(Screen):
         box = ui.entry(self.fields.get(field, default), hint=hint, multiline=multiline,
                        min_lines=3 if multiline else 1, keyboard=keyboard,
                        on_change=lambda _e: self._changed(field))
-        box.on_blur = lambda _e: self.flush()
+        box.on_blur = self._blurred
         self.inputs[field] = lambda: (box.value or "").strip() if not multiline \
             else (box.value or "").rstrip()
         return box
 
     def _checklist(self, items):
         return [ui.check_row(text, fpj.checked(self.fields, key),
-                             lambda value, k=key: self._set("check_" + k,
-                                                            "1" if value else "0"))
+                             lambda value, k=key: self._set_check(k, value))
                 for key, text in items]
+
+    def _set_check(self, key, value):
+        """Haken der Checkliste (ab 0.63.2, Z7: danach zeichnen)."""
+        self._set("check_" + key, "1" if value else "0")
+        _redraw(self.root)
 
     @staticmethod
     def _field(caption, control):
@@ -2276,6 +2505,10 @@ class FinalProjectScreen(Screen):
         self.tab_area.controls = [box]
         self.tab_pills.select_value(tab, notify=False)
         self._refresh_derived()
+        # Ab 0.63.2 (Z7): flush oben kann bei einem Datenbankfehler einen
+        # Hinweis zeigen (auch fuer Projektwahl und "Neues Projekt", die hier
+        # enden; beim Aufbau gibt es root noch nicht)
+        _redraw(getattr(self, "root", None))
 
     def _build_uebersicht(self):
         rows = [self._field(label, self._entry(field)) for field, label, _m in
@@ -2339,6 +2572,7 @@ class FinalProjectScreen(Screen):
         self.fg_index = 0
         self.tab_boxes.pop("fachgespraech", None)
         self.derived.pop("fachgespraech", None)
+        _redraw(self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
     def _build_antrag(self):
         controls = []
@@ -2465,6 +2699,7 @@ class FinalProjectScreen(Screen):
             question = questions[self.fg_index % len(questions)]
             self._set("fg_" + question["id"], "1" if known else "0")
             turn(1)
+            _redraw(self.root)   # ab 0.63.2 (Z7): auch nach einem Datenbank-Hinweis
 
         self.derived["fachgespraech"] = paint
         return [
@@ -2521,13 +2756,14 @@ class NotebookScreen(Screen):
         self.rows = ft.Column(spacing=8, tight=True)
         self.list_card = ui.Card("Zu üben", [self.rows], accent=C["red"])
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
-        pager = ft.Row([
-            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
-            self.lbl_page,
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        # Ab 0.63.2 (B-E-03): Pfeile gemerkt, auf der ersten bzw. letzten
+        # Seite gesperrt und gedaempft (siehe _paint_page_buttons)
+        self.btn_prev = ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1))
+        self.btn_next = ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
+                                      tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1))
+        pager = ft.Row([self.btn_prev, self.lbl_page, self.btn_next],
+                       alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
                     subtitle="Abgeschlossen = zweimal hintereinander richtig"),
@@ -2586,9 +2822,11 @@ class NotebookScreen(Screen):
         for src in SOURCES:
             counts = summary[src]
             total = sum(counts.values()) or 1
-            bar = ui.GradientBar("%s · %d zu üben" % (SOURCE_PLURAL[src], counts[Q_PRACTICE]),
+            bar = ui.GradientBar("%s · %s zu üben" % (SOURCE_PLURAL[src],
+                                                      fc.de_int(counts[Q_PRACTICE])),
                                  C["green"], C["accent"])
-            bar.set(100.0 * counts[Q_DONE] / total, "%d / %d" % (counts[Q_DONE], total))
+            bar.set(100.0 * counts[Q_DONE] / total,
+                    "%s / %s" % (fc.de_int(counts[Q_DONE]), fc.de_int(total)))
             bars.append(bar)
         self.summary.controls = bars
         self._paint_practice()
@@ -2619,6 +2857,7 @@ class NotebookScreen(Screen):
         return [e["key"] for e in self.entries if e["source"] == source]
 
     def practice(self, source, keys, first=None):
+        mark = self.app.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         if not keys:
             self.toast("In dieser Auswahl gibt es dazu keine Fragen.")
             return
@@ -2626,10 +2865,10 @@ class NotebookScreen(Screen):
             keys = [first] + [key for key in keys if key != first]
         if source == SRC_CARD:
             self.app.screens["cards"].practice(keys)
-            self.app.open("cards")
+            self.app.open("cards", toast_bis=mark)
         elif source == SRC_QUIZ:
             self.app.screens["quiz"].practice(keys, keep_order=first is not None)
-            self.app.open("quiz")
+            self.app.open("quiz", toast_bis=mark)
         elif source == SRC_PROJECT:
             self.app.screens["testproject"].open_detail(keys[0])
         else:
@@ -2644,7 +2883,7 @@ class NotebookScreen(Screen):
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         rows = [self._row(entry) for entry in visible]
         if not rows:
-            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+            text = ("Nichts zu üben – sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
                     "Keine Fragen in dieser Auswahl.")
             if self.query.strip() and self.all_entries:
@@ -2652,6 +2891,7 @@ class NotebookScreen(Screen):
             rows = [ui.text(text, size=14, color=C["text_soft"])]
         self.rows.controls = rows
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
+        _paint_page_buttons(self.btn_prev, self.btn_next, self.page, pages)
 
     def _row(self, entry):
         source, item = entry["source"], entry["item"]
@@ -2674,7 +2914,7 @@ class NotebookScreen(Screen):
             if len(answer) > 900:
                 answer = answer[:900].rsplit(" ", 1)[0] + " …"
             controls.append(ui.text(answer, size=13, color=C["text_dim"], selectable=True))
-        controls.append(ft.Row([
+        controls.append(tile_row([
             ui.GradientButton("Antwort ausblenden" if key in self.opened else "Antwort zeigen",
                               lambda _e, k=key: self._toggle(k), kind="ghost", height=36,
                               expand=True),
@@ -2708,13 +2948,15 @@ class NotebookScreen(Screen):
 # ============================================================================
 
 class TrainerPanel(ft.Column):
-    """Subnetting-Trainer im Rechner (ab 0.51), wie am PC."""
+    """Rechen-Trainer im Rechner (ab 0.51), wie am PC."""
 
     def __init__(self, app):
         self.app = app
         self.db = app.db
         self.tasks, self.index, self.results, self.checked = [], 0, [], False
-        self.kind_pills = ui.PillGroup(TRAINER_KINDS)
+        # Ab 0.63.2 (A4): sechs Arten brechen um wie die Rechner-Pillen (ohne
+        # Pfeil, der bei Sehr gross den ersten Tipp auf die letzte Art abfing)
+        self.kind_pills = _pills(TRAINER_KINDS)
         self.level_pills = ui.PillGroup(TRAINER_LEVELS)
         self.lbl_stats = ui.text("", size=12, color=C["muted"])
         self.lbl_head = ui.text("", size=12, color=C["muted"])
@@ -2723,14 +2965,16 @@ class TrainerPanel(ft.Column):
                                 color=C["text_soft"], weight=ft.FontWeight.BOLD)
         self.fields_box = ft.Column(spacing=10, tight=True)
         self.lbl_feedback = ui.text("", size=14, weight=ft.FontWeight.BOLD)
-        self.steps = ui.read_box("", mono=True)
+        # Ab 0.63.2 (A3): Rechenweg im Kasten der Rechner-Ergebnisse (fit_lines,
+        # Fortsetzung mit Einzug statt freiem Umbruch ab Spalte 0)
+        self.steps = ui.read_box("", mono=True, scroll=True, fit=True)
         self.steps.visible = False
         self.btn_check = ui.GradientButton("Prüfen", lambda _e: self.check())
         self.btn_check.visible = False
         self.lbl_counter = ui.text("", size=12, color=C["muted"])
         self.entries, self.marks = {}, {}
         super().__init__([
-            ui.Card("Subnetting-Trainer", [
+            ui.Card(TRAINER_TITLE, [
                 ui.label("Aufgabenart"), self.kind_pills,
                 ui.label("Schwierigkeit"), self.level_pills,
                 ft.Row([ui.GradientButton("Runde starten", lambda _e: self.start_round())]),
@@ -2767,7 +3011,9 @@ class TrainerPanel(ft.Column):
         self.lbl_task.value = task.text
         self.entries, self.marks, rows = {}, {}, []
         for key, label in task.fields:
-            field = ui.entry("", hint=label,
+            # Ab 0.63.2 (A2): kein Hinweistext im Feld (wurde mit "…" gekuerzt);
+            # die Beschriftung steht ganz ueber dem Feld, wie am PC
+            field = ui.entry("", hint=None,
                              keyboard=ft.KeyboardType.TEXT
                              if task.kind in ("ipv6", "zahlen", "teilen", "bedarf")
                              else ft.KeyboardType.NUMBER if key == "hosts"
@@ -2806,11 +3052,12 @@ class TrainerPanel(ft.Column):
         self.lbl_feedback.color = C["green"] if correct else C["yellow"]
         # Ab 0.63.1 (F-63-18 = S1): die neuen Arten bringen die Handy-Fassung
         # des Rechenwegs als steps_schmal mit, alle anderen nur steps
-        self.steps.content.value = "\n".join(getattr(task, "steps_schmal", None) or task.steps)
+        ui.set_box(self.steps, "\n".join(getattr(task, "steps_schmal", None) or task.steps))
         self.steps.visible = True
         self.checked = True
         last = self.index >= len(self.tasks) - 1
         self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
+        _redraw(self)   # ab 0.63.2 (Z7): log_trainer kann einen Hinweis zeigen
 
     def advance(self):
         if self.index < len(self.tasks) - 1:
@@ -2844,6 +3091,16 @@ def _accepts(func, name):
 # ui.py die Schluesselwoerter kennt (paralleler Arbeitsbaum "Anzeige Handy").
 UI_FIT = _accepts(ui.read_box, "fit")
 UI_UMBRECHEN = _accepts(ui.PillGroup.__init__, "umbrechen")
+
+# Ab 0.63.2 (A5-c): unsichtbares Wortverbindungszeichen (U+2060) nach jedem
+# "/" - Flutter bricht die Feldbeschriftung sonst nach "/" um
+# ("…abcd::/" / "48)"); sichtbar bleibt der Wortlaut wie am PC
+WORD_JOINER = "\u2060"
+
+
+def _kein_umbruch_nach_schraegstrich(text):
+    return text.replace("/", "/" + WORD_JOINER)
+
 
 # Vorgaben der Ansicht "Netzdaten" (passen zu den festen Rechenwegen)
 SUBNET_NETZDATEN_VORGABE = {"ipv4": "192.168.1.50/24", "ipv6": "2001:db8:abcd:12::1/64"}
@@ -2898,27 +3155,27 @@ class CalcScreen(Screen):
         self.entry_disks = ui.entry("4", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_size = ui.entry("1000", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.out_raid = _result_box("Noch keine Berechnung durchgeführt.")
-        raid = ui.Card("RAID-Kapazität", [
-            ui.text("RAID-Level", size=13, color=C["text_dim"]), self.raid_pills,
-            self._field("Anzahl Festplatten", self.entry_disks),
-            self._field("Kapazität je Festplatte (GB)", self.entry_size),
+        raid = ui.Card(fc.RAID_TITLE, [
+            ui.text(fc.RAID_FIELD_LEVEL, size=13, color=C["text_dim"]), self.raid_pills,
+            self._field(fc.RAID_FIELD_DISKS, self.entry_disks),
+            self._field(fc.RAID_FIELD_SIZE, self.entry_size),
             ft.Row([ui.GradientButton("Berechnen", self.calc_raid)]),
             self.out_raid, *self._explain(CALC_EXPLAIN_RAID_HANDY),
-        ], accent=C["purple"], subtitle="Nutzkapazität, Verlust, Effizienz")
+        ], accent=C["purple"], subtitle=fc.RAID_SUBTITLE)
 
         self.entry_width = ui.entry("1920", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_height = ui.entry("1080", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.entry_fps = ui.entry("30", keyboard=ft.KeyboardType.NUMBER, expand=True)
         self.depth_pills = _pills(COLOR_DEPTHS, initial=2)
         self.out_screen = _result_box("Noch keine Berechnung durchgeführt.")
-        screen = ui.Card("Bildschirm-Datenvolumen", [
-            self._field("Breite (Pixel)", self.entry_width),
-            self._field("Höhe (Pixel)", self.entry_height),
-            self._field("Bildrate (fps, optional)", self.entry_fps),
-            ui.text("Farbtiefe", size=13, color=C["text_dim"]), self.depth_pills,
+        screen = ui.Card(fc.SCREEN_TITLE, [
+            self._field(fc.SCREEN_FIELD_WIDTH, self.entry_width),
+            self._field(fc.SCREEN_FIELD_HEIGHT, self.entry_height),
+            self._field(fc.SCREEN_FIELD_FPS, self.entry_fps),
+            ui.text(fc.SCREEN_FIELD_DEPTH, size=13, color=C["text_dim"]), self.depth_pills,
             ft.Row([ui.GradientButton("Berechnen", self.calc_screen, kind="accent")]),
             self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN_HANDY),
-        ], accent=C["green"], subtitle="Pixel, Farbtiefe, Datenrate")
+        ], accent=C["green"], subtitle=fc.SCREEN_SUBTITLE)
         # Ab 0.51: Umschalter Rechner / Trainer
         self.calc_box = ft.Column([subnet, raid, screen, self._build_ups()], spacing=14,
                                   tight=True)
@@ -3085,7 +3342,8 @@ class CalcScreen(Screen):
         else:
             net, other = fc.SUBNET_DEFAULTS[(mode, view)]
         panel["net"] = ui.entry(net)
-        controls = [ui.text(fc.SUBNET_FIELD_NET[mode], size=13, color=C["text_dim"]),
+        controls = [ui.text(_kein_umbruch_nach_schraegstrich(fc.SUBNET_FIELD_NET[mode]),
+                            size=13, color=C["text_dim"]),
                     panel["net"]]
         if view == "aufteilen":
             panel["count"] = ui.entry(other, keyboard=ft.KeyboardType.NUMBER, expand=True)
@@ -3166,8 +3424,11 @@ class CalcScreen(Screen):
         if pages > 1:
             page = panel["page"]
             panel["page_text"].value = fc.SUBNET_PAGE_OF % (fc.de_int(page), fc.de_int(pages))
+            locked_color = _locked_arrow_color()
             for where, button in panel["page_buttons"].items():
                 button.disabled = page == 1 if where in ("first", "back") else page == pages
+                # Ab 0.63.2 (N-h, FG-71): gesperrt gedaempft wie _paint_page_buttons
+                button.icon_color = locked_color if button.disabled else C["accent"]
 
     @staticmethod
     def _fold(parts):
@@ -3353,8 +3614,10 @@ class ProgressScreen(Screen):
             # Ab 0.60 (K-A): drei Kacheln, "Bestes Ergebnis" allein ueber die volle
             # Breite; die Lernserie steht nur noch im Banner der Startseite.
             # Namen wie am PC (vorher "Sessions" und "Bestes")
-            ft.Row([stat("tests", "Test-Sessions", C["accent"]),
-                    stat("avg", "Durchschnitt", C["purple"])], spacing=12),
+            # Ab 0.63.2 (B-E-05 d): beide Kacheln gleich hoch (Sehr gross)
+            # Ab 0.63.2 (B-J-06): tile_row - ab 160 % untereinander
+            tile_row([stat("tests", "Test-Sessions", C["accent"]),
+                      stat("avg", "Durchschnitt", C["purple"])], **SAME_HEIGHT),
             ft.Row([stat("best", "Bestes Ergebnis", C["accent2"])], spacing=12),
             ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
                                       ft.Container(height=6),
@@ -3377,10 +3640,11 @@ class ProgressScreen(Screen):
         results = self.db.get_all_results()
         count, average = self.db.get_stats()
         self._stat("tests", str(count), "abgeschlossene Sessions")
-        self._stat("avg", "%.1f %%" % average, "über alle Sessions")
+        # Ab 0.63.2 (B-D-05): Dezimalkomma (wie am PC)
+        self._stat("avg", "%s %%" % fc.de_number(average, 1), "über alle Sessions")
         if results:
             best = max(row[3] for row in results)
-            self._stat("best", "%.1f %%" % best, ihk_note(best))
+            self._stat("best", "%s %%" % fc.de_number(best, 1), ihk_note(best))
         else:
             self._stat("best", "-", "noch keine Session")
         # Ab 0.54 einmal laden: "Aufgaben pro Tag" (wie Tagesziel und Lernserie gezaehlt)
@@ -3410,7 +3674,7 @@ class ProgressScreen(Screen):
                                 size=12, color=C["muted"]),
                     ], spacing=2, tight=True, expand=True),
                     ft.Column([
-                        ui.text("%.1f %%" % percentage, size=15, color=C["accent"],
+                        ui.text("%s %%" % fc.de_number(percentage, 1), size=15, color=C["accent"],
                                 weight=ft.FontWeight.BOLD),
                         ui.text(note, size=11, color=C["text_dim"]),
                     ], spacing=2, tight=True,
@@ -3747,6 +4011,29 @@ def custom_preview(palette, map_colors, categories, block):
         vertical_alignment=ft.CrossAxisAlignment.START))
 
 
+# Ab 0.63.2 (FG-77): Schreibsperre (read_only_reason) waehrend "Sicherung
+# einspielen" -> "Zusammenfuehren". SyncError kommt nur aus merge_into_local,
+# vor dessen Schreibblock: nichts uebernommen, die normale Sicherungs-Meldung.
+# Entsteht die Sperre erst waehrend des Vorgangs und kommt BackupError, kann
+# das Zusammenfuehren schon geschrieben sein (Pruefung vor dem Wiederherstellen
+# geloeschter Spielstaende): ehrlicher Satz. PC und Handy gleich (Test).
+MSG_MERGE_INTERRUPTED = ("Das Zusammenführen wurde unterbrochen. Ein Teil der Sicherung "
+                         "kann schon übernommen sein; es geht nichts verloren. %s Ist das "
+                         "behoben, spiele die Sicherung noch einmal mit „Zusammenführen“ ein.")
+
+
+def merge_error_text(db, error, locked_before):
+    """Meldung zu einem Fehler beim Zusammenfuehren (ab 0.63.2, FG-77);
+    locked_before: read_only_reason vor dem Aufruf."""
+    reason = getattr(db, "read_only_reason", None)
+    line = fc.DB_READ_ONLY_LINES.get(reason, "") if reason else ""
+    if isinstance(error, fisi_sync.SyncError):
+        return (fsi.MSG_READ_ONLY % line).strip()
+    if reason and not locked_before:
+        return " ".join((MSG_MERGE_INTERRUPTED % line).split())
+    return fsi.restore_error_text(error)
+
+
 class SettingsScreen(Screen):
     crumbs = ("SYSTEM", "OPTIONEN")
 
@@ -3774,12 +4061,14 @@ class SettingsScreen(Screen):
         self.btn_sync = ui.GradientButton("Speichern und abgleichen", self.sync_now,
                                           kind="accent")
         self.lbl_sync = ui.text("", size=13, color=C["text_dim"])
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, gezeigt nur mit Text
+        self.lbl_sync_mixed = ui.text("", size=13, color=C["text_dim"])
         sync = self._area("abgleich", [
             ui.text("Repository (Benutzer/Name)", size=13, color=C["text_dim"]),
             self.entry_repo,
             ui.text("Zugangsschlüssel (Token)", size=13, color=C["text_dim"]),
             self.entry_token,
-            ft.Row([self.btn_sync]), ui.live(self.lbl_sync),
+            ft.Row([self.btn_sync]), ui.live(self.lbl_sync), self.lbl_sync_mixed,
             self._switch("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
                          "Verlassen der App)", settings["sync_auto"], self._toggle_sync_auto),
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
@@ -3797,8 +4086,16 @@ class SettingsScreen(Screen):
 
         # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie am PC. Der
         # Bericht wird erst beim Anzeigen der Seite eingetragen (on_show).
-        self.report_text = ui.text("", size=11, color=C["text_dim"], font_family=ui.MONO,
-                                   selectable=True)
+        # Ab 0.63.2 (B-N-05): Bericht im Kasten der Rechner-Ergebnisse (Saetze
+        # brechen mit Einzug um, Unteilbares wischt, "→ wischen"); Schrift 11
+        # wie bisher, senkrecht rollbar mit Hoehe 240. report_text bleibt das
+        # Text-Element (Selbsttest), gesetzt wird ueber ui.set_box.
+        self.report_box = ui.read_box("", mono=True, scroll=True, fit=True)
+        self.report_box.text.size = 11
+        self.report_box.box.height = 240
+        self.report_box.box.content = ft.Column([self.report_box.content],
+                                                scroll=ft.ScrollMode.AUTO, tight=True)
+        self.report_text = self.report_box.text
         self._report_key = None
         # Ab 0.59.2 (U): Problem melden und Leistungsmessung stehen als
         # Zwischenueberschriften im Bereich "Diagnose und Werkzeuge" (bis 0.62.1
@@ -3807,10 +4104,7 @@ class SettingsScreen(Screen):
         report_controls = [
             ui.label(sections["problem"]),
             ui.text(fdg.HELP, size=13, color=C["text_dim"]),
-            ft.Container(content=ft.Column([self.report_text], scroll=ft.ScrollMode.AUTO,
-                                           tight=True),
-                         height=240, bgcolor=C["card_alt"], border_radius=12, padding=12,
-                         border=ft.Border.all(1, C["border"])),
+            self.report_box,
             ft.Row([ui.GradientButton(fdg.BTN_COPY, self.copy_report, expand=True)]),
             ft.Row([ui.GradientButton(fdg.BTN_SAVE, self.save_report, kind="ghost",
                                       expand=True)]),
@@ -3831,12 +4125,14 @@ class SettingsScreen(Screen):
         ]
 
         totals = content_totals()
-        lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
-                 "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
-                 "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
-                 "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
-        lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
+        de_int = fc.de_int   # ab 0.63.2 (B-D-07): Tausenderpunkt wie am PC
+        lines = ["Karteikarten gesamt: %s" % de_int(len(KARTEIKARTEN)),
+                 "Prüfungsfragen gesamt: %s" % de_int(len(QUIZ_QUESTIONS)),
+                 "AP1-Szenarien gesamt: %s" % de_int(len(AP1_SZENARIEN)),
+                 "AP2-Szenarien gesamt: %s" % de_int(len(SZENARIEN)),
+                 "Testprojekte gesamt: %s" % de_int(len(PROJEKTARBEITEN)), ""]
+        lines += ["%s: %s Inhalte" % (CATEGORY_SHORT[c], de_int(totals.get(c, 0)))
+                  for c in CATEGORIES]
 
         # Ab 0.62.2: "Optische Anpassungen" mit den Zwischenueberschriften
         # SCHRIFTGRÖSSE (ab 0.56, je Geraet) und FARBEN (ab 0.56; ab 0.57
@@ -3977,11 +4273,8 @@ class SettingsScreen(Screen):
         # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
         danger = self._area("loeschen", [
             ui.label("Lerndaten"),
-            ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                    "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete Szenarien. "
-                    "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                    "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
-                    "rückgängig machen.", size=13, color=C["text_dim"]),
+            # Ab 0.63.2 (B-G-16): ein Text fuer PC und Handy (fisi_optionen)
+            ui.text(fo.RESET_ALL_TEXT, size=13, color=C["text_dim"]),
             ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                       kind="danger")]),
             ft.Container(height=6),
@@ -4165,14 +4458,17 @@ class SettingsScreen(Screen):
 
     @staticmethod
     def _switch(caption, value, handler):
-        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter")
+        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter").
+        # Ab 0.63.2 (FG-114): mehrzeiliger Text -> Schalter oben an der ersten
+        # Zeile (wie ui.check_row); einzeilig steht der Text wie bisher mittig.
         return ft.Row([
-            ft.Semantics(label=caption, content=ft.Switch(
+            ft.Container(content=ft.Semantics(label=caption, content=ft.Switch(
                 value=value, on_change=handler, active_color=C["knob"],
                 active_track_color=C["violet"], inactive_track_color=C["card_alt"],
-                inactive_thumb_color=C["muted"])),
-            ui.text(caption, size=13, color=C["text_dim"], expand=True),
-        ], spacing=8)
+                inactive_thumb_color=C["muted"])), alignment=ft.Alignment.TOP_LEFT),
+            ft.Container(content=ui.text(caption, size=13, color=C["text_dim"]),
+                         expand=True, alignment=ft.Alignment.CENTER_LEFT),
+        ], spacing=8, intrinsic_height=True, vertical_alignment=ft.CrossAxisAlignment.STRETCH)
 
     @staticmethod
     def _reminder_changed(event):
@@ -4223,12 +4519,19 @@ class SettingsScreen(Screen):
             self.lbl_sync.color = C["yellow"]
             return
         self.btn_sync.set_enabled(False)
-        self.lbl_sync.value = "Gleiche ab ..."
+        self.lbl_sync.value = "Gleiche ab …"
         self.lbl_sync.color = C["text_dim"]
         self.app.sync.run()
 
     def show_sync_status(self, result, error):
         self.btn_sync.set_enabled(True)
+        # Ab 0.63.2 (C-4): Mischbetrieb-Zeile, Text wie am PC aus
+        # fisi_optionen; ohne Text nicht gezeigt. Ohne die Zeile (Attrappen,
+        # die nur lbl_sync kennen) bleibt alles wie bisher.
+        mixed = getattr(self, "lbl_sync_mixed", None)
+        if mixed is not None:
+            mixed.value = fo.sync_mixed_text(self.app.db)
+            mixed.visible = bool(mixed.value)
         if error:
             self.lbl_sync.value, self.lbl_sync.color = error, C["red"]
             return
@@ -4245,7 +4548,7 @@ class SettingsScreen(Screen):
 
     def check_updates(self, _event=None):
         self.btn_update.set_enabled(False)
-        self.lbl_update.value = "Suche nach Updates ..."
+        self.lbl_update.value = "Suche nach Updates …"
         self.box_update.visible = True
         self.lbl_update.color = C["text_dim"]
         self.app.check_updates(manual=True)
@@ -4316,7 +4619,7 @@ class SettingsScreen(Screen):
         key = (log_key, self.db.change_stamp())
         if key != self._report_key:
             self._report_key = key
-            self.report_text.value = self._report_text()
+            ui.set_box(self.report_box, self._report_text())
 
     def copy_report(self, _event=None):
         text = self._report_text()
@@ -4381,7 +4684,12 @@ class SettingsScreen(Screen):
 
     def create_backup(self, _event=None):
         self._flush_inputs()
-        data = fsi.create_backup(self.db, APP_VERSION, "Handy")
+        # Ab 0.63.2 (N7): Hinweis, solange die Sicherung entsteht
+        overlay = show_wait(self.app, WAIT_BACKUP_TEXT)
+        try:
+            data = fsi.create_backup(self.db, APP_VERSION, "Handy")
+        finally:
+            hide_wait(self.app, overlay)
         self.app.page.run_task(self.app.save_file, fsi.default_name(), data,
                                "application/octet-stream")
 
@@ -4455,11 +4763,12 @@ class SettingsScreen(Screen):
 
         def merge(restore):
             chosen = runs if restore else []
+            locked = getattr(self.db, "read_only_reason", None)
             try:
                 count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in chosen],
                                          "Handy")
-            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-                self.app.info(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+            except fsi.RESTORE_ERRORS + (fisi_sync.SyncError,) as error:  # ab 0.63.2 (FG-77)
+                self.app.info(fsi.ERROR_TITLE, merge_error_text(self.db, error, locked))
                 return
             self._after_restore()
             self.app.info(fsi.ERROR_TITLE,
@@ -4472,13 +4781,24 @@ class SettingsScreen(Screen):
 
     def _replace_backup(self, backup):
         def replace():
+            # Ab 0.63.2 (N7): Hinweis, solange ersetzt und neu angezeigt wird;
+            # vor jeder Meldung wieder weg
+            overlay = show_wait(self.app, WAIT_REPLACE_TEXT)
+            failure = None
             try:
-                path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
-                                       APP_VERSION, "Handy")
-            except fsi.RESTORE_ERRORS as error:      # ab 0.62.5 auch DB-Fehler (B-G-05)
-                self.app.info(fsi.ERROR_TITLE, fsi.restore_error_text(error))
+                try:
+                    path = fsi.replace_all(self.db, backup,
+                                           os.path.dirname(self.db.db_path),
+                                           APP_VERSION, "Handy")
+                except fsi.RESTORE_ERRORS as error:   # ab 0.62.5 auch DB-Fehler (B-G-05)
+                    failure = fsi.restore_error_text(error)
+                if failure is None:
+                    self._after_restore()
+            finally:
+                hide_wait(self.app, overlay)
+            if failure is not None:
+                self.app.info(fsi.ERROR_TITLE, failure)
                 return
-            self._after_restore()
             self.app.info(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
 
         self.app.confirm(fsi.REPLACE_TITLE, fsi.replace_question(backup),
@@ -4514,14 +4834,32 @@ class SettingsScreen(Screen):
         if dashboard is not None:
             dashboard.refresh()
 
+    def _delete_quietly(self, delete):
+        """Ab 0.63.2 (B-D-12, wie am PC): Loeschen mit voruebergehend
+        gesammelten Datenbank-Meldungen. Liefert (geklappt, Meldungstexte);
+        bei einem Fehler zeigt der Aufrufer genau einen Hinweis."""
+        messages = []
+        handler, self.db.error_handler = self.db.error_handler, messages.append
+        try:
+            done = delete()
+        finally:
+            self.db.error_handler = handler
+        return done, messages
+
+    def _nothing_deleted(self, messages):
+        """B-D-12: ein Hinweis "Es wurde nichts geloescht." (+ Datenbanktext)."""
+        self.toast("\n\n".join([fo.DELETE_NOTHING] + messages), C["red"])
+
     def clear_history(self, _event=None):
-        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert. Ab 0.63.2
+        (B-D-12) mit Bestaetigung bzw. Fehlerhinweis wie am PC."""
         def confirmed():
-            if self.db.clear_history():
-                hint = fisi_sync.clock_fix_text(self.db.last_clock_fix)
-                if hint:
-                    self.toast(hint, C["green"])
+            done, messages = self._delete_quietly(lambda: self.db.clear_history())
+            if done:
+                self.toast(self._with_clock_fix(fo.DELETE_HISTORY_DONE), C["green"])
                 self.app.notify_progress()
+            else:
+                self._nothing_deleted(messages)
 
         self.app.confirm("Historie löschen",
                          "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
@@ -4529,27 +4867,52 @@ class SettingsScreen(Screen):
 
     def reset_all(self, _event=None):
         def confirmed():
-            if self.db.reset_all():
+            done, messages = self._delete_quietly(lambda: self.db.reset_all())
+            if done:
                 self.toast(self._with_clock_fix("Alle Lerndaten wurden gelöscht."),
                            C["green"])
                 self.app.notify_progress()
+            else:
+                self._nothing_deleted(messages)   # ab 0.63.2 (B-D-12)
 
         self.app.confirm("Alles zurücksetzen",
                          "Wirklich ALLE Lerndaten unwiderruflich löschen?", confirmed)
+
+
+# Ab 0.63.2 (N7, B-I-03, Wortlaut Weisung zu Meldung 38/40, N7-F7): Hinweis,
+# solange "Sicherung erstellen" bzw. "Alles ersetzen" laeuft. PC = Handy (Test).
+WAIT_BACKUP_TEXT = "Bitte warten \u2013 die Sicherung wird erstellt."
+WAIT_REPLACE_TEXT = "Bitte warten \u2013 die Daten werden ersetzt."
+
+
+def show_wait(app, text):
+    """Bitte-warten-Hinweis (FISIMobileApp.show_wait). None, wenn app keine
+    Abdeckung kennt (z.B. Test-Attrappe)."""
+    show = getattr(app, "show_wait", None)
+    return show(text) if show is not None else None
+
+
+def hide_wait(app, overlay):
+    if overlay is not None:
+        app.hide_wait(overlay)
 
 
 # ============================================================================
 #  SUCHE
 # ============================================================================
 
+# Ab 0.63.2 (B-E-04): Hinweis, solange nichts gesucht wurde
+SEARCH_EMPTY_HINT = "Gib oben einen Suchbegriff ein und tippe auf die Lupe."
+
+
 class SearchScreen(Screen):
     crumbs = ("SUCHE", "ERGEBNISSE")
 
     def build(self):
-        self.field = ui.entry(hint="Suchen ... (z.B. RAID, DNS, DSGVO)", expand=True)
+        self.field = ui.entry(hint="Suchen … (z. B. RAID, DNS, DSGVO)", expand=True)
         self.field.on_submit = lambda _e: self.search(self.field.value or "")
         self.field.autofocus = True
-        self.lbl_info = ui.text("", size=13, color=C["text_dim"])
+        self.lbl_info = ui.text(SEARCH_EMPTY_HINT, size=13, color=C["text_dim"])
         self.results = ft.Column(spacing=8, tight=True)
         return screen_list([
             ft.Row([self.field, ft.Semantics(button=True, label=SEARCH_TEXT, content=ft.Container(
@@ -4563,6 +4926,10 @@ class SearchScreen(Screen):
     def search(self, query):
         query = query.strip()
         if not query:
+            # Ab 0.63.2 (B-E-04): leerer Begriff zeigt den Hinweis statt nichts
+            self.lbl_info.value = SEARCH_EMPTY_HINT
+            self.results.controls = []
+            self.app.page.update()
             return
         # Ab 0.56 zuerst die passenden Hilfe-Abschnitte (wie am PC)
         self.app.last_query = query   # ab 0.59: Optionen-Treffer oeffnen ggf. "Vorlagen"
@@ -4595,7 +4962,7 @@ class SearchScreen(Screen):
                 on_click=lambda _e, k=kind, t=title: self.app.open_search_hit(k, t))))
         if len(hits) > 60:
             self.results.controls.append(ui.text(
-                "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,
+                "… weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,   # ab 0.63.2 (N-c)
                 color=C["muted"]))
         self.app.page.update()
 
@@ -4867,6 +5234,13 @@ class SyncController:
 #  APP
 # ============================================================================
 
+# Ab 0.63.2 (B-E-06): Navigationsleiste waechst mit der Schrift - Hoehe und
+# Symbole mal Faktor (Flutter-Standard 80 und 24); die Beschriftung bleibt bei
+# hoechstens NAV_LABEL_MAX, damit "Fortschritt" einzeilig bleibt
+NAV_HEIGHT = 80
+NAV_ICON_SIZE = 24
+NAV_LABEL_MAX = 12
+
 NAV = [
     ("dashboard", ft.Icons.DASHBOARD_OUTLINED, ft.Icons.DASHBOARD_ROUNDED, "Start"),
     ("learn", ft.Icons.SCHOOL_OUTLINED, ft.Icons.SCHOOL_ROUNDED, "Lernen"),
@@ -5017,7 +5391,11 @@ class FISIMobileApp:
         self.page = page
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
         page.padding = 0
-        self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
+        # Ab 0.63.2 (A12): Datenbank-Meldungen waehrend des Aufbaus sammeln.
+        # Als Hinweis gezeigt haette show_tab("dashboard") sie sofort wieder
+        # geschlossen (close_toast); sie kommen nach dem Aufbau als ein Hinweis.
+        self._start_messages = []
+        self.db = DBManager(error_handler=self._db_error)
         # Ab 0.62.5 (G-2): Hilfsdatei eines abgebrochenen "Alles ersetzen" weg
         fsi.remove_stale_temp()
         self.sync = SyncController(self)
@@ -5031,6 +5409,18 @@ class FISIMobileApp:
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
         self.show_tab("dashboard")
+        messages, self._start_messages = self._start_messages, None
+        if messages:
+            self.toast("\n".join(messages), C["red"])
+            self.page.update()
+
+    def _db_error(self, message):
+        """Datenbank-Meldung als Hinweis (ab 0.63.2 waehrend des Aufbaus
+        gesammelt, siehe __init__)."""
+        if self._start_messages is not None:
+            self._start_messages.append(message)
+        else:
+            self.toast(message, C["red"])
 
     def _build_ui(self):
         """Design, Seiten und Navigation (auch zum Neuaufbau nach einem
@@ -5044,9 +5434,15 @@ class FISIMobileApp:
                 on_surface=C["text"], error=C["red"]),
             navigation_bar_theme=ft.NavigationBarTheme(
                 bgcolor=C["sidebar"], indicator_color=C["card_hi"],
+                # Ab 0.63.2 (B-E-06): Die Leiste waechst mit der Schrift (Hoehe
+                # und Symbole, siehe NAV_ICON_SIZE)
+                height=ui.grow(NAV_HEIGHT),
                 # Ab 0.56: hoechstens 12, sonst bricht "Fortschritt" bei
-                # "Sehr gross" in der schmalen Leiste um
-                label_text_style=ft.TextStyle(size=min(12, ui.fs(11)), color=C["text_dim"])))
+                # "Sehr gross" in der schmalen Leiste um. Ab 0.63.2 (B-E-06)
+                # gemessen: Jede groessere Beschriftung bricht bei 384 dp mitten
+                # im Wort um (6 Eintraege je 64 dp), deshalb bleibt die Grenze
+                label_text_style=ft.TextStyle(size=min(NAV_LABEL_MAX, ui.fs(11)),
+                                              color=C["text_dim"])))
 
         self.screens = {key: cls(self) for key, cls in SCREEN_CLASSES.items()}
         self.tab = "dashboard"
@@ -5060,8 +5456,9 @@ class FISIMobileApp:
         self.body = ft.Container(expand=True)
         self.nav = ft.NavigationBar(
             destinations=[ft.NavigationBarDestination(
-                icon=ft.Icon(icon, color=C["muted"]),
-                selected_icon=ft.Icon(selected, color=C["accent"]), label=caption)
+                icon=ft.Icon(icon, color=C["muted"], size=ui.grow(NAV_ICON_SIZE)),
+                selected_icon=ft.Icon(selected, color=C["accent"],
+                                      size=ui.grow(NAV_ICON_SIZE)), label=caption)
                 for _key, icon, selected, caption in NAV],
             selected_index=0, on_change=self._nav_changed,
             bgcolor=C["sidebar"], indicator_color=C["card_hi"])
@@ -5127,6 +5524,21 @@ class FISIMobileApp:
             self.page.update()
         self.perf.theme(before, _theme_name(), measured)
 
+    def show_wait(self, text):
+        """Ab 0.63.2 (N7, B-I-03): Bitte-warten-Hinweis (wie am PC), sofort
+        gezeigt; Rueckgabe fuer hide_wait."""
+        overlay = self._busy_overlay(text, None)
+        self.page.overlay.append(overlay)
+        self._lock_bars(True)
+        self.page.update()
+        return overlay
+
+    def hide_wait(self, overlay):
+        if overlay in self.page.overlay:
+            self.page.overlay.remove(overlay)
+        self._lock_bars(False)
+        self.page.update()
+
     def _lock_bars(self, locked):
         """Kopfzeile und Navigationsleiste liegen nicht unter der Abdeckung -
         sie werden waehrend des Farbwechsels deshalb eigens gesperrt."""
@@ -5137,16 +5549,20 @@ class FISIMobileApp:
 
     @staticmethod
     def _busy_overlay(title=fisi_theme.BUSY_TITLE, message=fisi_theme.BUSY_TEXT):
-        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
+        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC).
+        Ab 0.63.2 (N7): message=None zeigt nur die eine Zeile title
+        (Bitte-warten-Hinweis bei Sicherung und "Alles ersetzen")."""
+        texts = [ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
+                         color=C["text"], text_align=ft.TextAlign.CENTER)]
+        if message is not None:
+            texts.append(ft.Text(message, size=13, color=C["text_dim"],
+                                 text_align=ft.TextAlign.CENTER))
         card = ft.Container(
             content=ft.Column([
                 ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
                                 bgcolor=C["ring_bg"]),
-                ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
-                        color=C["text"], text_align=ft.TextAlign.CENTER),
-                ft.Text(message, size=13, color=C["text_dim"],
-                        text_align=ft.TextAlign.CENTER),
-            ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            ] + texts, spacing=12, tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
             bgcolor=C["card"], border_radius=18, border=ft.Border.all(1, C["border_hi"]))
         return ft.Container(content=card, left=0, top=0, right=0, bottom=0,
@@ -5155,28 +5571,43 @@ class FISIMobileApp:
 
     # -- Kopfzeile und Navigation ------------------------------------------
 
+    # Ab 0.63.2 (B-E-05 b): sichtbarer Abstand zum Hilfe-Symbol = CRUMB_GAP +
+    # 12 Innenrand des Knopfs. Bei Sehr gross ragte die Zeile vorher ueber
+    # ihren Platz hinaus (auch "AUSWERTUNG / FORTSCHRITT", gemessen mit Abstand
+    # 0); jetzt bricht sie um
+    CRUMB_WRAP = {"wrap": True, "run_spacing": 1}
+    CRUMB_GAP = 12
+    BAR_HEIGHT = 56   # Kopfzeile (Flutter kToolbarHeight), ab 160 % mal Faktor
+
     def _appbar(self, root, crumbs=None):
         if crumbs:
             title = ft.Row([ft.Text(crumbs[0], size=12, weight=ft.FontWeight.BOLD,
                                     color=C["text"]),
                             ft.Text("/", size=12, color=C["muted"]),
                             ft.Text(crumbs[1], size=12, weight=ft.FontWeight.BOLD,
-                                    color=C["accent"])], spacing=7)
+                                    color=C["accent"])], spacing=7, **self.CRUMB_WRAP)
         else:
             title = ft.Column([ft.Row([self.crumb_main, ft.Text("/", size=12, color=C["muted"]),
-                                       self.crumb_sub], spacing=7),
+                                       self.crumb_sub], spacing=7, **self.CRUMB_WRAP),
                                self.lbl_version], spacing=1, tight=True)
+        # Ab 0.63.2 (B-E-05 b): Abstand rechts vor dem Hilfe-Symbol; die Krumen
+        # brechen bei Sehr gross in die naechste Zeile um statt anzustossen
+        title = ft.Container(content=title, padding=ft.Padding.only(right=self.CRUMB_GAP))
         leading = None
         if root:
-            logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1)
+            logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1, mitwachsen=False)
             logo.set(1.0, C["accent"], C["accent2"])
             logo.controls[1] = ft.Container(content=ui.dot(C["accent2"], 10), width=30,
                                             height=30, alignment=ft.Alignment.CENTER)
             leading = ft.Container(content=logo, padding=ft.Padding.only(left=16),
                                    alignment=ft.Alignment.CENTER_LEFT)
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher, sonst schnitt die Leiste die
+        # (umbrochenen) Brotkrumen und die Versionszeile oben und unten ab.
+        # Bis "Sehr gross" Flutter-Standard wie bisher
+        height = {"toolbar_height": ui.grow(self.BAR_HEIGHT)} if ui.large() else {}
         return ft.AppBar(
             leading=leading, leading_width=52 if root else None, title=title,
-            bgcolor=C["bg"], elevation=0, color=C["text"],
+            bgcolor=C["bg"], elevation=0, color=C["text"], **height,
             # Ab 0.56: Hilfe in der Kopfzeile (die untere Leiste hat schon 6 Punkte)
             # Ab 0.60 (K-G): mit Namen fuer Bildschirmleser (ein Element je Knopf)
             actions=[named(fh.HELP_TITLE, ft.IconButton(
@@ -5218,19 +5649,30 @@ class FISIMobileApp:
         self.body.content = screen.root
         self.page.update()
 
-    def open(self, key):
+    def open(self, key, toast_bis=None):
         """Unterseite (z.B. Karteikarten, Suche) ueber der aktuellen Seite
         oeffnen - der Zurueck-Pfeil bzw. die Zurueck-Geste fuehrt zurueck."""
+        # Ab 0.63.2 (N-a, Frage 17): Nummer vor on_show lesen oder vom Aufrufer
+        # uebernehmen; Hinweise aus diesem Ereignis bleiben nach push offen.
+        mark = self.toast_mark() if toast_bis is None else toast_bis
         started = time.perf_counter()
         screen = self.screens[key]
         screen.on_show()
-        self.push(screen.crumbs, screen.root)
+        self.push(screen.crumbs, screen.root, toast_bis=mark)
+        # Ab 0.63.2 (B-G-23, Nacharbeit M1): Hinweis aus on_show nach push zeigen
+        after_open = getattr(screen, "after_open", None)
+        if after_open is not None:
+            after_open()
         perf = getattr(self, "perf", None)
         if perf is not None:
             perf.page(self.tab, key, started)
 
-    def push(self, crumbs, content):
-        self.close_toast()
+    def push(self, crumbs, content, toast_bis=None):
+        # Ab 0.63.2 (N-a): Mit toast_bis (Nummer vom Anfang des Ereignisses,
+        # toast_mark) bleibt ein Hinweis aus diesem Ereignis offen, nur
+        # aeltere werden geschlossen. Ohne Parameter wie bisher: alle.
+        if toast_bis is None or getattr(self, "_toast_nr", -1) < toast_bis:
+            self.close_toast()
         self.page.views.append(ft.View(
             route="/%d" % len(self.page.views), controls=[safe_content(content)],
             appbar=self._appbar(root=False, crumbs=crumbs), bgcolor=C["bg"], padding=0))
@@ -5278,8 +5720,9 @@ class FISIMobileApp:
             pass
 
     def open_cards(self, category, topic=None):
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         self.screens["cards"].set_category(category, topic)
-        self.open("cards")
+        self.open("cards", toast_bis=mark)
 
     def open_help(self, section_id=None):
         """Hilfe oeffnen (ab 0.56), auf Wunsch mit aufgeklapptem Abschnitt."""
@@ -5343,6 +5786,7 @@ class FISIMobileApp:
             return None
 
     def open_search_hit(self, kind, title):
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         if kind == fh.SEARCH_KIND:
             self.open_help(fh.HELP_BY_TITLE[title]["id"])
         elif kind == fo.SEARCH_KIND:
@@ -5353,10 +5797,10 @@ class FISIMobileApp:
                 self.scroll_to_area(self.screens["settings"].open_area(area_id, templates))
         elif kind == "Karteikarte":
             self.screens["cards"].jump_to_question(title)
-            self.open("cards")
+            self.open("cards", toast_bis=mark)
         elif kind == KIND_QUIZ:
             self.screens["quiz"].jump_to_question(title)
-            self.open("quiz")
+            self.open("quiz", toast_bis=mark)
         else:
             key = "ap1scenarios" if kind == "AP1-Szenario" else "scenarios"
             screen = self.screens[key]
@@ -5370,12 +5814,21 @@ class FISIMobileApp:
     def toast(self, message, color=None, duration=TOAST_MS):
         # Ab 0.53 wie am PC: ein neuer Hinweis ersetzt den alten, gleiche Dauer
         self.close_toast()
+        # Ab 0.63.2 (N-a): laufende Nummer je Hinweis (siehe toast_mark, push)
+        self._toast_nr = self.toast_mark()
+        self._toast_count = self._toast_nr + 1
         self._toast = ft.SnackBar(
             ft.Text(message, color=C["text"]), bgcolor=C["card_hi"],
             behavior=ft.SnackBarBehavior.FLOATING,
             shape=ft.RoundedRectangleBorder(radius=12), duration=duration,
             show_close_icon=True, close_icon_color=color or C["text_dim"])
         self.page.show_dialog(self._toast)
+
+    def toast_mark(self):
+        """Ab 0.63.2 (N-a): Nummer, die der naechste Hinweis bekommt. Wer vor
+        einem Seitenwechsel schreibt, liest sie am Anfang des Ereignisses und
+        gibt sie push als toast_bis mit. Nur lesen, aendert nichts."""
+        return getattr(self, "_toast_count", 0)
 
     def close_toast(self):
         """Offenen Hinweis schliessen (ab 0.53: beim Seitenwechsel und vor
@@ -5391,8 +5844,11 @@ class FISIMobileApp:
                 on_yes()
             self.page.update()
 
+        # Ab 0.63.2: scrollable wie beim Rundgang - ein langer Text (Warntext
+        # "Alles ersetzen") laesst sich rollen statt unten abgeschnitten zu
+        # werden; die Knoepfe bleiben stehen. Kurze Texte sehen aus wie bisher.
         self.page.show_dialog(ft.AlertDialog(
-            modal=True, bgcolor=C["card"],
+            modal=True, bgcolor=C["card"], scrollable=True,
             title=ft.Text(title, color=C["text"], size=18, weight=ft.FontWeight.BOLD),
             content=ft.Text(message, color=C["text_dim"], size=14),
             actions=[ft.TextButton("Abbrechen", on_click=lambda _e: answer(False)),
@@ -5518,6 +5974,8 @@ class FISIMobileApp:
             self.screens["quiz"].exam.save_answers()
             self.screens["abschluss"].flush()
             self.sync.on_leave()
+            # Ab 0.63.2 (Z7): flush kann einen Datenbank-Hinweis zeigen
+            _redraw(self.screens["abschluss"].root)
         elif event.state in (ft.AppLifecycleState.RESUME, ft.AppLifecycleState.SHOW):
             # Android beendet die App im Hintergrund oft nicht: Beim Zurueckholen
             # laeuft main() nicht erneut, daher hier ebenfalls nachsehen.
@@ -5527,6 +5985,7 @@ class FISIMobileApp:
     def start_review(self):
         """"Jetzt wiederholen" (ab 0.51): erst faellige Karteikarten, dann
         faellige Pruefungstrainer-Fragen."""
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         plan = ReviewPlan.from_db(self.db)
         source = plan.first_source()
         if source is None:
@@ -5534,7 +5993,7 @@ class FISIMobileApp:
             return
         key = "cards" if source == SRC_CARD else "quiz"
         self.screens[key].practice(plan.session(source))
-        self.open(key)
+        self.open(key, toast_bis=mark)
 
     def practice_topic(self, name):
         """"Jetzt ueben" neben einem schwachen Thema (ab 0.54, wie am PC):
@@ -5559,6 +6018,7 @@ class FISIMobileApp:
     def _practice_part(self, parts):
         """Gemischte Runde (ab 0.54, wie am PC): erst die Quizfragen, nach
         ihrem Ergebnis auf Rueckfrage die Karteikarten zum selben Thema."""
+        mark = self.toast_mark()   # ab 0.63.2 (N-a, Frage 17): vor dem Schreiben
         source, keys = parts[0]
         rest = parts[1:]
         key = "cards" if source == SRC_CARD else "quiz"
@@ -5579,7 +6039,7 @@ class FISIMobileApp:
             self.scroll_top()
             self.page.update()
         else:
-            self.open(key)
+            self.open(key, toast_bis=mark)
 
     def check_reminder(self):
         """Erinnerung ans Tagesziel (ab 0.51) als Hinweis beim Oeffnen bzw.

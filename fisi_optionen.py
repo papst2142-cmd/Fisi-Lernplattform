@@ -73,6 +73,21 @@ ABOUT_ID = "ueber"
 SAVE_FAILED_TITLE = "Speichern fehlgeschlagen"
 SAVE_FAILED = ("Die Einstellung ließ sich nicht speichern. Ist der Datenordner "
                "schreibgeschützt oder die Platte voll? Die bisherige Einstellung gilt weiter.")
+# Ab 0.63.2 (B-G-16): ein Text fuer "Alle Lerndaten löschen" an PC und Handy.
+# Geloescht werden alle Tabellen aus fisi_core.EVENT_TABLES; das
+# Abschlussprojekt, die Einstellungen und der Spielstand nicht. Das Wissen im
+# Spiel wird aus Karteikarten und Pruefungsfragen berechnet (fisi_game.knowledge)
+RESET_ALL_TEXT = ("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                  "Klausursimulationen, Karteikarten-Verlauf, Antworten im "
+                  "Prüfungstrainer, Aufgaben im Rechen-Trainer und bearbeitete "
+                  "Szenarien und Testprojekte. Erhalten bleiben das Abschlussprojekt, "
+                  "deine Einstellungen (z. B. das Tagesziel) und der Spielstand des "
+                  "Lernspiels; das Wissen im Spiel beginnt aber wieder bei 0. Mit "
+                  "eingerichtetem Abgleich gilt das Zurücksetzen auf allen abgeglichenen "
+                  "Geräten. Dieser Schritt lässt sich nicht rückgängig machen.")
+# Ab 0.63.2 (B-D-12): Rueckmeldung nach "Historie löschen" (PC und Handy)
+DELETE_HISTORY_DONE = "Die Historie wurde gelöscht."
+DELETE_NOTHING = "Es wurde nichts gelöscht."
 SECTIONS = {
     OPTIK_ID: [{"id": "schrift", "titel": fisi_theme.FONT_TITLE},
                {"id": "farben", "titel": COLORS_TITLE}],
@@ -88,6 +103,8 @@ AREAS = [
      "stichwoerter": ["Rundgang", "Hilfe", "Name", "Einführung"]},
     {"id": OPTIK_ID, "titel": OPTIK_TITLE,
      "stichwoerter": ["Schrift", "Schriftgröße", "groß", "Sehr groß",
+                      # Ab 0.63.2 (B-J-06, Weisung zu Meldung 41, Frage 10)
+                      "Extra groß", "Maximal",
                       "Farbe", "Darstellung", "Dunkel", "Hell", TEMPLATES_TITLE,
                       "Grundfarbe", "Hintergrund", "Eigene Farben", "Regler",
                       "Farbton", "Sättigung", "Helligkeit", "Akzent"]
@@ -208,3 +225,34 @@ def hit_target(title, query=""):
     templates = area["id"] == OPTIK_ID and bool(needle) and any(
         needle in word.lower() for word in TEMPLATE_WORDS)
     return area["id"], templates
+
+
+# Ab 0.63.2 (C-4): Zeile unter dem Abgleich-Status (PC = Handy). Sie sagt, ob
+# der Abgleich gerade die volle Schutzwirkung hat oder ob noch ein Geraet mit
+# einer Version vor 0.62.4 mitgleicht (Mischbetrieb, fisi_sync.MIXED_KEY).
+# Entschieden wird mit derselben Regel wie im Abgleich (_mixed_recent);
+# fisi_sync wird nur gelesen. Kein "vorzeitig beenden" (Abnahme 0.62.4).
+SYNC_MIXED_DONE = "Abgleich: volle Schutzwirkung aktiv."
+SYNC_MIXED_ACTIVE = ("Abgleich: volle Schutzwirkung ab %s (ein Gerät mit älterer "
+                     "Version hat zuletzt am %s abgeglichen).")
+
+
+def sync_mixed_text(db, now=None, settings=None):
+    """Text fuer die Mischbetrieb-Zeile, "" wenn der Abgleich nicht
+    eingerichtet ist oder noch nie lief (dann wird die Zeile nicht gezeigt).
+    now: Zeitpunkt mit Zone (fuer Tests), sonst die Geraeteuhr. Liest nur
+    (ein SELECT in sync_meta) und scheitert nie: im Zweifel "" ."""
+    import datetime
+    import fisi_sync
+    try:
+        settings = settings or fisi_sync.sync_settings()
+        if not fisi_sync.is_configured(settings) or not settings.get("sync_last"):
+            return ""
+        if not fisi_sync._mixed_recent(db, now):
+            return SYNC_MIXED_DONE
+        seen = fisi_sync._parse_utc(db.get_meta(fisi_sync.MIXED_KEY))
+        until = (seen + datetime.timedelta(seconds=fisi_sync.MIXED_HOLD)).astimezone()
+        return SYNC_MIXED_ACTIVE % (until.strftime("%d.%m.%Y"),
+                                    seen.astimezone().strftime("%d.%m."))
+    except Exception:
+        return ""

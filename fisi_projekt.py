@@ -21,7 +21,7 @@ import os
 import re
 import uuid
 
-from fisi_core import CATEGORY_KEYS, CONTENT_DIR, PROJEKTARBEITEN
+from fisi_core import CATEGORY_KEYS, CONTENT_DIR, PROJEKTARBEITEN, _number_value
 
 MAX_HOURS = 40
 DOC_SHARE_MAX = 20          # Prozent der Stunden fuer die Dokumentation (DIHK ca. 20)
@@ -91,7 +91,7 @@ CHAPTERS = [
     ("ist", "2. Ist-Analyse",
      "Bestandsaufnahme und Schwachstellen."),
     ("soll", "3. Soll-Konzept und Lösungsauswahl",
-     "Anforderungen, Alternativen, Entscheidung (z.B. Nutzwertanalyse)."),
+     "Anforderungen, Alternativen, Entscheidung (z. B. Nutzwertanalyse)."),
     ("wirtschaft", "4. Wirtschaftlichkeit",
      "Projektkosten, Make-or-Buy, Amortisation."),
     ("durchfuehrung", "5. Durchführung",
@@ -175,21 +175,50 @@ def create_project(db, title=""):
 
 
 def delete_project(db, project):
-    return db.save_project_field(project, DELETED_FIELD, "1")
+    """Ab 0.63.2 (B-G-09): loescht wirklich. Erst ausblenden (wie bis 0.63.1;
+    bricht es danach ab, ist das Projekt wenigstens ausgeblendet), dann jedes
+    Feld mit einer neueren, leeren Fassung ueberschreiben. Die Regel
+    "neueste Fassung je Feld gilt" (seit 0.51, purge_superseded_project_rows)
+    entfernt die alten Texte sofort aus der Datenbank und nach dem Abgleich
+    auch auf den anderen Geraeten, auch auf aelteren Versionen."""
+    if not db.save_project_field(project, DELETED_FIELD, "1"):
+        return False
+    done = True
+    for field, value in db.project_fields().get(project, {}).items():
+        if field != DELETED_FIELD and value != "":
+            done = db.save_project_field(project, field, "") and done
+    return done
 
 
-# Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich) - das Projekt
-# wird nur ausgeblendet (DELETED_FIELD), die Eingaben bleiben gespeichert
+# Ab 0.62.5 (B-G-09): ehrliche Rueckfrage (PC und Handy gleich). Ab 0.63.2
+# werden die Eingaben wirklich geloescht; der Satz zum Abgleich und der
+# Hinweis auf GitHub stehen nur bei eingerichtetem Abgleich (Freigabe 4.4).
+# Ab 0.63.2 (F31 (b), N16): ohne Abgleich immer der Satz zu frueheren
+# Staenden im Abgleich-Repository (Abgleich kann frueher eingerichtet gewesen sein)
 DELETE_TITLE = "Projekt löschen"
-DELETE_QUESTION = ("„%s“ löschen? Das Projekt verschwindet aus der Auswahl, nach dem "
-                   "Abgleich auch auf deinen anderen Geräten. Das lässt sich in der App "
-                   "nicht rückgängig machen.\n\nHinweis: Die Eingaben werden nur "
-                   "ausgeblendet, nicht entfernt. Sie bleiben in der Datenbank, in "
-                   "Sicherungen und bei eingerichtetem Abgleich im Repository gespeichert.")
+DELETE_QUESTION_SYNC = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden gelöscht, "
+                        "nach dem Abgleich auch auf deinen anderen Geräten. Das lässt sich "
+                        "in der App nicht rückgängig machen.\n\nHinweis: Ältere "
+                        "Sicherungsdateien und frühere Stände im Verlauf des "
+                        "Abgleich-Repositorys auf GitHub enthalten die Eingaben weiterhin.")
+DELETE_QUESTION_LOCAL = ("„%s“ löschen? Das Projekt und alle seine Eingaben werden "
+                         "gelöscht. Das lässt sich in der App nicht rückgängig machen."
+                         "\n\nHinweis: Ältere Sicherungsdateien enthalten die Eingaben "
+                         "weiterhin. Falls du den Abgleich früher genutzt hast, enthalten "
+                         "frühere Stände im Abgleich-Repository auf GitHub die Eingaben "
+                         "weiterhin.")
 
 
-def delete_question(fields):
-    return DELETE_QUESTION % project_title(fields)
+def delete_question(fields, synced=None):
+    """synced: Abgleich eingerichtet? None = aus den Einstellungen lesen."""
+    if synced is None:
+        try:
+            import fisi_sync
+            synced = fisi_sync.is_configured()
+        except Exception:
+            synced = True      # im Zweifel der Text, der mehr sagt
+    template = DELETE_QUESTION_SYNC if synced else DELETE_QUESTION_LOCAL
+    return template % project_title(fields)
 
 
 def active_project(db, settings):
@@ -233,19 +262,24 @@ def apply_template(db, project, position):
 # ============================================================================
 
 def to_number(text, default=0.0):
-    """Zahl aus einer Eingabe wie "25", "25,5" oder "1.234,56"."""
+    """Zahl aus einer Eingabe wie "25", "25,5" oder "1.234,56".
+
+    Ab 0.63.2 (B-P-01): gleiche Leseregel wie die Rechner (fisi_core,
+    _number_value): "1.000" = 1000 (vorher 1), "1.000.000" = 1000000 (vorher
+    0). Was die Regel ablehnt ("abc", "inf", "nan", 400 Ziffern, mehr als 3
+    Nachkommastellen), ergibt wie bisher bei Fehlern den Vorgabewert."""
     value = str(text if text is not None else "").strip().replace("€", "").replace(" ", "")
-    if "," in value:
-        value = value.replace(".", "").replace(",", ".")
+    if not value:
+        return default
     try:
-        return float(value) if value else default
-    except ValueError:
+        return _number_value(value)
+    except ValueError:                  # _NumberProblem ist ein ValueError
         return default
 
 
 def euro(value):
     text = "{:,.2f}".format(value).replace(",", "X").replace(".", ",").replace("X", ".")
-    return text + " €"
+    return text + "\u00a0€"  # ab 0.63.2 (FG-109): geschuetztes Leerzeichen
 
 
 def hours_text(value):

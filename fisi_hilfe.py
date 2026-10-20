@@ -273,7 +273,8 @@ HELP_SECTIONS = [
               "Laufzeit. Unter „Übungsaufgaben“ gibt es Aufgaben mit „Lösung anzeigen“ "
               "und „Nächste Aufgabe“.\n\n"
               "Oben unter „Trainer“ rechnest du selbst: „IPv4-Subnetz“, „VLSM“, "
-              "„Binär/Hex/Dezimal“ und „IPv6 kürzen“, jeweils „Leicht“, „Mittel“ oder "
+              "„Binär/Hex/Dezimal“, „IPv6-Schreibweise“, „Netz aufteilen“ und "
+              "„Nach Hostbedarf“, jeweils „Leicht“, „Mittel“ oder "
               "„Schwer“. Trainer-Aufgaben zählen zum Tagesziel.")},
     {"id": "spiel", "titel": "Firma-Spiel",
      "reiter": ["Spiel"],
@@ -304,7 +305,8 @@ HELP_SECTIONS = [
               "„Sicherung“ speicherst du ihn mit „Sicherung erstellen“ als Datei, zum "
               "Beispiel vor einem Gerätewechsel. Mit „Sicherung einspielen“ holst du ihn "
               "zurück, auch auf einem anderen Gerät. Dabei wählst du „Zusammenführen“ "
-              "(nur Fehlendes ergänzen) oder „Alles ersetzen“.\n\n"
+              "(nur Fehlendes ergänzen) oder „Alles ersetzen“. In der Sicherungsdatei "
+              "steht auch der Name des Geräts, am PC mit dem Rechnernamen.\n\n"
               "Mit „Abgleich PC und Handy“ haben PC und Handy denselben Lernstand. Wie "
               "du ihn einrichtest, steht im nächsten Thema.")},
     # Ab 0.56 (Nachbesserung): Anleitung hier statt nur in LIESMICH.txt (die
@@ -323,6 +325,12 @@ HELP_SECTIONS = [
               "„Repository (Benutzer/Name)“ zum Beispiel deinname/fisi-lernstand und "
               "bei „Zugangsschlüssel (Token)“ den Schlüssel ein und wählst „Speichern und "
               "abgleichen“. Auf dem anderen Gerät genauso.\n\n"
+              # Ab 0.63.2 (B-L-01, B-L-02): was im Repository landet
+              "Übertragen werden: was du wann gelernt hast, die Ergebnisse deiner Tests "
+              "und Prüfungen (Punkte und Note, nicht deine Antworten), die Texte deines "
+              "Abschlussprojekts, deine Spielstände und die Bestenliste. In jeder "
+              "Änderung im Repository steht außerdem der Name des Geräts, am PC mit dem "
+              "Rechnernamen.\n\n"
               "Achtung: Auch Löschen wird abgeglichen.")},
     {"id": "update", "titel": "Update",
      "reiter": ["Optionen"],
@@ -362,7 +370,8 @@ HELP_SECTIONS = [
               "Werkzeuge“ steht bei „Problem melden“ ein "
               "Bericht mit Programmversion, Gerät, Datenordner und Fehlerprotokoll. "
               "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
-              "entfernt, deine Antworten und Projekttexte stehen nicht darin.\n\n"
+              "entfernt. Andere Angaben aus Fehlermeldungen können darin stehen. Sieh "
+              "dir den Bericht vor dem Weitergeben an.\n\n"
               "Speichere den Bericht mit „Als Datei speichern“ (oder „Kopieren“) und gib "
               "ihn an die Person weiter, von der du das Programm hast. Schreib kurz dazu: "
               "Was hast du gemacht, was ist passiert, was hast du erwartet?")},
@@ -414,10 +423,14 @@ HELP_SECTIONS = [
               "Element hat einen deutlichen Rahmen.\n"
               "• Eingabe oder Leertaste drückt Knöpfe, schaltet Schalter um und klappt "
               "Bereiche auf und zu.\n"
-              "• Esc überspringt den Rundgang.\n\n"
+              "• Esc überspringt den Rundgang.\n"
+              # Ab 0.63.2 (B-K-07): alle Tastenkuerzel hier wie in LIESMICH.txt
+              "• Strg+F springt in die Suche oben rechts.\n"
+              "• Strg+Eingabe prüft im Antwortfeld einer Karteikarte deine Antwort.\n\n"
               "Die Schrift vergrößerst du in den „Optionen“ unter „Optische "
               "Anpassungen“ bei „Schriftgröße“ mit "
-              "„Groß“ oder „Sehr groß“.")},
+              # Ab 0.63.2 (B-J-06, Weisung zu Meldung 41, Frage 10): alle Stufen
+              "„Groß“, „Sehr groß“, „Extra groß“ oder „Maximal“.")},
     {"id": "schutzprogramm", "titel": "Warnung vom Schutzprogramm",
      "reiter": [],
      "text": ("Manche Schutzprogramme und Browser warnen beim Herunterladen oder "

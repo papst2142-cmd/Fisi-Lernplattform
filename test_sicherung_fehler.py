@@ -194,8 +194,19 @@ class KernTest(Base):
         self.assertIn("5 Einträge der Sicherung bleiben gelöscht", message)
         self.assertIn("„Alles ersetzen“", message)
         self.assertNotIn("nichts geht verloren", fs.PREVIEW_HINT)
-        self.assertIn("Gelöschtes kommt dabei nicht zurück", fs.PREVIEW_HINT)
-        self.assertIn("Gelöschtes kommt dabei nicht zurück", fs.preview_text(backup))
+        # Ab 0.63.2 (FG-92, Antwort Meldung 31 B.4): voller Wortlaut statt
+        # Teilstueck; Verhaltenstests f9 und "Sicherung von vor dem Ersetzen"
+        # in test_abgleich_0632.py BG08Ersetzen (test_fg92_*)
+        self.assertEqual(fs.PREVIEW_HINT, (
+            "Zusammenführen übernimmt, was auf diesem Gerät noch fehlt – doppelt wird nichts. "
+            "Gelöschtes kommt dabei in der Regel nicht zurück: Was auf diesem Gerät gelöscht "
+            "wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht – außer die Sicherung "
+            "wurde auf einem Gerät erstellt, nachdem es nach dieser Löschung mit „Alles "
+            "ersetzen“ einen älteren Stand eingespielt hatte; dann kommt dieser Stand zurück. "
+            "Alles ersetzen stellt genau den Stand der Sicherung her."))
+        self.assertNotIn("Gelöschtes kommt dabei nicht zurück", fs.PREVIEW_HINT)
+        self.assertIn("Gelöschtes kommt dabei in der Regel nicht zurück", fs.preview_text(backup))
+        self.assertTrue(fs.preview_text(backup).endswith("\n\n" + fs.PREVIEW_HINT))
 
     def test_b_g_07_ohne_loeschung_bleibt_es_beim_alten_text(self):
         """Schutz-Test (auch auf v0.62.3 gruen): nichts geloescht, nichts neu."""
@@ -206,10 +217,79 @@ class KernTest(Base):
                          "Sicherung eingespielt: Es fehlte nichts, alles war schon da.")
 
     def test_b_g_08_warntext_nennt_eigene_loeschungen(self):
-        text = fs.replace_question(self.backup_of(self.learned(self.db())))
-        self.assertIn("die anderer Geräte und auch die dieses Geräts", text)
-        self.assertIn("„Alle Lerndaten löschen“", text)
-        self.assertIn("Bewahre die Sicherungsdatei deshalb auf.", text)
+        # Ab 0.63.2 (FG-81, nur zusammen mit B-G-08): volle neue Saetze statt
+        # Teilstuecke. Endfassung (Weisung zu Meldung 38 und 40, Abschnitt 2
+        # Frage 1: Satz 5 ersatzlos gestrichen; davor Weisung zu Meldung 37,
+        # Abschnitt 3: Satz 6 neu gefasst, Satz 7 zu Spielstaenden/Projekten
+        # neu; die anderen Saetze wie Antwort Meldung 35 B.2): jeder Satz ist in
+        # test_abgleich_0632.py BG08Ersetzen per Verhaltenstest belegt (Liste:
+        # bau_0.63.2/s6b/texte_m37/ergebnis.md)
+        backup = self.backup_of(self.learned(self.db()))
+        text = fs.replace_question(backup)
+        erster, zweiter = text.split("\n\n")
+        self.assertTrue(erster.startswith("Der komplette Lernstand dieses Geräts"))
+        self.assertEqual(erster, (
+            "Der komplette Lernstand dieses Geräts – Lernfortschritt, Prüfungen, "
+            "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
+            "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
+            "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert."
+            % fs.backup_summary(backup)["erstellt"]))
+        self.assertEqual(zweiter, (
+            "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
+            "dem Repository wieder dazu. "
+            "Löschungen, die dieses Gerät schon kennt (zum Beispiel „Alle Lerndaten "
+            "löschen“), löschen das Eingespielte nicht noch einmal; das gilt auch für "
+            "deine anderen Geräte, wenn alle deine Geräte schon beim Ersetzen mindestens "
+            "Version 0.63.2 hatten. "
+            "Solange ein Gerät noch eine ältere Version hat, kann das Eingespielte auf "
+            "deinen anderen Geräten zeitweise wieder fehlen, und ein Gerät mit einer "
+            "älteren Version, das die Löschung kennt, löscht es bei sich weiterhin; "
+            "aktualisiere deine anderen Geräte deshalb bald. "
+            "Was ein anderes Gerät ohne Verbindung gelernt hat, bleibt in der Regel "
+            "erhalten, wenn es sich erst nach dem Ersetzen wieder abgleicht und alle deine "
+            "Geräte schon beim Ersetzen mindestens Version 0.63.2 hatten. "
+            "Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, gelten "
+            "weiter – außer sie kamen vor der letzten Löschung derselben Art, die dieses "
+            "Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ oder "
+            "beide „Bestenliste löschen“); solche werden aufgehoben. "
+            "Bei Spielständen und Projekten ist das anders: Ein zurückgesetzter oder "
+            "gelöschter Spielstand und ein gelöschtes Projekt bleiben gelöscht, wenn die "
+            "Löschung von einem anderen Gerät kam oder schon abgeglichen war. "
+            "Bewahre die Sicherungsdatei deshalb auf."))
+        self.assertNotIn("ist nach dem nächsten Abgleich wieder weg", text)
+        # die beiden Saetze der ersten Fassung, die gp_s6b_nacharbeit (M1, M2) widerlegt hat
+        self.assertNotIn("Auch was ein anderes Gerät ohne Verbindung gelernt hat", text)
+        self.assertNotIn("Löschungen, die dieses Gerät noch nicht kennt, gelten weiter.", text)
+        # Fassung von 31b539c (Meldung 31 B.3), Saetze 2, 3, 4 und 6, von
+        # gp_s6b_texte (M1, M2, M3) widerlegt (Ablaeufe f4b, f4f, f2e, f2f)
+        self.assertNotIn("sobald sie mindestens Version 0.63.2 haben und sich einmal "
+                         "abgeglichen haben", text)
+        self.assertNotIn("alle Geräte, die die Löschung kennen, mindestens Version 0.63.2",
+                         text)
+        self.assertNotIn("löscht das Eingespielte bei sich weiterhin", text)
+        self.assertNotIn("eine unbekannte frühere Löschung eines anderen Geräts", text)
+        # Vorschlag der Pruefung (gp_s6b_texte), Saetze 2 und 4: zeitlich zu weit
+        # (Antwort Meldung 35 B.1, Ablauf f4f/f4h) - nur "schon beim Ersetzen"
+        self.assertNotIn("sobald alle deine Geräte mindestens Version 0.63.2 haben", text)
+        self.assertNotIn("alle deine Geräte mindestens Version 0.63.2 haben", text)
+        self.assertEqual(text.count("schon beim Ersetzen mindestens Version 0.63.2 hatten"), 2)
+        # Fassung von dd0c2a0 (Antwort Meldung 35 B.2), Satz 6: von f2g "nach"
+        # (Bauer) und gp_meldung_37 (S1, S2, S1b, S2b: Spielstaende/Projekte)
+        # widerlegt; ersetzt durch Weisung zu Meldung 37, Abschnitt 3
+        self.assertNotIn("Löschungen, die erst nach der letzten Löschung auf diesem Gerät",
+                         text)
+        self.assertNotIn("kamen und die es noch nicht kennt, gelten weiter", text)
+        self.assertNotIn("eine unbekannte frühere Löschung derselben Art", text)
+        self.assertNotIn("(zum Beispiel ebenfalls „Alle Lerndaten löschen“)", text)
+        self.assertNotIn("wird dagegen aufgehoben", text)
+        # Fassung von d54397f, Satz 5: von gp3_fg81_m37 (M1, Ablaeufe h7, h7h,
+        # h8, h9) widerlegt; ersatzlos gestrichen (Weisung zu Meldung 38 und
+        # 40, Abschnitt 2 Frage 1)
+        self.assertNotIn("Was nach dem Erstellen der Sicherung schon abgeglichen war, "
+                         "bleibt gelöscht.", text)
+        self.assertNotIn("bleibt gelöscht. Löschungen eines anderen", text)
+        self.assertEqual(zweiter.count(". "), 6)          # 7 Saetze
+        self.assertEqual(text.count("beide „"), 3)
 
     def test_b_g_11_volle_platte_keine_leere_sicherheitskopie(self):
         target = self.learned(self.db(), tag="alt")
@@ -577,14 +657,30 @@ class TexteTest(unittest.TestCase):
 
 
 class ProjektLoeschenTest(unittest.TestCase):
-    """B-G-09 (nur der Text): die Rueckfrage sagt, dass die Eingaben bleiben."""
+    """B-G-09: die Rueckfrage sagt ehrlich, was geloescht wird und wo die
+    Eingaben bleiben. Bis 0.63.1 (nur ausgeblendet): "nur ausgeblendet,
+    nicht entfernt" und "in Sicherungen". Ab 0.63.2 (wirklich geloescht,
+    FG-28): "alle seine Eingaben werden gelöscht", aeltere Sicherungsdateien
+    und (nur bei eingerichtetem Abgleich) der Verlauf auf GitHub."""
 
     def test_b_g_09_rueckfrage_ehrlich_und_gleich(self):
         import fisi_projekt as fpj
-        text = fpj.delete_question({"titel": "Netzplan"})
+        text = fpj.delete_question({"titel": "Netzplan"}, synced=True)
         self.assertTrue(text.startswith("„Netzplan“ löschen?"))
-        self.assertIn("nur ausgeblendet, nicht entfernt", text)
-        self.assertIn("in Sicherungen", text)
+        self.assertIn("alle seine Eingaben werden gelöscht", text)
+        self.assertIn("Ältere Sicherungsdateien", text)
+        self.assertIn("im Verlauf des Abgleich-Repositorys auf GitHub", text)
+        local = fpj.delete_question({"titel": "Netzplan"}, synced=False)
+        self.assertTrue(local.startswith("„Netzplan“ löschen?"))
+        self.assertIn("alle seine Eingaben werden gelöscht", local)
+        self.assertIn("Ältere Sicherungsdateien", local)
+        # ab 0.63.2 (F31 (b)): frueher genutzter Abgleich, GitHub genau einmal,
+        # keine Zusage zur Weitergabe
+        self.assertIn("Falls du den Abgleich früher genutzt hast, enthalten frühere "
+                      "Stände im Abgleich-Repository auf GitHub die Eingaben weiterhin.", local)
+        self.assertEqual(local.count("GitHub"), 1)
+        self.assertNotIn("nach dem Abgleich", local)
+        self.assertNotIn("anderen Geräten", local)
         with open(os.path.join(CODE, "app_gui.py"), encoding="utf-8") as handle:
             pc = handle.read()
         with open(os.path.join(CODE, "mobile", "src", "main.py"), encoding="utf-8") as handle:

@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Tests 0.63.2 A5 (PC-Teil): Umbruch im Rechenweg, Wert nicht vom Vorsatz
+trennen (Nebenbefund 13).
+
+Plan 0.63.2 (S1 A5, Abschnitt 3.6 A5-PC): In fit_lines (gemeinsam fuer PC
+und Handy) gehoeren "=", "->", "→" und "hex" zum folgenden Wort: eine Zeile
+endet nicht auf ihnen, der Umbruch kommt davor ("... = 2^7 = 128" /
+"= hex 80" statt "... = 128 = hex" / "80"). Dazu der Satz mit Doppelpunkt
+"An der naechsten 4-Bit-Grenze (Nibble): /44 = 4.096 Subnetze. ...":
+Beschriftung und Wert bleiben in einer Zeile, wenn sie zusammen passen;
+Regel F-8 b ("Beschriftung:" und darunter der Wert) nur, wenn nicht.
+
+Geprueft fuer die Rechenwege und Ergebnisse "Netz aufteilen" und "Nach
+Hostbedarf" (IPv4/IPv6, feste Netze) und alle Breiten 20 bis 75 Zeichen:
+  (a) keine Ausgabezeile, die fit_lines erzeugt hat, endet auf "=", "->",
+      "→" oder "hex" - ausser Bindewort und folgendes Wort passen zusammen
+      nicht in eine Zeile (dann bleibt es wie bisher)
+  (b) Wortlaut: Ausgabe ohne Leerraum = Eingabe ohne Leerraum
+  (c) keine Zeile wird durch die Regel breiter als die Breite (verglichen
+      mit dem Stand ohne Regel: nur Zeilen, die schon vorher zu breit waren)
+Z9 (F17 (a)): Die abgenommene Tausenderpunkt-Regel (Plan 4.3) bleibt; ein
+Test haelt sie fest (test_z9_regel_bleibt, auch gegen 14b3bd4 gruen).
+Reine Textfunktionen, kein Fenster. Gegen 14b3bd4 rot (ausser Z9).
+
+Start:  python test_umbruch_bindung.py
+"""
+
+import os
+import re
+import sys
+import unittest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+import fisi_core as fc  # noqa: E402
+
+BIND = ("=", "->", "→", "hex")
+BREITEN = range(20, 76)
+AUFTEILEN = (("10.0.0.0/8", "1000", 4), ("192.168.0.0/24", "6", 4),
+             ("100.0.0.0/8", "4000000", 4), ("2001:db8::/32", "300", 6),
+             ("::/0", "300", 6), ("2001:db8::/48", "16", 6))
+BEDARF = (("192.168.10.0/24", "A 50\nB 20\nC 10\nD 2"),
+          ("10.0.0.0/8", "Server 2000\nBuero 500\nWLAN 300\nGaeste 60\nLink 2"),
+          ("172.16.0.0/16", "Netz1 1000\nNetz2 500\nNetz3 200"))
+
+
+def texte():
+    """(Name, Rohtext) aller geprueften Rechenwege und Ergebnisse."""
+    out = []
+    for net, count, version in AUFTEILEN:
+        result = fc.split_network(net, count, version=version)
+        out.append(("aufteilen %s %s Rechenweg" % (net, count), fc.split_explain(result)))
+        out.append(("aufteilen %s %s Ergebnis" % (net, count), fc.split_report(result, 1)))
+    for net, needs in BEDARF:
+        result = fc.subnet_by_hosts(net, needs, version=4)
+        out.append(("bedarf %s Rechenweg" % net, fc.hosts_explain(result)))
+        out.append(("bedarf %s Ergebnis" % net, fc.hosts_report(result)))
+    return out
+
+
+def ends_bound(line):
+    """Bindewoerter am Ende der Zeile (Liste, leer wenn keins)."""
+    words = line.split()
+    tail = []
+    while words and words[-1] in BIND:
+        tail.insert(0, words.pop())
+    return tail, words
+
+
+def problems(raw, zeichen):
+    shown = fc.fit_lines(raw, zeichen)
+    found = []
+    raw_lines = set(raw.split("\n"))
+    lines = shown.split("\n")
+    for number, line in enumerate(lines):
+        tail, rest = ends_bound(line)
+        if not tail or line in raw_lines:
+            continue
+        if not rest:
+            continue                      # Zeile besteht nur aus Bindewoertern
+        follow = lines[number + 1] if number + 1 < len(lines) else ""
+        first = follow.split()[0] if follow.split() else ""
+        lead = len(follow) - len(follow.lstrip(" "))
+        if first and lead + len(" ".join(tail + [first])) > zeichen:
+            continue                      # passt zusammen nicht: wie bisher
+        found.append("Zeile endet auf %r: %r / %r" % (" ".join(tail), line, follow))
+    if "".join(shown.split()) != "".join(raw.split()):
+        found.append("Wortlaut weicht ab")
+    return found, lines
+
+
+def _old_line_lengths(raw, zeichen):
+    """Zeilenlaengen ohne die Regel (Bindewoerter wirkungslos gemacht)."""
+    saved = getattr(fc, "_FIT_BIND", None)
+    saved_prose = getattr(fc, "_fit_prose", None)
+    try:
+        if saved is not None:
+            fc._FIT_BIND = ()
+        if saved_prose is not None:
+            fc._fit_prose = lambda line, z: None
+        return fc.fit_lines(raw, zeichen).split("\n")
+    finally:
+        if saved is not None:
+            fc._FIT_BIND = saved
+        if saved_prose is not None:
+            fc._fit_prose = saved_prose
+
+
+class BindungTest(unittest.TestCase):
+
+    def test_a_b_alle_breiten(self):
+        found = []
+        for name, raw in texte():
+            for zeichen in BREITEN:
+                errors, _lines = problems(raw, zeichen)
+                found.extend("%s @%d: %s" % (name, zeichen, e) for e in errors)
+        self.assertEqual(found[:20], [], "%d Funde" % len(found))
+
+    def test_c_nicht_breiter(self):
+        """Ab Gegenpruefung S1a (L2) Zeile fuer Zeile: jede Zeile ueber der
+        Breite gab es genau so (ohne Einzug) schon ohne die Regel. Die
+        Ausnahme in _fit_unbind (Bindewort und Folgewort passen zusammen
+        nicht) verhindert neue ueberlange Zeilen."""
+        found = []
+        for name, raw in texte():
+            for zeichen in BREITEN:
+                old = [line.strip() for line in _old_line_lengths(raw, zeichen)
+                       if len(line) > zeichen]
+                new = fc.fit_lines(raw, zeichen).split("\n")
+                for line in new:
+                    if len(line) > zeichen and line.strip() not in old:
+                        found.append("%s @%d: %r (%d > %d)"
+                                     % (name, zeichen, line, len(line), zeichen))
+                self.assertLessEqual(sum(len(line) > zeichen for line in new),
+                                     len(old), (name, zeichen))
+        self.assertEqual(found[:20], [], "%d Funde" % len(found))
+
+    def test_beispiele_nebenbefund_13(self):
+        result = fc.split_network("2001:db8::/32", "300", version=6)
+        raw = fc.split_explain(result)
+        # Satz-Zeile (Satzregel, _fit_sentence)
+        lines = fc.fit_lines(raw, 60).split("\n")
+        self.assertIn("   Schrittweite im 3. Hextett = 2^(48 - 41) = 2^7 = 128", lines)
+        self.assertIn("   = hex 80", lines)
+        lines = fc.fit_lines(raw, 45).split("\n")
+        self.assertIn("   neue Präfixlänge = alte Präfixlänge + k", lines)
+        self.assertIn("   = 32 + 9 = 41 -> /41", lines)
+        lines = fc.fit_lines(raw, 40).split("\n")
+        self.assertIn("   Adressen je Subnetz = 2^(128 - 41)", lines)
+        self.assertIn("   = 2^87", lines)
+        # Wert-Zeile (Regel F-8 b, _fit_value)
+        value = "Schritt : 2^(48 - 41) = 2^7 = 128 = hex 80"
+        self.assertEqual(fc.fit_lines(value, 32),
+                         "Schritt:\n  2^(48 - 41) = 2^7 = 128\n  = hex 80")
+        self.assertEqual(fc.fit_lines("Weg : a = b -> c", 9),
+                         "Weg:\n  a = b\n  -> c")
+
+    def test_nibble(self):
+        result = fc.split_network("2001:db8::/32", "300", version=6)
+        raw = fc.split_explain(result)
+        for zeichen in (45, 50, 55, 60, 66):
+            lines = fc.fit_lines(raw, zeichen).split("\n")
+            row = next(line for line in lines if "(Nibble)" in line)
+            self.assertTrue(row.startswith("   An der nächsten 4-Bit-Grenze (Nibble): /44"),
+                            (zeichen, row))
+            self.assertNotIn("(Nibble):", [line.strip() for line in lines])
+        # passt nicht einmal Beschriftung und "/44": Regel F-8 b wie bisher
+        lines = fc.fit_lines(raw, 41).split("\n")
+        self.assertIn("   An der nächsten 4-Bit-Grenze (Nibble):", lines)
+        self.assertIn("     /44 = 4.096 Subnetze. In der", lines)
+
+    def test_nibble_grenze(self):
+        """Gegenpruefung S1a (M1): Die Satzregel fuer "(Nibble):" gilt nur
+        fuer die enge Klasse aus Plan 3.6 (mindestens vier Woerter vor dem
+        Doppelpunkt, Wert beginnt mit "/" und Zahl). Sonst bleibt Regel
+        F-8 b ("Beschriftung:" und darunter eingerueckt der Wert) wie auf
+        14b3bd4 (F17 (a))."""
+        # drei Woerter vor dem Doppelpunkt: F-8 b
+        line = "Nächste 4-Bit-Grenze (Nibble): /44 = 4.096 Subnetze. In der"
+        self.assertEqual(fc.fit_lines(line, 45).split("\n"),
+                         ["Nächste 4-Bit-Grenze (Nibble):",
+                          "  /44 = 4.096 Subnetze. In der"])
+        # vier Woerter, Wert ohne "/": F-8 b (Beispiele der Gegenpruefung)
+        for line, zeichen, soll in (
+                ("Netz 2 (300 Hosts): 2^8 - 2 = 254 < 300, 2^9 - 2 = 510 >= 300", 58,
+                 ["Netz 2 (300 Hosts):",
+                  "  2^8 - 2 = 254 < 300, 2^9 - 2 = 510 >= 300"]),
+                ("Jede Gruppe ist eine Hex-Ziffer: 1111=F 0001=1 1011=B", 46,
+                 ["Jede Gruppe ist eine Hex-Ziffer:", "  1111=F 0001=1 1011=B"]),
+                ("Die 10 Subnetz-Bits (Bit 13 bis 22): 4 im 2. und 6 im 3. Oktett.", 61,
+                 ["Die 10 Subnetz-Bits (Bit 13 bis 22):",
+                  "  4 im 2. und 6 im 3. Oktett."]),
+                ("Aufgabe 1 von 6: Scheinleistung und Wirkleistung", 40,
+                 ["Aufgabe 1 von 6:", "  Scheinleistung und Wirkleistung"])):
+            self.assertEqual(fc.fit_lines(line, zeichen).split("\n"), soll, line)
+        # alle Zeilen der Rechenwege, Ergebnisse und Trainer-Aufgaben: die
+        # Satzregel greift nur bei "(Nibble):"
+        zeilen = set()
+        for _name, raw in texte():
+            zeilen.update(raw.split("\n"))
+        import fisi_lernen as fl
+        for kind, _title in fl.TRAINER_KINDS:
+            for stufe in (1, 2, 3):
+                for start in range(5):
+                    for schmal in (False, True):
+                        task = fl.trainer_task(kind, stufe, start, schmal)
+                        for teil in [task.text] + list(task.steps) + list(task.solution.values()):
+                            teil = teil if isinstance(teil, str) else "\n".join(teil)
+                            zeilen.update(teil.split("\n"))
+        treffer = set()
+        for line in zeilen:
+            for zeichen in range(10, 81):
+                if fc._fit_prose(line, zeichen):
+                    treffer.add(line)
+                    break
+        self.assertTrue(treffer)
+        self.assertEqual([line for line in treffer if "(Nibble): /" not in line], [])
+
+    def test_spalten_unveraendert(self):
+        """Zeilen "Beschriftung : Wert" (Leerzeichen vor dem Doppelpunkt)
+        und Tabellen bleiben bei Regel F-8 b bzw. unveraendert."""
+        line = "Adressen gesamt       : 79.228.162.514.264.337.593.543.950.336"
+        self.assertEqual(fc.fit_lines(line, 36),
+                         "Adressen gesamt:\n  79.228.162.514.264.337.593.543.950\n  .336")
+        table = "  1   000000000 0000 0000 0000 0000 = 0000  2001:db8::/41"
+        self.assertEqual(fc.fit_lines(table, 30), table)
+
+    def test_z9_regel_bleibt(self):
+        """Z9 (F17 (a), Freigabe 0.63.2): Die abgenommene Regel aus Plan 4.3
+        (0.63) bleibt: Eine grosse Zahl, die nicht in die Zeile passt, bricht
+        VOR einem Tausenderpunkt um; die neue Zeile beginnt mit ".", die
+        obere endet nie auf ".". Gilt auch nach der A5-Bindungsregel."""
+        line = "Adressen gesamt       : 79.228.162.514.264.337.593.543.950.336"
+        for zeichen in (32, 33, 34, 35):
+            self.assertEqual(fc.fit_lines(line, zeichen).split("\n"),
+                             ["Adressen gesamt:", "  79.228.162.514.264.337.593.543",
+                              "  .950.336"], zeichen)
+        for net in ("::/0", "2001:db8::/32", "4000::/16"):
+            raw = fc.subnet_report(net)
+            value = next(l for l in raw.split("\n")
+                         if l.startswith("Adressen gesamt")).split(": ", 1)[1]
+            for zeichen in range(20, len(value) + 2):
+                rows = fc.fit_lines(raw, zeichen).split("\n")
+                start = rows.index("Adressen gesamt:")
+                # Ab 0.63.2 (FG-75, S2c): der Wert ist "2^n = Zahl". Z9 gilt fuer
+                # die Zahl: in ihr nur VOR einem Tausenderpunkt umbrechen. Vor der
+                # Zahl ("2^n", "=") darf nur an den Leerzeichen umbrochen werden.
+                # Beides prueft das Zusammensetzen: Folgezeile mit "." direkt
+                # anhaengen, sonst mit genau einem Leerzeichen; das Ergebnis muss
+                # zeichengleich der Wert sein (ein Umbruch in der Zahl ohne "."
+                # erzeugte ein Leerzeichen in der Zahl und waere rot).
+                def zusammen(parts):
+                    text = parts[0] if parts else ""
+                    for part in parts[1:]:
+                        text += part if part.startswith(".") else " " + part
+                    return text
+                parts = []
+                for row in rows[start + 1:]:
+                    if not row.startswith("  ") or row.startswith("   "):
+                        break
+                    parts.append(row[2:])
+                    if zusammen(parts) == value:
+                        break
+                self.assertEqual(zusammen(parts), value, (net, zeichen, parts))
+                for upper, lower in zip(parts, parts[1:]):
+                    self.assertFalse(upper.endswith("."), (net, zeichen, parts))
+                # A5 auch fuer diese Zeile (vor der Zahl nur erlaubte Umbrueche)
+                self.assertEqual(problems(raw, zeichen)[0], [], (net, zeichen))
+
+    def test_hilfe_selbst(self):
+        self.assertEqual(ends_bound("a = b ="), (["="], ["a", "=", "b"]))
+        self.assertEqual(ends_bound("x hex"), (["hex"], ["x"]))
+        self.assertEqual(ends_bound("x"), ([], ["x"]))
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

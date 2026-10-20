@@ -236,21 +236,61 @@ GEPLANT = {
     "szenarien_ap2.json": {123: [("solution", 0)], 288: [("solution", 2)],
                            293: [("solution", 2)]},
 }
+# Ab 0.63.2 (FG-25): zusaetzlich die Felder der Inhaltskorrekturen 0.63.2
+# (S4: A14/B-C-06, B-C-11 bis B-C-39, B-D-13 "ModeWelt", B-N-13). Einzeln
+# geprueft in test_inhalte_0632.py; hier bleibt alles UEBRIGE gesperrt.
+GEPLANT_0632 = {
+    "karteikarten.json": {58: [("a",), ("options", 0), ("a_full",)], 120: [("q",)],
+                          159: [("a_full",)], 301: [("a",), ("options", 0), ("a_full",)],
+                          740: [("q",)], 858: [("a_full",)], 859: [("a_full",)],
+                          882: [("options", 1), ("a_full",)],
+                          1295: [("a",), ("options", 0), ("a_full",)], 1429: [("q",)]},
+    "projektarbeiten.json": {0: [("aufgaben", 4), ("ausgangssituation",)], 9: [("hinweise", 0)],
+                             21: [("aufgaben", 3), ("hinweise", 3)], 27: [("hinweise", 4)],
+                             37: [("hinweise", 3)], 44: [("rahmenbedingungen", 4)],
+                             47: [("aufgaben", 2)]},
+    "quizfragen.json": {28: [("exp",)], 71: [("exp",), ("q",)], 158: [("q",)],
+                        628: [("options", 0), ("a",)], 777: [("exp",)],
+                        828: [("exp",), ("q",)], 931: [("q",)], 1024: [("q",)],
+                        1323: [("exp",), ("q",)], 1479: [("options", 3), ("exp",)],
+                        1495: [("exp",), ("q",)], 1933: [("exp",), ("q",)], 2102: [("q",)]},
+    "szenarien_ap1.json": {4: [("solution", 2)], 58: [("solution", 4)], 91: [("text", 0)],
+                           143: [("solution", 0)],
+                           207: [("text", 2), ("text", 3), ("text", 4), ("text", 5)]},
+    "szenarien_ap2.json": {0: [("solution", 0), ("solution", 6)],
+                           23: [("text", 1), ("text", 2), ("text", 3)],
+                           25: [("solution", 2), ("solution", 3)],
+                           46: [("text", 1), ("text", 2), ("text", 3), ("text", 4)],
+                           134: [("text", 0), ("solution", 0)],
+                           218: [("text", 10), ("text", 11), ("text", 12)], 223: [("text", 0)],
+                           228: [("text", 1), ("text", 2), ("text", 3), ("text", 4), ("text", 5)],
+                           296: [("text", 2), ("text", 3), ("text", 4), ("text", 5)]},
+}
+for _datei, _felder in GEPLANT_0632.items():
+    for _index, _pfade in _felder.items():
+        GEPLANT.setdefault(_datei, {}).setdefault(_index, []).extend(_pfade)
 ANZAHL = {"karteikarten.json": 1565, "quizfragen.json": 2120, "szenarien_ap1.json": 265,
           "szenarien_ap2.json": 330, "projektarbeiten.json": 50}
 # SHA-256 ueber alle Eintraege, geplante Felder durch "*" ersetzt (Stand 0.62.5, cf4912b;
 # quizfragen.json ohne geplante Felder, B-C-06 zurueckgestellt)
+# Ab 0.63.2 (FG-25): mit den Feldern 0.63.1 UND 0.63.2 als "*". Derselbe Wert ergibt
+# sich auf dem Stand 0.63.1 (14b3bd4): ausserhalb der geplanten Felder ist nichts
+# geaendert. Werte bis 0.63.1: adfb69fb...7165, 7cc29b85...c9c3, 321e2e6e...9a95,
+# d1dc2c96...af35, bfc9e918...00c6.
+# Ab N12 (B-N-08, FG-60): ueber die vereinheitlichte Schreibweise (pruefwert). Derselbe
+# Wert ergibt sich auf 0.63.1 (14b3bd4), auf S4 (29558a8) und auf N12. Werte bis S4:
+# cbd53db8...0e99, 84ed04c7...acfd, 13c8429f...26c1, 4b783630...9879, eda3cfcd...7f83.
 PRUEFWERT = {
     "karteikarten.json":
-        "adfb69fb728ccd513b0e781d777794b8e0e71a71f295526b0c308d9976ee7165",
+        "e9149975d55f9aae6f9146b66f75a0c9712df8be11bd0d3d2770b8d816863f71",
     "quizfragen.json":
-        "7cc29b855bf441fb1e0d9317b27c97dbf363817c08bc52b3deedcd991b6cc9c3",
+        "b8fe31e1c966c74c36de8b6f7bee0d328b64e7c9e237622c4fa4744f19a37390",
     "szenarien_ap1.json":
-        "321e2e6e564791532d68da033f38d87fe3b5c14935a7e8c9b2e6bc7000649a95",
+        "d01f914c26a343647108a684952c77523628503154336dbc36e9f3b53716b1dc",
     "szenarien_ap2.json":
-        "d1dc2c96d2327f702cf5a0a562481e84c47ac7514aa41be3b8bd84e672a2af35",
+        "29f38b3469a89fcea80f9c56ab517f86870c4b42b9202307a83bca1a270aba0c",
     "projektarbeiten.json":
-        "bfc9e918e2a31ed30d1ef8f385d18b784a42560af581e2d81ecdeab3a51000c6",
+        "6a0fbd580712968144a83df65d119ea65b7615892f723e0fb36c26c4fbdd26cf",
 }
 PRUEFWERT_UMBENENNUNGEN = "a2ae7b3264d79cf6d82353de5277f03d91f4122507731609e6af031719d0706f"
 P1480_NEU = ("Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB "
@@ -267,12 +307,67 @@ def pruefwert(datei, eintraege):
                 ziel = ziel[teil]
             ziel[pfad[-1]] = "*"
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
+    # Ab 0.63.2 (N12, B-N-08, FG-60): "z.B." -> "z. B." und "Broadcastadresse" ->
+    # "Broadcast-Adresse" in fast 950 Feldern. Der Pruefwert wird deshalb ueber die
+    # vereinheitlichte Schreibweise gebildet (beide Formen gleich behandelt); jede
+    # andere Aenderung bleibt rot. Dass wirklich nur diese Ersetzung geschah und
+    # keine Stelle verschwand, pruefen test_inhalte_zb (Zahl je Datei, kein "z.B."
+    # mehr) und das Werkzeug des Eintrag-fuer-Eintrag-Vergleichs.
+    # Ab FG-87 (0.63.2, Zusatz von Nico): ebenso die 13 Stellen "Z.B." -> "Z. B."
+    # (Zahl je Datei und kein "Z.B." mehr: test_inhalte_zb.KriterienGrossZbTest)
+    text = text.replace("z. B.", "z.B.").replace("Broadcast-Adresse", "Broadcastadresse")
+    text = text.replace("Z. B.", "Z.B.")
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# Ab 0.63.2 (FG-25, F7 d): neue Eintraege (Fragetexte B-N-13, B-C-27/-28/-29/-30/-33).
+# Sie werden vor dem Pruefwert entfernt; alle alten Eintraege bleiben so gesperrt
+# wie bisher. Die neuen prueft test_inhalte_0632.UmbenennungenTest einzeln.
+UMBENENNUNGEN_0632 = {
+    "karte": {
+        "Welche Domäne trennt ein Router, ein einfacher Switch aber nicht?",
+        "Welches Geschäft darf ein Prokurist ohne besondere Befugnis nicht abschließen?",
+        "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an "
+        "einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip "
+        "wurde nicht umgesetzt?",
+    },
+    "quiz": {
+        "Welches Protokoll nutzt NFS standardmäßig?",
+        "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft "
+        "mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?",
+        "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder "
+        "Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit "
+        "höchstens gleichzeitig versorgen?",
+        "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für "
+        "IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget "
+        "im dritten Jahr in heutigen Preisen noch wert?",
+        "Welche Phase gehört zum ITIL-Service-Lebenszyklus?",
+        "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?",
+        "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) "
+        "nicht erkannt?",
+        "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?",
+        "Welches der folgenden Merkmale ist durch das Allgemeine Gleichbehandlungsgesetz "
+        "(AGG) nicht geschützt?",
+    },
+}
 
 
 def pruefwert_umbenennungen(daten):
     kopie = json.loads(json.dumps(daten))
+    for art, alte in UMBENENNUNGEN_0632.items():
+        kopie[art] = {alt: neu for alt, neu in kopie[art].items() if alt not in alte}
     kopie["quiz"] = {alt: neu for alt, neu in kopie["quiz"].items() if neu != P1480_NEU}
+    # Ab 0.63.2 (N12, B-N-08): angehaengte Eintraege, deren neuer Text genau der alte
+    # mit "z. B." statt "z.B." ist; einzeln geprueft in test_inhalte_zb (27 Stueck).
+    # Nacharbeit N12 (Meldung 24, Frage 4 a, FG-60): ebenso die 2 Eintraege, deren
+    # neuer Text genau der alte mit "Broadcast-Adresse" statt "Broadcastadresse" ist
+    # (P1487, P1488; einzeln geprueft in test_inhalte_zb.UMBENANNT_BC)
+    for art in ("karte", "quiz"):
+        kopie[art] = {alt: neu for alt, neu in kopie[art].items()
+                      if not ("z.B." in alt and neu == alt.replace("z.B.", "z. B."))
+                      and not ("Broadcastadresse" in alt
+                               and neu == alt.replace("Broadcastadresse",
+                                                      "Broadcast-Adresse"))}
     text = json.dumps(kopie, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -289,6 +384,8 @@ class BestandTest(unittest.TestCase):
 
     def test_umbenennungen_unveraendert(self):
         # B-C-06 zurueckgestellt: kein neuer Eintrag, Datei wie in 0.62.5
+        # Ab 0.63.2 (FG-25): alte Eintraege unveraendert (gleicher Pruefwert wie
+        # bisher), neu nur die 12 geplanten aus UMBENENNUNGEN_0632.
         daten = lade("umbenennungen.json")
         self.assertEqual(pruefwert_umbenennungen(daten), PRUEFWERT_UMBENENNUNGEN)
         self.assertNotIn(P1480_NEU, daten["quiz"].values())

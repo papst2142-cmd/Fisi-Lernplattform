@@ -76,10 +76,15 @@ BTN_MERGE = "Zusammenführen"
 BTN_REPLACE = "Alles ersetzen"
 BTN_CANCEL = "Abbrechen"
 FILE_TYPE = "Lernstand-Sicherung"   # nur Beschriftung im Dateidialog (ab 0.61)
-# Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck
+# Ab 0.62.5 (B-G-07): ehrlich - Geloeschtes kommt beim Zusammenfuehren nicht zurueck (ab 0.63.2 FG-92: ausser nach "Alles ersetzen")
 PREVIEW_HINT = ("Zusammenführen übernimmt, was auf diesem Gerät noch fehlt – doppelt "
-                "wird nichts. Gelöschtes kommt dabei nicht zurück: Was auf diesem Gerät "
-                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht. "
+                "wird nichts. "
+                # Ab 0.63.2 (FG-92, B-G-08): Wortlaut Chat, Antwort Meldung 31 B.4
+                "Gelöschtes kommt dabei in der Regel nicht zurück: Was auf diesem Gerät "
+                "gelöscht wurde (z. B. mit „Alle Lerndaten löschen“), bleibt gelöscht – "
+                "außer die Sicherung wurde auf einem Gerät erstellt, nachdem es nach dieser "
+                "Löschung mit „Alles ersetzen“ einen älteren Stand eingespielt hatte; dann "
+                "kommt dieser Stand zurück. "
                 "Alles ersetzen stellt genau den Stand der Sicherung her.")
 DELETED_TITLE = "Gelöschter Spielstand"
 REPLACE_TITLE = "Alles ersetzen"
@@ -490,6 +495,8 @@ def merge_backup(db, backup, restore_runs=(), device=""):
 
     events = _records(data, "spiel_ereignisse")
     slot_rows = _records(data, "spiel_plaetze")
+    # Ab 0.63.2 (G-B): erneut pruefen, direkt vor dem Schreibblock
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -579,11 +586,26 @@ def replace_question(backup):
             "Abschlussprojekt, Spielstände und Bestenliste – wird durch die Sicherung "
             "vom %s ersetzt. Das Tagesziel kommt ebenfalls aus der Sicherung. Vorher wird "
             "der jetzige Stand als Sicherheitskopie neben der Datenbank gespeichert.\n\n"
-            "Mit eingerichtetem Abgleich kommen beim nächsten Abgleich die Daten aus dem "
-            "Repository wieder dazu. Schon abgeglichene Löschungen gelten weiterhin – "
-            "die anderer Geräte und auch die dieses Geräts (z. B. „Alle Lerndaten "
-            "löschen“): Was sie betreffen, ist nach dem nächsten Abgleich wieder weg. "
-            "Bewahre die Sicherungsdatei deshalb auf."
+            # Ab 0.63.2 (FG-81, B-G-08): Wortlaut Chat, Weisung zu Meldung 38/40, Abschnitt 2
+            "Ist der Abgleich eingerichtet, kommen beim nächsten Abgleich die Daten aus "
+            "dem Repository wieder dazu. Löschungen, die dieses Gerät schon kennt (zum "
+            "Beispiel „Alle Lerndaten löschen“), löschen das Eingespielte nicht noch "
+            "einmal; das gilt auch für deine anderen Geräte, wenn alle deine Geräte schon "
+            "beim Ersetzen mindestens Version 0.63.2 hatten. Solange ein Gerät noch eine "
+            "ältere Version hat, kann das Eingespielte auf deinen anderen Geräten "
+            "zeitweise wieder fehlen, und ein Gerät mit einer älteren Version, das die "
+            "Löschung kennt, löscht es bei sich weiterhin; aktualisiere deine anderen "
+            "Geräte deshalb bald. Was ein anderes Gerät ohne Verbindung gelernt hat, "
+            "bleibt in der Regel erhalten, wenn es sich erst nach dem Ersetzen wieder "
+            "abgleicht und alle deine Geräte schon beim Ersetzen mindestens Version 0.63.2 "
+            "hatten. Löschungen eines anderen Geräts, die dieses Gerät noch nicht kennt, "
+            "gelten weiter – außer sie kamen vor der letzten Löschung derselben Art, die "
+            "dieses Gerät kennt (beide „Alle Lerndaten löschen“, beide „Historie löschen“ "
+            "oder beide „Bestenliste löschen“); solche werden aufgehoben. Bei Spielständen "
+            "und Projekten ist das anders: Ein zurückgesetzter oder gelöschter Spielstand "
+            "und ein gelöschtes Projekt bleiben gelöscht, wenn die Löschung von einem "
+            "anderen Gerät kam oder schon abgeglichen war. Bewahre die Sicherungsdatei "
+            "deshalb auf."
             % backup_summary(backup)["erstellt"])
 
 
@@ -682,6 +704,9 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
     settings = load_settings()
     settings.update(_goal_values(backup.get("einstellungen")))
     temp = target = None
+    # Ab 0.63.2 (G-B): erneut pruefen, nach der Sicherheitskopie und direkt
+    # vor dem Schreibblock
+    fisi_sync.refuse_read_only(db, MSG_READ_ONLY, BackupError)
     conn = sqlite3.connect(db.db_path)
     try:
         cur = conn.cursor()
@@ -691,10 +716,19 @@ def replace_all(db, backup, safety_dir, app_version="", device=""):
                 table, ", ".join(columns), ", ".join("?" * (len(columns) + 1)))
             for record in _records(data, table):
                 cur.execute(sql, [record["uid"]] + [record[c] for c in columns])
+        # Ab 0.63.2 (B-G-08): Loeschungen, die die Sicherung nicht kennt,
+        # sind aufgehoben - auch auf den anderen Geraeten (fisi_sync.LIFT_KEY)
+        meta = dict(cur.execute("SELECT key, value FROM sync_meta"))
+        lifts = fisi_sync.replace_lifts(
+            {key: meta.get(key) for key in MARKERS},
+            {key: meta.get(fisi_sync.LIFT_PREFIX + key) for key in MARKERS}, markers)
         cur.execute("DELETE FROM sync_meta WHERE key IN (%s)" % ", ".join("?" * len(MARKERS)),
                     MARKERS)
         for key, value in markers.items():
             cur.execute("INSERT INTO sync_meta (key, value) VALUES (?, ?)", (key, value))
+        for key, pair in lifts.items():
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        (fisi_sync.LIFT_PREFIX + key, json.dumps(pair)))
         # Ab 0.62.5 (B-G-15): Tagesziel schon vor dem commit in eine
         # Hilfsdatei, direkt danach an ihren Platz - ein Absturz dazwischen
         # laesst sonst den neuen Lernstand mit dem alten Tagesziel zurueck

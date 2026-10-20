@@ -1,0 +1,19 @@
+# Ab 0.63.2 (B-M-05, FG-52): Lock-Datei mit Pruefsummen - NICHT VON HAND
+# AENDERN, sondern mit pruefung/lock_erzeugen.py neu erzeugen.
+# Zweck: Tests PC (requirements.txt und psutil), Jobs tests und tests-windows.
+# Systeme: win32, linux (Python 3.12). Fassungen wie im Referenzlauf 38443624150.
+# Installation nur mit: pip install --require-hashes -r requirements-lock-tests.txt
+certifi==2026.7.22 \
+    --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775
+customtkinter==6.0.0 \
+    --hash=sha256:704fcbf1d2fca06bd7881b0afacfae72aed9864c9b6de2870e632e55eb3a0456
+darkdetect==0.8.0 \
+    --hash=sha256:a7509ccf517eaad92b31c214f593dbcf138ea8a43b2935406bbd565e15527a85
+packaging==26.3 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pillow==12.3.0 \
+    --hash=sha256:78cb2c6865a35ab8ff8b75fd122f6033b92a62c82801110e48ddd6c936a45d91 \
+    --hash=sha256:a2b55dd6b2a4c4b7d87ffa56bdb33fdc5fdb9a462173861a7bc097f17d91cb09
+psutil==7.2.2 \
+    --hash=sha256:076a2d2f923fd4821644f5ba89f059523da90dc9014e85f8e45a5774ca5bc6f9 \
+    --hash=sha256:eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988

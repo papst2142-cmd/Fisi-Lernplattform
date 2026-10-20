@@ -29,7 +29,8 @@ MONO = "monospace"
 # Schriftgroesse des Systems (Flutter-Standard MediaQuery.textScaler). Die
 # Einstellung "Schriftgroesse" der App kommt hinzu: Jeder ft.Text bekommt beim
 # Anlegen seine Groesse mal dem Faktor (Normal 1,0 / Gross 1,15 / Sehr gross
-# 1,3). Feste Hoehen der Bausteine hier (Knoepfe, Pillen) wachsen mit.
+# 1,3; ab 0.63.2 auch 160 % (1,6) / 200 % (2,0)). Feste Hoehen der
+# Bausteine hier (Knoepfe, Pillen) wachsen mit.
 # Zeichnungen auf der Leinwand (Spielkarte) bleiben gleich; Achsen und
 # Legenden der Diagramme wachsen ab 0.58 mit (fs, grow).
 
@@ -48,6 +49,24 @@ def grow(value):
 
 def set_font_factor(factor):
     FONT_FACTOR[0] = float(factor)
+
+
+# Ab 0.63.2 (B-J-06, F22 b): Ab der Stufe 160 % stehen
+# Bausteine, die sonst nebeneinander stehen (Banner, Kacheln, Ringkarten),
+# untereinander, und Kopfzeile und Diagramme werden hoeher - auf 384 dp
+# braeche sonst fast jedes Wort mitten im Wort um oder Text wuerde
+# abgeschnitten. Bis "Sehr gross" (130 %) bleibt alles wie bisher.
+LARGE_FACTOR = 1.6
+
+
+def large():
+    """Ist eine der Stufen ab 160 % gewaehlt?"""
+    return FONT_FACTOR[0] >= LARGE_FACTOR
+
+
+def large_grow(value):
+    """Hoehe eines Bausteins: ab 160 % mit der Schrift (grow), sonst fest."""
+    return grow(value) if large() else value
 
 
 _text_init = ft.Text.__init__
@@ -88,6 +107,12 @@ def gradient(kind, begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT
 class Card(ft.Container):
     """Abgerundete Karte mit farbigem Strich und Titel in Grossbuchstaben."""
 
+    # Ab 0.63.2 (B-E-05 e): Ab diesem Schriftfaktor (Sehr gross) steht die
+    # Unterschrift unter dem Titel statt daneben (wie bei FoldCard): in der
+    # schmalen rechten Spalte stand sonst oft ein Wort allein in einer Zeile
+    # ("zum", "Linie")
+    STACK_FACTOR = 1.3
+
     def __init__(self, title=None, controls=None, accent=None, subtitle=None,
                  padding=16, spacing=10, expand=None, action=None):
         self.body = ft.Column(controls or [], spacing=spacing, tight=True,
@@ -100,26 +125,50 @@ class Card(ft.Container):
                                      expand=2 if subtitle else None)
         self.title_text = None
         self.tick = None
+        self.stacked = False
         column = [self.body]
         if title:
             accent = accent or C["accent"]
             self.tick = ft.Container(width=4, height=14, border_radius=2, bgcolor=accent)
             self.title_text = ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD,
                                       color=accent, expand=3)
-            header = ft.Row([
-                self.tick, self.title_text,
-                self.subtitle_text,
-            ] + ([action] if action is not None else []),
-                spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+            middle = [self.tick, self.title_text, self.subtitle_text]
+            self.stacked = FONT_FACTOR[0] >= self.STACK_FACTOR
+            if self.stacked:
+                self.title_text.expand = self.subtitle_text.expand = None
+                self.subtitle_text.text_align = ft.TextAlign.LEFT
+                self.subtitle_text.visible = bool(subtitle)
+                # Nacharbeit L3: Strich auf Hoehe der (ersten) Titelzeile statt
+                # mittig neben Titel und Unterschrift; eine Aktion rechts bleibt
+                # wie bisher mittig
+                middle = [ft.Row([
+                    ft.Container(content=self.tick,
+                                 padding=ft.Padding.only(top=self.tick_top())),
+                    ft.Column(middle[1:], spacing=2, tight=True, expand=True),
+                ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.START, expand=True)]
+            header = ft.Row(middle + ([action] if action is not None else []),
+                            spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             column = [header, self.body]
         super().__init__(
             content=ft.Column(column, spacing=12, tight=True),
             bgcolor=C["card"], border_radius=16,
             border=ft.Border.all(1, C["border"]), padding=padding, expand=expand)
 
+    TICK_HEIGHT = 14
+    LINE_HEIGHT = 1.17   # Zeilenhoehe der Schrift (Roboto) je Schriftgroesse
+
+    @classmethod
+    def tick_top(cls):
+        """Ab 0.63.2 (Nacharbeit L3): Abstand oben, damit der 14 hohe Strich
+        mittig zur ersten Titelzeile (11 x Faktor) steht."""
+        return max(0.0, round((fs(11) * cls.LINE_HEIGHT - cls.TICK_HEIGHT) / 2, 1))
+
     def set_subtitle(self, value, color=None):
         self.subtitle_text.value = value
-        self.subtitle_text.expand = 2 if value else None
+        if self.stacked:
+            self.subtitle_text.visible = bool(value)
+        else:
+            self.subtitle_text.expand = 2 if value else None
         self.subtitle_text.color = color or C["muted"]
 
     def set_title(self, value, color=None):
@@ -136,12 +185,13 @@ class FoldCard(Card):
     bleibt fuer die Laufzeit der App erhalten (key).
 
     Ab 0.59 (Optionen, marker=True, wie am PC): Pfeil links in der
-    Akzentfarbe, rechts "aufklappen"/"einklappen", ganze Kopfzeile mindestens
-    48 dp hoch, TalkBack liest "Optische Anpassungen, eingeklappt" und sagt
+    Akzentfarbe, rechts "aufklappen"/"zuklappen", ganze Kopfzeile mindestens
+    48 dp hoch, TalkBack liest "Optische Anpassungen, zugeklappt" und sagt
     Wechsel an (live_region). Die Optionen vergessen den Zustand beim Oeffnen
     (reset_states)."""
 
     _open_state = {}
+    ACTION_GAP = 8
 
     def __init__(self, title, controls=None, accent=None, subtitle=None, key=None,
                  opened=False, open_text="aufklappen", close_text="zuklappen",
@@ -183,6 +233,10 @@ class FoldCard(Card):
                                ft.Column([self.title_text, self.subtitle_text], spacing=2,
                                          tight=True, expand=True),
                                header.controls[-1]]
+        # Ab 0.63.2 (B-E-05 c): mehr Luft vor "aufklappen" - bei Sehr gross
+        # stiess ein umbrochener Titel sonst fast an die Aktion
+        header.controls[-1] = ft.Container(content=header.controls[-1],
+                                           padding=ft.Padding.only(left=self.ACTION_GAP))
         # Ab 0.59 (marker): Touch-Ziel mindestens 48 dp - Pfeil 28 + 2 x 10
         self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
                                           border_radius=8, padding=ft.Padding.symmetric(
@@ -284,11 +338,23 @@ class GradientButton(ft.Container):
         # Ab 0.59.1 (H1): Rolle "Schaltflaeche" mit dem Knopftext als Namen
         # (vorher meldete sich der Knopf nur als Flaeche). Die Rolle sitzt
         # innen, damit Rolle, Name und Antippen ein Element bleiben.
+        inner = ft.Row(row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)
+        # Ab 0.63.2 (B-J-06, Rest S6): ab 160 % darf der Text eines Knopfs ohne
+        # Symbol in eine zweite Zeile umbrechen, wenn der Knopf schmaler ist als
+        # sein Text (nur wo der Knopf eine Breite hat, z. B. expand=True); bis
+        # "Sehr groß" bleibt der Aufbau wie bisher
+        hoehe, rand = grow(height), ft.Padding.symmetric(horizontal=20)
+        if large() and not icon:
+            self.caption.text_align = ft.TextAlign.CENTER
+            # FG-111: der Knopf waechst mit dem Text; ein unsichtbarer Halter
+            # haelt einzeilig die bisherige Hoehe
+            oben = grow(6)
+            inner = ft.Stack([ft.Container(width=0, height=hoehe - 2 * oben), self.caption],
+                             alignment=ft.Alignment.CENTER)
+            hoehe, rand = None, ft.Padding.symmetric(horizontal=20, vertical=oben)
         super().__init__(
-            content=ft.Semantics(button=True, content=ft.Row(
-                row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)),
-            height=grow(height), border_radius=grow(height) // 2,
-            padding=ft.Padding.symmetric(horizontal=20),
+            content=ft.Semantics(button=True, content=inner),
+            height=hoehe, border_radius=grow(height) // 2, padding=rand,
             alignment=ft.Alignment.CENTER, expand=expand,
             on_click=self._clicked, ink=True)
         self._paint(True)
@@ -334,16 +400,20 @@ class PillGroup(ft.Stack):
         self.current = initial
         self.pills = []
         self.semantics = []
-        height = grow(36)
+        height = max(48, grow(36))   # B-J-04 Variante unsichtbar: Tippflaeche
+        sichtbar = grow(36)          # Pille selbst wie bisher
         for index, (_value, caption) in enumerate(options):
             pill = ft.Container(
                 content=ft.Text(caption, size=13, weight=ft.FontWeight.BOLD),
-                height=height, border_radius=height // 2, alignment=ft.Alignment.CENTER,
-                padding=ft.Padding.symmetric(horizontal=16), ink=True,
-                on_click=lambda _e, i=index: self.select(i))
+                height=sichtbar, border_radius=sichtbar // 2, alignment=ft.Alignment.CENTER,
+                padding=ft.Padding.symmetric(horizontal=16))
+            # nur die Tippflaeche nimmt das Tippen an (ein Knoten fuer TalkBack)
+            tipp = ft.Container(content=pill, height=height, alignment=ft.Alignment.CENTER,
+                                border_radius=sichtbar // 2, ink=True,
+                                on_click=lambda _e, i=index: self.select(i))
             self.pills.append(pill)
             # Ab 0.56: TalkBack sagt "Schaltflaeche" und ob die Pille gewaehlt ist
-            self.semantics.append(ft.Semantics(content=pill, button=True, selected=False))
+            self.semantics.append(ft.Semantics(content=tipp, button=True, selected=False))
         # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
         self._widths = [32 + 7.6 * FONT_FACTOR[0] * len(str(caption))
                         for _v, caption in options]
@@ -588,6 +658,9 @@ class Stepper(ft.Row):
         return self.value
 
 
+HINT_MAX_LINES = 2
+
+
 def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
           max_lines=None, mono=False, keyboard=None, on_change=None, expand=None):
     """Dunkles, abgerundetes Eingabefeld. Bei password=True gibt es ab 0.48
@@ -600,6 +673,9 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
         border_color=C["field_border"], focused_border_color=C["purple"],
         border_radius=12, color=C["text"], cursor_color=C["accent"],
         hint_style=ft.TextStyle(color=C["muted"]),
+        # Ab 0.63.2 (B-E-05 e): ein langer Platzhalter bricht um statt mit "..."
+        # gekuerzt zu werden (Sehr gross)
+        hint_max_lines=HINT_MAX_LINES,
         text_style=ft.TextStyle(font_family=MONO if mono else None, size=fs(14)),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
         expand=expand)
@@ -680,6 +756,8 @@ FIT_HINT = "→ wischen"
 FIT_CHAR_RATIO = 0.62
 _FIT_PADDING = 14
 _FIT_BORDER = 1
+# Ab 0.63.2 (A5-d): Breite des Verlaufs rechts (px)
+_FIT_FADE = 28
 
 
 # Ab 0.63.1 (Plan 0.63.1 Teil 1.3, Antwort 12 (A)): fit_lines und seine
@@ -711,7 +789,11 @@ class FitBox(ft.Column):
                             font_family=MONO if mono else None, selectable=True,
                             no_wrap=True, on_size_change=self._text_sized,
                             size_change_interval=100)
-        self.content = ft.Row([self.text], scroll=ft.ScrollMode.AUTO)
+        # Ab 0.63.2 (A5-d): Leerraum hinter dem Text, nur bei "→ wischen" -
+        # so steht das Zeilenende nach dem Wischen frei vom Verlauf
+        self.end_space = ft.Container(width=_FIT_FADE, visible=False)
+        self.content = ft.Row([self.text, self.end_space], scroll=ft.ScrollMode.AUTO,
+                              spacing=0)
         self.box = ft.Container(
             content=self.content, data=self.text,
             bgcolor=C["card_alt"], border_radius=12, padding=_FIT_PADDING,
@@ -762,11 +844,22 @@ class FitBox(ft.Column):
 
     def _refit(self):
         self.zeichen = self.capacity()
-        shown = fit_lines(self.raw, self.zeichen)
+        # Ab 0.63.2 (A5-a): Abschnitte einheitlich ein- oder zweizeilig
+        shown = fit_lines(self.raw, self.zeichen, einheitlich=True)
         too_long = bool(self.zeichen) and any(
             len(line) > self.zeichen for line in shown.split("\n"))
+        if too_long:
+            # Ab 0.63.2 (A5-d): Mit "→ wischen" liegt rechts der Verlauf.
+            # Noch einmal setzen, so schmal, dass alles Teilbare davor endet;
+            # self.zeichen (volle Breite) und die Hinweisregel bleiben.
+            narrow = self.zeichen - math.ceil(
+                _FIT_FADE / (self._char_width or self._estimate()) - 1e-6)
+            if narrow > 0:
+                shown = fit_lines(self.raw, narrow, einheitlich=True)
+                too_long = any(len(line) > self.zeichen for line in shown.split("\n"))
         self.text.value = shown
         self.hint.visible = too_long
+        self.end_space.visible = too_long
         self.box.foreground_decoration = self._fade() if too_long else None
 
     def _fade(self):
@@ -775,7 +868,7 @@ class FitBox(ft.Column):
         in Kastenfarbe, die Linie des Kastens wird darueber neu gezogen."""
         width = self._box_width or 300
         full = max(0.5, 1 - (_FIT_PADDING + _FIT_BORDER) / width)
-        start = max(0.0, full - 28 / width)
+        start = max(0.0, full - _FIT_FADE / width)
         clear = ft.Colors.with_opacity(0, C["card_alt"])
         return ft.BoxDecoration(
             gradient=ft.LinearGradient(
@@ -811,6 +904,20 @@ def dot(color, size=9):
 #  BANNER, RINGE, BALKEN
 # ============================================================================
 
+def keep_last_words(value):
+    """Ab 0.63.2 (B-E-05 e): Das letzte Wort bleibt mit dem Wort davor in einer
+    Zeile (geschuetztes Leerzeichen), ein Zeichen wie "%" dazu mit seiner Zahl
+    ("0 % richtig") - sonst stand z.B. "richtig" bei Sehr gross allein in der
+    letzten Zeile. Der Wortlaut bleibt gleich."""
+    words = (value or "").split(" ")
+    if len(words) < 3:
+        return value
+    keep = 2
+    while keep < len(words) - 1 and words[-keep] and not words[-keep][0].isalnum():
+        keep += 1
+    return " ".join(words[:-keep]) + " " + "\u00a0".join(words[-keep:])
+
+
 class HeroPanel(ft.Container):
     """Farbverlaufs-Banner oben im Dashboard."""
 
@@ -819,18 +926,27 @@ class HeroPanel(ft.Container):
         self.sub = ft.Text("", size=13, color=mix(C["on_accent"], C["accent2"], 0.25))
         self.big = ft.Text("", size=30, weight=ft.FontWeight.BOLD, color=C["on_accent"])
         self.big_sub = ft.Text("", size=12, color=mix(C["on_accent"], C["accent2"], 0.25))
+        texts = ft.Column([self.title, self.sub], spacing=6, tight=True, expand=True)
+        numbers = ft.Column([self.big, self.big_sub], spacing=0, tight=True,
+                            horizontal_alignment=ft.CrossAxisAlignment.END)
+        # Ab 0.63.2 (B-J-06): ab 160 % steht die grosse Zahl unter dem Text
+        # (daneben blieb fuer "Dein Lernstand" nur eine schmale Spalte)
+        if large():
+            texts.expand = None
+            numbers.horizontal_alignment = ft.CrossAxisAlignment.START
+            layout = ft.Column([texts, numbers], spacing=12, tight=True,
+                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        else:
+            layout = ft.Row([texts, numbers],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER)
         super().__init__(
-            content=ft.Row([
-                ft.Column([self.title, self.sub], spacing=6, tight=True, expand=True),
-                ft.Column([self.big, self.big_sub], spacing=0, tight=True,
-                          horizontal_alignment=ft.CrossAxisAlignment.END),
-            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            content=layout,
             gradient=gradient("hero", ft.Alignment.TOP_LEFT, ft.Alignment.BOTTOM_RIGHT),
             border_radius=18, padding=20)
 
     def set_data(self, title, sub, big, big_sub):
         self.title.value = title
-        self.sub.value = sub
+        self.sub.value = keep_last_words(sub)
         self.big.value = big
         self.big_sub.value = big_sub
 
@@ -838,15 +954,21 @@ class HeroPanel(ft.Container):
 class Ring(ft.Stack):
     """Fortschrittsring mit Farbverlauf und Text in der Mitte."""
 
-    def __init__(self, size=120, thickness=11, big_size=22, small_size=11):
-        self.size = size
+    def __init__(self, size=120, thickness=11, big_size=22, small_size=11, mitwachsen=True):
+        # Ab 0.63.2 (B-E-05 a): Der Ring waechst mit der Schrift (grow), sonst
+        # ragte der Text in der Mitte bei Sehr gross ueber den Ring. Ohne Text
+        # (Logo in der Kopfzeile) bleibt er mit mitwachsen=False fest.
+        if mitwachsen:
+            size = grow(size)
+        self.size = self.wanted = size
         self.thickness = thickness
+        self._last = None
         self.canvas = cv.Canvas(width=size, height=size)
         self.big = ft.Text("", size=big_size, weight=ft.FontWeight.BOLD, color=C["text"],
                            text_align=ft.TextAlign.CENTER)
         self.small = ft.Text("", size=small_size, color=C["text_dim"],
                              text_align=ft.TextAlign.CENTER)
-        center = ft.Container(
+        center = self.center = ft.Container(
             content=ft.Column([self.big, self.small], spacing=0, tight=True,
                               horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=size, height=size, alignment=ft.Alignment.CENTER,
@@ -858,7 +980,21 @@ class Ring(ft.Stack):
                                                        exclude_semantics=True)],
                          width=size, height=size)
 
+    def resize(self, size):
+        """Ab 0.63.2 (B-E-05 a, Nacharbeit M1): neue Groesse (z.B. schmale
+        Ringkarte); ein schon gesetzter Ring wird neu gezeichnet."""
+        size = int(size)
+        if size == self.size:
+            return False
+        self.size = size
+        for control in (self, self.canvas, self.center):
+            control.width = control.height = size
+        if self._last is not None:
+            self.set(*self._last)
+        return True
+
     def set(self, fraction, color_a, color_b=None, big="", small=""):
+        self._last = (fraction, color_a, color_b, big, small)
         fraction = max(0.0, min(1.0, fraction))
         color_b = color_b or color_a
         half = self.thickness / 2
@@ -985,7 +1121,10 @@ class _LineCanvas(cv.Canvas):
         self._goal = None
         self._name = None
         self._width = 300
-        super().__init__(height=height, expand=True, on_resize=self._resized,
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher - Achsenschrift und Raender
+        # wachsen seit 0.58 mit, bei fester Hoehe lagen die Achsenzahlen dann
+        # uebereinander
+        super().__init__(height=large_grow(height), expand=True, on_resize=self._resized,
                          resize_interval=100)
 
     def _resized(self, event):
@@ -1119,7 +1258,8 @@ class _ShareCanvas(cv.Canvas):
         self._names = ("richtig", "falsch")
         self._empty = "–"
         self._width = 300
-        super().__init__(height=height, expand=True, on_resize=self._resized,
+        # Ab 0.63.2 (B-J-06): ab 160 % hoeher (wie _LineCanvas)
+        super().__init__(height=large_grow(height), expand=True, on_resize=self._resized,
                          resize_interval=100)
 
     def _resized(self, event):
@@ -1285,6 +1425,12 @@ class UpsPicture(ft.Semantics):
 
     @staticmethod
     def _bar(share, color, height=12):
+        # Ab 0.63.2 (B-E-10): nicht endliche Werte nicht abbrechen lassen,
+        # unendlich = voll, NaN = leer (wie am PC, fisi_widgets UpsDiagram)
+        if math.isnan(share):
+            share = 0.0
+        elif math.isinf(share):
+            share = 1.0 if share > 0 else 0.0
         filled = max(0, min(1000, int(round(share * 1000))))
         parts = []
         if filled:
@@ -1427,7 +1573,7 @@ class ThemeProgress(ft.Column):
         for name, percent, color in items:
             ring = Ring(size=46, thickness=5, big_size=11, small_size=1)
             ring.set(percent / 100.0, color, mix(color, C["text"], 0.25),
-                     "%d%%" % round(percent), "")
+                     "%d\u00a0%%" % round(percent), "")   # ab 0.63.2 (B-D-07)
             ring.small.visible = False
             self.controls.append(ft.Row([
                 ring, ft.Text(name, size=13, color=C["text_dim"], expand=True)],
